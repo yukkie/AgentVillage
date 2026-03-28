@@ -55,6 +55,7 @@ def build_public_info_prompt(
     alive_players: list[str],
     dead_players: list[str],
     day: int,
+    all_agents: list[AgentState] | None = None,
 ) -> str:
     """Build prompt section with public game information."""
     lines = [
@@ -62,6 +63,14 @@ def build_public_info_prompt(
         f"Alive players: {', '.join(alive_players)}",
         f"Dead players: {', '.join(dead_players) if dead_players else 'none'}",
     ]
+    if all_agents:
+        claims = [
+            f"{a.name} claims {a.claimed_role}"
+            for a in all_agents
+            if a.claimed_role is not None
+        ]
+        if claims:
+            lines.append(f"Known role claims: {', '.join(claims)}")
     if today_log:
         lines.append("\nToday's discussion so far:")
         for entry in today_log:
@@ -132,13 +141,14 @@ def build_system_prompt(
     day: int,
     lang: str = "English",
     reply_to_entry: SpeechEntry | None = None,
+    all_agents: list[AgentState] | None = None,
 ) -> str:
     """Assemble full system prompt for an agent."""
     parts = [
         build_persona_prompt(agent),
         "\n",
         build_role_prompt(agent.role),
-        build_public_info_prompt(today_log, alive_players, dead_players, day),
+        build_public_info_prompt(today_log, alive_players, dead_players, day, all_agents),
         build_personal_info_prompt(agent),
     ]
     if reply_to_entry is not None:

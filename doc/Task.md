@@ -31,6 +31,8 @@
 
 ## 未着手・検討中
 
+- [ ] 前日以前の投票結果（誰が誰に投票したか）をプロンプトのPublic情報として渡す（現状は当日の発言ログのみ）
+
 - [ ] Extended thinking フラグ（`call()` に `extended_thinking: bool = False` 引数）
 - [ ] prompt cache 活用（キャラ性格mdファイルをシステムプロンプト先頭に固定して cache_control を付与）
 - [ ] 思考ログのデバッグ表示と観戦表示の切り替えUI

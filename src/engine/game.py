@@ -123,6 +123,7 @@ class GameEngine:
             self.day,
             self.lang,
             reply_to_entry=reply_to_entry,
+            all_agents=self.agents,
         )
         self._day_outputs[agent.name] = output
 
@@ -149,6 +150,10 @@ class GameEngine:
             is_public=False,
             speech_id=speech_id,
         ))
+
+        if output.intent.co:
+            agent.claimed_role = output.intent.co
+            store.save(agent)
 
         if output.memory_update:
             memory_mod.update_memory(agent, output.memory_update)
