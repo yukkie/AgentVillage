@@ -123,6 +123,7 @@ class GameEngine:
             self.day,
             self.lang,
             reply_to_entry=reply_to_entry,
+            all_agents=self.agents,
         )
         self._day_outputs[agent.name] = output
 
