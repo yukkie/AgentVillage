@@ -56,13 +56,35 @@ def build_public_info_prompt(
     dead_players: list[str],
     day: int,
     all_agents: list[AgentState] | None = None,
+    past_votes: list[dict] | None = None,
+    past_deaths: list[dict] | None = None,
 ) -> str:
     """Build prompt section with public game information."""
-    lines = [
-        f"\n--- PUBLIC INFORMATION (Day {day}) ---",
+    from collections import Counter
+    lines = [f"\n--- PUBLIC INFORMATION (Day {day}) ---"]
+
+    if all_agents:
+        role_counts = Counter(a.role for a in all_agents)
+        role_summary = ", ".join(f"{count} {role}" for role, count in sorted(role_counts.items()))
+        lines.append(f"Role distribution: {role_summary}")
+
+    lines += [
         f"Alive players: {', '.join(alive_players)}",
         f"Dead players: {', '.join(dead_players) if dead_players else 'none'}",
     ]
+
+    if past_deaths:
+        lines.append("\nPast deaths:")
+        for d in past_deaths:
+            cause = "executed" if d["cause"] == "execution" else "killed by werewolves"
+            lines.append(f"  Day {d['day']}: {d['name']} was {cause}")
+
+    if past_votes:
+        lines.append("\nPast votes:")
+        for v in past_votes:
+            vote_str = ", ".join(f"{voter}→{target}" for voter, target in v["votes"].items())
+            lines.append(f"  Day {v['day']}: {vote_str}")
+
     if all_agents:
         claims = [
             f"{a.name} claims {a.claimed_role}"
@@ -71,6 +93,7 @@ def build_public_info_prompt(
         ]
         if claims:
             lines.append(f"Known role claims: {', '.join(claims)}")
+
     if today_log:
         lines.append("\nToday's discussion so far:")
         for entry in today_log:
@@ -142,13 +165,15 @@ def build_system_prompt(
     lang: str = "English",
     reply_to_entry: SpeechEntry | None = None,
     all_agents: list[AgentState] | None = None,
+    past_votes: list[dict] | None = None,
+    past_deaths: list[dict] | None = None,
 ) -> str:
     """Assemble full system prompt for an agent."""
     parts = [
         build_persona_prompt(agent),
         "\n",
         build_role_prompt(agent.role),
-        build_public_info_prompt(today_log, alive_players, dead_players, day, all_agents),
+        build_public_info_prompt(today_log, alive_players, dead_players, day, all_agents, past_votes, past_deaths),
         build_personal_info_prompt(agent),
     ]
     if reply_to_entry is not None:

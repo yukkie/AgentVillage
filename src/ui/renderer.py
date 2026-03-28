@@ -48,7 +48,9 @@ def render_event(
                 style = "blue"
             else:
                 style = "white"
-            text.append(f"{event.agent}: ", style=f"bold {style}")
+            prefix = f"[{event.speech_id}] " if event.speech_id is not None else ""
+            reply = f" (→[{event.reply_to}])" if event.reply_to is not None else ""
+            text.append(f"{prefix}{event.agent}{reply}: ", style=f"bold {style}")
             text.append(event.content, style=style)
 
     elif event.event_type == EventType.REASONING:
@@ -59,7 +61,7 @@ def render_event(
         text.append(f"[VOTE] {event.agent} → {event.target}", style="white")
 
     elif event.event_type == EventType.ELIMINATION:
-        text.append(f"\n[ELIMINATED] {event.agent} has been eliminated!", style="bold red")
+        text.append(f"\n{event.content}\n", style="bold red")
 
     elif event.event_type == EventType.NIGHT_ATTACK:
         # Spectator only — red
