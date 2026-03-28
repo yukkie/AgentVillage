@@ -45,9 +45,11 @@ def call(
     lang: str = "English",
     reply_to_entry: SpeechEntry | None = None,
     all_agents: list[AgentState] | None = None,
+    past_votes: list[dict] | None = None,
+    past_deaths: list[dict] | None = None,
 ) -> AgentOutput:
     """Call LLM for day-phase speech and return structured AgentOutput."""
-    system_prompt = build_system_prompt(agent, today_log, alive_players, dead_players, day, lang, reply_to_entry, all_agents)
+    system_prompt = build_system_prompt(agent, today_log, alive_players, dead_players, day, lang, reply_to_entry, all_agents, past_votes, past_deaths)
     try:
         message = _client.messages.create(
             model=agent.model,

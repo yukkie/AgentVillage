@@ -34,6 +34,9 @@ class GameEngine:
         self._speech_id_counter: int = 0
         self._day_turn: int = 0
         self._day_outputs: dict[str, AgentOutput] = {}
+        # Public history passed to agent prompts
+        self._past_votes: list[dict] = []   # [{"day": n, "votes": {"voter": "target"}}]
+        self._past_deaths: list[dict] = []  # [{"day": n, "name": str, "cause": "execution"|"attack"}]
 
     def _emit(self, event: LogEvent) -> None:
         self.log_writer.write(event)
@@ -61,8 +64,11 @@ class GameEngine:
             store.save(agent)
             if event_type == EventType.NIGHT_ATTACK:
                 content = f"Werewolves attacked {name}! {name} was found dead at dawn."
+                cause = "attack"
             else:
                 content = f"{name} was executed by the village vote."
+                cause = "execution"
+            self._past_deaths.append({"day": self.day, "name": name, "cause": cause})
             event = LogEvent.make(
                 day=self.day,
                 phase=phase_str,
@@ -139,6 +145,8 @@ class GameEngine:
             self.lang,
             reply_to_entry=reply_to_entry,
             all_agents=self.agents,
+            past_votes=self._past_votes,
+            past_deaths=self._past_deaths,
         )
         self._day_outputs[agent.name] = output
 
@@ -264,6 +272,7 @@ class GameEngine:
                     ))
 
         if votes:
+            self._past_votes.append({"day": self.day, "votes": dict(votes)})
             eliminated = tally_votes(votes)
             self._eliminate(eliminated, EventType.ELIMINATION, Phase.DAY_VOTE.value)
 
