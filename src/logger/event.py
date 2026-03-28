@@ -24,6 +24,8 @@ class LogEvent(BaseModel):
     target: str | None = None
     content: str = ""
     is_public: bool = True
+    speech_id: int | None = None
+    reply_to: int | None = None
 
     @classmethod
     def make(
@@ -35,6 +37,8 @@ class LogEvent(BaseModel):
         target: str | None = None,
         content: str = "",
         is_public: bool = True,
+        speech_id: int | None = None,
+        reply_to: int | None = None,
     ) -> "LogEvent":
         return cls(
             day=day,
@@ -44,4 +48,6 @@ class LogEvent(BaseModel):
             target=target,
             content=content,
             is_public=is_public,
+            speech_id=speech_id,
+            reply_to=reply_to,
         )

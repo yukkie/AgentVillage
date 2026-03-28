@@ -1,4 +1,5 @@
 from src.agent.state import AgentState
+from src.llm.schema import SpeechEntry
 
 
 def build_persona_prompt(agent: AgentState) -> str:
@@ -50,7 +51,7 @@ def build_role_prompt(role: str) -> str:
 
 
 def build_public_info_prompt(
-    today_log: list[str],
+    today_log: list[SpeechEntry],
     alive_players: list[str],
     dead_players: list[str],
     day: int,
@@ -64,7 +65,7 @@ def build_public_info_prompt(
     if today_log:
         lines.append("\nToday's discussion so far:")
         for entry in today_log:
-            lines.append(f"  {entry}")
+            lines.append(f"  [{entry.speech_id}] {entry.agent}: {entry.text}")
     else:
         lines.append("\nNo discussion yet today.")
     return "\n".join(lines)
@@ -125,11 +126,12 @@ Rules:
 
 def build_system_prompt(
     agent: AgentState,
-    today_log: list[str],
+    today_log: list[SpeechEntry],
     alive_players: list[str],
     dead_players: list[str],
     day: int,
     lang: str = "English",
+    reply_to_entry: SpeechEntry | None = None,
 ) -> str:
     """Assemble full system prompt for an agent."""
     parts = [
@@ -138,9 +140,48 @@ def build_system_prompt(
         build_role_prompt(agent.role),
         build_public_info_prompt(today_log, alive_players, dead_players, day),
         build_personal_info_prompt(agent),
-        build_output_format_prompt(lang),
     ]
+    if reply_to_entry is not None:
+        parts.append(
+            f"\n--- YOUR TURN (CHALLENGE) ---\n"
+            f"You decided to challenge speech [{reply_to_entry.speech_id}] by {reply_to_entry.agent}:\n"
+            f'  "{reply_to_entry.text}"\n'
+            f"Respond directly to this statement in your speech."
+        )
+    parts.append(build_output_format_prompt(lang))
     return "\n".join(parts)
+
+
+def build_judgment_prompt(
+    agent: AgentState,
+    today_log: list[SpeechEntry],
+    alive_players: list[str],
+    day: int,
+    lang: str = "English",
+) -> str:
+    """Build lightweight judgment prompt for the parallel decision phase."""
+    recent = today_log[-6:] if len(today_log) > 6 else today_log
+    lines = [
+        f"You are {agent.name} ({agent.role}) in a Werewolf game. Day {day}.",
+        f"Alive players: {', '.join(alive_players)}",
+    ]
+    if agent.memory_summary:
+        lines.append(f"Your memory: {'; '.join(agent.memory_summary)}")
+    if recent:
+        lines.append("\nRecent speeches:")
+        for e in recent:
+            lines.append(f"  [{e.speech_id}] {e.agent}: {e.text}")
+    lines.append(f"""
+Decide your next action. Respond with ONLY valid JSON, no other text:
+{{
+  "decision": "challenge" | "speak" | "silent",
+  "reply_to": <speech_id to challenge, or null>
+}}
+- "challenge": directly counter a specific speech (set reply_to to its speech_id)
+- "speak": add a new statement unprompted
+- "silent": nothing to add right now
+Use {lang}.""")
+    return "\n".join(lines)
 
 
 def build_night_action_prompt(agent: AgentState, alive_players: list[str], context: str, lang: str = "English") -> str:

@@ -1,4 +1,17 @@
+from typing import Literal
+
 from pydantic import BaseModel
+
+
+class SpeechEntry(BaseModel):
+    speech_id: int
+    agent: str
+    text: str
+
+
+class JudgmentOutput(BaseModel):
+    decision: Literal["challenge", "speak", "silent"]
+    reply_to: int | None = None
 
 
 class VoteCandidate(BaseModel):
@@ -14,6 +27,6 @@ class Intent(BaseModel):
 class AgentOutput(BaseModel):
     thought: str
     speech: str
-    reasoning: str  # 推理宣言フェーズ用（誰をなぜ疑うか）
+    reasoning: str
     intent: Intent
     memory_update: list[str] = []

@@ -8,7 +8,7 @@ from src.engine.vote import tally_votes
 from src.engine.victory import check_victory
 from src.engine.role import has_night_action
 from src.llm import client as llm_client
-from src.llm.schema import AgentOutput
+from src.llm.schema import AgentOutput, SpeechEntry
 from src.action.types import Vote, Inspect, Attack
 from src.action.validator import validate
 from src.action.resolver import resolve_inspect, resolve_attack
@@ -29,9 +29,9 @@ class GameEngine:
         self.event_callback = event_callback or (lambda e: None)
         self.lang = lang
         self.day = 1
-        self.phase = Phase.DAY_SPEAK
-        self.today_log: list[str] = []
-        # Cache for LLM outputs from day_speak phase
+        self.phase = Phase.DAY_OPENING
+        self.today_log: list[SpeechEntry] = []
+        self._speech_id_counter: int = 0
         self._day_outputs: dict[str, AgentOutput] = {}
 
     def _emit(self, event: LogEvent) -> None:
@@ -101,83 +101,120 @@ class GameEngine:
 
             self.day += 1
             self.today_log = []
+            self._speech_id_counter = 0
             self._day_outputs = {}
 
+    def _next_speech_id(self) -> int:
+        self._speech_id_counter += 1
+        return self._speech_id_counter
+
+    def _do_speak(
+        self,
+        agent: AgentState,
+        phase: Phase,
+        reply_to_entry: SpeechEntry | None = None,
+    ) -> SpeechEntry:
+        """Generate a speech for agent, emit events, update memory, and append to today_log."""
+        output = llm_client.call(
+            agent,
+            list(self.today_log),
+            self._alive_names(),
+            self._dead_names(),
+            self.day,
+            self.lang,
+            reply_to_entry=reply_to_entry,
+        )
+        self._day_outputs[agent.name] = output
+
+        speech_id = self._next_speech_id()
+        entry = SpeechEntry(speech_id=speech_id, agent=agent.name, text=output.speech)
+        self.today_log.append(entry)
+
+        self._emit(LogEvent.make(
+            day=self.day,
+            phase=phase.value,
+            event_type=EventType.SPEECH,
+            agent=agent.name,
+            content=output.speech,
+            is_public=True,
+            speech_id=speech_id,
+            reply_to=reply_to_entry.speech_id if reply_to_entry else None,
+        ))
+        self._emit(LogEvent.make(
+            day=self.day,
+            phase=phase.value,
+            event_type=EventType.SPEECH,
+            agent=agent.name,
+            content=f"[THINK] {output.thought}",
+            is_public=False,
+            speech_id=speech_id,
+        ))
+
+        if output.memory_update:
+            memory_mod.update_memory(agent, output.memory_update)
+
+        return entry
+
     def _run_day(self) -> str | None:
-        # DAY_SPEAK
-        self.phase = Phase.DAY_SPEAK
-        self._phase_start(Phase.DAY_SPEAK)
         self._day_outputs = {}
 
-        speak_order = self._alive_agents()
-        random.shuffle(speak_order)
+        # --- OPENING: 全員1回発言 ---
+        self.phase = Phase.DAY_OPENING
+        self._phase_start(Phase.DAY_OPENING)
 
-        for agent in speak_order:
-            output = llm_client.call(
-                agent,
-                list(self.today_log),
-                self._alive_names(),
-                self._dead_names(),
-                self.day,
-                self.lang,
-            )
-            self._day_outputs[agent.name] = output
-            log_entry = f"{agent.name}: {output.speech}"
-            self.today_log.append(log_entry)
+        opening_order = self._alive_agents()
+        random.shuffle(opening_order)
+        for agent in opening_order:
+            self._do_speak(agent, Phase.DAY_OPENING)
 
-            # Emit speech event
-            self._emit(LogEvent.make(
-                day=self.day,
-                phase=Phase.DAY_SPEAK.value,
-                event_type=EventType.SPEECH,
-                agent=agent.name,
-                content=output.speech,
-                is_public=True,
-            ))
+        # --- DISCUSSION × 2: 並列判断 → レスポンス順発言 ---
+        self.phase = Phase.DAY_DISCUSSION
+        for _round in range(2):
+            self._phase_start(Phase.DAY_DISCUSSION)
+            alive = self._alive_agents()
+            # 判断時点のログのスナップショットを渡す
+            judgment_snapshot = list(self.today_log)
+            spoke_anyone = False
 
-            # Emit thought event (spectator only)
-            self._emit(LogEvent.make(
-                day=self.day,
-                phase=Phase.DAY_SPEAK.value,
-                event_type=EventType.SPEECH,
-                agent=agent.name,
-                content=f"[THINK] {output.thought}",
-                is_public=False,
-            ))
+            for agent, judgment in llm_client.call_judgment_parallel(
+                alive, judgment_snapshot, self._alive_names(), self.day, self.lang
+            ):
+                if judgment.decision == "silent":
+                    self._emit(LogEvent.make(
+                        day=self.day,
+                        phase=Phase.DAY_DISCUSSION.value,
+                        event_type=EventType.SPEECH,
+                        agent=agent.name,
+                        content=f"{agent.name} is watching the village silently...",
+                        is_public=True,
+                    ))
+                    continue
+                spoke_anyone = True
 
-            # Update memory
-            if output.memory_update:
-                memory_mod.update_memory(agent, output.memory_update)
+                reply_to_entry: SpeechEntry | None = None
+                if judgment.decision == "challenge" and judgment.reply_to is not None:
+                    reply_to_entry = next(
+                        (e for e in self.today_log if e.speech_id == judgment.reply_to),
+                        None,
+                    )
 
-        # DAY_REASON
-        self.phase = Phase.DAY_REASON
-        self._phase_start(Phase.DAY_REASON)
+                self._do_speak(agent, Phase.DAY_DISCUSSION, reply_to_entry=reply_to_entry)
 
-        for agent in speak_order:
-            output = self._day_outputs.get(agent.name)
-            if output:
-                self._emit(LogEvent.make(
-                    day=self.day,
-                    phase=Phase.DAY_REASON.value,
-                    event_type=EventType.REASONING,
-                    agent=agent.name,
-                    content=output.reasoning,
-                    is_public=True,
-                ))
+            if not spoke_anyone:
+                break  # 全員silentなら2巡目はスキップ
 
-        # DAY_VOTE
+        # --- VOTE ---
         self.phase = Phase.DAY_VOTE
         self._phase_start(Phase.DAY_VOTE)
 
         votes: dict[str, str] = {}
         alive_names = self._alive_names()
 
-        for agent in speak_order:
+        for agent in self._alive_agents():
             output = self._day_outputs.get(agent.name)
             target = None
 
             if output and output.intent.vote_candidates:
-                # Pick highest-scoring candidate who is alive
                 sorted_candidates = sorted(
                     output.intent.vote_candidates,
                     key=lambda vc: vc.score,
@@ -189,7 +226,6 @@ class GameEngine:
                         break
 
             if target is None:
-                # Fallback: vote for first alive player that isn't self
                 others = [n for n in alive_names if n != agent.name]
                 target = others[0] if others else None
 
@@ -207,13 +243,11 @@ class GameEngine:
                         is_public=True,
                     ))
 
-        # Tally and eliminate
         if votes:
             eliminated = tally_votes(votes)
             self._eliminate(eliminated, EventType.ELIMINATION, Phase.DAY_VOTE.value)
 
-        winner = check_victory(self.agents)
-        return winner
+        return check_victory(self.agents)
 
     def _run_night(self) -> str | None:
         self.phase = Phase.NIGHT
