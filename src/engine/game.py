@@ -32,6 +32,7 @@ class GameEngine:
         self.phase = Phase.DAY_OPENING
         self.today_log: list[SpeechEntry] = []
         self._speech_id_counter: int = 0
+        self._day_turn: int = 0
         self._day_outputs: dict[str, AgentOutput] = {}
 
     def _emit(self, event: LogEvent) -> None:
@@ -58,22 +59,35 @@ class GameEngine:
         if agent:
             agent.is_alive = False
             store.save(agent)
+            if event_type == EventType.NIGHT_ATTACK:
+                content = f"Werewolves attacked {name}! {name} was found dead at dawn."
+            else:
+                content = f"{name} was executed by the village vote."
             event = LogEvent.make(
                 day=self.day,
                 phase=phase_str,
                 event_type=event_type,
                 agent=name,
-                content=f"{name} has been eliminated.",
+                content=content,
                 is_public=True,
             )
             self._emit(event)
 
     def _phase_start(self, phase: Phase) -> None:
+        if phase in (Phase.DAY_OPENING, Phase.DAY_DISCUSSION):
+            self._day_turn += 1
+            label = f"DAY {self.day}  TURN {self._day_turn}"
+        elif phase == Phase.DAY_VOTE:
+            label = f"DAY {self.day}  VOTE"
+        elif phase == Phase.NIGHT:
+            label = f"NIGHT {self.day}"
+        else:
+            label = phase.value.upper()
         event = LogEvent.make(
             day=self.day,
             phase=phase.value,
             event_type=EventType.PHASE_START,
-            content=f"=== Day {self.day} — {phase.value.upper()} ===",
+            content=f"=== {label} ===",
             is_public=True,
         )
         self._emit(event)
@@ -102,6 +116,7 @@ class GameEngine:
             self.day += 1
             self.today_log = []
             self._speech_id_counter = 0
+            self._day_turn = 0
             self._day_outputs = {}
 
     def _next_speech_id(self) -> int:
