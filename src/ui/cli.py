@@ -20,7 +20,14 @@ class CLI:
             console.print(text)
 
     def show_winner(self, winner: str) -> None:
-        """Display the winner prominently."""
+        """Display the winner and full role reveal."""
+        console.print()
+        console.print("[bold yellow]=== ROLE REVEAL ===[/bold yellow]")
+        for agent in self.agents:
+            role_style = "red" if agent.role == "Werewolf" else ("blue" if agent.role == "Seer" else "white")
+            status = "" if agent.is_alive else " [dim](eliminated)[/dim]"
+            console.print(f"  [{role_style}]{agent.name}[/{role_style}] — {agent.role}{status}")
+        console.print()
         console.print(
             Panel(
                 f"[bold green]{winner} WIN THE GAME![/bold green]",

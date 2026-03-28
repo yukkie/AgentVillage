@@ -1,3 +1,4 @@
+import random
 from typing import Callable
 
 from src.agent.state import AgentState, Belief
@@ -108,7 +109,10 @@ class GameEngine:
         self._phase_start(Phase.DAY_SPEAK)
         self._day_outputs = {}
 
-        for agent in self._alive_agents():
+        speak_order = self._alive_agents()
+        random.shuffle(speak_order)
+
+        for agent in speak_order:
             output = llm_client.call(
                 agent,
                 list(self.today_log),
@@ -149,7 +153,7 @@ class GameEngine:
         self.phase = Phase.DAY_REASON
         self._phase_start(Phase.DAY_REASON)
 
-        for agent in self._alive_agents():
+        for agent in speak_order:
             output = self._day_outputs.get(agent.name)
             if output:
                 self._emit(LogEvent.make(
@@ -168,7 +172,7 @@ class GameEngine:
         votes: dict[str, str] = {}
         alive_names = self._alive_names()
 
-        for agent in self._alive_agents():
+        for agent in speak_order:
             output = self._day_outputs.get(agent.name)
             target = None
 

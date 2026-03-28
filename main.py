@@ -45,32 +45,24 @@ AGENT_CONFIGS = [
     },
 ]
 
-ROLE_ASSIGNMENTS = {
-    "Setsu": "Villager",
-    "SQ": "Villager",
-    "Raqio": "Villager",
-    "Gina": "Seer",
-    "Zephyr": "Werewolf",
-}
+ROLES = ["Villager", "Villager", "Villager", "Seer", "Werewolf"]
 
 
 def initialize_agents() -> list[AgentState]:
-    """Create and persist initial agent states."""
-    # Ensure state directory exists
+    """Create and persist initial agent states with randomized roles."""
     Path("state/agents").mkdir(parents=True, exist_ok=True)
 
+    shuffled_roles = ROLES[:]
+    random.shuffle(shuffled_roles)
+
     agents = []
-    for config in AGENT_CONFIGS:
+    for config, role in zip(AGENT_CONFIGS, shuffled_roles):
         name = config["name"]
-        role = ROLE_ASSIGNMENTS[name]
-
-        # Initialize beliefs about all other agents
-        beliefs = {}
-        for other_config in AGENT_CONFIGS:
-            other_name = other_config["name"]
-            if other_name != name:
-                beliefs[other_name] = Belief()
-
+        beliefs = {
+            other["name"]: Belief()
+            for other in AGENT_CONFIGS
+            if other["name"] != name
+        }
         agent = AgentState(
             name=name,
             role=role,
