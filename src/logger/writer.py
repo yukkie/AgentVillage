@@ -1,3 +1,5 @@
+import shutil
+from datetime import datetime
 from pathlib import Path
 
 from src.logger.event import LogEvent
@@ -5,6 +7,21 @@ from src.logger.event import LogEvent
 STATE_DIR = Path("state")
 PUBLIC_LOG = STATE_DIR / "public_log.jsonl"
 SPECTATOR_LOG = STATE_DIR / "spectator_log.jsonl"
+ARCHIVE_DIR = Path("state_archive")
+
+
+def archive_state() -> Path | None:
+    """Archive the current state/ folder to state_archive/YYYYMMDD_HHMMSS/.
+
+    Returns the archive path, or None if there was nothing to archive.
+    """
+    if not PUBLIC_LOG.exists() or PUBLIC_LOG.stat().st_size == 0:
+        return None
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    dest = ARCHIVE_DIR / timestamp
+    ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(str(STATE_DIR), str(dest))
+    return dest
 
 
 class LogWriter:

@@ -12,14 +12,14 @@ import random
 from pathlib import Path
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
-from src.agent.state import AgentState, Persona, Belief
-from src.agent import store
-from src.engine.game import GameEngine
-from src.engine.role import ROLES
-from src.logger.writer import LogWriter
-from src.ui.cli import CLI
+from src.agent.state import AgentState, Persona, Belief  # noqa: E402
+from src.agent import store  # noqa: E402
+from src.engine.game import GameEngine  # noqa: E402
+from src.logger.writer import LogWriter, archive_state  # noqa: E402
+from src.ui.cli import CLI  # noqa: E402
 
 
 AGENT_CONFIGS = [
@@ -94,18 +94,14 @@ def main() -> None:
     spectator_mode: bool = args.spectator
     lang: str = args.lang
 
-    # Initialize agents
     agents = initialize_agents()
 
-    # Set up UI
     cli = CLI(agents=agents, spectator_mode=spectator_mode)
     cli.show_intro()
     cli.show_agent_roles()
 
-    # Set up logger
     log_writer = LogWriter()
 
-    # Run game
     engine = GameEngine(
         agents=agents,
         log_writer=log_writer,
@@ -115,6 +111,10 @@ def main() -> None:
 
     winner = engine.run()
     cli.show_winner(winner)
+
+    archive_path = archive_state()
+    if archive_path:
+        print(f"Game archived to: {archive_path}")
 
 
 if __name__ == "__main__":
