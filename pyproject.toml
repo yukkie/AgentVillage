@@ -1,0 +1,11 @@
+[project]
+name = "agentvillage"
+version = "0.1.0"
+description = "LLM multi-agent werewolf social simulation game"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic>=0.50.0",
+    "pydantic>=2.0.0",
+    "rich>=13.0.0",
+    "python-dotenv>=1.0.0",
+]

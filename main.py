@@ -2,12 +2,15 @@
 AgentVillage — LLM Werewolf Game
 
 Usage:
-    python main.py               # Public mode
-    python main.py --spectator   # Spectator mode (shows thoughts & night actions)
+    uv run main.py               # Public mode
+    uv run main.py --spectator   # Spectator mode (shows thoughts & night actions)
 """
 import argparse
 import random
 from pathlib import Path
+
+from dotenv import load_dotenv
+load_dotenv()
 
 from src.agent.state import AgentState, Persona, Belief
 from src.agent import store
