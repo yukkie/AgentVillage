@@ -91,27 +91,28 @@ def build_personal_info_prompt(agent: AgentState) -> str:
     return "\n".join(lines)
 
 
-def build_output_format_prompt() -> str:
+def build_output_format_prompt(lang: str = "English") -> str:
     """Instruct LLM to output structured JSON."""
-    return """
+    return f"""
 --- OUTPUT FORMAT ---
 You MUST respond with ONLY valid JSON matching this exact schema. No other text.
 
-{
+{{
   "thought": "<your internal reasoning, hidden from others>",
   "speech": "<what you say aloud to the group>",
   "reasoning": "<your public deduction: who you suspect and why>",
-  "intent": {
+  "intent": {{
     "vote_candidates": [
-      {"target": "<player_name>", "score": <0.0-1.0>},
+      {{"target": "<player_name>", "score": <0.0-1.0>}},
       ...
     ],
     "co": "<role_name or null>"
-  },
+  }},
   "memory_update": ["<key thing to remember for future turns>", ...]
-}
+}}
 
 Rules:
+- "thought", "speech", "reasoning", "memory_update" must be written in {lang}
 - "thought" is your private inner monologue
 - "speech" is your actual spoken words (1-3 sentences)
 - "reasoning" is your public deduction statement (1-2 sentences)
@@ -128,6 +129,7 @@ def build_system_prompt(
     alive_players: list[str],
     dead_players: list[str],
     day: int,
+    lang: str = "English",
 ) -> str:
     """Assemble full system prompt for an agent."""
     parts = [
@@ -136,12 +138,12 @@ def build_system_prompt(
         build_role_prompt(agent.role),
         build_public_info_prompt(today_log, alive_players, dead_players, day),
         build_personal_info_prompt(agent),
-        build_output_format_prompt(),
+        build_output_format_prompt(lang),
     ]
     return "\n".join(parts)
 
 
-def build_night_action_prompt(agent: AgentState, alive_players: list[str], context: str) -> str:
+def build_night_action_prompt(agent: AgentState, alive_players: list[str], context: str, lang: str = "English") -> str:
     """Build prompt for night action (attack or inspect)."""
     if agent.role == "Werewolf":
         action_desc = "choose one player to ATTACK (eliminate) tonight"

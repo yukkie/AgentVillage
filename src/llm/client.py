@@ -40,9 +40,10 @@ def call(
     alive_players: list[str],
     dead_players: list[str],
     day: int = 1,
+    lang: str = "English",
 ) -> AgentOutput:
     """Call LLM for day-phase action and return structured AgentOutput."""
-    system_prompt = build_system_prompt(agent, today_log, alive_players, dead_players, day)
+    system_prompt = build_system_prompt(agent, today_log, alive_players, dead_players, day, lang)
     try:
         message = _client.messages.create(
             model=agent.model,
@@ -67,9 +68,10 @@ def call_night_action(
     agent: AgentState,
     context: str,
     alive_players: list[str],
+    lang: str = "English",
 ) -> str:
     """Call LLM for night action and return target player name."""
-    prompt = build_night_action_prompt(agent, alive_players, context)
+    prompt = build_night_action_prompt(agent, alive_players, context, lang)
     if not prompt:
         return ""
 

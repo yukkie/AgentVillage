@@ -21,10 +21,12 @@ class GameEngine:
         agents: list[AgentState],
         log_writer: LogWriter,
         event_callback: Callable[[LogEvent], None] | None = None,
+        lang: str = "English",
     ):
         self.agents = agents
         self.log_writer = log_writer
         self.event_callback = event_callback or (lambda e: None)
+        self.lang = lang
         self.day = 1
         self.phase = Phase.DAY_SPEAK
         self.today_log: list[str] = []
@@ -113,6 +115,7 @@ class GameEngine:
                 self._alive_names(),
                 self._dead_names(),
                 self.day,
+                self.lang,
             )
             self._day_outputs[agent.name] = output
             log_entry = f"{agent.name}: {output.speech}"
@@ -227,6 +230,7 @@ class GameEngine:
                 agent,
                 night_context,
                 self._alive_names(),
+                self.lang,
             )
 
             if agent.role == "Werewolf":

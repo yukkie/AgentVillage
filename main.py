@@ -2,8 +2,10 @@
 AgentVillage — LLM Werewolf Game
 
 Usage:
-    uv run main.py               # Public mode
-    uv run main.py --spectator   # Spectator mode (shows thoughts & night actions)
+    uv run main.py                        # Public mode (English)
+    uv run main.py --spectator            # Spectator mode
+    uv run main.py --lang Japanese        # Japanese output
+    uv run main.py --spectator --lang Japanese
 """
 import argparse
 import random
@@ -90,9 +92,15 @@ def main() -> None:
         action="store_true",
         help="Enable spectator mode (show thoughts, night actions, and secret information)",
     )
+    parser.add_argument(
+        "--lang",
+        default="English",
+        help="Language for agent speech and reasoning (e.g. English, Japanese)",
+    )
     args = parser.parse_args()
 
     spectator_mode: bool = args.spectator
+    lang: str = args.lang
 
     # Initialize agents
     agents = initialize_agents()
@@ -110,6 +118,7 @@ def main() -> None:
         agents=agents,
         log_writer=log_writer,
         event_callback=cli.on_event,
+        lang=lang,
     )
 
     winner = engine.run()
