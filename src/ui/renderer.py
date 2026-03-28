@@ -7,12 +7,13 @@ from src.agent.state import AgentState
 console = Console()
 
 
-def _get_agent_role(agent_name: str | None, agents: list[AgentState]) -> str | None:
+def _get_claimed_role(agent_name: str | None, agents: list[AgentState]) -> str | None:
+    """Return the role the agent has publicly claimed (CO), or None if no CO."""
     if agent_name is None:
         return None
     for a in agents:
         if a.name == agent_name:
-            return a.role
+            return a.claimed_role
     return None
 
 
@@ -29,7 +30,7 @@ def render_event(
     if not event.is_public and not spectator_mode:
         return None
 
-    role = _get_agent_role(event.agent, agents)
+    claimed_role = _get_claimed_role(event.agent, agents)
     text = Text()
 
     if event.event_type == EventType.PHASE_START:
@@ -42,8 +43,8 @@ def render_event(
             text.append(f"  [THINK] {event.agent}: ", style="dim white")
             text.append(thought_content, style="dim white")
         else:
-            # Regular speech
-            if role == "Seer":
+            # Regular speech — blue only after Seer CO
+            if claimed_role == "Seer":
                 style = "blue"
             else:
                 style = "white"

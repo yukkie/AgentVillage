@@ -21,3 +21,4 @@ class AgentState(BaseModel):
     beliefs: dict[str, Belief] = {}
     memory_summary: list[str] = []
     is_alive: bool = True
+    claimed_role: str | None = None  # publicly claimed role via CO; None until CO

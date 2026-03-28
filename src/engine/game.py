@@ -150,6 +150,10 @@ class GameEngine:
             speech_id=speech_id,
         ))
 
+        if output.intent.co:
+            agent.claimed_role = output.intent.co
+            store.save(agent)
+
         if output.memory_update:
             memory_mod.update_memory(agent, output.memory_update)
 
