@@ -87,14 +87,17 @@ class GameEngine:
             label = f"DAY {self.day}  VOTE"
         elif phase == Phase.NIGHT:
             label = f"NIGHT {self.day}"
+        elif phase == Phase.PRE_NIGHT:
+            label = "PRE-NIGHT (BEFORE DAY 1)"
         else:
             label = phase.value.upper()
+        is_public = phase != Phase.PRE_NIGHT
         event = LogEvent.make(
             day=self.day,
             phase=phase.value,
             event_type=EventType.PHASE_START,
             content=f"=== {label} ===",
-            is_public=True,
+            is_public=is_public,
         )
         self._emit(event)
 
@@ -107,6 +110,8 @@ class GameEngine:
             content="=== GAME START ===",
             is_public=True,
         ))
+
+        self._run_pre_night()
 
         while True:
             winner = self._run_day()
@@ -147,6 +152,7 @@ class GameEngine:
             all_agents=self.agents,
             past_votes=self._past_votes,
             past_deaths=self._past_deaths,
+            intended_co=agent.intended_co,
         )
         self._day_outputs[agent.name] = output
 
@@ -174,14 +180,46 @@ class GameEngine:
             speech_id=speech_id,
         ))
 
+        # Enforce pre-night CO decision on the opening speech as a safety net
+        if agent.intended_co and phase == Phase.DAY_OPENING and not output.intent.co:
+            output.intent.co = "Seer" if agent.role == "Werewolf" else agent.role
+
         if output.intent.co:
             agent.claimed_role = output.intent.co
+            agent.intended_co = False  # clear once CO is made
             store.save(agent)
 
         if output.memory_update:
             memory_mod.update_memory(agent, output.memory_update)
 
         return entry
+
+    def _run_pre_night(self) -> None:
+        """Pre-night phase: non-Villager agents secretly decide whether to CO on Day 1.
+
+        Only runs once at game start. Results logged as spectator-only.
+        Filter: role != "Villager" — covers Seer (true CO) and Werewolf (fake CO as Seer).
+        """
+        targets = [a for a in self._alive_agents() if a.role != "Villager"]
+        if not targets:
+            return
+
+        self._phase_start(Phase.PRE_NIGHT)
+
+        for agent in targets:
+            output = llm_client.call_pre_night_action(agent, self._alive_names(), self.lang)
+            agent.intended_co = output.decision == "co"
+            store.save(agent)
+
+            decision_label = "decided to CO" if agent.intended_co else "decided to wait"
+            self._emit(LogEvent.make(
+                day=self.day,
+                phase=Phase.PRE_NIGHT.value,
+                event_type=EventType.PRE_NIGHT_DECISION,
+                agent=agent.name,
+                content=f"{agent.name} ({agent.role}) {decision_label}. Reasoning: {output.reasoning}",
+                is_public=False,
+            ))
 
     def _run_day(self) -> str | None:
         self._day_outputs = {}
@@ -297,7 +335,6 @@ class GameEngine:
                 agent,
                 night_context,
                 self._alive_names(),
-                self.lang,
             )
 
             if agent.role == "Werewolf":

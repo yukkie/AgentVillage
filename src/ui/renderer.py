@@ -77,6 +77,13 @@ def render_event(
         # Spectator only — cyan
         text.append(f"[INSPECT] {event.content}", style="cyan")
 
+    elif event.event_type == EventType.PRE_NIGHT_DECISION:
+        # Spectator only — cyan for Seer, red for Werewolf
+        agent_state = next((a for a in agents if a.name == event.agent), None)
+        role = agent_state.role if agent_state else ""
+        style = "red" if role == "Werewolf" else "cyan"
+        text.append(f"[PRE-NIGHT] {event.content}", style=style)
+
     elif event.event_type == EventType.GAME_OVER:
         text.append(f"\n{'=' * 50}\n", style="bold yellow")
         text.append(event.content, style="bold green")

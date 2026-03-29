@@ -11,6 +11,7 @@ class EventType(Enum):
     ELIMINATION = "elimination"
     NIGHT_ATTACK = "night_attack"
     INSPECTION = "inspection"
+    PRE_NIGHT_DECISION = "pre_night_decision"
     GAME_OVER = "game_over"
     PHASE_START = "phase_start"
 

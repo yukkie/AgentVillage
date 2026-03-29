@@ -13,12 +13,12 @@ def _ensure_dir() -> None:
 def save(agent: AgentState) -> None:
     _ensure_dir()
     path = STATE_DIR / f"{agent.name.lower()}.json"
-    path.write_text(agent.model_dump_json(indent=2))
+    path.write_text(agent.model_dump_json(indent=2), encoding="utf-8")
 
 
 def load(name: str) -> AgentState:
     path = STATE_DIR / f"{name.lower()}.json"
-    data = json.loads(path.read_text())
+    data = json.loads(path.read_text(encoding="utf-8"))
     return AgentState.model_validate(data)
 
 
@@ -26,6 +26,6 @@ def load_all() -> list[AgentState]:
     _ensure_dir()
     agents = []
     for path in sorted(STATE_DIR.glob("*.json")):
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding="utf-8"))
         agents.append(AgentState.model_validate(data))
     return agents
