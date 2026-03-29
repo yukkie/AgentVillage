@@ -80,14 +80,15 @@ LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検
 - 状態は `state/agents/{name}.json` に永続化
 - Pydanticモデルでスキーマを定義
 
-#### claimed_role（公開役職）
+#### claimed_role（公開役職）と intended_co（前夜CO意思）
 
-`AgentState` に `claimed_role: str | None` フィールドを持つ。
+`AgentState` に以下のフィールドを持つ。
 
 | フィールド | 内容 |
 |---|---|
 | `role` | 真の役職（システム管理。LLMには渡さない） |
 | `claimed_role` | エージェントが公言した役職（CO済みなら設定。未COはNull） |
+| `intended_co` | 前夜ターンで「初日COする」と決めた場合 `True`（Day 1 OPENINGプロンプトに反映後は参照不要） |
 
 - `intent.co` がLLM出力に含まれたタイミングでGame Engineが `claimed_role` に保存
 - `claimed_role` は **Public情報** として全エージェントのプロンプトに渡す
@@ -106,6 +107,7 @@ LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検
 | `call()` | 発言生成（OPENING / DISCUSSION） | フル（役職・性格・記憶・当日ログ・他者のCO情報） | `AgentOutput` |
 | `call_judgment()` | 判断（DISCUSSION 並列） | 軽量（役職・性格・memory_summary・直近発言のみ） | `JudgmentOutput` |
 | `call_night_action()` | 夜行動 | 夜フェーズ専用 | `str`（ターゲット名） |
+| `call_pre_night_action()` | 前夜判断（Day 1 前・1回限り） | 役職・性格・参加者情報 | `PreNightOutput` |
 
 #### 並列実行
 

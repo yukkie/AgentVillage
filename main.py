@@ -8,12 +8,19 @@ Usage:
     uv run main.py --spectator --lang Japanese
 """
 import argparse
+import os
 import random
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+if not os.environ.get("ANTHROPIC_API_KEY"):
+    print("Error: ANTHROPIC_API_KEY is not set.")
+    print("Copy .env.example to .env and add your API key.")
+    sys.exit(1)
 
 from src.agent.state import AgentState, Persona, Belief  # noqa: E402
 from src.agent import store  # noqa: E402

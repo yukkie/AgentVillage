@@ -167,6 +167,7 @@ def build_system_prompt(
     all_agents: list[AgentState] | None = None,
     past_votes: list[dict] | None = None,
     past_deaths: list[dict] | None = None,
+    intended_co: bool = False,
 ) -> str:
     """Assemble full system prompt for an agent."""
     parts = [
@@ -183,8 +184,66 @@ def build_system_prompt(
             f'  "{reply_to_entry.text}"\n'
             f"Respond directly to this statement in your speech."
         )
+    if intended_co:
+        if agent.role == "Werewolf":
+            parts.append(
+                "\n--- YOUR PRE-GAME DECISION ---\n"
+                "Before the game began, you decided to claim to be the Seer today to confuse the village. "
+                "Declare yourself as the Seer in your speech. "
+                'Set "intent.co" to "Seer" in your JSON output.'
+            )
+        else:
+            parts.append(
+                f"\n--- YOUR PRE-GAME DECISION ---\n"
+                f"Before the game began, you decided to publicly reveal your role today. "
+                f"State that you are the {agent.role} in your speech. "
+                f'Set "intent.co" to "{agent.role}" in your JSON output.'
+            )
     parts.append(build_output_format_prompt(lang))
     return "\n".join(parts)
+
+
+def build_pre_night_prompt(agent: AgentState, alive_players: list[str], lang: str = "English") -> str:
+    """Build prompt for pre-night CO decision phase (non-Villager roles only).
+
+    Seer decides whether to true-CO. Werewolf decides whether to fake-CO as Seer.
+    Both choices are encoded as "co" | "wait".
+    """
+    if agent.role == "Werewolf":
+        decision_desc = (
+            "Will you claim to be the Seer (fake-CO) in your Day 1 opening speech "
+            "to confuse the village and neutralize the real Seer?\n"
+            '- "co": you will claim to be the Seer in your opening speech\n'
+            '- "wait": you will stay silent about your role for now'
+        )
+    else:
+        decision_desc = (
+            f"Will you reveal your true role as {agent.role} in your Day 1 opening speech?\n"
+            f'- "co": you will publicly declare your role as {agent.role} in your opening speech\n'
+            f'- "wait": you will not reveal your role yet'
+        )
+
+    lines = [
+        f"You are {agent.name}, a player in a social deduction game (Werewolf/Mafia).",
+        f"Your personality style: {agent.persona.style}.",
+        "",
+        f"Your secret role is: {agent.role}",
+        f"Players in this game: {', '.join(alive_players)}",
+        "",
+        "Before Day 1 begins, you must secretly decide your opening strategy.",
+        decision_desc,
+        "",
+        "--- OUTPUT FORMAT ---",
+        'Respond with ONLY valid JSON, no other text:',
+        "{",
+        '  "thought": "<your internal reasoning>",',
+        '  "decision": "co" | "wait",',
+        '  "reasoning": "<brief explanation of your choice>"',
+        "}",
+        f'- "thought" and "reasoning" must be written in {lang}',
+        '- "decision" must be exactly "co" or "wait" (always English, no other value)',
+    ]
+    return "\n".join(lines)
 
 
 def build_judgment_prompt(
@@ -219,7 +278,7 @@ Use {lang}.""")
     return "\n".join(lines)
 
 
-def build_night_action_prompt(agent: AgentState, alive_players: list[str], context: str, lang: str = "English") -> str:
+def build_night_action_prompt(agent: AgentState, alive_players: list[str], context: str) -> str:
     """Build prompt for night action (attack or inspect)."""
     if agent.role == "Werewolf":
         action_desc = "choose one player to ATTACK (eliminate) tonight"

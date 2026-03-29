@@ -3,6 +3,12 @@ from typing import Literal
 from pydantic import BaseModel
 
 
+class PreNightOutput(BaseModel):
+    thought: str
+    decision: Literal["co", "wait"]
+    reasoning: str
+
+
 class SpeechEntry(BaseModel):
     speech_id: int
     agent: str
