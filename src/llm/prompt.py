@@ -195,8 +195,8 @@ def build_system_prompt(
         else:
             parts.append(
                 f"\n--- YOUR PRE-GAME DECISION ---\n"
-                f"Before the game began, you decided to reveal your role today. "
-                f"Include a clear CO (Coming Out) declaration as {agent.role} in your speech. "
+                f"Before the game began, you decided to publicly reveal your role today. "
+                f"State that you are the {agent.role} in your speech. "
                 f'Set "intent.co" to "{agent.role}" in your JSON output.'
             )
     parts.append(build_output_format_prompt(lang))
@@ -219,7 +219,7 @@ def build_pre_night_prompt(agent: AgentState, alive_players: list[str], lang: st
     else:
         decision_desc = (
             f"Will you reveal your true role as {agent.role} in your Day 1 opening speech?\n"
-            f'- "co": you will CO as {agent.role} in your opening speech\n'
+            f'- "co": you will publicly declare your role as {agent.role} in your opening speech\n'
             f'- "wait": you will not reveal your role yet'
         )
 
