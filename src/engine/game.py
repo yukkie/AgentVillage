@@ -209,7 +209,7 @@ class GameEngine:
         for agent in targets:
             output = llm_client.call_pre_night_action(agent, self._alive_names(), self.lang)
             agent.intended_co = output.decision == "co"
-            store.save(agent)
+            memory_mod.update_memory(agent, [f"Pre-game decision: {output.reasoning}"])
 
             decision_label = "decided to CO" if agent.intended_co else "decided to wait"
             self._emit(LogEvent.make(

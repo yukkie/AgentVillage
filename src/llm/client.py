@@ -24,9 +24,10 @@ def _default_output(agent: AgentState) -> AgentOutput:
     )
 
 
-def _log_error(fn: str, agent_name: str, e: Exception, raw: str) -> None:
-    print(f"[{fn}] parse error for {agent_name}: {e!r}", file=sys.stderr)
-    print(f"[{fn}] raw response: {raw!r}", file=sys.stderr)
+def _log_error(fn: str, agent_name: str, stage: str, e: Exception, raw: str) -> None:
+    print(f"[{fn}] {stage} error for {agent_name}: {e!r}", file=sys.stderr)
+    if raw:
+        print(f"[{fn}] raw response: {raw!r}", file=sys.stderr)
 
 
 def _extract_json(text: str) -> str:
@@ -71,11 +72,15 @@ def call(
             ],
         )
         raw = message.content[0].text
+    except Exception as e:
+        _log_error("call", agent.name, "api", e, raw)
+        return _default_output(agent)
+    try:
         json_str = _extract_json(raw)
         data = json.loads(json_str)
         return AgentOutput.model_validate(data)
     except Exception as e:
-        _log_error("call", agent.name, e, raw)
+        _log_error("call", agent.name, "parse", e, raw)
         return _default_output(agent)
 
 
@@ -96,11 +101,15 @@ def call_judgment(
             messages=[{"role": "user", "content": prompt}],
         )
         raw = message.content[0].text
+    except Exception as e:
+        _log_error("call_judgment", agent.name, "api", e, raw)
+        return JudgmentOutput(decision="silent")
+    try:
         json_str = _extract_json(raw)
         data = json.loads(json_str)
         return JudgmentOutput.model_validate(data)
     except Exception as e:
-        _log_error("call_judgment", agent.name, e, raw)
+        _log_error("call_judgment", agent.name, "parse", e, raw)
         return JudgmentOutput(decision="silent")
 
 
@@ -137,11 +146,15 @@ def call_pre_night_action(
             messages=[{"role": "user", "content": prompt}],
         )
         raw = message.content[0].text
+    except Exception as e:
+        _log_error("call_pre_night_action", agent.name, "api", e, raw)
+        return PreNightOutput(thought="...", decision="wait", reasoning="Defaulting to wait.")
+    try:
         json_str = _extract_json(raw)
         data = json.loads(json_str)
         return PreNightOutput.model_validate(data)
     except Exception as e:
-        _log_error("call_pre_night_action", agent.name, e, raw)
+        _log_error("call_pre_night_action", agent.name, "parse", e, raw)
         return PreNightOutput(thought="...", decision="wait", reasoning="Defaulting to wait.")
 
 
@@ -169,16 +182,16 @@ def call_night_action(
             ],
         )
         raw = message.content[0].text.strip()
-        # Validate that the returned name is a valid alive player
-        for candidate in candidates:
-            if candidate.lower() == raw.lower():
-                return candidate
-        # If exact match fails, try partial match
-        for candidate in candidates:
-            if candidate.lower() in raw.lower():
-                return candidate
-        # Fallback: first candidate
-        return candidates[0] if candidates else ""
     except Exception as e:
-        _log_error("call_night_action", agent.name, e, raw)
+        _log_error("call_night_action", agent.name, "api", e, raw)
         return candidates[0] if candidates else ""
+    # Validate that the returned name is a valid alive player
+    for candidate in candidates:
+        if candidate.lower() == raw.lower():
+            return candidate
+    # If exact match fails, try partial match
+    for candidate in candidates:
+        if candidate.lower() in raw.lower():
+            return candidate
+    # Fallback: first candidate
+    return candidates[0] if candidates else ""
