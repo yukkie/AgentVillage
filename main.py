@@ -8,6 +8,7 @@ Usage:
     uv run main.py --spectator --lang Japanese
 """
 import argparse
+import json
 import os
 import random
 import sys
@@ -29,51 +30,32 @@ from src.logger.writer import LogWriter, archive_state  # noqa: E402
 from src.ui.cli import CLI  # noqa: E402
 
 
-AGENT_CONFIGS = [
-    {
-        "name": "Setsu",
-        "persona": Persona(style="logical, calm, empathic", lie_tendency=0.1, aggression=0.2),
-    },
-    {
-        "name": "SQ",
-        "persona": Persona(style="cheerful, intuitive, social", lie_tendency=0.2, aggression=0.3),
-    },
-    {
-        "name": "Raqio",
-        "persona": Persona(style="cautious, quiet, observant", lie_tendency=0.15, aggression=0.15),
-    },
-    {
-        "name": "Gina",
-        "persona": Persona(style="analytical, methodical, honest", lie_tendency=0.05, aggression=0.25),
-    },
-    {
-        "name": "Zephyr",
-        "persona": Persona(style="charming, manipulative, confident", lie_tendency=0.8, aggression=0.6),
-    },
-]
-
-ROLES = ["Villager", "Villager", "Villager", "Seer", "Werewolf"]
-
-
 def initialize_agents() -> list[AgentState]:
     """Create and persist initial agent states with randomized roles."""
     Path("state/agents").mkdir(parents=True, exist_ok=True)
 
-    shuffled_roles = ROLES[:]
+    agent_configs = json.loads(Path("config/agents.json").read_text(encoding="utf-8"))
+    roles = json.loads(Path("config/roles.json").read_text(encoding="utf-8"))
+
+    shuffled_roles = roles[:]
     random.shuffle(shuffled_roles)
 
     agents = []
-    for config, role in zip(AGENT_CONFIGS, shuffled_roles):
+    for config, role in zip(agent_configs, shuffled_roles):
         name = config["name"]
         beliefs = {
             other["name"]: Belief()
-            for other in AGENT_CONFIGS
+            for other in agent_configs
             if other["name"] != name
         }
         agent = AgentState(
             name=name,
             role=role,
-            persona=config["persona"],
+            persona=Persona(
+                style=config["style"],
+                lie_tendency=config["lie_tendency"],
+                aggression=config["aggression"],
+            ),
             beliefs=beliefs,
             memory_summary=[],
             is_alive=True,
