@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Setsu",
+    "style": "logical, calm, empathic",
+    "lie_tendency": 0.1,
+    "aggression": 0.2
+  },
+  {
+    "name": "SQ",
+    "style": "cheerful, intuitive, social",
+    "lie_tendency": 0.2,
+    "aggression": 0.3
+  },
+  {
+    "name": "Raqio",
+    "style": "cautious, quiet, observant",
+    "lie_tendency": 0.15,
+    "aggression": 0.15
+  },
+  {
+    "name": "Gina",
+    "style": "analytical, methodical, honest",
+    "lie_tendency": 0.05,
+    "aggression": 0.25
+  },
+  {
+    "name": "Zephyr",
+    "style": "charming, manipulative, confident",
+    "lie_tendency": 0.8,
+    "aggression": 0.6
+  }
+]
