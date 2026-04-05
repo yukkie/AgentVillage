@@ -377,7 +377,7 @@ class GameEngine:
                 attack = Attack(target=target_name)
                 if validate(attack, agent, alive_names):
                     attack_target = resolve_attack(attack, self.agents)
-                    break  # 1人決めれば十分
+                    break
 
         if attack_target:
             self._emit(LogEvent.make(
@@ -390,56 +390,34 @@ class GameEngine:
                 is_public=False,
             ))
 
-        # --- ③ 騎士が護衛先を決定（襲撃より先に実行） ---
-        for agent in self._alive_agents():
-            if agent.role != "Knight":
-                continue
-            target_name = llm_client.call_night_action(agent, night_context, alive_names)
-            candidates = [n for n in alive_names if n != agent.name]
-            if target_name in candidates:
-                guard_target = target_name
-                self._emit(LogEvent.make(
-                    day=self.day,
-                    phase=Phase.NIGHT.value,
-                    event_type=EventType.GUARD,
-                    agent=agent.name,
-                    target=guard_target,
-                    content=f"{agent.name} guards {guard_target}",
-                    is_public=False,
-                ))
+        # --- ③ 全役職が行動意思を決定（騎士・占い師） ---
+        seer_inspect: tuple[AgentState, Inspect] | None = None  # (seer, inspect_action)
 
-        # --- ④ 占い師が占い（自分が襲撃対象の場合はスキップ） ---
         for agent in self._alive_agents():
-            if agent.role != "Seer":
-                continue
-            if agent.name == attack_target:
-                continue  # 今夜狼に襲われる占い師は占えない
-            target_name = llm_client.call_night_action(agent, night_context, alive_names)
-            inspect = Inspect(target=target_name)
-            if validate(inspect, agent, alive_names):
-                name, result = resolve_inspect(inspect, self.agents)
-                if name not in agent.beliefs:
-                    agent.beliefs[name] = Belief()
-                if result == "Werewolf":
-                    agent.beliefs[name].suspicion = 1.0
-                    agent.beliefs[name].trust = 0.0
-                    agent.beliefs[name].reason.append(f"Day {self.day}: inspected as Werewolf")
-                else:
-                    agent.beliefs[name].suspicion = 0.0
-                    agent.beliefs[name].trust = 1.0
-                    agent.beliefs[name].reason.append(f"Day {self.day}: inspected as Not Werewolf")
-                store.save(agent)
-                self._emit(LogEvent.make(
-                    day=self.day,
-                    phase=Phase.NIGHT.value,
-                    event_type=EventType.INSPECTION,
-                    agent=agent.name,
-                    target=name,
-                    content=f"{agent.name} inspects {name}: {result}",
-                    is_public=False,
-                ))
+            if agent.role == "Knight":
+                target_name = llm_client.call_night_action(agent, night_context, alive_names)
+                candidates = [n for n in alive_names if n != agent.name]
+                if target_name in candidates:
+                    guard_target = target_name
+                    self._emit(LogEvent.make(
+                        day=self.day,
+                        phase=Phase.NIGHT.value,
+                        event_type=EventType.GUARD,
+                        agent=agent.name,
+                        target=guard_target,
+                        content=f"{agent.name} guards {guard_target}",
+                        is_public=False,
+                    ))
 
-        # --- ④ 護衛と襲撃の照合 → 結果適用 ---
+            elif agent.role == "Seer":
+                target_name = llm_client.call_night_action(agent, night_context, alive_names)
+                inspect = Inspect(target=target_name)
+                if validate(inspect, agent, alive_names):
+                    seer_inspect = (agent, inspect)  # 結果適用は後回し
+
+        # --- ④ 解決フェーズ ---
+        # 騎士の護衛判定 → 狼の襲撃判定 → 占い師の占い判定
+        seer_survived = True
         if attack_target:
             if guard_target == attack_target:
                 self._emit(LogEvent.make(
@@ -451,7 +429,35 @@ class GameEngine:
                     is_public=False,
                 ))
             else:
+                # 占い師が襲撃対象かチェック
+                if seer_inspect and seer_inspect[0].name == attack_target:
+                    seer_survived = False
                 self._eliminate(attack_target, EventType.NIGHT_ATTACK, Phase.NIGHT.value)
+
+        # 占い師が生き残っていれば占い結果を適用
+        if seer_inspect and seer_survived:
+            seer, inspect = seer_inspect
+            name, result = resolve_inspect(inspect, self.agents)
+            if name not in seer.beliefs:
+                seer.beliefs[name] = Belief()
+            if result == "Werewolf":
+                seer.beliefs[name].suspicion = 1.0
+                seer.beliefs[name].trust = 0.0
+                seer.beliefs[name].reason.append(f"Day {self.day}: inspected as Werewolf")
+            else:
+                seer.beliefs[name].suspicion = 0.0
+                seer.beliefs[name].trust = 1.0
+                seer.beliefs[name].reason.append(f"Day {self.day}: inspected as Not Werewolf")
+            store.save(seer)
+            self._emit(LogEvent.make(
+                day=self.day,
+                phase=Phase.NIGHT.value,
+                event_type=EventType.INSPECTION,
+                agent=seer.name,
+                target=name,
+                content=f"{seer.name} inspects {name}: {result}",
+                is_public=False,
+            ))
 
         return check_victory(self.agents)
 
