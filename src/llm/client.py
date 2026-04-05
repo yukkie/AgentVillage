@@ -179,7 +179,7 @@ def call_wolf_chat(
     try:
         message = _client.messages.create(
             model=agent.model,
-            max_tokens=512,
+            max_tokens=2048,
             messages=[{"role": "user", "content": prompt}],
         )
         raw = message.content[0].text
