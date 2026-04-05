@@ -1,9 +1,8 @@
-ROLES = ["Villager", "Villager", "Villager", "Werewolf", "Seer"]
-
 ROLE_NIGHT_ACTIONS = {
     "Villager": None,
     "Werewolf": "attack",
     "Seer": "inspect",
+    "Knight": "guard",
 }
 
 

@@ -309,6 +309,43 @@ Use {lang} only for internal reasoning if needed, but keep the JSON minimal.""")
     return "\n".join(lines)
 
 
+def build_wolf_chat_prompt(
+    agent: AgentState,
+    wolf_partners: list[str],
+    alive_players: list[str],
+    wolf_chat_log: list[SpeechEntry],
+    lang: str = "English",
+) -> str:
+    """Build prompt for werewolf team night chat (secret coordination before attack)."""
+    lines = [
+        f"You are {agent.name}, a Werewolf in a social deduction game.",
+        f"Your wolf partners tonight: {', '.join(wolf_partners)}.",
+        f"Alive players (potential targets): {', '.join(p for p in alive_players if p != agent.name and p not in wolf_partners)}.",
+        "",
+        "It is night. You are meeting secretly with your wolf partner(s) to coordinate.",
+        "Discuss who to attack tonight. You may propose a target and explain your reasoning.",
+    ]
+    if wolf_chat_log:
+        lines.append("\nWolf team conversation so far:")
+        for entry in wolf_chat_log:
+            lines.append(f"  {entry.agent}: {entry.text}")
+    lines.append(f"""
+--- OUTPUT FORMAT ---
+Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
+{{
+  "thought": "<your private reasoning>",
+  "speech": "<what you say to your wolf partner(s)>",
+  "vote_candidates": [
+    {{"target": "<player_name>", "score": <0.0-1.0>}},
+    ...
+  ]
+}}
+- "thought" and "speech" must be written in {lang}
+- "vote_candidates" lists your preferred attack targets (highest score = most preferred)
+- The JSON must contain exactly these three fields and nothing else.""")
+    return "\n".join(lines)
+
+
 def build_night_action_prompt(agent: AgentState, alive_players: list[str], context: str) -> str:
     """Build prompt for night action (attack or inspect)."""
     if agent.role == "Werewolf":

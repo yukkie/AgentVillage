@@ -36,3 +36,9 @@ class AgentOutput(BaseModel):
     reasoning: str
     intent: Intent
     memory_update: list[str] = []
+
+
+class WolfChatOutput(BaseModel):
+    thought: str
+    speech: str
+    vote_candidates: list[VoteCandidate] = []

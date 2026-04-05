@@ -84,6 +84,18 @@ def render_event(
         style = "red" if role == "Werewolf" else "cyan"
         text.append(f"[PRE-NIGHT] {event.content}", style=style)
 
+    elif event.event_type == EventType.WOLF_CHAT:
+        # Spectator only — red
+        text.append(f"[WOLF] {event.content}", style="red")
+
+    elif event.event_type == EventType.GUARD:
+        # Spectator only — cyan
+        text.append(f"[GUARD] {event.content}", style="cyan")
+
+    elif event.event_type == EventType.GUARD_BLOCK:
+        # Spectator only — bold cyan
+        text.append(f"[GUARD BLOCK] {event.content}", style="bold cyan")
+
     elif event.event_type == EventType.GAME_OVER:
         text.append(f"\n{'=' * 50}\n", style="bold yellow")
         text.append(event.content, style="bold green")
