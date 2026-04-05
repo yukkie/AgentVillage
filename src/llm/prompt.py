@@ -361,13 +361,16 @@ Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
 
 
 def build_night_action_prompt(agent: AgentState, alive_players: list[str], context: str) -> str:
-    """Build prompt for night action (attack or inspect)."""
+    """Build prompt for night action (attack, inspect, or guard)."""
     if agent.role == "Werewolf":
         action_desc = "choose one player to ATTACK (eliminate) tonight"
         instruction = "You must pick a non-Werewolf target. Respond with ONLY the player's exact name, nothing else."
     elif agent.role == "Seer":
-        action_desc = "choose one player to INSPECT (learn their true role) tonight"
+        action_desc = "choose one player to INSPECT (learn their alignment) tonight"
         instruction = "Pick a player you want to investigate. Respond with ONLY the player's exact name, nothing else."
+    elif agent.role == "Knight":
+        action_desc = "choose one player to GUARD (protect from werewolf attack) tonight"
+        instruction = "Pick a player you want to protect. You cannot guard yourself. Respond with ONLY the player's exact name, nothing else."
     else:
         return ""
 

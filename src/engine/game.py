@@ -6,7 +6,6 @@ from src.agent import store, memory as memory_mod
 from src.engine.phase import Phase
 from src.engine.vote import tally_votes
 from src.engine.victory import check_victory
-from src.engine.role import has_night_action
 from src.llm import client as llm_client
 from src.llm.schema import AgentOutput, SpeechEntry
 from src.action.types import Vote, Inspect, Attack
@@ -369,79 +368,76 @@ class GameEngine:
             if score_totals:
                 attack_target = max(score_totals, key=lambda t: score_totals[t])
 
-        # --- ② 各役職の夜行動（狼の個人行動 / 占い師 / 騎士） ---
-        for agent in self._alive_agents():
-            if not has_night_action(agent.role):
-                continue
-
-            if agent.role == "Werewolf":
-                # 狼が2人未満（5人制）またはチャットで合意できなかった場合のフォールバック
-                if attack_target is None:
-                    target_name = llm_client.call_night_action(agent, night_context, alive_names)
-                    attack = Attack(target=target_name)
-                    if validate(attack, agent, alive_names):
-                        attack_target = resolve_attack(attack, self.agents)
-                        self._emit(LogEvent.make(
-                            day=self.day,
-                            phase=Phase.NIGHT.value,
-                            event_type=EventType.NIGHT_ATTACK,
-                            agent=agent.name,
-                            target=attack_target,
-                            content=f"{agent.name} attacks {attack_target}",
-                            is_public=False,
-                        ))
-
-            elif agent.role == "Seer":
+        # --- ② 狼単体フォールバック（チャットで合意できなかった場合） ---
+        if attack_target is None:
+            for agent in self._alive_agents():
+                if agent.role != "Werewolf":
+                    continue
                 target_name = llm_client.call_night_action(agent, night_context, alive_names)
-                inspect = Inspect(target=target_name)
-                if validate(inspect, agent, alive_names):
-                    name, role = resolve_inspect(inspect, self.agents)
-                    if name not in agent.beliefs:
-                        agent.beliefs[name] = Belief()
-                    if role == "Werewolf":
-                        agent.beliefs[name].suspicion = 1.0
-                        agent.beliefs[name].trust = 0.0
-                        agent.beliefs[name].reason.append(f"Day {self.day}: inspected as Werewolf")
-                    else:
-                        agent.beliefs[name].suspicion = 0.0
-                        agent.beliefs[name].trust = 1.0
-                        agent.beliefs[name].reason.append(f"Day {self.day}: inspected as {role}")
-                    store.save(agent)
-                    self._emit(LogEvent.make(
-                        day=self.day,
-                        phase=Phase.NIGHT.value,
-                        event_type=EventType.INSPECTION,
-                        agent=agent.name,
-                        target=name,
-                        content=f"{agent.name} inspects {name}: {role}",
-                        is_public=False,
-                    ))
+                attack = Attack(target=target_name)
+                if validate(attack, agent, alive_names):
+                    attack_target = resolve_attack(attack, self.agents)
+                    break  # 1人決めれば十分
 
-            elif agent.role == "Knight":
-                target_name = llm_client.call_night_action(agent, night_context, alive_names)
-                if target_name in alive_names:
-                    guard_target = target_name
-                    self._emit(LogEvent.make(
-                        day=self.day,
-                        phase=Phase.NIGHT.value,
-                        event_type=EventType.GUARD,
-                        agent=agent.name,
-                        target=guard_target,
-                        content=f"{agent.name} guards {guard_target}",
-                        is_public=False,
-                    ))
-
-        # --- ③ 狼チャットで合意した場合の攻撃ログ（フォールバック経由でない場合） ---
-        if attack_target and len(wolves) >= 2:
+        if attack_target:
             self._emit(LogEvent.make(
                 day=self.day,
                 phase=Phase.NIGHT.value,
                 event_type=EventType.NIGHT_ATTACK,
-                agent=wolves[0].name,
+                agent=wolves[0].name if wolves else None,
                 target=attack_target,
-                content=f"Werewolves agreed to attack {attack_target}",
+                content=f"Werewolves attack {attack_target}",
                 is_public=False,
             ))
+
+        # --- ③ 騎士が護衛先を決定（襲撃より先に実行） ---
+        for agent in self._alive_agents():
+            if agent.role != "Knight":
+                continue
+            target_name = llm_client.call_night_action(agent, night_context, alive_names)
+            candidates = [n for n in alive_names if n != agent.name]
+            if target_name in candidates:
+                guard_target = target_name
+                self._emit(LogEvent.make(
+                    day=self.day,
+                    phase=Phase.NIGHT.value,
+                    event_type=EventType.GUARD,
+                    agent=agent.name,
+                    target=guard_target,
+                    content=f"{agent.name} guards {guard_target}",
+                    is_public=False,
+                ))
+
+        # --- ④ 占い師が占い（自分が襲撃対象の場合はスキップ） ---
+        for agent in self._alive_agents():
+            if agent.role != "Seer":
+                continue
+            if agent.name == attack_target:
+                continue  # 今夜狼に襲われる占い師は占えない
+            target_name = llm_client.call_night_action(agent, night_context, alive_names)
+            inspect = Inspect(target=target_name)
+            if validate(inspect, agent, alive_names):
+                name, result = resolve_inspect(inspect, self.agents)
+                if name not in agent.beliefs:
+                    agent.beliefs[name] = Belief()
+                if result == "Werewolf":
+                    agent.beliefs[name].suspicion = 1.0
+                    agent.beliefs[name].trust = 0.0
+                    agent.beliefs[name].reason.append(f"Day {self.day}: inspected as Werewolf")
+                else:
+                    agent.beliefs[name].suspicion = 0.0
+                    agent.beliefs[name].trust = 1.0
+                    agent.beliefs[name].reason.append(f"Day {self.day}: inspected as Not Werewolf")
+                store.save(agent)
+                self._emit(LogEvent.make(
+                    day=self.day,
+                    phase=Phase.NIGHT.value,
+                    event_type=EventType.INSPECTION,
+                    agent=agent.name,
+                    target=name,
+                    content=f"{agent.name} inspects {name}: {result}",
+                    is_public=False,
+                ))
 
         # --- ④ 護衛と襲撃の照合 → 結果適用 ---
         if attack_target:
