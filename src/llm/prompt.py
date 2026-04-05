@@ -296,7 +296,7 @@ def build_judgment_prompt(
         for e in recent:
             lines.append(f"  [{e.speech_id}] {e.agent}: {e.text}")
     lines.append(f"""
-Decide your next action. Respond with ONLY valid JSON, no other text:
+Decide your next action. Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
 {{
   "decision": "challenge" | "speak" | "silent",
   "reply_to": <speech_id to challenge, or null>
@@ -304,7 +304,8 @@ Decide your next action. Respond with ONLY valid JSON, no other text:
 - "challenge": directly counter a specific speech (set reply_to to its speech_id)
 - "speak": add a new statement unprompted
 - "silent": nothing to add right now
-Use {lang}.""")
+- The JSON must contain exactly these two fields and nothing else.
+Use {lang} only for internal reasoning if needed, but keep the JSON minimal.""")
     return "\n".join(lines)
 
 
