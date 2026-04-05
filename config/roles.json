@@ -1,1 +1,4 @@
-["Villager", "Villager", "Villager", "Seer", "Werewolf"]
+{
+  "5": ["Villager", "Villager", "Villager", "Seer", "Werewolf"],
+  "7": ["Villager", "Villager", "Villager", "Seer", "Werewolf", "Werewolf", "Knight"]
+}

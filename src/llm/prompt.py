@@ -233,7 +233,12 @@ def build_system_prompt(
     return "\n".join(parts)
 
 
-def build_pre_night_prompt(agent: AgentState, alive_players: list[str], lang: str = "English") -> str:
+def build_pre_night_prompt(
+    agent: AgentState,
+    alive_players: list[str],
+    lang: str = "English",
+    all_agents: list[AgentState] | None = None,
+) -> str:
     """Build prompt for pre-night CO decision phase (non-Villager roles only).
 
     Seer decides whether to true-CO. Werewolf decides whether to fake-CO as Seer.
@@ -259,6 +264,15 @@ def build_pre_night_prompt(agent: AgentState, alive_players: list[str], lang: st
         "",
         f"Your secret role is: {agent.role}",
         f"Players in this game: {', '.join(alive_players)}",
+    ]
+
+    if all_agents:
+        from collections import Counter
+        role_counts = Counter(a.role for a in all_agents)
+        role_summary = ", ".join(f"{count} {role}" for role, count in sorted(role_counts.items()))
+        lines.append(f"Role distribution in this game: {role_summary}")
+
+    lines += [
         "",
         "Before Day 1 begins, you must secretly decide your opening strategy.",
         decision_desc,
@@ -309,14 +323,54 @@ Use {lang} only for internal reasoning if needed, but keep the JSON minimal.""")
     return "\n".join(lines)
 
 
+def build_wolf_chat_prompt(
+    agent: AgentState,
+    wolf_partners: list[str],
+    alive_players: list[str],
+    wolf_chat_log: list[SpeechEntry],
+    lang: str = "English",
+) -> str:
+    """Build prompt for werewolf team night chat (secret coordination before attack)."""
+    lines = [
+        f"You are {agent.name}, a Werewolf in a social deduction game.",
+        f"Your wolf partners tonight: {', '.join(wolf_partners)}.",
+        f"Alive players (potential targets): {', '.join(p for p in alive_players if p != agent.name and p not in wolf_partners)}.",
+        "",
+        "It is night. You are meeting secretly with your wolf partner(s) to coordinate.",
+        "Discuss who to attack tonight. You may propose a target and explain your reasoning.",
+    ]
+    if wolf_chat_log:
+        lines.append("\nWolf team conversation so far:")
+        for entry in wolf_chat_log:
+            lines.append(f"  {entry.agent}: {entry.text}")
+    lines.append(f"""
+--- OUTPUT FORMAT ---
+Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
+{{
+  "thought": "<your private reasoning>",
+  "speech": "<what you say to your wolf partner(s)>",
+  "vote_candidates": [
+    {{"target": "<player_name>", "score": <0.0-1.0>}},
+    ...
+  ]
+}}
+- "thought" and "speech" must be written in {lang}
+- "vote_candidates" lists your preferred attack targets (highest score = most preferred)
+- The JSON must contain exactly these three fields and nothing else.""")
+    return "\n".join(lines)
+
+
 def build_night_action_prompt(agent: AgentState, alive_players: list[str], context: str) -> str:
-    """Build prompt for night action (attack or inspect)."""
+    """Build prompt for night action (attack, inspect, or guard)."""
     if agent.role == "Werewolf":
         action_desc = "choose one player to ATTACK (eliminate) tonight"
         instruction = "You must pick a non-Werewolf target. Respond with ONLY the player's exact name, nothing else."
     elif agent.role == "Seer":
-        action_desc = "choose one player to INSPECT (learn their true role) tonight"
+        action_desc = "choose one player to INSPECT (learn their alignment) tonight"
         instruction = "Pick a player you want to investigate. Respond with ONLY the player's exact name, nothing else."
+    elif agent.role == "Knight":
+        action_desc = "choose one player to GUARD (protect from werewolf attack) tonight"
+        instruction = "Pick a player you want to protect. You cannot guard yourself. Respond with ONLY the player's exact name, nothing else."
     else:
         return ""
 

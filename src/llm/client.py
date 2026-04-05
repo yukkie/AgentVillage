@@ -6,8 +6,8 @@ from collections.abc import Iterator
 import anthropic
 
 from src.agent.state import AgentState
-from src.llm.prompt import build_system_prompt, build_judgment_prompt, build_night_action_prompt, build_pre_night_prompt
-from src.llm.schema import AgentOutput, Intent, JudgmentOutput, PreNightOutput, SpeechEntry
+from src.llm.prompt import build_system_prompt, build_judgment_prompt, build_night_action_prompt, build_pre_night_prompt, build_wolf_chat_prompt
+from src.llm.schema import AgentOutput, Intent, JudgmentOutput, PreNightOutput, SpeechEntry, WolfChatOutput
 
 _client = anthropic.Anthropic()
 
@@ -69,7 +69,7 @@ def call(
     try:
         message = _client.messages.create(
             model=agent.model,
-            max_tokens=1024,
+            max_tokens=2048,
             system=system_prompt,
             messages=[
                 {
@@ -104,7 +104,7 @@ def call_judgment(
     try:
         message = _client.messages.create(
             model=agent.model,
-            max_tokens=512,
+            max_tokens=1024,
             messages=[{"role": "user", "content": prompt}],
         )
         raw = message.content[0].text
@@ -142,9 +142,10 @@ def call_pre_night_action(
     agent: AgentState,
     alive_players: list[str],
     lang: str = "English",
+    all_agents: list[AgentState] | None = None,
 ) -> PreNightOutput:
     """Call LLM for pre-night CO decision and return structured PreNightOutput."""
-    prompt = build_pre_night_prompt(agent, alive_players, lang)
+    prompt = build_pre_night_prompt(agent, alive_players, lang, all_agents)
     raw = ""
     try:
         message = _client.messages.create(
@@ -163,6 +164,35 @@ def call_pre_night_action(
     except Exception as e:
         _log_error("call_pre_night_action", agent.name, "parse", e, raw)
         return PreNightOutput(thought="...", decision="wait", reasoning="Defaulting to wait.")
+
+
+def call_wolf_chat(
+    agent: AgentState,
+    wolf_partners: list[str],
+    alive_players: list[str],
+    wolf_chat_log: list[SpeechEntry],
+    lang: str = "English",
+) -> WolfChatOutput:
+    """Call LLM for werewolf team night chat and return structured WolfChatOutput."""
+    prompt = build_wolf_chat_prompt(agent, wolf_partners, alive_players, wolf_chat_log, lang)
+    raw = ""
+    try:
+        message = _client.messages.create(
+            model=agent.model,
+            max_tokens=2048,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw = message.content[0].text
+    except Exception as e:
+        _log_error("call_wolf_chat", agent.name, "api", e, raw)
+        return WolfChatOutput(thought="...", speech="...", vote_candidates=[])
+    try:
+        json_str = _extract_json(raw)
+        data = json.loads(json_str)
+        return WolfChatOutput.model_validate(data)
+    except Exception as e:
+        _log_error("call_wolf_chat", agent.name, "parse", e, raw)
+        return WolfChatOutput(thought="...", speech="...", vote_candidates=[])
 
 
 def call_night_action(

@@ -5,7 +5,8 @@ Usage:
     uv run main.py                        # Public mode (English)
     uv run main.py --spectator            # Spectator mode
     uv run main.py --lang Japanese        # Japanese output
-    uv run main.py --spectator --lang Japanese
+    uv run main.py --players 7            # 7-player mode (default: 5)
+    uv run main.py --spectator --lang Japanese --players 7
 """
 import argparse
 import json
@@ -30,22 +31,34 @@ from src.logger.writer import LogWriter, archive_state  # noqa: E402
 from src.ui.cli import CLI  # noqa: E402
 
 
-def initialize_agents() -> list[AgentState]:
+def initialize_agents(num_players: int) -> list[AgentState]:
     """Create and persist initial agent states with randomized roles."""
     Path("state/agents").mkdir(parents=True, exist_ok=True)
 
     agent_configs = json.loads(Path("config/agents.json").read_text(encoding="utf-8"))
-    roles = json.loads(Path("config/roles.json").read_text(encoding="utf-8"))
+    roles_config = json.loads(Path("config/roles.json").read_text(encoding="utf-8"))
+
+    key = str(num_players)
+    if key not in roles_config:
+        print(f"Error: no role configuration found for {num_players} players.")
+        print(f"Available: {', '.join(roles_config.keys())} players")
+        sys.exit(1)
+
+    roles = roles_config[key]
+    selected_configs = agent_configs[:num_players]
+    if len(selected_configs) < num_players:
+        print(f"Error: not enough agents in config/agents.json for {num_players} players (found {len(agent_configs)}).")
+        sys.exit(1)
 
     shuffled_roles = roles[:]
     random.shuffle(shuffled_roles)
 
     agents = []
-    for config, role in zip(agent_configs, shuffled_roles):
+    for config, role in zip(selected_configs, shuffled_roles):
         name = config["name"]
         beliefs = {
             other["name"]: Belief()
-            for other in agent_configs
+            for other in selected_configs
             if other["name"] != name
         }
         agent = AgentState(
@@ -74,12 +87,18 @@ def main() -> None:
         default="English",
         help="Language for agent speech and reasoning (e.g. English, Japanese)",
     )
+    parser.add_argument(
+        "--players",
+        type=int,
+        default=5,
+        help="Number of players (e.g. 5 or 7)",
+    )
     args = parser.parse_args()
 
     spectator_mode: bool = args.spectator
     lang: str = args.lang
 
-    agents = initialize_agents()
+    agents = initialize_agents(args.players)
 
     cli = CLI(agents=agents, spectator_mode=spectator_mode)
     cli.show_intro()

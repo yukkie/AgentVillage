@@ -12,6 +12,9 @@ class EventType(Enum):
     NIGHT_ATTACK = "night_attack"
     INSPECTION = "inspection"
     PRE_NIGHT_DECISION = "pre_night_decision"
+    WOLF_CHAT = "wolf_chat"
+    GUARD = "guard"
+    GUARD_BLOCK = "guard_block"
     GAME_OVER = "game_over"
     PHASE_START = "phase_start"
 

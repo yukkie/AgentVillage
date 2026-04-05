@@ -43,5 +43,23 @@
     "gender": null,
     "age": null,
     "speech_style": "polite"
+  },
+  {
+    "name": "Jonas",
+    "style": "calm, strategic, quietly perceptive",
+    "lie_tendency": 0.45,
+    "aggression": 0.25,
+    "gender": "male",
+    "age": "adult",
+    "speech_style": "gentle"
+  },
+  {
+    "name": "Methode",
+    "style": "elegant, calculating, merciless",
+    "lie_tendency": 0.55,
+    "aggression": 0.5,
+    "gender": "female",
+    "age": "adult",
+    "speech_style": "polite"
   }
 ]

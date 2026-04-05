@@ -3,7 +3,7 @@ from rich.panel import Panel
 
 from src.logger.event import LogEvent
 from src.agent.state import AgentState
-from src.ui.renderer import render_event
+from src.ui.renderer import render_event, _ROLE_COLORS
 
 console = Console()
 
@@ -24,13 +24,14 @@ class CLI:
         console.print()
         console.print("[bold yellow]=== ROLE REVEAL ===[/bold yellow]")
         for agent in self.agents:
-            role_style = "red" if agent.role == "Werewolf" else ("blue" if agent.role == "Seer" else "white")
+            role_style = _ROLE_COLORS.get(agent.role, "white")
             status = "" if agent.is_alive else " [dim](eliminated)[/dim]"
             console.print(f"  [{role_style}]{agent.name}[/{role_style}] — {agent.role}{status}")
         console.print()
+        result_style = "bold red" if winner == "Werewolves" else "bold green"
         console.print(
             Panel(
-                f"[bold green]{winner} WIN THE GAME![/bold green]",
+                f"[{result_style}]{winner} WIN THE GAME![/{result_style}]",
                 title="GAME OVER",
                 border_style="bold yellow",
                 padding=(1, 4),
@@ -54,6 +55,6 @@ class CLI:
             return
         console.print("\n[bold cyan]Agent Roster:[/bold cyan]")
         for agent in self.agents:
-            role_style = "red" if agent.role == "Werewolf" else ("blue" if agent.role == "Seer" else "white")
+            role_style = _ROLE_COLORS.get(agent.role, "white")
             console.print(f"  [{role_style}]{agent.name}[/{role_style}] — {agent.role} ({agent.persona.style})")
         console.print()
