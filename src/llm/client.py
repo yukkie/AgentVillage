@@ -1,5 +1,4 @@
 import json
-import re
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from collections.abc import Iterator
@@ -31,16 +30,24 @@ def _log_error(fn: str, agent_name: str, stage: str, e: Exception, raw: str) -> 
 
 
 def _extract_json(text: str) -> str:
-    """Extract JSON object from text, handling markdown code blocks."""
-    # Try to find JSON in code blocks first
-    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
-    if match:
-        return match.group(1)
-    # Try raw JSON
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if match:
-        return match.group(0)
-    return text
+    """Extract the first complete JSON object from text.
+
+    Handles markdown code fences, multiple JSON blocks, and self-correction
+    patterns where the LLM emits extra text or a second JSON block.
+    Uses bracket counting to find the first complete { ... } span.
+    """
+    start = text.find("{")
+    if start == -1:
+        return text
+    depth = 0
+    for i, ch in enumerate(text[start:], start):
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : i + 1]
+    return text[start:]  # truncated JSON fallback
 
 
 def call(
@@ -97,7 +104,7 @@ def call_judgment(
     try:
         message = _client.messages.create(
             model=agent.model,
-            max_tokens=64,
+            max_tokens=512,
             messages=[{"role": "user", "content": prompt}],
         )
         raw = message.content[0].text
