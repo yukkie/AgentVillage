@@ -31,16 +31,13 @@ def _log_error(fn: str, agent_name: str, stage: str, e: Exception, raw: str) -> 
 
 
 def _extract_json(text: str) -> str:
-    """Extract JSON object from text, handling markdown code blocks."""
-    # Try to find JSON in code blocks first
-    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
-    if match:
-        return match.group(1)
-    # Try raw JSON
-    match = re.search(r"\{.*\}", text, re.DOTALL)
+    """Extract JSON object from text, stripping markdown code fences if present."""
+    stripped = re.sub(r"^```(?:json)?\s*", "", text.strip())
+    stripped = re.sub(r"\s*```$", "", stripped)
+    match = re.search(r"\{.*\}", stripped, re.DOTALL)
     if match:
         return match.group(0)
-    return text
+    return stripped
 
 
 def call(
@@ -97,7 +94,7 @@ def call_judgment(
     try:
         message = _client.messages.create(
             model=agent.model,
-            max_tokens=64,
+            max_tokens=256,
             messages=[{"role": "user", "content": prompt}],
         )
         raw = message.content[0].text
