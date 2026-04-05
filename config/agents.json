@@ -3,30 +3,45 @@
     "name": "Setsu",
     "style": "logical, calm, empathic",
     "lie_tendency": 0.1,
-    "aggression": 0.2
+    "aggression": 0.2,
+    "gender": "non-binary",
+    "age": "adult",
+    "speech_style": "polite"
   },
   {
     "name": "SQ",
     "style": "cheerful, intuitive, social",
     "lie_tendency": 0.2,
-    "aggression": 0.3
+    "aggression": 0.3,
+    "gender": "female",
+    "age": "teen",
+    "speech_style": "casual"
   },
   {
     "name": "Raqio",
     "style": "cautious, quiet, observant",
     "lie_tendency": 0.15,
-    "aggression": 0.15
+    "aggression": 0.15,
+    "gender": "male",
+    "age": "adult",
+    "speech_style": "gentle"
   },
   {
     "name": "Gina",
     "style": "analytical, methodical, honest",
     "lie_tendency": 0.05,
-    "aggression": 0.25
+    "aggression": 0.25,
+    "gender": "female",
+    "age": "adult",
+    "speech_style": "casual"
   },
   {
     "name": "Zephyr",
     "style": "charming, manipulative, confident",
     "lie_tendency": 0.8,
-    "aggression": 0.6
+    "aggression": 0.6,
+    "gender": null,
+    "age": null,
+    "speech_style": "tsundere"
   }
 ]

@@ -38,7 +38,10 @@
   "persona": {
     "style": "logical, calm, empathic",
     "lie_tendency": 0.1,
-    "aggression": 0.2
+    "aggression": 0.2,
+    "gender": "female",
+    "age": "adult",
+    "speech_style": "polite"
   },
   "beliefs": {
     "SQ": { "suspicion": 0.62, "trust": 0.18, "reason": ["Day2で票替え"] }

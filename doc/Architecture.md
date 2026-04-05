@@ -80,6 +80,21 @@ LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検
 - 状態は `state/agents/{name}.json` に永続化
 - Pydanticモデルでスキーマを定義
 
+#### Persona フィールド
+
+`Persona` モデルは以下のフィールドを持つ。
+
+| フィールド | 型 | デフォルト | 説明 |
+|---|---|---|---|
+| `style` | `str` | — | 性格の文字列説明 |
+| `lie_tendency` | `float` | `0.2` | 嘘のつきやすさ |
+| `aggression` | `float` | `0.3` | 攻撃性 |
+| `gender` | `str \| None` | `None` | 性別（`"male"` / `"female"` / `"non-binary"` 等、null = 未指定） |
+| `age` | `str \| None` | `None` | 年齢または年代（例: `"17"`, `"teen"`, `"adult"`） |
+| `speech_style` | `str` | `"casual"` | 口調（例: `"polite"`, `"casual"`, `"blunt"`, `"tsundere"`） |
+
+これらは `build_persona_prompt()` でシステムプロンプトの一部に変換される。
+
 #### claimed_role（公開役職）と intended_co（前夜CO意思）
 
 `AgentState` に以下のフィールドを持つ。
