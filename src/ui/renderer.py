@@ -7,14 +7,35 @@ from src.agent.state import AgentState
 console = Console()
 
 
-def _get_claimed_role(agent_name: str | None, agents: list[AgentState]) -> str | None:
-    """Return the role the agent has publicly claimed (CO), or None if no CO."""
+_ROLE_COLORS: dict[str, str] = {
+    "Werewolf": "red",
+    "Seer": "blue",
+    "Knight": "bright_green",
+    "Villager": "white",
+}
+
+
+def _get_agent(agent_name: str | None, agents: list[AgentState]) -> AgentState | None:
     if agent_name is None:
         return None
-    for a in agents:
-        if a.name == agent_name:
-            return a.claimed_role
-    return None
+    return next((a for a in agents if a.name == agent_name), None)
+
+
+def _speech_style(agent_name: str | None, agents: list[AgentState], spectator_mode: bool) -> str:
+    """Return Rich color style for a speech event.
+
+    Spectator mode: color by true role.
+    Public mode: color by claimed role (CO'd role only), default white.
+    """
+    agent = _get_agent(agent_name, agents)
+    if agent is None:
+        return "white"
+    if spectator_mode:
+        return _ROLE_COLORS.get(agent.role, "white")
+    # public mode: only color if the agent has CO'd
+    if agent.claimed_role:
+        return _ROLE_COLORS.get(agent.claimed_role, "white")
+    return "white"
 
 
 def render_event(
@@ -30,7 +51,6 @@ def render_event(
     if not event.is_public and not spectator_mode:
         return None
 
-    claimed_role = _get_claimed_role(event.agent, agents)
     text = Text()
 
     if event.event_type == EventType.PHASE_START:
@@ -43,11 +63,7 @@ def render_event(
             text.append(f"  [THINK] {event.agent}: ", style="dim white")
             text.append(thought_content, style="dim white")
         else:
-            # Regular speech — blue only after Seer CO
-            if claimed_role == "Seer":
-                style = "blue"
-            else:
-                style = "white"
+            style = _speech_style(event.agent, agents, spectator_mode)
             prefix = f"[{event.speech_id}] " if event.speech_id is not None else ""
             reply = f" (→[{event.reply_to}])" if event.reply_to is not None else ""
             text.append(f"{prefix}{event.agent}{reply}: ", style=f"bold {style}")
@@ -78,10 +94,10 @@ def render_event(
         text.append(f"[INSPECT] {event.content}", style="cyan")
 
     elif event.event_type == EventType.PRE_NIGHT_DECISION:
-        # Spectator only — cyan for Seer, red for Werewolf
-        agent_state = next((a for a in agents if a.name == event.agent), None)
+        # Spectator only — role color
+        agent_state = _get_agent(event.agent, agents)
         role = agent_state.role if agent_state else ""
-        style = "red" if role == "Werewolf" else "cyan"
+        style = _ROLE_COLORS.get(role, "cyan")
         text.append(f"[PRE-NIGHT] {event.content}", style=style)
 
     elif event.event_type == EventType.WOLF_CHAT:
