@@ -393,8 +393,10 @@ class GameEngine:
         # --- ③ 全役職が行動意思を決定（騎士・占い師） ---
         seer_inspect: tuple[AgentState, Inspect] | None = None  # (seer, inspect_action)
 
+        knight: AgentState | None = None
         for agent in self._alive_agents():
             if agent.role == "Knight":
+                knight = agent
                 target_name = llm_client.call_night_action(agent, night_context, alive_names)
                 candidates = [n for n in alive_names if n != agent.name]
                 if target_name in candidates:
@@ -420,6 +422,7 @@ class GameEngine:
         seer_survived = True
         if attack_target:
             if guard_target == attack_target:
+                # spectator: 護衛成功の詳細
                 self._emit(LogEvent.make(
                     day=self.day,
                     phase=Phase.NIGHT.value,
@@ -428,6 +431,20 @@ class GameEngine:
                     content=f"{attack_target} was protected by the Knight! The attack was blocked.",
                     is_public=False,
                 ))
+                # 村全員: 誰も死ななかった（誰が守ったかは伏せる）
+                self._emit(LogEvent.make(
+                    day=self.day,
+                    phase=Phase.NIGHT.value,
+                    event_type=EventType.GUARD_BLOCK,
+                    content="The village woke up to find everyone safe. The werewolves' attack seems to have failed.",
+                    is_public=True,
+                ))
+                # 騎士: 自分の護衛が成功したことを記憶
+                if knight:
+                    memory_mod.update_memory(
+                        knight,
+                        [f"Day {self.day}: successfully guarded {guard_target} from werewolf attack"],
+                    )
             else:
                 # 占い師が襲撃対象かチェック
                 if seer_inspect and seer_inspect[0].name == attack_target:
