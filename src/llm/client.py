@@ -104,7 +104,7 @@ def call_judgment(
     try:
         message = _client.messages.create(
             model=agent.model,
-            max_tokens=512,
+            max_tokens=1024,
             messages=[{"role": "user", "content": prompt}],
         )
         raw = message.content[0].text
@@ -142,9 +142,10 @@ def call_pre_night_action(
     agent: AgentState,
     alive_players: list[str],
     lang: str = "English",
+    all_agents: list[AgentState] | None = None,
 ) -> PreNightOutput:
     """Call LLM for pre-night CO decision and return structured PreNightOutput."""
-    prompt = build_pre_night_prompt(agent, alive_players, lang)
+    prompt = build_pre_night_prompt(agent, alive_players, lang, all_agents)
     raw = ""
     try:
         message = _client.messages.create(

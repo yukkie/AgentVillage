@@ -233,7 +233,12 @@ def build_system_prompt(
     return "\n".join(parts)
 
 
-def build_pre_night_prompt(agent: AgentState, alive_players: list[str], lang: str = "English") -> str:
+def build_pre_night_prompt(
+    agent: AgentState,
+    alive_players: list[str],
+    lang: str = "English",
+    all_agents: list[AgentState] | None = None,
+) -> str:
     """Build prompt for pre-night CO decision phase (non-Villager roles only).
 
     Seer decides whether to true-CO. Werewolf decides whether to fake-CO as Seer.
@@ -259,6 +264,15 @@ def build_pre_night_prompt(agent: AgentState, alive_players: list[str], lang: st
         "",
         f"Your secret role is: {agent.role}",
         f"Players in this game: {', '.join(alive_players)}",
+    ]
+
+    if all_agents:
+        from collections import Counter
+        role_counts = Counter(a.role for a in all_agents)
+        role_summary = ", ".join(f"{count} {role}" for role, count in sorted(role_counts.items()))
+        lines.append(f"Role distribution in this game: {role_summary}")
+
+    lines += [
         "",
         "Before Day 1 begins, you must secretly decide your opening strategy.",
         decision_desc,

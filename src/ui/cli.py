@@ -28,9 +28,10 @@ class CLI:
             status = "" if agent.is_alive else " [dim](eliminated)[/dim]"
             console.print(f"  [{role_style}]{agent.name}[/{role_style}] — {agent.role}{status}")
         console.print()
+        result_style = "bold red" if winner == "Werewolves" else "bold green"
         console.print(
             Panel(
-                f"[bold green]{winner} WIN THE GAME![/bold green]",
+                f"[{result_style}]{winner} WIN THE GAME![/{result_style}]",
                 title="GAME OVER",
                 border_style="bold yellow",
                 padding=(1, 4),
