@@ -69,7 +69,7 @@ def call(
     try:
         message = _client.messages.create(
             model=agent.model,
-            max_tokens=1024,
+            max_tokens=2048,
             system=system_prompt,
             messages=[
                 {
