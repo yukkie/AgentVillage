@@ -2,16 +2,46 @@ from src.agent.state import AgentState
 from src.llm.schema import SpeechEntry
 
 
+_SPEECH_STYLE_PROMPTS: dict[str, str] = {
+    "polite": "You speak politely and formally, using respectful language at all times.",
+    "casual": "You speak in a relaxed, casual tone.",
+    "blunt": "You speak bluntly and directly, with little regard for social niceties.",
+    "gentle": (
+        "You speak in a calm, measured tone — composed and unhurried, "
+        "like a mature adult who chooses words carefully and never raises their voice."
+    ),
+    "tsundere": (
+        "You have a tsundere personality: you act cold, dismissive, or even hostile on the surface, "
+        "but occasionally let warmth or concern slip through — especially when caught off guard. "
+        "You would never openly admit to caring about others."
+    ),
+}
+
+
 def build_persona_prompt(agent: AgentState) -> str:
     """Generate personality prompt from agent persona."""
     style = agent.persona.style
     lie = agent.persona.lie_tendency
     agg = agent.persona.aggression
 
+    identity_parts = [agent.name]
+    if agent.persona.age is not None:
+        identity_parts.append(f"age {agent.persona.age}")
+    if agent.persona.gender is not None:
+        identity_parts.append(agent.persona.gender)
+    identity = ", ".join(identity_parts)
+
     lines = [
-        f"You are {agent.name}, a player in a social deduction game (Werewolf/Mafia).",
+        f"You are {identity}, a player in a social deduction game (Werewolf/Mafia).",
         f"Your personality style: {style}.",
     ]
+
+    speech_prompt = _SPEECH_STYLE_PROMPTS.get(agent.persona.speech_style)
+    if speech_prompt:
+        lines.append(speech_prompt)
+    elif agent.persona.speech_style != "casual":
+        lines.append(f"Your speaking style: {agent.persona.speech_style}.")
+
     if lie > 0.5:
         lines.append("You are comfortable bending the truth when it serves your survival.")
     elif lie < 0.2:

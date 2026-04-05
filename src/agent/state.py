@@ -5,6 +5,9 @@ class Persona(BaseModel):
     style: str
     lie_tendency: float = 0.2
     aggression: float = 0.3
+    gender: str | None = None
+    age: str | None = None
+    speech_style: str = "casual"
 
 
 class Belief(BaseModel):
