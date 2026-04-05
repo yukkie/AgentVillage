@@ -51,11 +51,7 @@ def initialize_agents() -> list[AgentState]:
         agent = AgentState(
             name=name,
             role=role,
-            persona=Persona(
-                style=config["style"],
-                lie_tendency=config["lie_tendency"],
-                aggression=config["aggression"],
-            ),
+            persona=Persona.model_validate(config),
             beliefs=beliefs,
             memory_summary=[],
             is_alive=True,
