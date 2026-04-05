@@ -15,7 +15,7 @@
     "aggression": 0.3,
     "gender": "female",
     "age": "teen",
-    "speech_style": "casual"
+    "speech_style": "tsundere"
   },
   {
     "name": "Raqio",
@@ -42,6 +42,6 @@
     "aggression": 0.6,
     "gender": null,
     "age": null,
-    "speech_style": "tsundere"
+    "speech_style": "polite"
   }
 ]
