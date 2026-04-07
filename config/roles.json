@@ -1,4 +1,5 @@
 {
   "5": ["Villager", "Villager", "Villager", "Seer", "Werewolf"],
-  "7": ["Villager", "Villager", "Villager", "Seer", "Werewolf", "Werewolf", "Knight"]
+  "7": ["Villager", "Villager", "Villager", "Seer", "Werewolf", "Werewolf", "Knight"],
+  "9": ["Villager", "Villager", "Villager", "Seer", "Medium", "Knight", "Werewolf", "Werewolf", "Madman"]
 }

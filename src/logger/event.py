@@ -15,6 +15,7 @@ class EventType(Enum):
     WOLF_CHAT = "wolf_chat"
     GUARD = "guard"
     GUARD_BLOCK = "guard_block"
+    MEDIUM_RESULT = "medium_result"
     GAME_OVER = "game_over"
     PHASE_START = "phase_start"
 

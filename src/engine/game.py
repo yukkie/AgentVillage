@@ -180,8 +180,10 @@ class GameEngine:
         ))
 
         # Enforce pre-night CO decision on the opening speech as a safety net
+        # Madman is excluded: "Madman" CO must only happen when strategically appropriate (LLM decides)
         if agent.intended_co and phase == Phase.DAY_OPENING and not output.intent.co:
-            output.intent.co = "Seer" if agent.role == "Werewolf" else agent.role
+            if agent.role != "Madman":
+                output.intent.co = "Seer" if agent.role == "Werewolf" else agent.role
 
         if output.intent.co:
             agent.claimed_role = output.intent.co
@@ -312,6 +314,26 @@ class GameEngine:
             self._past_votes.append({"day": self.day, "votes": dict(votes)})
             eliminated = tally_votes(votes)
             self._eliminate(eliminated, EventType.ELIMINATION, Phase.DAY_VOTE.value)
+
+            # Notify Medium of the executed player's alignment (Werewolf or Not Werewolf)
+            medium = next((a for a in self._alive_agents() if a.role == "Medium"), None)
+            if medium:
+                executed_agent = self._get_agent(eliminated)
+                if executed_agent:
+                    result = "Werewolf" if executed_agent.role == "Werewolf" else "Not Werewolf"
+                    memory_mod.update_memory(
+                        medium,
+                        [f"Day {self.day}: {eliminated} was executed, they were {result}"],
+                    )
+                    self._emit(LogEvent.make(
+                        day=self.day,
+                        phase=Phase.DAY_VOTE.value,
+                        event_type=EventType.MEDIUM_RESULT,
+                        agent=medium.name,
+                        target=eliminated,
+                        content=f"[MEDIUM] {medium.name} senses: {eliminated} was {result}",
+                        is_public=False,
+                    ))
 
         return check_victory(self.agents)
 

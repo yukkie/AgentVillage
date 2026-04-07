@@ -3,6 +3,8 @@ ROLE_NIGHT_ACTIONS = {
     "Werewolf": "attack",
     "Seer": "inspect",
     "Knight": "guard",
+    "Medium": None,
+    "Madman": None,
 }
 
 

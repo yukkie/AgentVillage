@@ -72,9 +72,33 @@ def build_role_prompt(role: str) -> str:
     elif role == "Seer":
         return (
             "You are the Seer. Your goal is to help Villagers identify the Werewolf. "
-            "Each night you can inspect a player and learn their true role. Use your knowledge "
-            "wisely — revealing yourself as Seer makes you a target for the Werewolf. "
+            "Each night you can inspect a player and learn their alignment (Werewolf or Not Werewolf). "
+            "Use your knowledge wisely — revealing yourself as Seer makes you a target for the Werewolf. "
             "Share inspection results strategically."
+        )
+    elif role == "Knight":
+        return (
+            "You are the Knight. Your goal is to protect Villagers from the Werewolf's nightly attack. "
+            "Each night you choose one player to guard; if the Werewolf attacks them, the attack is blocked. "
+            "You cannot guard yourself. Revealing yourself as Knight makes you a priority target, "
+            "so time your CO carefully."
+        )
+    elif role == "Medium":
+        return (
+            "You are the Medium. Your goal is to help Villagers identify the Werewolf through the executed. "
+            "Each day, after the village executes someone, you sense their alignment "
+            "(Werewolf or Not Werewolf) — this information is added to your memory automatically. "
+            "You have no night action. Use your accumulated knowledge to guide the vote. "
+            "Revealing yourself as Medium makes you a target, so time your CO carefully."
+        )
+    elif role == "Madman":
+        return (
+            "You are the Madman. You are secretly on the Werewolf side, but you do NOT know who the "
+            "Werewolves are, and they do not know you. Your goal is to help the Werewolves win — "
+            "confuse the village, protect the Werewolves, and vote against Villagers. "
+            "NEVER reveal that you are the Madman, unless Werewolves + you already form a majority "
+            "of alive players — in that case, openly declaring 'I am the Madman' can clinch victory. "
+            "Otherwise, pose as a regular Villager or fake-CO as a Villager-side role to sow confusion."
         )
     else:
         return f"You are a {role}. Play to win."
@@ -218,9 +242,16 @@ def build_system_prompt(
         if agent.role == "Werewolf":
             parts.append(
                 "\n--- YOUR PRE-GAME DECISION ---\n"
-                "Before the game began, you decided to claim to be the Seer today to confuse the village. "
+                "Before the game began, you decided to publicly claim to be the Seer today to confuse the village. "
                 "Declare yourself as the Seer in your speech. "
                 'Set "intent.co" to "Seer" in your JSON output.'
+            )
+        elif agent.role == "Madman":
+            parts.append(
+                "\n--- YOUR PRE-GAME DECISION ---\n"
+                "Before the game began, you decided to publicly claim to be a Villager-side role today. "
+                "Choose to declare yourself as the Seer or the Medium in your speech to mislead the village. "
+                'Set "intent.co" to your chosen role (e.g. "Seer" or "Medium") in your JSON output.'
             )
         else:
             parts.append(
@@ -239,17 +270,28 @@ def build_pre_night_prompt(
     lang: str = "English",
     all_agents: list[AgentState] | None = None,
 ) -> str:
-    """Build prompt for pre-night CO decision phase (non-Villager roles only).
+    """Build prompt for pre-night decision phase (non-Villager roles only).
 
-    Seer decides whether to true-CO. Werewolf decides whether to fake-CO as Seer.
-    Both choices are encoded as "co" | "wait".
+    Seer decides whether to reveal their role on Day 1.
+    Werewolf decides whether to falsely claim to be the Seer.
+    Madman decides whether to falsely claim to be a Villager-side role.
+    All choices are encoded as "co" | "wait".
     """
     if agent.role == "Werewolf":
         decision_desc = (
-            "Will you claim to be the Seer (fake-CO) in your Day 1 opening speech "
+            "Will you publicly claim to be the Seer in your Day 1 opening speech "
             "to confuse the village and neutralize the real Seer?\n"
             '- "co": you will claim to be the Seer in your opening speech\n'
             '- "wait": you will stay silent about your role for now'
+        )
+    elif agent.role == "Madman":
+        decision_desc = (
+            "You are the Madman. You are secretly on the Werewolf side, "
+            "but neither the Werewolves nor the village know this.\n"
+            "Will you publicly claim to be a Villager-side role (Seer or Medium) "
+            "in your Day 1 opening speech to mislead the village and help the Werewolves?\n"
+            '- "co": you will claim to be a Villager-side role in your opening speech\n'
+            '- "wait": you will appear as a regular Villager for now'
         )
     else:
         decision_desc = (

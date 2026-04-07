@@ -9,7 +9,9 @@ console = Console()
 
 _ROLE_COLORS: dict[str, str] = {
     "Werewolf": "red",
+    "Madman": "orange3",
     "Seer": "blue",
+    "Medium": "yellow",
     "Knight": "bright_green",
     "Villager": "white",
 }
@@ -111,6 +113,10 @@ def render_event(
     elif event.event_type == EventType.GUARD_BLOCK:
         # Spectator only — bold cyan
         text.append(f"[GUARD BLOCK] {event.content}", style="bold cyan")
+
+    elif event.event_type == EventType.MEDIUM_RESULT:
+        # Spectator only — yellow
+        text.append(f"[MEDIUM] {event.content}", style="yellow")
 
     elif event.event_type == EventType.GAME_OVER:
         text.append(f"\n{'=' * 50}\n", style="bold yellow")

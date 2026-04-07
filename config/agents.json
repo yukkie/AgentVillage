@@ -61,5 +61,23 @@
     "gender": "female",
     "age": "adult",
     "speech_style": "polite"
+  },
+  {
+    "name": "Kael",
+    "style": "hot-headed, impulsive, straightforward",
+    "lie_tendency": 0.25,
+    "aggression": 0.85,
+    "gender": "male",
+    "age": "teen",
+    "speech_style": "blunt"
+  },
+  {
+    "name": "Lumi",
+    "style": "innocent, warm-hearted, trusting",
+    "lie_tendency": 0.02,
+    "aggression": 0.05,
+    "gender": "female",
+    "age": "teen",
+    "speech_style": "gentle"
   }
 ]
