@@ -109,6 +109,20 @@ LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検
 - `claimed_role` は **Public情報** として全エージェントのプロンプトに渡す
 - UIのカラー表示も `claimed_role` を参照（真の役職で色付けしない）
 
+#### COフォールバックと狂人の扱い
+
+Day 1 OPENINGで `intended_co=True` なのにLLMがCOを出力しなかった場合のセーフティネット：
+
+| 役職 | フォールバック内容 |
+|---|---|
+| Werewolf | `"Seer"` として強制CO（最も一般的な偽CO） |
+| Seer / Knight / Medium | 自分の本当の役職名で強制CO |
+| **Madman** | **強制しない**（LLMに委ねる） |
+
+狂人が「Madman」と公言してしまうのを防ぐため、フォールバックから除外する。
+狂人のCO先（Seer / Medium / Knightなどの偽CO、またはMadman公言）はLLMが状況判断で決める。
+> **Madman公言の条件**: 人狼＋狂人の合計が生存者の過半数を超えている場合、狂人が自ら「狂人」とCOして人狼陣営の勝利を確定させる戦術がある。プロンプトでこの戦略ヒントを与える。
+
 ### 3.3 LLM Client（`src/llm/`）
 
 - `anthropic` SDKのラッパー
