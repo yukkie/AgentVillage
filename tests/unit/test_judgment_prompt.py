@@ -3,7 +3,12 @@ from src.llm.prompt import build_judgment_prompt
 from src.llm.schema import SpeechEntry
 
 
-def _make_agent(name: str = "Setsu", role: str = "Villager", memory: list[str] | None = None) -> AgentState:
+def _make_agent(
+    name: str = "Setsu",
+    role: str = "Villager",
+    memory: list[str] | None = None,
+    claimed_role: str | None = None,
+) -> AgentState:
     return AgentState(
         name=name,
         role=role,
@@ -11,6 +16,7 @@ def _make_agent(name: str = "Setsu", role: str = "Villager", memory: list[str] |
         beliefs={"SQ": Belief()},
         memory_summary=memory or [],
         is_alive=True,
+        claimed_role=claimed_role,
     )
 
 
@@ -52,3 +58,35 @@ class TestBuildJudgmentPrompt:
         assert "challenge" in prompt
         assert "silent" in prompt
         assert "reply_to" in prompt
+
+    def test_co_option_absent_for_villager(self):
+        agent = _make_agent(role="Villager")
+        prompt = build_judgment_prompt(agent, [], ["Setsu"], day=1, co_eligible=False)
+        assert '"co"' not in prompt
+
+    def test_co_option_present_when_co_eligible(self):
+        agent = _make_agent(role="Seer")
+        prompt = build_judgment_prompt(agent, [], ["Setsu"], day=1, co_eligible=True)
+        assert '"co"' in prompt
+
+    def test_co_strategy_hint_seer(self):
+        agent = _make_agent(role="Seer")
+        prompt = build_judgment_prompt(agent, [], ["Setsu"], day=1, co_eligible=True)
+        assert "Seer" in prompt
+        assert "trust" in prompt.lower()
+
+    def test_co_strategy_hint_werewolf(self):
+        agent = _make_agent(role="Werewolf")
+        prompt = build_judgment_prompt(agent, [], ["Setsu"], day=1, co_eligible=True)
+        assert "fake" in prompt.lower() or "chaos" in prompt.lower()
+
+    def test_co_strategy_hint_madman(self):
+        agent = _make_agent(role="Madman")
+        prompt = build_judgment_prompt(agent, [], ["Setsu"], day=1, co_eligible=True)
+        assert "Madman" in prompt
+
+    def test_co_not_in_format_when_not_eligible(self):
+        """Ensure the 4th choice is absent when co_eligible=False (default)."""
+        agent = _make_agent(role="Seer")
+        prompt = build_judgment_prompt(agent, [], ["Setsu"], day=1)  # default co_eligible=False
+        assert '"co"' not in prompt

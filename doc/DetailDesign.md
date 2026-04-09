@@ -109,7 +109,7 @@ class AgentOutput(BaseModel):
 | 関数 | 用途 | max_tokens | 理由 |
 |---|---|---|---|
 | `call()` | 昼フェーズの発言生成（OPENING / DISCUSSION） | 2048 | thought が日本語で長くなりやすい |
-| `call_judgment()` | 昼フェーズの並列判断（challenge / speak / silent） | 1024 | JSON 2フィールドのみだが日本語思考が付随することがある |
+| `call_judgment()` | 昼フェーズの並列判断（challenge / speak / silent / co） | 1024 | JSON 2フィールドのみだが日本語思考が付随することがある。`co_eligible=True` のときのみ `"co"` を選択肢に含める |
 | `call_wolf_chat()` | 夜フェーズの狼チーム会話 | 2048 | thought + speech + vote_candidates。日本語で長くなりやすい |
 | `call_pre_night_action()` | 前夜フェーズの CO 判断（占い師・人狼） | 1024 | thought + decision + reasoning の3フィールド |
 | `call_night_action()` | 夜フェーズの個別行動（襲撃・占い・護衛） | 64 | プレイヤー名1つだけ返す |

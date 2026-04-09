@@ -16,7 +16,7 @@ class SpeechEntry(BaseModel):
 
 
 class JudgmentOutput(BaseModel):
-    decision: Literal["challenge", "speak", "silent"]
+    decision: Literal["challenge", "speak", "silent", "co"]
     reply_to: int | None = None
 
 

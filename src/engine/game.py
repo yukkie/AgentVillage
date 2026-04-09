@@ -138,8 +138,13 @@ class GameEngine:
         agent: AgentState,
         phase: Phase,
         reply_to_entry: SpeechEntry | None = None,
+        force_co: bool = False,
     ) -> SpeechEntry:
-        """Generate a speech for agent, emit events, update memory, and append to today_log."""
+        """Generate a speech for agent, emit events, update memory, and append to today_log.
+
+        force_co=True injects the CO instruction into the speech prompt without mutating
+        agent.intended_co. Used when the agent chose "co" in the discussion judgment phase.
+        """
         output = llm_client.call(
             agent,
             list(self.today_log),
@@ -151,7 +156,7 @@ class GameEngine:
             all_agents=self.agents,
             past_votes=self._past_votes,
             past_deaths=self._past_deaths,
-            intended_co=agent.intended_co,
+            intended_co=agent.intended_co or force_co,
         )
         self._day_outputs[agent.name] = output
 
@@ -258,6 +263,11 @@ class GameEngine:
                     continue
                 spoke_anyone = True
 
+                # "co" is only valid for agents that have not yet claimed a role
+                # and are not a plain Villager. Fall back to "speak" if ineligible.
+                is_co_eligible = agent.claimed_role is None and agent.role != "Villager"
+                force_co = judgment.decision == "co" and is_co_eligible
+
                 reply_to_entry: SpeechEntry | None = None
                 if judgment.decision == "challenge" and judgment.reply_to is not None:
                     reply_to_entry = next(
@@ -265,7 +275,7 @@ class GameEngine:
                         None,
                     )
 
-                self._do_speak(agent, Phase.DAY_DISCUSSION, reply_to_entry=reply_to_entry)
+                self._do_speak(agent, Phase.DAY_DISCUSSION, reply_to_entry=reply_to_entry, force_co=force_co)
 
             if not spoke_anyone:
                 break  # 全員silentなら2巡目はスキップ

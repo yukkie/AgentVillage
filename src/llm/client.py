@@ -99,7 +99,8 @@ def call_judgment(
     lang: str = "English",
 ) -> JudgmentOutput:
     """Call LLM for the lightweight parallel judgment decision."""
-    prompt = build_judgment_prompt(agent, today_log, alive_players, day, lang)
+    co_eligible = agent.claimed_role is None and agent.role != "Villager"
+    prompt = build_judgment_prompt(agent, today_log, alive_players, day, lang, co_eligible)
     raw = ""
     try:
         message = _client.messages.create(

@@ -332,14 +332,56 @@ def build_pre_night_prompt(
     return "\n".join(lines)
 
 
+def _build_co_strategy_hint(role: str) -> str:
+    """Return a role-specific strategic hint for the discussion-phase CO decision."""
+    if role == "Seer":
+        return (
+            '  "co" strategy hint: If no other Seer has claimed yet, a solo CO earns '
+            "strong village trust. If you hold a black (Werewolf) result, revealing it "
+            "now is a major opportunity to drive the vote."
+        )
+    if role == "Medium":
+        return (
+            '  "co" strategy hint: A solo Medium CO is usually trusted. The payoff is '
+            "highest right after a Werewolf was executed — announce the result to prove "
+            "your role."
+        )
+    if role == "Knight":
+        return (
+            '  "co" strategy hint: Late-game CO can help organize votes by disclosing '
+            "your guard history, but you become a prime night-attack target. Use it "
+            "when the trade-off favors the village."
+        )
+    if role == "Werewolf":
+        return (
+            '  "co" strategy hint: If no real Seer or Medium has claimed yet, a fake '
+            "solo CO (as Seer) lets you steal a key village role. When multiple COs are "
+            "already in play and the village is confused, a fake CO deepens the chaos."
+        )
+    if role == "Madman":
+        return (
+            '  "co" strategy hint: If Werewolves + Madman already outnumber the '
+            "remaining villagers, openly declaring yourself as the Madman seals the "
+            "Werewolf victory. Otherwise, a fake Seer or Medium CO is usually the best "
+            "way to disrupt the village."
+        )
+    return ""
+
+
 def build_judgment_prompt(
     agent: AgentState,
     today_log: list[SpeechEntry],
     alive_players: list[str],
     day: int,
     lang: str = "English",
+    co_eligible: bool = False,
 ) -> str:
-    """Build lightweight judgment prompt for the parallel decision phase."""
+    """Build lightweight judgment prompt for the parallel decision phase.
+
+    When co_eligible is True, a 4th option "co" is added with a role-specific
+    strategic hint. Eligibility is decided by the engine (claimed_role is None
+    and role != "Villager").
+    """
     recent = today_log[-6:] if len(today_log) > 6 else today_log
     lines = [
         f"You are {agent.name} ({agent.role}) in a Werewolf game. Day {day}.",
@@ -351,7 +393,24 @@ def build_judgment_prompt(
         lines.append("\nRecent speeches:")
         for e in recent:
             lines.append(f"  [{e.speech_id}] {e.agent}: {e.text}")
-    lines.append(f"""
+
+    if co_eligible:
+        co_hint = _build_co_strategy_hint(agent.role)
+        lines.append(f"""
+Decide your next action. Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
+{{
+  "decision": "challenge" | "speak" | "silent" | "co",
+  "reply_to": <speech_id to challenge, or null>
+}}
+- "challenge": directly counter a specific speech (set reply_to to its speech_id)
+- "speak": add a new statement unprompted
+- "silent": nothing to add right now
+- "co": publicly declare your role (Coming-Out) in your next speech
+{co_hint}
+- The JSON must contain exactly these two fields and nothing else.
+Use {lang} only for internal reasoning if needed, but keep the JSON minimal.""")
+    else:
+        lines.append(f"""
 Decide your next action. Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
 {{
   "decision": "challenge" | "speak" | "silent",
