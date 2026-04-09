@@ -34,8 +34,17 @@ def _extract_json(text: str) -> str:
 
     Handles markdown code fences, multiple JSON blocks, and self-correction
     patterns where the LLM emits extra text or a second JSON block.
-    Uses bracket counting to find the first complete { ... } span.
+
+    Strategy:
+    1. Look for a ```json ... ``` or ``` ... ``` fence first — this avoids
+       false matches on set-notation like {SQ, Jonas, Lumi} in prose.
+    2. Fall back to bracket counting when no fence is present.
     """
+    import re
+    m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    if m:
+        return m.group(1)
+    # Fallback: bracket counting to find first complete { ... } span
     start = text.find("{")
     if start == -1:
         return text
