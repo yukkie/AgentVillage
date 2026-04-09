@@ -138,8 +138,13 @@ class GameEngine:
         agent: AgentState,
         phase: Phase,
         reply_to_entry: SpeechEntry | None = None,
+        force_co: bool = False,
     ) -> SpeechEntry:
-        """Generate a speech for agent, emit events, update memory, and append to today_log."""
+        """Generate a speech for agent, emit events, update memory, and append to today_log.
+
+        force_co=True injects the CO instruction into the speech prompt without mutating
+        agent.intended_co. Used when the agent chose "co" in the discussion judgment phase.
+        """
         output = llm_client.call(
             agent,
             list(self.today_log),
@@ -151,9 +156,31 @@ class GameEngine:
             all_agents=self.agents,
             past_votes=self._past_votes,
             past_deaths=self._past_deaths,
-            intended_co=agent.intended_co,
+            intended_co=agent.intended_co or force_co,
         )
         self._day_outputs[agent.name] = output
+
+        # Safety net: enforce pre-night CO decision on the opening speech.
+        # Werewolf and Madman fall back to "Seer" (fake CO); others use their true role.
+        if agent.intended_co and phase == Phase.DAY_OPENING and not output.intent.co:
+            output.intent.co = "Seer" if agent.role in ("Werewolf", "Madman") else agent.role
+
+        # Update claimed_role BEFORE emitting the speech so the CO speech itself
+        # is rendered with the correct role color.
+        # Only emit CO_ANNOUNCEMENT when the claimed role actually changes
+        # (prevents duplicate announcements when LLM spontaneously repeats intent.co).
+        if output.intent.co and output.intent.co != agent.claimed_role:
+            agent.claimed_role = output.intent.co
+            agent.intended_co = False  # clear once CO is made
+            store.save(agent)
+            self._emit(LogEvent.make(
+                day=self.day,
+                phase=phase.value,
+                event_type=EventType.CO_ANNOUNCEMENT,
+                agent=agent.name,
+                content=f"{agent.name} claims to be {agent.claimed_role}",
+                is_public=True,
+            ))
 
         speech_id = self._next_speech_id()
         entry = SpeechEntry(speech_id=speech_id, agent=agent.name, text=output.speech)
@@ -178,17 +205,6 @@ class GameEngine:
             is_public=False,
             speech_id=speech_id,
         ))
-
-        # Enforce pre-night CO decision on the opening speech as a safety net
-        # Madman is excluded: "Madman" CO must only happen when strategically appropriate (LLM decides)
-        if agent.intended_co and phase == Phase.DAY_OPENING and not output.intent.co:
-            if agent.role != "Madman":
-                output.intent.co = "Seer" if agent.role == "Werewolf" else agent.role
-
-        if output.intent.co:
-            agent.claimed_role = output.intent.co
-            agent.intended_co = False  # clear once CO is made
-            store.save(agent)
 
         if output.memory_update:
             memory_mod.update_memory(agent, output.memory_update)
@@ -258,6 +274,11 @@ class GameEngine:
                     continue
                 spoke_anyone = True
 
+                # "co" is only valid for agents that have not yet claimed a role
+                # and are not a plain Villager. Fall back to "speak" if ineligible.
+                is_co_eligible = agent.claimed_role is None and agent.role != "Villager"
+                force_co = judgment.decision == "co" and is_co_eligible
+
                 reply_to_entry: SpeechEntry | None = None
                 if judgment.decision == "challenge" and judgment.reply_to is not None:
                     reply_to_entry = next(
@@ -265,7 +286,7 @@ class GameEngine:
                         None,
                     )
 
-                self._do_speak(agent, Phase.DAY_DISCUSSION, reply_to_entry=reply_to_entry)
+                self._do_speak(agent, Phase.DAY_DISCUSSION, reply_to_entry=reply_to_entry, force_co=force_co)
 
             if not spoke_anyone:
                 break  # 全員silentなら2巡目はスキップ
@@ -331,7 +352,7 @@ class GameEngine:
                         event_type=EventType.MEDIUM_RESULT,
                         agent=medium.name,
                         target=eliminated,
-                        content=f"[MEDIUM] {medium.name} senses: {eliminated} was {result}",
+                        content=f"{medium.name} senses: {eliminated} was {result}",
                         is_public=False,
                     ))
 
@@ -375,7 +396,7 @@ class GameEngine:
                         phase=Phase.NIGHT_WOLF_CHAT.value,
                         event_type=EventType.WOLF_CHAT,
                         agent=wolf.name,
-                        content=f"[WOLF] {wolf.name}: {output.speech}",
+                        content=f"{wolf.name}: {output.speech}",
                         is_public=False,
                     ))
 

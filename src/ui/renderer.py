@@ -11,7 +11,7 @@ _ROLE_COLORS: dict[str, str] = {
     "Werewolf": "red",
     "Madman": "orange3",
     "Seer": "blue",
-    "Medium": "yellow",
+    "Medium": "cyan",
     "Knight": "bright_green",
     "Villager": "white",
 }
@@ -113,6 +113,10 @@ def render_event(
     elif event.event_type == EventType.GUARD_BLOCK:
         # Spectator only — bold cyan
         text.append(f"[GUARD BLOCK] {event.content}", style="bold cyan")
+
+    elif event.event_type == EventType.CO_ANNOUNCEMENT:
+        # Public CO declaration — bold white so it stands out
+        text.append(f"[CO] {event.content}", style="bold white")
 
     elif event.event_type == EventType.MEDIUM_RESULT:
         # Spectator only — yellow

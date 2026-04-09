@@ -30,6 +30,11 @@ class TestJudgmentOutput:
         j = JudgmentOutput(decision="silent")
         assert j.decision == "silent"
 
+    def test_co_decision(self):
+        j = JudgmentOutput(decision="co")
+        assert j.decision == "co"
+        assert j.reply_to is None
+
     def test_invalid_decision_raises(self):
         with pytest.raises(ValidationError):
             JudgmentOutput(decision="attack")

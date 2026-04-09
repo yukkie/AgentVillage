@@ -109,6 +109,16 @@ LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検
 - `claimed_role` は **Public情報** として全エージェントのプロンプトに渡す
 - UIのカラー表示も `claimed_role` を参照（真の役職で色付けしない）
 
+CO が成立する経路は現状2つある:
+
+1. **前夜CO（Day 1 OPENING）**: `intended_co=True` のエージェントが Day 1 OPENING で公言（§16.1）
+2. **議論中CO（DISCUSSION・全Day）**: 判断フェーズで `decision="co"` を選んだ適格エージェントがその場で公言（§16.2）
+   - 適格条件: `claimed_role is None` かつ `role != "Villager"`
+   - 発言生成プロンプトは前夜CO経路と同じ「CO指示ブロック」を再利用する（`build_system_prompt` の `intended_co=True` 分岐）
+   - エンジンは `_do_speak(..., force_co=True)` で一時的に CO 指示を有効化する。`AgentState.intended_co` 自体は変更しない
+
+なお Day 2+ OPENING には現状構造化された CO 判断ステップがなく、LLM が通常発言中に自発的に `intent.co` を返したケースのみ受動的に成立する。Day 2+ にも前夜判断相当のフェーズを設ける拡張案は Ideas.md §16.2a を参照。
+
 #### COフォールバックと狂人の扱い
 
 Day 1 OPENINGで `intended_co=True` なのにLLMがCOを出力しなかった場合のセーフティネット：
