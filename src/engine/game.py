@@ -167,7 +167,9 @@ class GameEngine:
 
         # Update claimed_role BEFORE emitting the speech so the CO speech itself
         # is rendered with the correct role color.
-        if output.intent.co:
+        # Only emit CO_ANNOUNCEMENT when the claimed role actually changes
+        # (prevents duplicate announcements when LLM spontaneously repeats intent.co).
+        if output.intent.co and output.intent.co != agent.claimed_role:
             agent.claimed_role = output.intent.co
             agent.intended_co = False  # clear once CO is made
             store.save(agent)
