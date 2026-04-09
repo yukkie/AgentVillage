@@ -341,7 +341,7 @@ class GameEngine:
                         event_type=EventType.MEDIUM_RESULT,
                         agent=medium.name,
                         target=eliminated,
-                        content=f"[MEDIUM] {medium.name} senses: {eliminated} was {result}",
+                        content=f"{medium.name} senses: {eliminated} was {result}",
                         is_public=False,
                     ))
 
@@ -385,7 +385,7 @@ class GameEngine:
                         phase=Phase.NIGHT_WOLF_CHAT.value,
                         event_type=EventType.WOLF_CHAT,
                         agent=wolf.name,
-                        content=f"[WOLF] {wolf.name}: {output.speech}",
+                        content=f"{wolf.name}: {output.speech}",
                         is_public=False,
                     ))
 
