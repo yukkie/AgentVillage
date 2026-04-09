@@ -11,7 +11,7 @@ _ROLE_COLORS: dict[str, str] = {
     "Werewolf": "red",
     "Madman": "orange3",
     "Seer": "blue",
-    "Medium": "yellow",
+    "Medium": "cyan",
     "Knight": "bright_green",
     "Villager": "white",
 }
