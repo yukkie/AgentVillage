@@ -16,6 +16,7 @@ class EventType(Enum):
     GUARD = "guard"
     GUARD_BLOCK = "guard_block"
     MEDIUM_RESULT = "medium_result"
+    CO_ANNOUNCEMENT = "co_announcement"
     GAME_OVER = "game_over"
     PHASE_START = "phase_start"
 

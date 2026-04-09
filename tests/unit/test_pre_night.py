@@ -72,12 +72,12 @@ class TestBuildSystemPromptIntendedCo:
     def test_no_intended_co_section_by_default(self):
         agent = _make_agent("Gina", "Seer")
         prompt = build_system_prompt(agent, [], ["Gina", "SQ"], [], day=1)
-        assert "PRE-GAME DECISION" not in prompt
+        assert "CO DECISION" not in prompt
 
     def test_seer_intended_co_adds_true_co_instruction(self):
         agent = _make_agent("Gina", "Seer")
         prompt = build_system_prompt(agent, [], ["Gina", "SQ"], [], day=1, intended_co=True)
-        assert "PRE-GAME DECISION" in prompt
+        assert "CO DECISION" in prompt
         assert "Seer" in prompt
         assert "intent.co" in prompt
         # Must NOT instruct Seer to fake
@@ -86,11 +86,11 @@ class TestBuildSystemPromptIntendedCo:
     def test_werewolf_intended_co_adds_fake_co_instruction(self):
         agent = _make_agent("SQ", "Werewolf")
         prompt = build_system_prompt(agent, [], ["Gina", "SQ"], [], day=1, intended_co=True)
-        assert "PRE-GAME DECISION" in prompt
+        assert "CO DECISION" in prompt
         assert "Seer" in prompt  # instructs to claim Seer
         assert "intent.co" in prompt
         # Must NOT tell werewolf to reveal true role
-        assert "Werewolf" not in prompt.split("PRE-GAME DECISION")[1]
+        assert "Werewolf" not in prompt.split("--- YOUR CO DECISION ---")[1]
 
 
 # ── _run_pre_night ──────────────────────────────────────────────────────────

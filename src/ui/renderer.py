@@ -114,6 +114,10 @@ def render_event(
         # Spectator only — bold cyan
         text.append(f"[GUARD BLOCK] {event.content}", style="bold cyan")
 
+    elif event.event_type == EventType.CO_ANNOUNCEMENT:
+        # Public CO declaration — bold white so it stands out
+        text.append(f"[CO] {event.content}", style="bold white")
+
     elif event.event_type == EventType.MEDIUM_RESULT:
         # Spectator only — yellow
         text.append(f"[MEDIUM] {event.content}", style="yellow")

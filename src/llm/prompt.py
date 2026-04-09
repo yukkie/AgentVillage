@@ -241,23 +241,24 @@ def build_system_prompt(
     if intended_co:
         if agent.role == "Werewolf":
             parts.append(
-                "\n--- YOUR PRE-GAME DECISION ---\n"
-                "Before the game began, you decided to publicly claim to be the Seer today to confuse the village. "
-                "Declare yourself as the Seer in your speech. "
+                "\n--- YOUR CO DECISION ---\n"
+                "You have decided to publicly claim to be the Seer to confuse the village. "
+                "Your speech MUST explicitly state that you are the Seer (e.g. 'I am the Seer'). "
                 'Set "intent.co" to "Seer" in your JSON output.'
             )
         elif agent.role == "Madman":
             parts.append(
-                "\n--- YOUR PRE-GAME DECISION ---\n"
-                "Before the game began, you decided to publicly claim to be a Villager-side role today. "
-                "Choose to declare yourself as the Seer or the Medium in your speech to mislead the village. "
+                "\n--- YOUR CO DECISION ---\n"
+                "You have decided to publicly claim to be a Villager-side role to mislead the village. "
+                "Choose to declare yourself as the Seer or the Medium. "
+                "Your speech MUST explicitly state your chosen role (e.g. 'I am the Seer'). "
                 'Set "intent.co" to your chosen role (e.g. "Seer" or "Medium") in your JSON output.'
             )
         else:
             parts.append(
-                f"\n--- YOUR PRE-GAME DECISION ---\n"
-                f"Before the game began, you decided to publicly reveal your role today. "
-                f"State that you are the {agent.role} in your speech. "
+                f"\n--- YOUR CO DECISION ---\n"
+                f"You have decided to publicly reveal your role. "
+                f"Your speech MUST explicitly state that you are the {agent.role} (e.g. 'I am the {agent.role}'). "
                 f'Set "intent.co" to "{agent.role}" in your JSON output.'
             )
     parts.append(build_output_format_prompt(lang))

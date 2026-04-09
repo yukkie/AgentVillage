@@ -160,6 +160,26 @@ class GameEngine:
         )
         self._day_outputs[agent.name] = output
 
+        # Safety net: enforce pre-night CO decision on the opening speech.
+        # Werewolf and Madman fall back to "Seer" (fake CO); others use their true role.
+        if agent.intended_co and phase == Phase.DAY_OPENING and not output.intent.co:
+            output.intent.co = "Seer" if agent.role in ("Werewolf", "Madman") else agent.role
+
+        # Update claimed_role BEFORE emitting the speech so the CO speech itself
+        # is rendered with the correct role color.
+        if output.intent.co:
+            agent.claimed_role = output.intent.co
+            agent.intended_co = False  # clear once CO is made
+            store.save(agent)
+            self._emit(LogEvent.make(
+                day=self.day,
+                phase=phase.value,
+                event_type=EventType.CO_ANNOUNCEMENT,
+                agent=agent.name,
+                content=f"{agent.name} claims to be {agent.claimed_role}",
+                is_public=True,
+            ))
+
         speech_id = self._next_speech_id()
         entry = SpeechEntry(speech_id=speech_id, agent=agent.name, text=output.speech)
         self.today_log.append(entry)
@@ -183,17 +203,6 @@ class GameEngine:
             is_public=False,
             speech_id=speech_id,
         ))
-
-        # Enforce pre-night CO decision on the opening speech as a safety net
-        # Madman is excluded: "Madman" CO must only happen when strategically appropriate (LLM decides)
-        if agent.intended_co and phase == Phase.DAY_OPENING and not output.intent.co:
-            if agent.role != "Madman":
-                output.intent.co = "Seer" if agent.role == "Werewolf" else agent.role
-
-        if output.intent.co:
-            agent.claimed_role = output.intent.co
-            agent.intended_co = False  # clear once CO is made
-            store.save(agent)
 
         if output.memory_update:
             memory_mod.update_memory(agent, output.memory_update)
