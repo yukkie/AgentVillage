@@ -15,7 +15,8 @@
 | # | タイトル | 内容 |
 |---|---|---|
 | yukkie/AgentVillage#21 | Day 2+ pre-night judgment phase | 昼開始前の判断フェーズを Day 2+ にも拡張 |
-| yukkie/AgentVillage#22 | Night wolf chat + 7-player config | 狼チャット + 7人構成対応 |
+| ~~yukkie/AgentVillage#22~~ | ~~Night wolf chat + 7-player config~~ | ~~実装済みのためクローズ~~ |
+| yukkie/AgentVillage#33 | Wolf chat improvements | 早期終了・偽CO協議・テスト |
 | yukkie/AgentVillage#23 | Auto-summarize memory_summary | 記憶が長くなったら LLM で自動要約 |
 | yukkie/AgentVillage#24 | Role class refactoring | Strategy パターンで役職クラス化 |
 | yukkie/AgentVillage#25 | Skill memory (cross-game learning) | ゲームをまたいで引き継がれる戦略記憶 |
