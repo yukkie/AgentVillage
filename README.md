@@ -39,7 +39,8 @@ cp .env.example .env
 uv run main.py                          # 通常観戦モード
 uv run main.py --spectator              # 思考・夜行動も表示
 uv run main.py --lang Japanese          # 日本語でプレイ
-uv run main.py --spectator --lang Japanese
+uv run main.py --players 7              # 7人構成（デフォルト: 5）
+uv run main.py --spectator --lang Japanese --players 7
 
 uv run main.py --replay                 # 過去ゲームをリプレイ（public モード）
 uv run main.py --replay --spectator     # リプレイ（spectator モード）
@@ -49,6 +50,7 @@ uv run main.py --replay --spectator     # リプレイ（spectator モード）
 |---|---|
 | `--spectator` | エージェントの思考・夜の行動も表示 |
 | `--lang <言語>` | 発言・推理の言語（例: `Japanese`, `English`）デフォルト: `English` |
+| `--players <人数>` | エージェント数（`5` / `7` / `9`）デフォルト: `5`。編成は `config/roles.json` で管理 |
 | `--replay` | アーカイブからゲームをリプレイ（`state_archive/` 内のゲームを選択）|
 
 ## ゲームルール
@@ -123,7 +125,8 @@ cp .env.example .env
 uv run main.py                          # Public spectator mode
 uv run main.py --spectator              # Show thoughts & night actions
 uv run main.py --lang Japanese          # Play in Japanese
-uv run main.py --spectator --lang Japanese
+uv run main.py --players 7              # 7-player mode (default: 5)
+uv run main.py --spectator --lang Japanese --players 7
 
 uv run main.py --replay                 # Replay an archived game (public mode)
 uv run main.py --replay --spectator     # Replay with thoughts & night actions
@@ -133,6 +136,7 @@ uv run main.py --replay --spectator     # Replay with thoughts & night actions
 |---|---|
 | `--spectator` | Show agent thoughts and night actions |
 | `--lang <language>` | Language for agent speech and reasoning (e.g. `Japanese`, `English`). Default: `English` |
+| `--players <n>` | Number of agents (`5` / `7` / `9`). Default: `5`. Role sets defined in `config/roles.json` |
 | `--replay` | Browse and replay an archived game from `state_archive/` |
 
 ## Game Rules
