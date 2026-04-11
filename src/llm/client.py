@@ -176,6 +176,23 @@ def call_pre_night_action(
         return PreNightOutput(thought="...", decision="wait", reasoning="Defaulting to wait.")
 
 
+def call_pre_night_parallel(
+    agents: list[AgentState],
+    alive_players: list[str],
+    lang: str = "English",
+    all_agents: list[AgentState] | None = None,
+) -> Iterator[tuple[AgentState, PreNightOutput]]:
+    """Call pre-night CO decision for all agents in parallel; yield results in completion order."""
+    with ThreadPoolExecutor() as executor:
+        future_to_agent = {
+            executor.submit(call_pre_night_action, agent, alive_players, lang, all_agents): agent
+            for agent in agents
+        }
+        for future in as_completed(future_to_agent):
+            agent = future_to_agent[future]
+            yield agent, future.result()
+
+
 def call_wolf_chat(
     agent: AgentState,
     wolf_partners: list[str],

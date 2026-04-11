@@ -223,8 +223,9 @@ class GameEngine:
 
         self._phase_start(Phase.PRE_NIGHT)
 
-        for agent in targets:
-            output = llm_client.call_pre_night_action(agent, self._alive_names(), self.lang, self.agents)
+        for agent, output in llm_client.call_pre_night_parallel(
+            targets, self._alive_names(), self.lang, self.agents
+        ):
             agent.intended_co = output.decision == "co"
             memory_mod.update_memory(agent, [f"Pre-game decision: {output.reasoning}"])
 

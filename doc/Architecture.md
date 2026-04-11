@@ -146,7 +146,8 @@ Day 1 OPENINGで `intended_co=True` なのにLLMがCOを出力しなかった場
 | `call()` | 発言生成（OPENING / DISCUSSION） | フル（役職・性格・記憶・当日ログ・他者のCO情報） | `AgentOutput` |
 | `call_judgment()` | 判断（DISCUSSION 並列） | 軽量（役職・性格・memory_summary・直近発言のみ） | `JudgmentOutput` |
 | `call_night_action()` | 夜行動 | 夜フェーズ専用 | `str`（ターゲット名） |
-| `call_pre_night_action()` | 前夜判断（Day 1 前・1回限り） | 役職・性格・参加者情報 | `PreNightOutput` |
+| `call_pre_night_action()` | 前夜判断・単体呼び出し | 役職・性格・参加者情報 | `PreNightOutput` |
+| `call_pre_night_parallel()` | 前夜判断・並列呼び出し（`call_judgment_parallel` と同パターン） | 同上 | `Iterator[tuple[AgentState, PreNightOutput]]` |
 
 #### 並列実行
 
