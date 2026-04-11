@@ -128,12 +128,10 @@ class ReplayPager:
         all_lines: list[str] = []
         for event in events:
             # Update claimed_role in real time when a CO is announced.
-            # Content format: "{name} claims to be {role}"
-            if event.event_type == EventType.CO_ANNOUNCEMENT and event.agent:
-                marker = "claims to be "
-                idx = event.content.find(marker)
-                if idx != -1 and event.agent in dynamic_agents:
-                    dynamic_agents[event.agent].claimed_role = event.content[idx + len(marker):].strip()
+            # Use event.claimed_role (structured field) rather than parsing content text.
+            if event.event_type == EventType.CO_ANNOUNCEMENT and event.agent and event.claimed_role:
+                if event.agent in dynamic_agents:
+                    dynamic_agents[event.agent].claimed_role = event.claimed_role
 
             rich_text = render_event(event, list(dynamic_agents.values()), self._spectator)
             if rich_text is None:

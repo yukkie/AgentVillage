@@ -150,8 +150,15 @@ LLMの提案をゲームエンジンに渡す橋渡し役。
 | `GUARD_BLOCK` | False / True | 護衛成功の詳細（観戦者）/ 全体通知（村人全員） |
 | `WOLF_CHAT` | False | 狼チャット（観戦者のみ） |
 | `PRE_NIGHT_DECISION` | False | 前夜CO判断（観戦者のみ） |
+| `CO_ANNOUNCEMENT` | True | 役職公言。`claimed_role` フィールドに公言した役職名を格納 |
 | `PHASE_START` | True / False | フェーズ開始通知 |
 | `GAME_OVER` | True | ゲーム終了 |
+
+#### event.py — LogEvent フィールド
+
+`CO_ANNOUNCEMENT` イベントには `claimed_role: str | None` フィールドを使う。
+`content` の文字列フォーマット（`"{name} claims to be {role}"`）に依存せず、型安全に公言役職名を参照できる。
+既存アーカイブとの後方互換は `default=None` で対応する。
 
 ---
 
