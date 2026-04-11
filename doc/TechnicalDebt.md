@@ -5,21 +5,10 @@
 
 ---
 
-## 🔴 CO_ANNOUNCEMENT の文字列パース（replay.py）
+## ✅ CO_ANNOUNCEMENT の文字列パース（replay.py） — 解決済み
 
-**場所:** `src/ui/replay.py` `ReplayPager._build_lines()`
-
-```python
-marker = "claims to be "
-idx = event.content.find(marker)
-dynamic_agents[event.agent].claimed_role = event.content[idx + len(marker):].strip()
-```
-
-`game.py` のログ出力フォーマット（`f"{agent.name} claims to be {agent.claimed_role}"`）を文字列パースしている。
-フォーマットを変えると即壊れる。
-
-**修正案:** `LogEvent` に `claimed_role: str | None` フィールドを追加し、`CO_ANNOUNCEMENT` 記録時に値を入れる。
-既存アーカイブとの後方互換は `default=None` で対応可能。
+`LogEvent` に `claimed_role: str | None` フィールドを追加し、`CO_ANNOUNCEMENT` 記録時に値を格納するよう修正。
+`replay.py` の文字列パース（`"claims to be "` マーカー検索）を削除し、`event.claimed_role` を直接参照するよう変更。
 
 ---
 

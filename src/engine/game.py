@@ -186,6 +186,7 @@ class GameEngine:
                 agent=agent.name,
                 content=f"{agent.name} claims to be {agent.claimed_role}",
                 is_public=True,
+                claimed_role=agent.claimed_role,
             ))
 
         speech_id = self._next_speech_id()
