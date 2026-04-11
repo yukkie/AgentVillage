@@ -1,16 +1,21 @@
 # AgentVillage
 
+> **AgentVillage = 人狼 + The Sims + RimWorld + グノーシア + LLM**
+
 LLMエージェントが自律的に人狼ゲームをプレイする社会シミュレーション。
-プレイヤーはAIたちの推理・嘘・説得を観察する観戦型ゲーム。
+プレイヤーはキャラクターを直接操作するのではなく、**人格・記憶・推理を持ったAIエージェントたちの社会を観察・介入する立場**になる。
+
+インスパイア元: 人狼BBS の灰ログ文化（思考の一部が滲み出る演出）/ サカつく（育成しながら見守る）
 
 ---
 
 ## 特徴
 
 - **観戦型ゲーム** — AIたちの会話・推理・裏切りをリアルタイムで観察
-- **思考と発言の分離** — 各エージェントは腹の中の思考と表の発言を別々に持つ（人狼BBSの灰ログ文化にインスパイア）
+- **思考と発言の分離** — 各エージェントは腹の中の思考と表の発言を別々に持つ（灰ログ文化にインスパイア）
 - **決定論的なゲームエンジン** — 役職・投票・勝敗はコードが管理。LLMは発言と推理のみを担当
 - **多言語対応** — `--lang Japanese` で日本語プレイ
+- **リプレイ機能** — 過去のゲームをアーカイブから再生（`--replay`）
 
 ## セットアップ
 
@@ -35,12 +40,16 @@ uv run main.py                          # 通常観戦モード
 uv run main.py --spectator              # 思考・夜行動も表示
 uv run main.py --lang Japanese          # 日本語でプレイ
 uv run main.py --spectator --lang Japanese
+
+uv run main.py --replay                 # 過去ゲームをリプレイ（public モード）
+uv run main.py --replay --spectator     # リプレイ（spectator モード）
 ```
 
 | オプション | 説明 |
 |---|---|
 | `--spectator` | エージェントの思考・夜の行動も表示 |
 | `--lang <言語>` | 発言・推理の言語（例: `Japanese`, `English`）デフォルト: `English` |
+| `--replay` | アーカイブからゲームをリプレイ（`state_archive/` 内のゲームを選択）|
 
 ## ゲームルール
 
@@ -82,7 +91,7 @@ uv run pytest
 
 # AgentVillage (English)
 
-A social simulation where LLM agents autonomously play Werewolf. Players observe the AI society — watching agents reason, lie, and persuade each other.
+A social simulation where LLM agents autonomously play Werewolf. Rather than controlling characters directly, players take the role of an observer who watches — and can subtly intervene in — a society of AI agents with distinct personalities, memories, and reasoning.
 
 ## Features
 
@@ -90,6 +99,7 @@ A social simulation where LLM agents autonomously play Werewolf. Players observe
 - **Thought vs. speech separation** — Each agent has private inner thoughts and public speech (inspired by werewolf BBS "gray log" culture)
 - **Deterministic game engine** — Roles, voting, and win conditions are managed by code. LLMs handle only speech and reasoning
 - **Multilingual** — Play in any language with `--lang Japanese`
+- **Replay mode** — Browse and replay archived games (`--replay`)
 
 ## Setup
 
@@ -114,12 +124,16 @@ uv run main.py                          # Public spectator mode
 uv run main.py --spectator              # Show thoughts & night actions
 uv run main.py --lang Japanese          # Play in Japanese
 uv run main.py --spectator --lang Japanese
+
+uv run main.py --replay                 # Replay an archived game (public mode)
+uv run main.py --replay --spectator     # Replay with thoughts & night actions
 ```
 
 | Option | Description |
 |---|---|
 | `--spectator` | Show agent thoughts and night actions |
 | `--lang <language>` | Language for agent speech and reasoning (e.g. `Japanese`, `English`). Default: `English` |
+| `--replay` | Browse and replay an archived game from `state_archive/` |
 
 ## Game Rules
 
