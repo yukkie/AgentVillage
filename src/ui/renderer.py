@@ -107,8 +107,8 @@ def render_event(
         text.append(f"[WOLF] {event.content}", style="red")
 
     elif event.event_type == EventType.GUARD:
-        # Spectator only — cyan
-        text.append(f"[GUARD] {event.content}", style="cyan")
+        # Spectator only — bright_green (Knight role color)
+        text.append(f"[GUARD] {event.content}", style="bright_green")
 
     elif event.event_type == EventType.GUARD_BLOCK:
         # Spectator only — bold bright_green (Knight role color)

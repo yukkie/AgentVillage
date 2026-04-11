@@ -91,7 +91,7 @@
 | モジュール | 責務 |
 |---|---|
 | `client.py` | anthropic SDKのラッパー。APIコールと `AgentOutput` へのパース |
-| `prompt.py` | 性格プロンプト・役職プロンプトを組み合わせてシステムプロンプトを生成 |
+| `prompt.py` | 性格プロンプト・役職プロンプトを組み合わせてシステムプロンプトを生成。`build_role_prompt` が `wolf_partners` を受け取り、人狼役職のプロンプトに仲間情報を追記する。`wolf_partners` が空リストの場合は「最後の人狼」として通知する |
 | `schema.py` | `AgentOutput` のPydanticモデル定義（`thought`, `speech`, `intent`, `memory_update`） |
 
 ### AgentOutput スキーマ
@@ -161,3 +161,50 @@ LLMの提案をゲームエンジンに渡す橋渡し役。
 |---|---|
 | `cli.py` | Richを使ったCLI表示。フェーズ区切り・発言・死亡通知を色付きで出力 |
 | `renderer.py` | イベントを受け取って表示文字列に変換（cliから切り離して将来のWeb対応を容易に） |
+| `replay.py` | アーカイブ選択UI + ページャー。LLMを一切呼ばずにJSONLログを再生する |
+
+### replay.py — クラス構成
+
+#### `run_replay(spectator_mode: bool, archive_path: Path | None = None)`
+
+エントリポイント関数。`archive_path` が未指定の場合は `ArchiveSelector` でユーザーに選ばせる。
+
+#### `ArchiveSelector`
+
+```python
+class ArchiveSelector:
+    def __init__(self, archive_dir: Path)
+    def select(self) -> Path | None
+```
+
+- `state_archive/` 内フォルダを新しい順にリスト
+- msvcrt（Windows）でキー入力を受け取り、上下移動・ENTER 選択・Q/ESC キャンセル
+- フォルダ 0 件のときは `None` を返す
+
+#### `ReplayPager`
+
+```python
+class ReplayPager:
+    def __init__(self, archive_path: Path, spectator_mode: bool)
+    def run(self)
+```
+
+**初期化:**
+1. `archive_path/agents/*.json` を `AgentState` としてロード（`src.agent.state` の Pydantic モデルを直接使用）
+2. `spectator_mode` に応じて `spectator_log.jsonl` または `public_log.jsonl` を読み込み
+3. 各 `LogEvent` を `renderer.render_event()` で描画し、`list[str]`（ANSI 文字列）としてバッファに積む
+
+**`_build_lines()` の claimed_role 動的追跡:**
+アーカイブの agent JSON は end-of-game 状態（CO済み）を持つ。そのまま使うと、CO前の発言もCO後の色で表示されてしまう。
+これを防ぐため、`_build_lines()` ではエージェントのコピーを作り `claimed_role` を全員 `None` にリセットした上で、
+イベントを順に処理しながら `CO_ANNOUNCEMENT` が来たタイミングで `claimed_role` を更新する。
+spectatorモードは `agent.role`（変化しない真の役職）を使うため影響なし。
+
+**ページャーループ:**
+- `shutil.get_terminal_size().lines` でターミナル高さを取得
+- 1 ページ = `terminal_height - 2` 行
+- 現在位置 `pos`（行インデックス）を管理し、キー入力に応じて更新
+- 画面下部にステータスバー: `(Line X-Y / total)`
+
+**キー入力:**
+- Windows: `msvcrt.getch()` を使用（`\xe0` + 方向コードで矢印キーを判定）

@@ -55,7 +55,7 @@ def build_persona_prompt(agent: AgentState) -> str:
     return "\n".join(lines)
 
 
-def build_role_prompt(role: str) -> str:
+def build_role_prompt(role: str, wolf_partners: list[str] | None = None) -> str:
     """Generate role-specific action guidelines."""
     if role == "Villager":
         return (
@@ -64,11 +64,16 @@ def build_role_prompt(role: str) -> str:
             "strategically. You have no special night actions."
         )
     elif role == "Werewolf":
-        return (
+        base = (
             "You are a Werewolf. Your goal is to eliminate Villagers until Werewolves equal or "
             "outnumber them. During the day, blend in and deflect suspicion onto others. "
             "Lie convincingly. At night, you attack a target chosen by the system."
         )
+        if wolf_partners:
+            base += f"\nYour wolf partner(s): {', '.join(wolf_partners)}. Keep this secret."
+        elif wolf_partners is not None:
+            base += "\nYou are the last surviving Werewolf. You must act alone."
+        return base
     elif role == "Seer":
         return (
             "You are the Seer. Your goal is to help Villagers identify the Werewolf. "
@@ -222,12 +227,13 @@ def build_system_prompt(
     past_votes: list[dict] | None = None,
     past_deaths: list[dict] | None = None,
     intended_co: bool = False,
+    wolf_partners: list[str] | None = None,
 ) -> str:
     """Assemble full system prompt for an agent."""
     parts = [
         build_persona_prompt(agent),
         "\n",
-        build_role_prompt(agent.role),
+        build_role_prompt(agent.role, wolf_partners),
         build_public_info_prompt(today_log, alive_players, dead_players, day, all_agents, past_votes, past_deaths),
         build_personal_info_prompt(agent),
     ]
