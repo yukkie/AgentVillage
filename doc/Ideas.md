@@ -329,7 +329,7 @@ LLMの出力は文章だけでなく **JSON** にする。
 - ❌ **性格テンプレートのコミュニティ共有**: 性格プロンプトをオープンにしてユーザーがカスタマイズ・共有
 - ✅ **エージェントごとのLLMモデル割り当て**: `AgentState` に `model` フィールド実装済み
 - ✅ **Twitter/X的な会話構造**: `speech_id` / `reply_to` フィールド実装済み
-- ❌ **ログリプレイ機能**: `state_archive/` へのアーカイブは✅。`replay.py` CLIは未実装
+- ✅ **ログリプレイ機能**: `state_archive/` へのアーカイブは✅。`replay.py` CLIも実装済み（`--replay` / `--replay --spectator` で起動）
 
 ---
 

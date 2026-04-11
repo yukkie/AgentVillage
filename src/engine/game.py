@@ -145,6 +145,11 @@ class GameEngine:
         force_co=True injects the CO instruction into the speech prompt without mutating
         agent.intended_co. Used when the agent chose "co" in the discussion judgment phase.
         """
+        wolf_partners = (
+            [a.name for a in self._alive_agents() if a.role == "Werewolf" and a.name != agent.name]
+            if agent.role == "Werewolf"
+            else None
+        )
         output = llm_client.call(
             agent,
             list(self.today_log),
@@ -157,6 +162,7 @@ class GameEngine:
             past_votes=self._past_votes,
             past_deaths=self._past_deaths,
             intended_co=agent.intended_co or force_co,
+            wolf_partners=wolf_partners,
         )
         self._day_outputs[agent.name] = output
 
