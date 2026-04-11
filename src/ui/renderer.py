@@ -111,8 +111,8 @@ def render_event(
         text.append(f"[GUARD] {event.content}", style="cyan")
 
     elif event.event_type == EventType.GUARD_BLOCK:
-        # Spectator only — bold cyan
-        text.append(f"[GUARD BLOCK] {event.content}", style="bold cyan")
+        # Spectator only — bold bright_green (Knight role color)
+        text.append(f"[GUARD BLOCK] {event.content}", style="bold bright_green")
 
     elif event.event_type == EventType.CO_ANNOUNCEMENT:
         # Public CO declaration — bold white so it stands out
