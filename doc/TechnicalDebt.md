@@ -29,7 +29,40 @@ dynamic_agents[event.agent].claimed_role = event.content[idx + len(marker):].str
 
 現在12引数。`wolf_partners` 追加でさらに増えた。
 
-**修正案:** Ideas.md §20 の Role クラス化（`build_role_prompt` を Role クラスのメソッドに移管）を実施するタイミングで整理する。役職固有の引数（`wolf_partners` など）は Role クラスが保持することで signature を減らせる。
+**修正案:** 引数を3つのクラスに分割して `build_system_prompt(agent, ctx, direction)` の3引数に集約する。
+
+```python
+@dataclass
+class PublicContext:
+    """全エージェントが知っている公開情報"""
+    today_log: list[SpeechEntry]
+    alive_players: list[str]
+    dead_players: list[str]
+    day: int
+    all_agents: list[AgentState] | None = None
+    past_votes: list[dict] | None = None
+    past_deaths: list[dict] | None = None
+
+@dataclass
+class SpeechDirection:
+    """この発言呼び出し固有の指示・制約"""
+    lang: str = "English"
+    reply_to_entry: SpeechEntry | None = None
+    intended_co: bool = False
+    wolf_partners: list[str] | None = None  # Werewolf のみ
+
+@dataclass  # または Psyche クラス（将来）
+class Psyche:
+    """エージェントの内的状態（記憶・信念・当日の思考）"""
+    memory_summary: list[str]
+    beliefs: dict[str, Belief]
+    today_thoughts: list[str]   # 当日の previous thought の蓄積（将来追加）
+```
+
+`PublicContext` は1フェーズ内で全エージェント共通なので1回構築して使い回せる。
+`today_thoughts` の追加（エージェントの previous thought をプロンプトにフィードバック）とセットで実施すると3層が揃う。
+
+`AgentState`（JSON永続化モデル）はそのまま残し、`Psyche` はプロンプト生成時に `AgentState` から構築する形にするか、`AgentState` 自体を `Psyche` にリネームするかは実装時に判断する。
 
 ---
 
