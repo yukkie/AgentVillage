@@ -22,10 +22,14 @@ def load(name: str) -> AgentState:
     return AgentState.model_validate(data)
 
 
-def load_all() -> list[AgentState]:
-    _ensure_dir()
+def load_all_from_dir(path: Path) -> list[AgentState]:
     agents = []
-    for path in sorted(STATE_DIR.glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
+    for p in sorted(path.glob("*.json")):
+        data = json.loads(p.read_text(encoding="utf-8"))
         agents.append(AgentState.model_validate(data))
     return agents
+
+
+def load_all() -> list[AgentState]:
+    _ensure_dir()
+    return load_all_from_dir(STATE_DIR)

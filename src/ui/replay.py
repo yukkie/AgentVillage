@@ -12,6 +12,7 @@ import msvcrt
 from rich.console import Console
 from rich.text import Text
 
+from src.agent import store
 from src.agent.state import AgentState
 from src.logger.event import EventType, LogEvent
 from src.ui.renderer import render_event
@@ -96,12 +97,7 @@ class ReplayPager:
         self._lines = self._build_lines()
 
     def _load_agents(self) -> list[AgentState]:
-        agents_dir = self._archive / "agents"
-        agents = []
-        for path in sorted(agents_dir.glob("*.json")):
-            data = json.loads(path.read_text(encoding="utf-8"))
-            agents.append(AgentState.model_validate(data))
-        return agents
+        return store.load_all_from_dir(self._archive / "agents")
 
     def _load_events(self) -> list[LogEvent]:
         log_file = "spectator_log.jsonl" if self._spectator else "public_log.jsonl"
