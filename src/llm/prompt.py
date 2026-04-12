@@ -1,5 +1,36 @@
+from dataclasses import dataclass, field
+
 from src.agent.state import AgentState
 from src.llm.schema import SpeechEntry
+
+
+@dataclass
+class PublicContext:
+    today_log: list[SpeechEntry]
+    alive_players: list[str]
+    dead_players: list[str]
+    day: int
+    all_agents: list[AgentState] | None = None
+    past_votes: list[dict] | None = None
+    past_deaths: list[dict] | None = None
+
+
+@dataclass
+class SpeechDirection:
+    lang: str = "English"
+    reply_to_entry: SpeechEntry | None = None
+    intended_co: bool = False
+
+
+@dataclass
+class RoleSpecificContext:
+    """Base class for role-specific runtime context."""
+    pass
+
+
+@dataclass
+class WolfSpecificContext(RoleSpecificContext):
+    wolf_partners: list[str] = field(default_factory=list)
 
 
 _SPEECH_STYLE_PROMPTS: dict[str, str] = {
@@ -109,53 +140,45 @@ def build_role_prompt(role: str, wolf_partners: list[str] | None = None) -> str:
         return f"You are a {role}. Play to win."
 
 
-def build_public_info_prompt(
-    today_log: list[SpeechEntry],
-    alive_players: list[str],
-    dead_players: list[str],
-    day: int,
-    all_agents: list[AgentState] | None = None,
-    past_votes: list[dict] | None = None,
-    past_deaths: list[dict] | None = None,
-) -> str:
+def build_public_info_prompt(ctx: PublicContext) -> str:
     """Build prompt section with public game information."""
     from collections import Counter
-    lines = [f"\n--- PUBLIC INFORMATION (Day {day}) ---"]
+    lines = [f"\n--- PUBLIC INFORMATION (Day {ctx.day}) ---"]
 
-    if all_agents:
-        role_counts = Counter(a.role for a in all_agents)
+    if ctx.all_agents:
+        role_counts = Counter(a.role for a in ctx.all_agents)
         role_summary = ", ".join(f"{count} {role}" for role, count in sorted(role_counts.items()))
         lines.append(f"Role distribution: {role_summary}")
 
     lines += [
-        f"Alive players: {', '.join(alive_players)}",
-        f"Dead players: {', '.join(dead_players) if dead_players else 'none'}",
+        f"Alive players: {', '.join(ctx.alive_players)}",
+        f"Dead players: {', '.join(ctx.dead_players) if ctx.dead_players else 'none'}",
     ]
 
-    if past_deaths:
+    if ctx.past_deaths:
         lines.append("\nPast deaths:")
-        for d in past_deaths:
+        for d in ctx.past_deaths:
             cause = "executed" if d["cause"] == "execution" else "killed by werewolves"
             lines.append(f"  Day {d['day']}: {d['name']} was {cause}")
 
-    if past_votes:
+    if ctx.past_votes:
         lines.append("\nPast votes:")
-        for v in past_votes:
+        for v in ctx.past_votes:
             vote_str = ", ".join(f"{voter}→{target}" for voter, target in v["votes"].items())
             lines.append(f"  Day {v['day']}: {vote_str}")
 
-    if all_agents:
+    if ctx.all_agents:
         claims = [
             f"{a.name} claims {a.claimed_role}"
-            for a in all_agents
+            for a in ctx.all_agents
             if a.claimed_role is not None
         ]
         if claims:
             lines.append(f"Known role claims: {', '.join(claims)}")
 
-    if today_log:
+    if ctx.today_log:
         lines.append("\nToday's discussion so far:")
-        for entry in today_log:
+        for entry in ctx.today_log:
             lines.append(f"  [{entry.speech_id}] {entry.agent}: {entry.text}")
     else:
         lines.append("\nNo discussion yet today.")
@@ -217,34 +240,27 @@ Rules:
 
 def build_system_prompt(
     agent: AgentState,
-    today_log: list[SpeechEntry],
-    alive_players: list[str],
-    dead_players: list[str],
-    day: int,
-    lang: str = "English",
-    reply_to_entry: SpeechEntry | None = None,
-    all_agents: list[AgentState] | None = None,
-    past_votes: list[dict] | None = None,
-    past_deaths: list[dict] | None = None,
-    intended_co: bool = False,
-    wolf_partners: list[str] | None = None,
+    ctx: PublicContext,
+    direction: SpeechDirection,
+    role_ctx: RoleSpecificContext | None = None,
 ) -> str:
     """Assemble full system prompt for an agent."""
+    wolf_partners = role_ctx.wolf_partners if isinstance(role_ctx, WolfSpecificContext) else None
     parts = [
         build_persona_prompt(agent),
         "\n",
         build_role_prompt(agent.role, wolf_partners),
-        build_public_info_prompt(today_log, alive_players, dead_players, day, all_agents, past_votes, past_deaths),
+        build_public_info_prompt(ctx),
         build_personal_info_prompt(agent),
     ]
-    if reply_to_entry is not None:
+    if direction.reply_to_entry is not None:
         parts.append(
             f"\n--- YOUR TURN (CHALLENGE) ---\n"
-            f"You decided to challenge speech [{reply_to_entry.speech_id}] by {reply_to_entry.agent}:\n"
-            f'  "{reply_to_entry.text}"\n'
+            f"You decided to challenge speech [{direction.reply_to_entry.speech_id}] by {direction.reply_to_entry.agent}:\n"
+            f'  "{direction.reply_to_entry.text}"\n'
             f"Respond directly to this statement in your speech."
         )
-    if intended_co:
+    if direction.intended_co:
         if agent.role == "Werewolf":
             parts.append(
                 "\n--- YOUR CO DECISION ---\n"
@@ -267,7 +283,7 @@ def build_system_prompt(
                 f"Your speech MUST explicitly state that you are the {agent.role} (e.g. 'I am the {agent.role}'). "
                 f'Set "intent.co" to "{agent.role}" in your JSON output.'
             )
-    parts.append(build_output_format_prompt(lang))
+    parts.append(build_output_format_prompt(direction.lang))
     return "\n".join(parts)
 
 

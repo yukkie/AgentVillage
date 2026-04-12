@@ -178,9 +178,10 @@ class TestDiscussionCoDecision:
         ):
             engine._run_day()
 
-        # _do_speak should be called with force_co=False (ineligible)
-        _, kwargs = call_mock.call_args
-        assert kwargs.get("intended_co") is False or kwargs.get("intended_co") == seer.intended_co
+        # _do_speak should be called with force_co=False (ineligible): direction.intended_co == False
+        args, _ = call_mock.call_args
+        direction = args[2]
+        assert direction.intended_co is False
 
     def test_villager_co_treated_as_speak(self):
         """Villager cannot CO — co judgment falls back to speak."""
@@ -200,6 +201,6 @@ class TestDiscussionCoDecision:
         ):
             engine._run_day()
 
-        # force_co must be False for Villager
-        _, kwargs = call_mock.call_args
-        assert kwargs.get("intended_co") is False
+        # force_co must be False for Villager: direction.intended_co == False
+        args, _ = call_mock.call_args
+        assert args[2].intended_co is False

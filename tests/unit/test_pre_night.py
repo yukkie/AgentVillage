@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 from src.agent.state import AgentState, Persona
 from src.engine.game import GameEngine
 from src.engine.phase import Phase
-from src.llm.prompt import build_pre_night_prompt, build_system_prompt
+from src.llm.prompt import PublicContext, SpeechDirection, build_pre_night_prompt, build_system_prompt
 from src.llm.schema import PreNightOutput
 from src.logger.event import EventType, LogEvent
 from src.logger.writer import LogWriter
@@ -71,12 +71,14 @@ class TestBuildPreNightPrompt:
 class TestBuildSystemPromptIntendedCo:
     def test_no_intended_co_section_by_default(self):
         agent = _make_agent("Gina", "Seer")
-        prompt = build_system_prompt(agent, [], ["Gina", "SQ"], [], day=1)
+        ctx = PublicContext(today_log=[], alive_players=["Gina", "SQ"], dead_players=[], day=1)
+        prompt = build_system_prompt(agent, ctx, SpeechDirection())
         assert "CO DECISION" not in prompt
 
     def test_seer_intended_co_adds_true_co_instruction(self):
         agent = _make_agent("Gina", "Seer")
-        prompt = build_system_prompt(agent, [], ["Gina", "SQ"], [], day=1, intended_co=True)
+        ctx = PublicContext(today_log=[], alive_players=["Gina", "SQ"], dead_players=[], day=1)
+        prompt = build_system_prompt(agent, ctx, SpeechDirection(intended_co=True))
         assert "CO DECISION" in prompt
         assert "Seer" in prompt
         assert "intent.co" in prompt
@@ -85,7 +87,8 @@ class TestBuildSystemPromptIntendedCo:
 
     def test_werewolf_intended_co_adds_fake_co_instruction(self):
         agent = _make_agent("SQ", "Werewolf")
-        prompt = build_system_prompt(agent, [], ["Gina", "SQ"], [], day=1, intended_co=True)
+        ctx = PublicContext(today_log=[], alive_players=["Gina", "SQ"], dead_players=[], day=1)
+        prompt = build_system_prompt(agent, ctx, SpeechDirection(intended_co=True))
         assert "CO DECISION" in prompt
         assert "Seer" in prompt  # instructs to claim Seer
         assert "intent.co" in prompt
