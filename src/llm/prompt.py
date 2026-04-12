@@ -88,6 +88,15 @@ def build_persona_prompt(agent: AgentState) -> str:
 
 def build_role_prompt(role: str, wolf_partners: list[str] | None = None) -> str:
     """Generate role-specific action guidelines."""
+    # TODO: remove this guard when Role class refactoring is done (#24)
+    if role == "Werewolf":
+        assert wolf_partners is not None, (
+            "wolf_partners must not be None for Werewolf (use [] if last surviving)"
+        )
+    else:
+        assert wolf_partners is None, (
+            f"wolf_partners must be None for non-Werewolf roles, got role={role!r}"
+        )
     if role == "Villager":
         return (
             "You are a Villager. Your goal is to identify and eliminate the Werewolf through "

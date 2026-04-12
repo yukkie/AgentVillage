@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 from src.agent.state import AgentState, Persona
 from src.engine.game import GameEngine
 from src.engine.phase import Phase
-from src.llm.prompt import PublicContext, SpeechDirection, build_pre_night_prompt, build_system_prompt
+from src.llm.prompt import PublicContext, SpeechDirection, WolfSpecificContext, build_pre_night_prompt, build_system_prompt
 from src.llm.schema import PreNightOutput
 from src.logger.event import EventType, LogEvent
 from src.logger.writer import LogWriter
@@ -88,7 +88,8 @@ class TestBuildSystemPromptIntendedCo:
     def test_werewolf_intended_co_adds_fake_co_instruction(self):
         agent = _make_agent("SQ", "Werewolf")
         ctx = PublicContext(today_log=[], alive_players=["Gina", "SQ"], dead_players=[], day=1)
-        prompt = build_system_prompt(agent, ctx, SpeechDirection(intended_co=True))
+        role_ctx = WolfSpecificContext(wolf_partners=[])
+        prompt = build_system_prompt(agent, ctx, SpeechDirection(intended_co=True), role_ctx)
         assert "CO DECISION" in prompt
         assert "Seer" in prompt  # instructs to claim Seer
         assert "intent.co" in prompt
