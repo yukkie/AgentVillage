@@ -25,6 +25,7 @@
 | yukkie/AgentVillage#29 | Persona community sharing | キャラテンプレートの共有 |
 | yukkie/AgentVillage#30 | State management DB migration | JSON → DB 移行 |
 | yukkie/AgentVillage#36 | Belief updates from agent reasoning | suspicion/trust を推理結果から更新 |
+| yukkie/AgentVillage#45 | LLM output testing with promptfoo | speech/thought/intent の品質を CI で自動検証 |
 
 ---
 
