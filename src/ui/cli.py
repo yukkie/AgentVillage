@@ -1,8 +1,8 @@
 from rich.console import Console
 from rich.panel import Panel
 
-from src.logger.event import LogEvent
-from src.agent.state import AgentState
+from src.domain.event import LogEvent
+from src.domain.agent import AgentState
 from src.ui.renderer import render_event, _ROLE_COLORS
 
 console = Console()

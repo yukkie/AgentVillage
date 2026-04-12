@@ -2,7 +2,7 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
-from src.logger.event import LogEvent
+from src.domain.event import LogEvent
 from src.logger.logger import ARCHIVE_DIR, PUBLIC_LOG, SPECTATOR_LOG, STATE_DIR
 
 

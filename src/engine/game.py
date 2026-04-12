@@ -1,18 +1,18 @@
 import random
 from typing import Callable
 
-from src.agent.state import AgentState, Belief
+from src.domain.agent import AgentState, Belief
 from src.agent import store, memory as memory_mod
 from src.engine.phase import Phase
 from src.engine.vote import tally_votes
 from src.engine.victory import check_victory
 from src.llm import client as llm_client
 from src.llm.prompt import PublicContext, SpeechDirection, WolfSpecificContext
-from src.llm.schema import AgentOutput, SpeechEntry
+from src.domain.schema import AgentOutput, SpeechEntry
 from src.action.types import Vote, Inspect, Attack
 from src.action.validator import validate
 from src.action.resolver import resolve_inspect, resolve_attack
-from src.logger.event import LogEvent, EventType
+from src.domain.event import LogEvent, EventType
 from src.logger.writer import LogWriter
 
 

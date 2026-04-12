@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from src.agent.state import AgentState, Persona
+from src.domain.agent import AgentState, Persona
 from src.agent import store
 
 

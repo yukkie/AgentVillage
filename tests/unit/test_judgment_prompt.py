@@ -1,6 +1,6 @@
-from src.agent.state import AgentState, Persona, Belief
+from src.domain.agent import AgentState, Persona, Belief
 from src.llm.prompt import build_judgment_prompt
-from src.llm.schema import SpeechEntry
+from src.domain.schema import SpeechEntry
 
 
 def _make_agent(

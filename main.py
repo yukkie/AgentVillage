@@ -26,7 +26,7 @@ if not os.environ.get("ANTHROPIC_API_KEY"):
     print("Copy .env.example to .env and add your API key.")
     sys.exit(1)
 
-from src.agent.state import AgentState, Persona, Belief  # noqa: E402
+from src.domain.agent import AgentState, Persona, Belief  # noqa: E402
 from src.agent import store  # noqa: E402
 from src.engine.game import GameEngine  # noqa: E402
 from src.logger.writer import LogWriter, archive_state  # noqa: E402

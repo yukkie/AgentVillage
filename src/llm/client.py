@@ -5,9 +5,9 @@ from collections.abc import Iterator
 
 import anthropic
 
-from src.agent.state import AgentState
+from src.domain.agent import AgentState
 from src.llm.prompt import PublicContext, SpeechDirection, RoleSpecificContext, build_system_prompt, build_judgment_prompt, build_night_action_prompt, build_pre_night_prompt, build_wolf_chat_prompt
-from src.llm.schema import AgentOutput, Intent, JudgmentOutput, PreNightOutput, SpeechEntry, WolfChatOutput
+from src.domain.schema import AgentOutput, Intent, JudgmentOutput, PreNightOutput, SpeechEntry, WolfChatOutput
 
 _client = anthropic.Anthropic()
 

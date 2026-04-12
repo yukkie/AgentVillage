@@ -13,7 +13,9 @@
 
 | # | 種別 | 優先度 | タイトル | 内容 |
 |---|---|---|---|---|
-| yukkie/AgentVillage#52 | tech-debt | 🔴 | Consolidate Pydantic domain models | Pydanticモデルを src/domain/ に集約し責務境界を明確化 |
+| yukkie/AgentVillage#59 | tech-debt | 🟢 | Replace msvcrt with cross-platform key input | replay.py の Windows 専用 msvcrt をクロスプラットフォーム対応に置換 |
+| yukkie/AgentVillage#58 | tech-debt | 🟢 | Split GameEngine phases into dedicated modules | game.py を前夜・昼・夜フェーズモジュールに分割 |
+| yukkie/AgentVillage#57 | tech-debt | 🟢 | Move initialize_agents to src/engine/setup.py | main.py からゲーム初期化ロジックを engine 層に移動 |
 | yukkie/AgentVillage#24 | enhancement | 🟡 | Role class refactoring | Strategy パターンで役職クラス化 |
 | yukkie/AgentVillage#21 | enhancement | 🟡 | Day 2+ pre-night judgment phase | 昼開始前の判断フェーズを Day 2+ にも拡張 |
 | yukkie/AgentVillage#41 | tech-debt | 🟢 | Replace role string literals | タイポ時に実行時エラーにならない。#24 のRole化で定数に集約 |
