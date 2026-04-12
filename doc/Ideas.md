@@ -13,6 +13,7 @@
 
 | # | 種別 | 優先度 | タイトル | 内容 |
 |---|---|---|---|---|
+| yukkie/AgentVillage#58 | tech-debt | 🟢 | Split GameEngine phases into dedicated modules | game.py を前夜・昼・夜フェーズモジュールに分割 |
 | yukkie/AgentVillage#57 | tech-debt | 🟢 | Move initialize_agents to src/engine/setup.py | main.py からゲーム初期化ロジックを engine 層に移動 |
 | yukkie/AgentVillage#24 | enhancement | 🟡 | Role class refactoring | Strategy パターンで役職クラス化 |
 | yukkie/AgentVillage#21 | enhancement | 🟡 | Day 2+ pre-night judgment phase | 昼開始前の判断フェーズを Day 2+ にも拡張 |
