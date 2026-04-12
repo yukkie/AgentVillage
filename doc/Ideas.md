@@ -35,7 +35,6 @@
 | # | 優先度 | タイトル |
 |---|---|---|
 | yukkie/AgentVillage#38 | 🟡 | `build_role_prompt` に guard がない |
-| yukkie/AgentVillage#40 | 🟢 | `_load_events()` の JSONL パースが重複しうる |
 | yukkie/AgentVillage#41 | 🟢 | 役職名がすべて文字列リテラル |
 | yukkie/AgentVillage#42 | 🟢 | CO 判断プロンプトの Werewolf / Madman ブロックが類似 |
 | yukkie/AgentVillage#43 | 🟢 | replay.py のコメントが WHAT 説明になっている |

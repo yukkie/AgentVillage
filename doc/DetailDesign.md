@@ -166,7 +166,9 @@ LLMの提案をゲームエンジンに渡す橋渡し役。
 | モジュール | 責務 |
 |---|---|
 | `event.py` | ログイベントの型定義（発言・投票・死亡・夜行動など） |
-| `writer.py` | `public_log.jsonl`（全員公開）と `spectator_log.jsonl`（真実込み）への書き込み |
+| `logger.py` | 共通定数（`STATE_DIR`, `PUBLIC_LOG`, `SPECTATOR_LOG`, `ARCHIVE_DIR`）を一元管理。writer/reader が参照する |
+| `writer.py` | `public_log.jsonl`（全員公開）と `spectator_log.jsonl`（真実込み）への書き込み。定数は `logger.py` から import |
+| `reader.py` | `load_events(path: Path) -> list[LogEvent]` — JSONL ログの読み込みユーティリティ。GUI・リプレイ・将来の外部ツールが共通利用する |
 | `replay.py` | ログを読んで再生する（将来のリプレイUI用） |
 
 #### event.py — EventType 一覧

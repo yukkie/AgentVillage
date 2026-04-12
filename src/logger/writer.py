@@ -3,11 +3,7 @@ from datetime import datetime
 from pathlib import Path
 
 from src.logger.event import LogEvent
-
-STATE_DIR = Path("state")
-PUBLIC_LOG = STATE_DIR / "public_log.jsonl"
-SPECTATOR_LOG = STATE_DIR / "spectator_log.jsonl"
-ARCHIVE_DIR = Path("state_archive")
+from src.logger.logger import ARCHIVE_DIR, PUBLIC_LOG, SPECTATOR_LOG, STATE_DIR
 
 
 def archive_state() -> Path | None:
