@@ -34,9 +34,7 @@
 
 | # | 優先度 | タイトル |
 |---|---|---|
-| yukkie/AgentVillage#37 | 🟡 | `build_system_prompt` のパラメータ過多 |
 | yukkie/AgentVillage#38 | 🟡 | `build_role_prompt` に guard がない |
-| yukkie/AgentVillage#39 | 🟡 | `_load_agents()` が `store.load_all()` と重複 |
 | yukkie/AgentVillage#40 | 🟢 | `_load_events()` の JSONL パースが重複しうる |
 | yukkie/AgentVillage#41 | 🟢 | 役職名がすべて文字列リテラル |
 | yukkie/AgentVillage#42 | 🟢 | CO 判断プロンプトの Werewolf / Madman ブロックが類似 |
