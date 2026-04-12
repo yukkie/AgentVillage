@@ -38,6 +38,7 @@
 | yukkie/AgentVillage#41 | 🟢 | 役職名がすべて文字列リテラル |
 | yukkie/AgentVillage#42 | 🟢 | CO 判断プロンプトの Werewolf / Madman ブロックが類似 |
 | yukkie/AgentVillage#43 | 🟢 | replay.py のコメントが WHAT 説明になっている |
+| yukkie/AgentVillage#52 | 🟢 | Pydanticドメインモデルを src/domain/ に集約 |
 
 ---
 
