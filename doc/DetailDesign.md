@@ -91,8 +91,41 @@
 | モジュール | 責務 |
 |---|---|
 | `client.py` | anthropic SDKのラッパー。APIコールと `AgentOutput` へのパース |
-| `prompt.py` | 性格プロンプト・役職プロンプトを組み合わせてシステムプロンプトを生成。`build_role_prompt` が `wolf_partners` を受け取り、人狼役職のプロンプトに仲間情報を追記する。`wolf_partners` が空リストの場合は「最後の人狼」として通知する |
+| `prompt.py` | 性格プロンプト・役職プロンプトを組み合わせてシステムプロンプトを生成。`build_system_prompt(agent, ctx, direction, role_ctx)` の4引数シグネチャ。公開情報は `PublicContext`、発言制御は `SpeechDirection`、役職固有情報は `RoleSpecificContext` サブクラス（現在は `WolfSpecificContext` のみ）で渡す |
 | `schema.py` | `AgentOutput` のPydanticモデル定義（`thought`, `speech`, `intent`, `memory_update`） |
+
+### prompt.py — コンテキスト dataclass
+
+```python
+@dataclass
+class PublicContext:
+    today_log: list[SpeechEntry]   # 今日の発言ログ
+    alive_players: list[str]
+    dead_players: list[str]
+    day: int
+    all_agents: list[AgentState] | None = None   # 役職分布・CO状況
+    past_votes: list[dict] | None = None
+    past_deaths: list[dict] | None = None
+
+@dataclass
+class SpeechDirection:
+    lang: str = "English"
+    reply_to_entry: SpeechEntry | None = None   # challenge 対象
+    intended_co: bool = False
+
+@dataclass
+class RoleSpecificContext:
+    """役職固有コンテキストの基底クラス"""
+    pass
+
+@dataclass
+class WolfSpecificContext(RoleSpecificContext):
+    wolf_partners: list[str]   # 生存中の仲間狼の名前リスト
+```
+
+- `PublicContext` は1フェーズ内で全エージェント共通のため1回構築して使い回せる
+- `SpeechDirection` はエージェントごとに異なる（reply_to, co フラグ）
+- `RoleSpecificContext` サブクラスは役職固有のランタイム情報を型安全に渡す手段。Seer/Knight/Medium 向けサブクラスは Issue #36 実装時に追加予定
 
 ### AgentOutput スキーマ
 

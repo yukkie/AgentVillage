@@ -6,7 +6,7 @@ from collections.abc import Iterator
 import anthropic
 
 from src.agent.state import AgentState
-from src.llm.prompt import build_system_prompt, build_judgment_prompt, build_night_action_prompt, build_pre_night_prompt, build_wolf_chat_prompt
+from src.llm.prompt import PublicContext, SpeechDirection, RoleSpecificContext, build_system_prompt, build_judgment_prompt, build_night_action_prompt, build_pre_night_prompt, build_wolf_chat_prompt
 from src.llm.schema import AgentOutput, Intent, JudgmentOutput, PreNightOutput, SpeechEntry, WolfChatOutput
 
 _client = anthropic.Anthropic()
@@ -61,20 +61,12 @@ def _extract_json(text: str) -> str:
 
 def call(
     agent: AgentState,
-    today_log: list[SpeechEntry],
-    alive_players: list[str],
-    dead_players: list[str],
-    day: int = 1,
-    lang: str = "English",
-    reply_to_entry: SpeechEntry | None = None,
-    all_agents: list[AgentState] | None = None,
-    past_votes: list[dict] | None = None,
-    past_deaths: list[dict] | None = None,
-    intended_co: bool = False,
-    wolf_partners: list[str] | None = None,
+    ctx: PublicContext,
+    direction: SpeechDirection,
+    role_ctx: RoleSpecificContext | None = None,
 ) -> AgentOutput:
     """Call LLM for day-phase speech and return structured AgentOutput."""
-    system_prompt = build_system_prompt(agent, today_log, alive_players, dead_players, day, lang, reply_to_entry, all_agents, past_votes, past_deaths, intended_co, wolf_partners)
+    system_prompt = build_system_prompt(agent, ctx, direction, role_ctx)
     raw = ""
     try:
         message = _client.messages.create(

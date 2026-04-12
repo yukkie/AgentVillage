@@ -7,6 +7,7 @@ from src.engine.phase import Phase
 from src.engine.vote import tally_votes
 from src.engine.victory import check_victory
 from src.llm import client as llm_client
+from src.llm.prompt import PublicContext, SpeechDirection, WolfSpecificContext
 from src.llm.schema import AgentOutput, SpeechEntry
 from src.action.types import Vote, Inspect, Attack
 from src.action.validator import validate
@@ -145,25 +146,29 @@ class GameEngine:
         force_co=True injects the CO instruction into the speech prompt without mutating
         agent.intended_co. Used when the agent chose "co" in the discussion judgment phase.
         """
-        wolf_partners = (
-            [a.name for a in self._alive_agents() if a.role == "Werewolf" and a.name != agent.name]
-            if agent.role == "Werewolf"
-            else None
-        )
-        output = llm_client.call(
-            agent,
-            list(self.today_log),
-            self._alive_names(),
-            self._dead_names(),
-            self.day,
-            self.lang,
-            reply_to_entry=reply_to_entry,
+        ctx = PublicContext(
+            today_log=list(self.today_log),
+            alive_players=self._alive_names(),
+            dead_players=self._dead_names(),
+            day=self.day,
             all_agents=self.agents,
             past_votes=self._past_votes,
             past_deaths=self._past_deaths,
-            intended_co=agent.intended_co or force_co,
-            wolf_partners=wolf_partners,
         )
+        direction = SpeechDirection(
+            lang=self.lang,
+            reply_to_entry=reply_to_entry,
+            intended_co=agent.intended_co or force_co,
+        )
+        # TODO(#36): Add SeerSpecificContext / KnightSpecificContext / MediumSpecificContext
+        role_ctx = (
+            WolfSpecificContext(
+                wolf_partners=[a.name for a in self._alive_agents() if a.role == "Werewolf" and a.name != agent.name]
+            )
+            if agent.role == "Werewolf"
+            else None
+        )
+        output = llm_client.call(agent, ctx, direction, role_ctx)
         self._day_outputs[agent.name] = output
 
         # Safety net: enforce pre-night CO decision on the opening speech.
