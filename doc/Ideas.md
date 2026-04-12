@@ -6,7 +6,6 @@
 ゲームルール・機能仕様 → [Spec.md](Spec.md)
 アーキテクチャ・コンポーネント設計 → [Architecture.md](Architecture.md)
 モジュール詳細設計 → [DetailDesign.md](DetailDesign.md)
-技術的負債 → [TechnicalDebt.md](TechnicalDebt.md)
 
 ---
 
@@ -25,6 +24,22 @@
 | yukkie/AgentVillage#28 | Human player participation mode | 人間がエージェントとして参加 |
 | yukkie/AgentVillage#29 | Persona community sharing | キャラテンプレートの共有 |
 | yukkie/AgentVillage#30 | State management DB migration | JSON → DB 移行 |
+| yukkie/AgentVillage#36 | Belief updates from agent reasoning | suspicion/trust を推理結果から更新 |
+| yukkie/AgentVillage#45 | LLM output testing with promptfoo | speech/thought/intent の品質を CI で自動検証 |
+
+---
+
+## GitHub Issues（技術的負債 `tech-debt`）
+
+| # | 優先度 | タイトル |
+|---|---|---|
+| yukkie/AgentVillage#37 | 🟡 | `build_system_prompt` のパラメータ過多 |
+| yukkie/AgentVillage#38 | 🟡 | `build_role_prompt` に guard がない |
+| yukkie/AgentVillage#39 | 🟡 | `_load_agents()` が `store.load_all()` と重複 |
+| yukkie/AgentVillage#40 | 🟢 | `_load_events()` の JSONL パースが重複しうる |
+| yukkie/AgentVillage#41 | 🟢 | 役職名がすべて文字列リテラル |
+| yukkie/AgentVillage#42 | 🟢 | CO 判断プロンプトの Werewolf / Madman ブロックが類似 |
+| yukkie/AgentVillage#43 | 🟢 | replay.py のコメントが WHAT 説明になっている |
 
 ---
 
