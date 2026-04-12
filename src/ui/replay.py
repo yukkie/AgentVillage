@@ -1,7 +1,6 @@
 """Replay mode: archive selector UI + pager for JSONL log files."""
 from __future__ import annotations
 
-import json
 import os
 import shutil
 import sys
@@ -15,6 +14,7 @@ from rich.text import Text
 from src.agent import store
 from src.agent.state import AgentState
 from src.logger.event import EventType, LogEvent
+from src.logger.reader import load_events
 from src.ui.renderer import render_event
 
 ARCHIVE_DIR = Path("state_archive")
@@ -101,15 +101,7 @@ class ReplayPager:
 
     def _load_events(self) -> list[LogEvent]:
         log_file = "spectator_log.jsonl" if self._spectator else "public_log.jsonl"
-        path = self._archive / log_file
-        if not path.exists():
-            return []
-        events = []
-        for line in path.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if line:
-                events.append(LogEvent.model_validate(json.loads(line)))
-        return events
+        return load_events(self._archive / log_file)
 
     def _build_lines(self) -> list[str]:
         width = shutil.get_terminal_size().columns
