@@ -11,34 +11,25 @@
 
 ## GitHub Issues（未実装タスク）
 
-| # | タイトル | 内容 |
-|---|---|---|
-| yukkie/AgentVillage#21 | Day 2+ pre-night judgment phase | 昼開始前の判断フェーズを Day 2+ にも拡張 |
-| ~~yukkie/AgentVillage#22~~ | ~~Night wolf chat + 7-player config~~ | ~~実装済みのためクローズ~~ |
-| yukkie/AgentVillage#33 | Wolf chat improvements | 早期終了・偽CO協議・テスト |
-| yukkie/AgentVillage#23 | Auto-summarize memory_summary | 記憶が長くなったら LLM で自動要約 |
-| yukkie/AgentVillage#24 | Role class refactoring | Strategy パターンで役職クラス化 |
-| yukkie/AgentVillage#25 | Skill memory (cross-game learning) | ゲームをまたいで引き継がれる戦略記憶 |
-| yukkie/AgentVillage#26 | Thought log display mode switching | 思考ログの表示モード切り替え |
-| yukkie/AgentVillage#27 | Web / mobile app | FastAPI + WebSocket + React |
-| yukkie/AgentVillage#28 | Human player participation mode | 人間がエージェントとして参加 |
-| yukkie/AgentVillage#29 | Persona community sharing | キャラテンプレートの共有 |
-| yukkie/AgentVillage#30 | State management DB migration | JSON → DB 移行 |
-| yukkie/AgentVillage#36 | Belief updates from agent reasoning | suspicion/trust を推理結果から更新 |
-| yukkie/AgentVillage#45 | LLM output testing with promptfoo | speech/thought/intent の品質を CI で自動検証 |
-| yukkie/AgentVillage#47 | ❌ Reasoning field for Vote/Guard/Divination/Judgment | 各アクションに reasoning を追加し spectator ログ・memory_update に記録 |
-
----
-
-## GitHub Issues（技術的負債 `tech-debt`）
-
-| # | 優先度 | タイトル |
-|---|---|---|
-| yukkie/AgentVillage#38 | 🟡 | `build_role_prompt` に guard がない |
-| yukkie/AgentVillage#41 | 🟢 | 役職名がすべて文字列リテラル |
-| yukkie/AgentVillage#42 | 🟢 | CO 判断プロンプトの Werewolf / Madman ブロックが類似 |
-| yukkie/AgentVillage#43 | 🟢 | replay.py のコメントが WHAT 説明になっている |
-| yukkie/AgentVillage#52 | 🟢 | Pydanticドメインモデルを src/domain/ に集約 |
+| # | 種別 | 優先度 | タイトル | 内容 |
+|---|---|---|---|---|
+| yukkie/AgentVillage#52 | tech-debt | 🔴 | Consolidate Pydantic domain models | Pydanticモデルを src/domain/ に集約し責務境界を明確化 |
+| yukkie/AgentVillage#43 | tech-debt | 🔴 | replay.py: remove WHAT comments | WHY コメントのみ残し WHAT コメントは削除 |
+| yukkie/AgentVillage#24 | enhancement | 🟡 | Role class refactoring | Strategy パターンで役職クラス化 |
+| yukkie/AgentVillage#21 | enhancement | 🟡 | Day 2+ pre-night judgment phase | 昼開始前の判断フェーズを Day 2+ にも拡張 |
+| yukkie/AgentVillage#41 | tech-debt | 🟢 | Replace role string literals | タイポ時に実行時エラーにならない。#24 のRole化で定数に集約 |
+| yukkie/AgentVillage#42 | tech-debt | 🟢 | Merge similar CO prompt blocks | Werewolf/Madman の類似ブロックを統合。#24 の副産物として解消 |
+| yukkie/AgentVillage#33 | enhancement | 🟢 | Wolf chat improvements | 早期終了・偽CO協議・テスト |
+| yukkie/AgentVillage#36 | enhancement | 🟢 | Belief updates from agent reasoning | suspicion/trust を推理結果から更新 |
+| yukkie/AgentVillage#47 | enhancement | 🟢 | Reasoning field for Vote/Guard/Divination/Judgment | 各アクションに reasoning を追加し spectator ログ・memory_update に記録 |
+| yukkie/AgentVillage#23 | enhancement | 🟢 | Auto-summarize memory_summary | 記憶が長くなったら LLM で自動要約 |
+| yukkie/AgentVillage#45 | enhancement | 🟢 | LLM output testing with promptfoo | speech/thought/intent の品質を CI で自動検証 |
+| yukkie/AgentVillage#26 | enhancement | 🟢 | Thought log display mode switching | 思考ログの表示モード切り替え |
+| yukkie/AgentVillage#25 | enhancement | 🟢 | Skill memory (cross-game learning) | ゲームをまたいで引き継がれる戦略記憶 |
+| yukkie/AgentVillage#28 | enhancement | 🟢 | Human player participation mode | 人間がエージェントとして参加 |
+| yukkie/AgentVillage#29 | enhancement | 🟢 | Persona community sharing | キャラテンプレートの共有 |
+| yukkie/AgentVillage#27 | enhancement | 🟢 | Web / mobile app | FastAPI + WebSocket + React |
+| yukkie/AgentVillage#30 | enhancement | 🟢 | State management DB migration | JSON → DB 移行 |
 
 ---
 
