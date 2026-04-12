@@ -115,7 +115,6 @@ class ReplayPager:
 
         all_lines: list[str] = []
         for event in events:
-            # Update claimed_role in real time when a CO is announced.
             # Use event.claimed_role (structured field) rather than parsing content text.
             if event.event_type == EventType.CO_ANNOUNCEMENT and event.agent and event.claimed_role:
                 if event.agent in dynamic_agents:
