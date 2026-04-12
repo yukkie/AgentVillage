@@ -47,13 +47,24 @@
 
 ---
 
+## src/domain/ — Pydanticドメインモデル
+
+ゲーム仕様依存の型定義を集約。LLMもIOロジックも持たない。
+
+| モジュール | 責務 |
+|---|---|
+| `agent.py` | `AgentState`, `Belief`, `Persona` のPydanticモデル定義 |
+| `event.py` | `EventType`, `LogEvent` のPydanticモデル定義 |
+| `schema.py` | `AgentOutput`, `SpeechEntry`, `JudgmentOutput` 等のPydanticモデル定義 |
+
+---
+
 ## src/agent/ — エージェント状態・記憶・信念
 
 エージェントの「内部状態」を管理。LLMを呼ばない。
 
 | モジュール | 責務 |
 |---|---|
-| `state.py` | Pydanticモデル定義（`AgentState`, `Beliefs`, `Persona`） |
 | `memory.py` | 短期・中期・長期記憶の更新ロジック |
 | `belief.py` | 疑い・信頼スコアの更新（`memory_update` を受けて反映） |
 | `store.py` | JSONファイルへのread/write |
@@ -92,7 +103,8 @@
 |---|---|
 | `client.py` | anthropic SDKのラッパー。APIコールと `AgentOutput` へのパース |
 | `prompt.py` | 性格プロンプト・役職プロンプトを組み合わせてシステムプロンプトを生成。`build_system_prompt(agent, ctx, direction, role_ctx)` の4引数シグネチャ。公開情報は `PublicContext`、発言制御は `SpeechDirection`、役職固有情報は `RoleSpecificContext` サブクラス（現在は `WolfSpecificContext` のみ）で渡す |
-| `schema.py` | `AgentOutput` のPydanticモデル定義（`thought`, `speech`, `intent`, `memory_update`） |
+
+Pydanticモデル（`AgentOutput`, `SpeechEntry` 等）は `src/domain/schema.py` に移動。
 
 ### prompt.py — コンテキスト dataclass
 
@@ -165,11 +177,12 @@ LLMの提案をゲームエンジンに渡す橋渡し役。
 
 | モジュール | 責務 |
 |---|---|
-| `event.py` | ログイベントの型定義（発言・投票・死亡・夜行動など） |
 | `logger.py` | 共通定数（`STATE_DIR`, `PUBLIC_LOG`, `SPECTATOR_LOG`, `ARCHIVE_DIR`）を一元管理。writer/reader が参照する |
 | `writer.py` | `public_log.jsonl`（全員公開）と `spectator_log.jsonl`（真実込み）への書き込み。定数は `logger.py` から import |
 | `reader.py` | `load_events(path: Path) -> list[LogEvent]` — JSONL ログの読み込みユーティリティ。GUI・リプレイ・将来の外部ツールが共通利用する |
 | `replay.py` | ログを読んで再生する（将来のリプレイUI用） |
+
+`EventType`, `LogEvent` のPydanticモデルは `src/domain/event.py` に移動。
 
 #### event.py — EventType 一覧
 

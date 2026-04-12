@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from src.agent.state import AgentState
+from src.domain.agent import AgentState
 
 STATE_DIR = Path("state/agents")
 

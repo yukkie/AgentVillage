@@ -4,11 +4,11 @@ LLM呼び出し (llm_client.call / call_judgment_parallel) はモック。
 """
 from unittest.mock import MagicMock, patch
 
-from src.agent.state import AgentState, Persona
+from src.domain.agent import AgentState, Persona
 from src.engine.game import GameEngine
 from src.engine.phase import Phase
-from src.llm.schema import AgentOutput, Intent, JudgmentOutput
-from src.logger.event import EventType, LogEvent
+from src.domain.schema import AgentOutput, Intent, JudgmentOutput
+from src.domain.event import EventType, LogEvent
 from src.logger.writer import LogWriter
 
 

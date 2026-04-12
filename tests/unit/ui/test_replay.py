@@ -11,8 +11,8 @@ from unittest.mock import patch
 
 import pytest
 
-from src.agent.state import AgentState, Persona
-from src.logger.event import EventType, LogEvent
+from src.domain.agent import AgentState, Persona
+from src.domain.event import EventType, LogEvent
 from src.ui.replay import ArchiveSelector, ReplayPager, run_replay
 
 

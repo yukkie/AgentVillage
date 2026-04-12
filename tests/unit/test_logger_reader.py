@@ -1,7 +1,7 @@
 """Unit tests for src/logger/reader.py — load_events()."""
 from pathlib import Path
 
-from src.logger.event import EventType, LogEvent
+from src.domain.event import EventType, LogEvent
 from src.logger.reader import load_events
 
 

@@ -12,8 +12,8 @@ from rich.console import Console
 from rich.text import Text
 
 from src.agent import store
-from src.agent.state import AgentState
-from src.logger.event import EventType, LogEvent
+from src.domain.agent import AgentState
+from src.domain.event import EventType, LogEvent
 from src.logger.reader import load_events
 from src.ui.renderer import render_event
 

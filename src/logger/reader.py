@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 
-from src.logger.event import LogEvent
+from src.domain.event import LogEvent
 
 
 def load_events(path: Path) -> list[LogEvent]:

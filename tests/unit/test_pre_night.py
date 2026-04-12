@@ -7,12 +7,12 @@
 from unittest.mock import MagicMock, patch
 
 
-from src.agent.state import AgentState, Persona
+from src.domain.agent import AgentState, Persona
 from src.engine.game import GameEngine
 from src.engine.phase import Phase
 from src.llm.prompt import PublicContext, SpeechDirection, WolfSpecificContext, build_pre_night_prompt, build_system_prompt
-from src.llm.schema import PreNightOutput
-from src.logger.event import EventType, LogEvent
+from src.domain.schema import PreNightOutput
+from src.domain.event import EventType, LogEvent
 from src.logger.writer import LogWriter
 
 

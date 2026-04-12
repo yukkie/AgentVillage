@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
-from src.agent.state import AgentState
-from src.llm.schema import SpeechEntry
+from src.domain.agent import AgentState
+from src.domain.schema import SpeechEntry
 
 
 @dataclass

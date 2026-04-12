@@ -1,5 +1,5 @@
 from src.action.types import Vote, Inspect, Attack, CO
-from src.agent.state import AgentState
+from src.domain.agent import AgentState
 
 ActionType = Vote | Inspect | Attack | CO
 

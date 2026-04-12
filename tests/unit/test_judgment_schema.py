@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from src.llm.schema import JudgmentOutput, SpeechEntry
+from src.domain.schema import JudgmentOutput, SpeechEntry
 
 
 class TestSpeechEntry:

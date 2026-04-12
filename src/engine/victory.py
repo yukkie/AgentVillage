@@ -1,4 +1,4 @@
-from src.agent.state import AgentState
+from src.domain.agent import AgentState
 
 
 def check_victory(agents: list[AgentState]) -> str | None:

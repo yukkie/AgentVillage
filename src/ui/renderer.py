@@ -1,8 +1,8 @@
 from rich.text import Text
 from rich.console import Console
 
-from src.logger.event import LogEvent, EventType
-from src.agent.state import AgentState
+from src.domain.event import LogEvent, EventType
+from src.domain.agent import AgentState
 
 console = Console()
 

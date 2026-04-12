@@ -17,6 +17,7 @@ AgentVillage/
 │   ├── Ideas.md                # アイデア・未決事項
 │   └── Task.md                 # タスク管理
 ├── src/
+│   ├── domain/                 # Pydanticドメインモデル定義（ゲーム仕様依存の型）
 │   ├── engine/                 # ゲームエンジン（決定論的）
 │   ├── agent/                  # エージェント状態・記憶・信念モデル
 │   ├── llm/                    # LLMクライアント・プロンプト生成
@@ -78,7 +79,7 @@ LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検
 
 - エージェントの状態（役職・信念・記憶・人格パラメータ）を管理
 - 状態は `state/agents/{name}.json` に永続化
-- Pydanticモデルでスキーマを定義
+- Pydanticモデルは `src/domain/agent.py` で定義（`AgentState`, `Belief`, `Persona`）
 
 #### Persona フィールド
 
