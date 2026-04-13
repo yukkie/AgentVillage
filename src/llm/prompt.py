@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 
 from src.domain.agent import AgentState
+from src.domain.roles import get_role
 from src.domain.schema import SpeechEntry
 
 
@@ -87,66 +88,15 @@ def build_persona_prompt(agent: AgentState) -> str:
 
 
 def build_role_prompt(role: str, wolf_partners: list[str] | None = None) -> str:
-    """Generate role-specific action guidelines."""
-    # TODO: remove this guard when Role class refactoring is done (#24)
-    if role == "Werewolf":
-        assert wolf_partners is not None, (
-            "wolf_partners must not be None for Werewolf (use [] if last surviving)"
-        )
-    else:
+    """Generate role-specific action guidelines.
+
+    Delegates to the Role class (Strategy pattern). See src/domain/roles/.
+    """
+    if role != "Werewolf":
         assert wolf_partners is None, (
             f"wolf_partners must be None for non-Werewolf roles, got role={role!r}"
         )
-    if role == "Villager":
-        return (
-            "You are a Villager. Your goal is to identify and eliminate the Werewolf through "
-            "discussion and voting. Observe others carefully, share your suspicions, and vote "
-            "strategically. You have no special night actions."
-        )
-    elif role == "Werewolf":
-        base = (
-            "You are a Werewolf. Your goal is to eliminate Villagers until Werewolves equal or "
-            "outnumber them. During the day, blend in and deflect suspicion onto others. "
-            "Lie convincingly. At night, you attack a target chosen by the system."
-        )
-        if wolf_partners:
-            base += f"\nYour wolf partner(s): {', '.join(wolf_partners)}. Keep this secret."
-        elif wolf_partners is not None:
-            base += "\nYou are the last surviving Werewolf. You must act alone."
-        return base
-    elif role == "Seer":
-        return (
-            "You are the Seer. Your goal is to help Villagers identify the Werewolf. "
-            "Each night you can inspect a player and learn their alignment (Werewolf or Not Werewolf). "
-            "Use your knowledge wisely — revealing yourself as Seer makes you a target for the Werewolf. "
-            "Share inspection results strategically."
-        )
-    elif role == "Knight":
-        return (
-            "You are the Knight. Your goal is to protect Villagers from the Werewolf's nightly attack. "
-            "Each night you choose one player to guard; if the Werewolf attacks them, the attack is blocked. "
-            "You cannot guard yourself. Revealing yourself as Knight makes you a priority target, "
-            "so time your CO carefully."
-        )
-    elif role == "Medium":
-        return (
-            "You are the Medium. Your goal is to help Villagers identify the Werewolf through the executed. "
-            "Each day, after the village executes someone, you sense their alignment "
-            "(Werewolf or Not Werewolf) — this information is added to your memory automatically. "
-            "You have no night action. Use your accumulated knowledge to guide the vote. "
-            "Revealing yourself as Medium makes you a target, so time your CO carefully."
-        )
-    elif role == "Madman":
-        return (
-            "You are the Madman. You are secretly on the Werewolf side, but you do NOT know who the "
-            "Werewolves are, and they do not know you. Your goal is to help the Werewolves win — "
-            "confuse the village, protect the Werewolves, and vote against Villagers. "
-            "NEVER reveal that you are the Madman, unless Werewolves + you already form a majority "
-            "of alive players — in that case, openly declaring 'I am the Madman' can clinch victory. "
-            "Otherwise, pose as a regular Villager or fake-CO as a Villager-side role to sow confusion."
-        )
-    else:
-        return f"You are a {role}. Play to win."
+    return get_role(role).role_prompt(wolf_partners)
 
 
 def build_public_info_prompt(ctx: PublicContext) -> str:
@@ -270,28 +220,9 @@ def build_system_prompt(
             f"Respond directly to this statement in your speech."
         )
     if direction.intended_co:
-        if agent.role == "Werewolf":
-            parts.append(
-                "\n--- YOUR CO DECISION ---\n"
-                "You have decided to publicly claim to be the Seer to confuse the village. "
-                "Your speech MUST explicitly state that you are the Seer (e.g. 'I am the Seer'). "
-                'Set "intent.co" to "Seer" in your JSON output.'
-            )
-        elif agent.role == "Madman":
-            parts.append(
-                "\n--- YOUR CO DECISION ---\n"
-                "You have decided to publicly claim to be a Villager-side role to mislead the village. "
-                "Choose to declare yourself as the Seer or the Medium. "
-                "Your speech MUST explicitly state your chosen role (e.g. 'I am the Seer'). "
-                'Set "intent.co" to your chosen role (e.g. "Seer" or "Medium") in your JSON output.'
-            )
-        else:
-            parts.append(
-                f"\n--- YOUR CO DECISION ---\n"
-                f"You have decided to publicly reveal your role. "
-                f"Your speech MUST explicitly state that you are the {agent.role} (e.g. 'I am the {agent.role}'). "
-                f'Set "intent.co" to "{agent.role}" in your JSON output.'
-            )
+        co_text = get_role(agent.role).co_prompt()
+        if co_text:
+            parts.append(co_text)
     parts.append(build_output_format_prompt(direction.lang))
     return "\n".join(parts)
 
@@ -309,28 +240,7 @@ def build_pre_night_prompt(
     Madman decides whether to falsely claim to be a Villager-side role.
     All choices are encoded as "co" | "wait".
     """
-    if agent.role == "Werewolf":
-        decision_desc = (
-            "Will you publicly claim to be the Seer in your Day 1 opening speech "
-            "to confuse the village and neutralize the real Seer?\n"
-            '- "co": you will claim to be the Seer in your opening speech\n'
-            '- "wait": you will stay silent about your role for now'
-        )
-    elif agent.role == "Madman":
-        decision_desc = (
-            "You are the Madman. You are secretly on the Werewolf side, "
-            "but neither the Werewolves nor the village know this.\n"
-            "Will you publicly claim to be a Villager-side role (Seer or Medium) "
-            "in your Day 1 opening speech to mislead the village and help the Werewolves?\n"
-            '- "co": you will claim to be a Villager-side role in your opening speech\n'
-            '- "wait": you will appear as a regular Villager for now'
-        )
-    else:
-        decision_desc = (
-            f"Will you reveal your true role as {agent.role} in your Day 1 opening speech?\n"
-            f'- "co": you will publicly declare your role as {agent.role} in your opening speech\n'
-            f'- "wait": you will not reveal your role yet'
-        )
+    decision_desc = get_role(agent.role).pre_night_prompt()
 
     lines = [
         f"You are {agent.name}, a player in a social deduction game (Werewolf/Mafia).",
@@ -366,38 +276,7 @@ def build_pre_night_prompt(
 
 def _build_co_strategy_hint(role: str) -> str:
     """Return a role-specific strategic hint for the discussion-phase CO decision."""
-    if role == "Seer":
-        return (
-            '  "co" strategy hint: If no other Seer has claimed yet, a solo CO earns '
-            "strong village trust. If you hold a black (Werewolf) result, revealing it "
-            "now is a major opportunity to drive the vote."
-        )
-    if role == "Medium":
-        return (
-            '  "co" strategy hint: A solo Medium CO is usually trusted. The payoff is '
-            "highest right after a Werewolf was executed — announce the result to prove "
-            "your role."
-        )
-    if role == "Knight":
-        return (
-            '  "co" strategy hint: Late-game CO can help organize votes by disclosing '
-            "your guard history, but you become a prime night-attack target. Use it "
-            "when the trade-off favors the village."
-        )
-    if role == "Werewolf":
-        return (
-            '  "co" strategy hint: If no real Seer or Medium has claimed yet, a fake '
-            "solo CO (as Seer) lets you steal a key village role. When multiple COs are "
-            "already in play and the village is confused, a fake CO deepens the chaos."
-        )
-    if role == "Madman":
-        return (
-            '  "co" strategy hint: If Werewolves + Madman already outnumber the '
-            "remaining villagers, openly declaring yourself as the Madman seals the "
-            "Werewolf victory. Otherwise, a fake Seer or Medium CO is usually the best "
-            "way to disrupt the village."
-        )
-    return ""
+    return get_role(role).co_strategy_hint()
 
 
 def build_judgment_prompt(
@@ -495,23 +374,4 @@ Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
 
 def build_night_action_prompt(agent: AgentState, alive_players: list[str], context: str) -> str:
     """Build prompt for night action (attack, inspect, or guard)."""
-    if agent.role == "Werewolf":
-        action_desc = "choose one player to ATTACK (eliminate) tonight"
-        instruction = "You must pick a non-Werewolf target. Respond with ONLY the player's exact name, nothing else."
-    elif agent.role == "Seer":
-        action_desc = "choose one player to INSPECT (learn their alignment) tonight"
-        instruction = "Pick a player you want to investigate. Respond with ONLY the player's exact name, nothing else."
-    elif agent.role == "Knight":
-        action_desc = "choose one player to GUARD (protect from werewolf attack) tonight"
-        instruction = "Pick a player you want to protect. You cannot guard yourself. Respond with ONLY the player's exact name, nothing else."
-    else:
-        return ""
-
-    candidates = [p for p in alive_players if p != agent.name]
-    return (
-        f"NIGHT ACTION — {agent.name} ({agent.role})\n"
-        f"Context: {context}\n"
-        f"Alive players (excluding you): {', '.join(candidates)}\n"
-        f"Your task: {action_desc}.\n"
-        f"{instruction}"
-    )
+    return get_role(agent.role).night_action_prompt(agent.name, alive_players, context)
