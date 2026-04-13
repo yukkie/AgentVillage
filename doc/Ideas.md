@@ -18,7 +18,6 @@
 | yukkie/AgentVillage#58 | tech-debt | 🟢 | Split GameEngine phases into dedicated modules | game.py を前夜・昼・夜フェーズモジュールに分割 |
 | yukkie/AgentVillage#21 | enhancement | 🟡 | Day 2+ pre-night judgment phase | 昼開始前の判断フェーズを Day 2+ にも拡張 |
 | yukkie/AgentVillage#41 | tech-debt | 🟢 | Replace role string literals | タイポ時に実行時エラーにならない。#24 のRole化で定数に集約 |
-| yukkie/AgentVillage#42 | tech-debt | 🟢 | Merge similar CO prompt blocks | Werewolf/Madman の類似ブロックを統合。#24 の副産物として解消 |
 | yukkie/AgentVillage#33 | enhancement | 🟢 | Wolf chat improvements | 早期終了・偽CO協議・テスト |
 | yukkie/AgentVillage#36 | enhancement | 🟢 | Belief updates from agent reasoning | suspicion/trust を推理結果から更新 |
 | yukkie/AgentVillage#47 | enhancement | 🟢 | Reasoning field for Vote/Guard/Divination/Judgment | 各アクションに reasoning を追加し spectator ログ・memory_update に記録 |
