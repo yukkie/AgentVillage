@@ -13,6 +13,7 @@
 
 | # | 種別 | 優先度 | タイトル | 内容 |
 |---|---|---|---|---|
+| yukkie/AgentVillage#61 | tech-debt | 🟢 | Move common prompt content to Role ABC default methods | prompt.py のコンテンツ文字列を Role ABC のデフォルトメソッドに移動し、prompt.py をアセンブルのみに |
 | yukkie/AgentVillage#59 | tech-debt | 🟢 | Replace msvcrt with cross-platform key input | replay.py の Windows 専用 msvcrt をクロスプラットフォーム対応に置換 |
 | yukkie/AgentVillage#58 | tech-debt | 🟢 | Split GameEngine phases into dedicated modules | game.py を前夜・昼・夜フェーズモジュールに分割 |
 | yukkie/AgentVillage#57 | tech-debt | 🟢 | Move initialize_agents to src/engine/setup.py | main.py からゲーム初期化ロジックを engine 層に移動 |
