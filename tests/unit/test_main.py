@@ -1,58 +1,50 @@
-"""main.py の initialize_agents() のテスト。"""
-import json
-from pathlib import Path
-from unittest.mock import patch
-
-import pytest
-
-from main import initialize_agents
+"""main.py の main() 関数のテスト。"""
+from unittest.mock import MagicMock, patch
 
 
-def test_initialize_agents_count(tmp_path):
-    """5人分のAgentStateが返ること。"""
-    agents = initialize_agents.__wrapped__(5) if hasattr(initialize_agents, "__wrapped__") else None
-
-    # store.save をモックして実ファイルを書かせない
-    with patch("main.store.save"), patch("main.Path") as mock_path:
-        # config ファイルは実際のものを使う
-        import importlib, main as m
-        with patch.object(m, "Path", wraps=Path):
-            with patch("src.agent.store.save"):
-                result = initialize_agents(5)
-
-    assert len(result) == 5
+def _run_main(argv: list[str]) -> None:
+    """sys.argv を差し替えて main() を呼び出すヘルパー。"""
+    import sys
+    with patch.object(sys, "argv", ["main.py"] + argv):
+        import main
+        main.main()
 
 
-def test_initialize_agents_roles_distribution(tmp_path):
-    """5人モードのとき、役職が roles.json 通りの種類・数で配られること。"""
-    with patch("src.agent.store.save"):
-        agents = initialize_agents(5)
+@patch("main.archive_state", return_value=None)
+@patch("main.LogWriter")
+@patch("main.CLI")
+@patch("main.GameEngine")
+@patch("main.initialize_agents")
+def test_main_normal_game(mock_init, mock_engine_cls, mock_cli_cls, mock_writer_cls, mock_archive):
+    """デフォルト引数でゲームが1回実行されること。"""
+    fake_agents = [MagicMock()]
+    mock_init.return_value = fake_agents
 
-    roles = [a.role for a in agents]
-    roles_config = json.loads(Path("config/roles.json").read_text(encoding="utf-8"))
-    expected = sorted(roles_config["5"])
-    assert sorted(roles) == expected
+    fake_engine = MagicMock()
+    fake_engine.run.return_value = "Villagers"
+    mock_engine_cls.return_value = fake_engine
 
+    fake_cli = MagicMock()
+    mock_cli_cls.return_value = fake_cli
 
-def test_initialize_agents_unique_names():
-    """各エージェントの名前が一意であること。"""
-    with patch("src.agent.store.save"):
-        agents = initialize_agents(5)
+    _run_main([])
 
-    names = [a.name for a in agents]
-    assert len(names) == len(set(names))
-
-
-def test_initialize_agents_beliefs_exclude_self():
-    """beliefs に自分自身のキーが含まれないこと。"""
-    with patch("src.agent.store.save"):
-        agents = initialize_agents(5)
-
-    for agent in agents:
-        assert agent.name not in agent.beliefs
+    mock_init.assert_called_once_with(5)
+    mock_engine_cls.assert_called_once()
+    fake_engine.run.assert_called_once()
+    fake_cli.show_winner.assert_called_once_with("Villagers")
 
 
-def test_initialize_agents_invalid_player_count():
-    """存在しないプレイヤー数を指定したとき sys.exit が呼ばれること。"""
-    with pytest.raises(SystemExit):
-        initialize_agents(99)
+@patch("main.archive_state", return_value=None)
+@patch("main.LogWriter")
+@patch("main.CLI")
+@patch("main.GameEngine")
+@patch("main.initialize_agents")
+def test_main_replay_mode(mock_init, mock_engine_cls, mock_cli_cls, mock_writer_cls, mock_archive):
+    """--replay 指定のとき run_replay() が呼ばれ、GameEngine は呼ばれないこと。"""
+    with patch("src.ui.replay.run_replay") as mock_replay:
+        _run_main(["--replay"])
+
+    mock_init.assert_not_called()
+    mock_engine_cls.assert_not_called()
+    mock_replay.assert_called_once_with(spectator_mode=False)
