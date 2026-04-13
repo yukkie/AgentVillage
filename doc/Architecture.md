@@ -17,7 +17,7 @@ AgentVillage/
 │   ├── Ideas.md                # アイデア・未決事項
 │   └── Task.md                 # タスク管理
 ├── src/
-│   ├── domain/                 # Pydanticドメインモデル定義（ゲーム仕様依存の型）
+│   ├── domain/                 # Pydanticドメインモデル定義（ゲーム仕様依存の型）+ Role クラス群
 │   ├── engine/                 # ゲームエンジン（決定論的）
 │   ├── agent/                  # エージェント状態・記憶・信念モデル
 │   ├── llm/                    # LLMクライアント・プロンプト生成

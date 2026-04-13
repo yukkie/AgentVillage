@@ -21,3 +21,8 @@ def test_build_role_prompt_wolf_partners_empty_for_werewolf_is_allowed():
 def test_build_role_prompt_wolf_partners_list_for_werewolf_is_allowed():
     result = build_role_prompt("Werewolf", wolf_partners=["Bob"])
     assert "Bob" in result
+
+
+def test_build_role_prompt_unknown_role_raises():
+    with pytest.raises(ValueError, match="Unknown role"):
+        build_role_prompt("UnknownRole")

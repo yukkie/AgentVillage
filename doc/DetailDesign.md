@@ -12,22 +12,11 @@
 |---|---|
 | `game.py` | ゲーム全体の状態マシン。昼夜ループを回す |
 | `phase.py` | フェーズ定義（昼/夜/開始/終了）と遷移ロジック |
-| `role.py` | 役職定義と夜行動マッピング（`ROLE_NIGHT_ACTIONS`） |
 | `vote.py` | 投票集計・同数処理・追放決定 |
 | `victory.py` | 勝利条件の判定 |
 
-#### role.py — 役職定義
-
-`ROLE_NIGHT_ACTIONS` で各役職の夜行動を定義する。夜行動が「ない」役職は `None`。
-
-| 役職 | ROLE_NIGHT_ACTIONS | 備考 |
-|---|---|---|
-| Villager | `None` | |
-| Seer | `"inspect"` | 対象を選んで占う |
-| Knight | `"guard"` | 対象を選んで護衛する |
-| Werewolf | `"attack"` | 対象を選んで襲撃する |
-| Medium | `None` | 昼処刑後にGMから結果が届く（受動的）。夜に対象を選ばない |
-| Madman | `None` | 人狼陣営だが夜行動なし。狼チャットにも参加しない |
+> **Note**: 旧 `role.py`（`ROLE_NIGHT_ACTIONS` 辞書）は `src/domain/roles/` パッケージに統合され削除された（#24）。
+> 夜行動の判定は `get_role(role).night_action` を使用する。
 
 #### game.py — 霊媒師への処刑結果通知
 
@@ -55,7 +44,34 @@
 |---|---|
 | `agent.py` | `AgentState`, `Belief`, `Persona` のPydanticモデル定義 |
 | `event.py` | `EventType`, `LogEvent` のPydanticモデル定義 |
+| `role.py` | `Role` ABC + 具象クラス（Villager, Werewolf, Seer, Knight, Medium, Madman）+ `get_role()` ファクトリ。役職の定義を一箇所に集約する |
 | `schema.py` | `AgentOutput`, `SpeechEntry`, `JudgmentOutput` 等のPydanticモデル定義 |
+
+### role.py — Role ABC と具象クラス
+
+役職ごとの振る舞い（プロンプト生成・夜行動・陣営）を Strategy パターンで集約する。
+`src/llm/prompt.py` の `if/elif` ブロックと旧 `src/engine/role.py` の `ROLE_NIGHT_ACTIONS` を統合する。
+
+```python
+class Role(ABC):
+    @property
+    def name(self) -> str: ...           # "Villager", "Werewolf", etc.
+    @property
+    def faction(self) -> str: ...        # "village" | "werewolf"
+    @property
+    def night_action(self) -> str | None: ...  # "attack" | "inspect" | "guard" | None
+
+    def role_prompt(self, wolf_partners: list[str] | None = None) -> str: ...
+    def co_prompt(self) -> str: ...
+    def pre_night_prompt(self) -> str: ...
+    def night_action_prompt(self, agent_name: str, alive_players: list[str], context: str) -> str: ...
+    def co_strategy_hint(self) -> str: ...
+
+def get_role(role: str) -> Role:
+    """Factory: role name string → Role instance."""
+```
+
+具象クラス: `Villager`, `Werewolf`, `Seer`, `Knight`, `Medium`, `Madman`
 
 ---
 
@@ -102,7 +118,7 @@
 | モジュール | 責務 |
 |---|---|
 | `client.py` | anthropic SDKのラッパー。APIコールと `AgentOutput` へのパース |
-| `prompt.py` | 性格プロンプト・役職プロンプトを組み合わせてシステムプロンプトを生成。`build_system_prompt(agent, ctx, direction, role_ctx)` の4引数シグネチャ。公開情報は `PublicContext`、発言制御は `SpeechDirection`、役職固有情報は `RoleSpecificContext` サブクラス（現在は `WolfSpecificContext` のみ）で渡す |
+| `prompt.py` | 性格プロンプト・役職プロンプトを組み合わせてシステムプロンプトを生成。`build_system_prompt(agent, ctx, direction, role_ctx)` の4引数シグネチャ。公開情報は `PublicContext`、発言制御は `SpeechDirection`、役職固有情報は `RoleSpecificContext` サブクラス（現在は `WolfSpecificContext` のみ）で渡す。役職固有のプロンプト生成は `src/domain/role.py` の `Role` クラスに委譲する |
 
 Pydanticモデル（`AgentOutput`, `SpeechEntry` 等）は `src/domain/schema.py` に移動。
 
