@@ -7,7 +7,7 @@ import sys
 from io import StringIO
 from pathlib import Path
 
-import msvcrt
+import readchar
 from rich.console import Console
 from rich.text import Text
 
@@ -21,16 +21,15 @@ ARCHIVE_DIR = Path("state_archive")
 
 
 def _getch() -> str:
-    """Read a single keypress from the terminal (Windows msvcrt)."""
-    ch = msvcrt.getch()
-    if ch in (b"\x00", b"\xe0"):
-        ch2 = msvcrt.getch()
-        mapping = {b"H": "UP", b"P": "DOWN", b"K": "LEFT", b"M": "RIGHT"}
-        return mapping.get(ch2, "UNKNOWN")
-    try:
-        return ch.decode("utf-8")
-    except Exception:
-        return ""
+    """Read a single keypress from the terminal (cross-platform)."""
+    key = readchar.readkey()
+    mapping = {
+        readchar.key.UP: "UP",
+        readchar.key.DOWN: "DOWN",
+        readchar.key.LEFT: "LEFT",
+        readchar.key.RIGHT: "RIGHT",
+    }
+    return mapping.get(key, key)
 
 
 def _clear() -> None:
