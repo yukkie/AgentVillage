@@ -7,6 +7,10 @@ class Medium(Role):
         return "Medium"
 
     @property
+    def color(self) -> str:
+        return "cyan"
+
+    @property
     def faction(self) -> str:
         return "village"
 

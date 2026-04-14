@@ -10,6 +10,10 @@ class Role(ABC):
 
     @property
     @abstractmethod
+    def color(self) -> str: ...
+
+    @property
+    @abstractmethod
     def faction(self) -> str: ...
 
     @property

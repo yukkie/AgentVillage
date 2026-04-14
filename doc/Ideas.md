@@ -16,7 +16,6 @@
 | yukkie/AgentVillage#74 | tech-debt | 🟢 | Split ActorState into ActorProfile (static) and ActorState (dynamic) | name/role/model/persona を ActorProfile に分離。ActorState は動的フィールドのみ |
 | yukkie/AgentVillage#71 | tech-debt | 🟢 | Eliminate redundant role: str from ActorState | ActorState.role: str と Actor.role.name の冗長性を解消 |
 | yukkie/AgentVillage#72 | tech-debt | 🟢 | Replace role name strings with Role type in Intent, ActorState.claimed_role, LogEvent | Intent.co / claimed_role / LogEvent.claimed_role を str から Role 型に変更 |
-| yukkie/AgentVillage#66 | tech-debt | 🟢 | Add color property to Role classes and resolve MEDIUM_RESULT color mismatch | Role クラスに color プロパティ追加・renderer.py の _ROLE_COLORS 廃止（#68 完了後に着手） |
 | yukkie/AgentVillage#61 | tech-debt | 🟢 | Move common prompt content to Role ABC default methods | prompt.py のコンテンツ文字列を Role ABC のデフォルトメソッドに移動し、prompt.py をアセンブルのみに |
 | yukkie/AgentVillage#59 | tech-debt | 🟢 | Replace msvcrt with cross-platform key input | replay.py の Windows 専用 msvcrt をクロスプラットフォーム対応に置換 |
 | yukkie/AgentVillage#58 | tech-debt | 🟢 | Split GameEngine phases into dedicated modules | game.py を前夜・昼・夜フェーズモジュールに分割 |

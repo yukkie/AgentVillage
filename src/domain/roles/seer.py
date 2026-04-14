@@ -7,6 +7,10 @@ class Seer(Role):
         return "Seer"
 
     @property
+    def color(self) -> str:
+        return "blue"
+
+    @property
     def faction(self) -> str:
         return "village"
 
