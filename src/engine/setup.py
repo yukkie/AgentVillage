@@ -4,11 +4,11 @@ import random
 import sys
 from pathlib import Path
 
-from src.domain.agent import AgentState, Belief, Persona
+from src.domain.actor import Actor, ActorState, Belief, Persona, make_actor
 from src.agent import store
 
 
-def initialize_agents(num_players: int) -> list[AgentState]:
+def initialize_agents(num_players: int) -> list[Actor]:
     """Create and persist initial agent states with randomized roles."""
     Path("state/agents").mkdir(parents=True, exist_ok=True)
 
@@ -30,7 +30,7 @@ def initialize_agents(num_players: int) -> list[AgentState]:
     shuffled_roles = roles[:]
     random.shuffle(shuffled_roles)
 
-    agents = []
+    actors = []
     for config, role in zip(selected_configs, shuffled_roles):
         name = config["name"]
         beliefs = {
@@ -38,7 +38,7 @@ def initialize_agents(num_players: int) -> list[AgentState]:
             for other in selected_configs
             if other["name"] != name
         }
-        agent = AgentState(
+        state = ActorState(
             name=name,
             role=role,
             persona=Persona.model_validate(config),
@@ -46,7 +46,8 @@ def initialize_agents(num_players: int) -> list[AgentState]:
             memory_summary=[],
             is_alive=True,
         )
-        store.save(agent)
-        agents.append(agent)
+        actor = make_actor(state)
+        store.save(actor)
+        actors.append(actor)
 
-    return agents
+    return actors

@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
-from src.domain.agent import AgentState
-from src.domain.roles import get_role
+from src.domain.actor import Actor
+from src.domain.roles import Role, Werewolf
 from src.domain.schema import SpeechEntry
 
 
@@ -11,7 +11,7 @@ class PublicContext:
     alive_players: list[str]
     dead_players: list[str]
     day: int
-    all_agents: list[AgentState] | None = None
+    all_agents: list[Actor] | None = None
     past_votes: list[dict] | None = None
     past_deaths: list[dict] | None = None
 
@@ -50,17 +50,17 @@ _SPEECH_STYLE_PROMPTS: dict[str, str] = {
 }
 
 
-def build_persona_prompt(agent: AgentState) -> str:
-    """Generate personality prompt from agent persona."""
-    style = agent.persona.style
-    lie = agent.persona.lie_tendency
-    agg = agent.persona.aggression
+def build_persona_prompt(actor: Actor) -> str:
+    """Generate personality prompt from actor persona."""
+    style = actor.state.persona.style
+    lie = actor.state.persona.lie_tendency
+    agg = actor.state.persona.aggression
 
-    identity_parts = [agent.name]
-    if agent.persona.age is not None:
-        identity_parts.append(f"age {agent.persona.age}")
-    if agent.persona.gender is not None:
-        identity_parts.append(agent.persona.gender)
+    identity_parts = [actor.name]
+    if actor.state.persona.age is not None:
+        identity_parts.append(f"age {actor.state.persona.age}")
+    if actor.state.persona.gender is not None:
+        identity_parts.append(actor.state.persona.gender)
     identity = ", ".join(identity_parts)
 
     lines = [
@@ -68,11 +68,11 @@ def build_persona_prompt(agent: AgentState) -> str:
         f"Your personality style: {style}.",
     ]
 
-    speech_prompt = _SPEECH_STYLE_PROMPTS.get(agent.persona.speech_style)
+    speech_prompt = _SPEECH_STYLE_PROMPTS.get(actor.state.persona.speech_style)
     if speech_prompt:
         lines.append(speech_prompt)
-    elif agent.persona.speech_style != "casual":
-        lines.append(f"Your speaking style: {agent.persona.speech_style}.")
+    elif actor.state.persona.speech_style != "casual":
+        lines.append(f"Your speaking style: {actor.state.persona.speech_style}.")
 
     if lie > 0.5:
         lines.append("You are comfortable bending the truth when it serves your survival.")
@@ -87,16 +87,16 @@ def build_persona_prompt(agent: AgentState) -> str:
     return "\n".join(lines)
 
 
-def build_role_prompt(role: str, wolf_partners: list[str] | None = None) -> str:
+def build_role_prompt(role: Role, wolf_partners: list[str] | None = None) -> str:
     """Generate role-specific action guidelines.
 
     Delegates to the Role class (Strategy pattern). See src/domain/roles/.
     """
-    if role != "Werewolf":
+    if not isinstance(role, Werewolf):
         assert wolf_partners is None, (
             f"wolf_partners must be None for non-Werewolf roles, got role={role!r}"
         )
-    return get_role(role).role_prompt(wolf_partners)
+    return role.role_prompt(wolf_partners)
 
 
 def build_public_info_prompt(ctx: PublicContext) -> str:
@@ -105,7 +105,7 @@ def build_public_info_prompt(ctx: PublicContext) -> str:
     lines = [f"\n--- PUBLIC INFORMATION (Day {ctx.day}) ---"]
 
     if ctx.all_agents:
-        role_counts = Counter(a.role for a in ctx.all_agents)
+        role_counts = Counter(a.role.name for a in ctx.all_agents)
         role_summary = ", ".join(f"{count} {role}" for role, count in sorted(role_counts.items()))
         lines.append(f"Role distribution: {role_summary}")
 
@@ -128,9 +128,9 @@ def build_public_info_prompt(ctx: PublicContext) -> str:
 
     if ctx.all_agents:
         claims = [
-            f"{a.name} claims {a.claimed_role}"
+            f"{a.name} claims {a.state.claimed_role}"
             for a in ctx.all_agents
-            if a.claimed_role is not None
+            if a.state.claimed_role is not None
         ]
         if claims:
             lines.append(f"Known role claims: {', '.join(claims)}")
@@ -144,18 +144,18 @@ def build_public_info_prompt(ctx: PublicContext) -> str:
     return "\n".join(lines)
 
 
-def build_personal_info_prompt(agent: AgentState) -> str:
-    """Build prompt section with agent's personal beliefs and memory."""
+def build_personal_info_prompt(actor: Actor) -> str:
+    """Build prompt section with actor's personal beliefs and memory."""
     lines = ["\n--- YOUR PERSONAL INFORMATION ---"]
 
-    if agent.memory_summary:
+    if actor.state.memory_summary:
         lines.append("Your memory from previous days:")
-        for mem in agent.memory_summary:
+        for mem in actor.state.memory_summary:
             lines.append(f"  - {mem}")
 
-    if agent.beliefs:
+    if actor.state.beliefs:
         lines.append("\nYour current beliefs about other players:")
-        for name, belief in agent.beliefs.items():
+        for name, belief in actor.state.beliefs.items():
             lines.append(
                 f"  {name}: suspicion={belief.suspicion:.2f}, trust={belief.trust:.2f}"
             )
@@ -198,19 +198,19 @@ Rules:
 
 
 def build_system_prompt(
-    agent: AgentState,
+    actor: Actor,
     ctx: PublicContext,
     direction: SpeechDirection,
     role_ctx: RoleSpecificContext | None = None,
 ) -> str:
-    """Assemble full system prompt for an agent."""
+    """Assemble full system prompt for an actor."""
     wolf_partners = role_ctx.wolf_partners if isinstance(role_ctx, WolfSpecificContext) else None
     parts = [
-        build_persona_prompt(agent),
+        build_persona_prompt(actor),
         "\n",
-        build_role_prompt(agent.role, wolf_partners),
+        build_role_prompt(actor.role, wolf_partners),
         build_public_info_prompt(ctx),
-        build_personal_info_prompt(agent),
+        build_personal_info_prompt(actor),
     ]
     if direction.reply_to_entry is not None:
         parts.append(
@@ -220,7 +220,7 @@ def build_system_prompt(
             f"Respond directly to this statement in your speech."
         )
     if direction.intended_co:
-        co_text = get_role(agent.role).co_prompt()
+        co_text = actor.role.co_prompt()
         if co_text:
             parts.append(co_text)
     parts.append(build_output_format_prompt(direction.lang))
@@ -228,10 +228,10 @@ def build_system_prompt(
 
 
 def build_pre_night_prompt(
-    agent: AgentState,
+    actor: Actor,
     alive_players: list[str],
     lang: str = "English",
-    all_agents: list[AgentState] | None = None,
+    all_agents: list[Actor] | None = None,
 ) -> str:
     """Build prompt for pre-night decision phase (non-Villager roles only).
 
@@ -240,19 +240,19 @@ def build_pre_night_prompt(
     Madman decides whether to falsely claim to be a Villager-side role.
     All choices are encoded as "co" | "wait".
     """
-    decision_desc = get_role(agent.role).pre_night_prompt()
+    decision_desc = actor.role.pre_night_prompt()
 
     lines = [
-        f"You are {agent.name}, a player in a social deduction game (Werewolf/Mafia).",
-        f"Your personality style: {agent.persona.style}.",
+        f"You are {actor.name}, a player in a social deduction game (Werewolf/Mafia).",
+        f"Your personality style: {actor.state.persona.style}.",
         "",
-        f"Your secret role is: {agent.role}",
+        f"Your secret role is: {actor.role.name}",
         f"Players in this game: {', '.join(alive_players)}",
     ]
 
     if all_agents:
         from collections import Counter
-        role_counts = Counter(a.role for a in all_agents)
+        role_counts = Counter(a.role.name for a in all_agents)
         role_summary = ", ".join(f"{count} {role}" for role, count in sorted(role_counts.items()))
         lines.append(f"Role distribution in this game: {role_summary}")
 
@@ -274,13 +274,8 @@ def build_pre_night_prompt(
     return "\n".join(lines)
 
 
-def _build_co_strategy_hint(role: str) -> str:
-    """Return a role-specific strategic hint for the discussion-phase CO decision."""
-    return get_role(role).co_strategy_hint()
-
-
 def build_judgment_prompt(
-    agent: AgentState,
+    actor: Actor,
     today_log: list[SpeechEntry],
     alive_players: list[str],
     day: int,
@@ -295,18 +290,18 @@ def build_judgment_prompt(
     """
     recent = today_log[-6:] if len(today_log) > 6 else today_log
     lines = [
-        f"You are {agent.name} ({agent.role}) in a Werewolf game. Day {day}.",
+        f"You are {actor.name} ({actor.role.name}) in a Werewolf game. Day {day}.",
         f"Alive players: {', '.join(alive_players)}",
     ]
-    if agent.memory_summary:
-        lines.append(f"Your memory: {'; '.join(agent.memory_summary)}")
+    if actor.state.memory_summary:
+        lines.append(f"Your memory: {'; '.join(actor.state.memory_summary)}")
     if recent:
         lines.append("\nRecent speeches:")
         for e in recent:
             lines.append(f"  [{e.speech_id}] {e.agent}: {e.text}")
 
     if co_eligible:
-        co_hint = _build_co_strategy_hint(agent.role)
+        co_hint = actor.role.co_strategy_hint()
         lines.append(f"""
 Decide your next action. Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
 {{
@@ -336,7 +331,7 @@ Use {lang} only for internal reasoning if needed, but keep the JSON minimal.""")
 
 
 def build_wolf_chat_prompt(
-    agent: AgentState,
+    actor: Actor,
     wolf_partners: list[str],
     alive_players: list[str],
     wolf_chat_log: list[SpeechEntry],
@@ -344,9 +339,9 @@ def build_wolf_chat_prompt(
 ) -> str:
     """Build prompt for werewolf team night chat (secret coordination before attack)."""
     lines = [
-        f"You are {agent.name}, a Werewolf in a social deduction game.",
+        f"You are {actor.name}, a Werewolf in a social deduction game.",
         f"Your wolf partners tonight: {', '.join(wolf_partners)}.",
-        f"Alive players (potential targets): {', '.join(p for p in alive_players if p != agent.name and p not in wolf_partners)}.",
+        f"Alive players (potential targets): {', '.join(p for p in alive_players if p != actor.name and p not in wolf_partners)}.",
         "",
         "It is night. You are meeting secretly with your wolf partner(s) to coordinate.",
         "Discuss who to attack tonight. You may propose a target and explain your reasoning.",
@@ -372,6 +367,6 @@ Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
     return "\n".join(lines)
 
 
-def build_night_action_prompt(agent: AgentState, alive_players: list[str], context: str) -> str:
+def build_night_action_prompt(actor: Actor, alive_players: list[str], context: str) -> str:
     """Build prompt for night action (attack, inspect, or guard)."""
-    return get_role(agent.role).night_action_prompt(agent.name, alive_players, context)
+    return actor.role.night_action_prompt(actor.name, alive_players, context)

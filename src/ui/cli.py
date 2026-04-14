@@ -2,14 +2,14 @@ from rich.console import Console
 from rich.panel import Panel
 
 from src.domain.event import LogEvent
-from src.domain.agent import AgentState
+from src.domain.actor import Actor
 from src.ui.renderer import render_event, _ROLE_COLORS
 
 console = Console()
 
 
 class CLI:
-    def __init__(self, agents: list[AgentState], spectator_mode: bool = False):
+    def __init__(self, agents: list[Actor], spectator_mode: bool = False):
         self.agents = agents
         self.spectator_mode = spectator_mode
 
@@ -23,10 +23,10 @@ class CLI:
         """Display the winner and full role reveal."""
         console.print()
         console.print("[bold yellow]=== ROLE REVEAL ===[/bold yellow]")
-        for agent in self.agents:
-            role_style = _ROLE_COLORS.get(agent.role, "white")
-            status = "" if agent.is_alive else " [dim](eliminated)[/dim]"
-            console.print(f"  [{role_style}]{agent.name}[/{role_style}] — {agent.role}{status}")
+        for actor in self.agents:
+            role_style = _ROLE_COLORS.get(actor.role.name, "white")
+            status = "" if actor.is_alive else " [dim](eliminated)[/dim]"
+            console.print(f"  [{role_style}]{actor.name}[/{role_style}] — {actor.role.name}{status}")
         console.print()
         result_style = "bold red" if winner == "Werewolves" else "bold green"
         console.print(
@@ -54,7 +54,7 @@ class CLI:
         if not self.spectator_mode:
             return
         console.print("\n[bold cyan]Agent Roster:[/bold cyan]")
-        for agent in self.agents:
-            role_style = _ROLE_COLORS.get(agent.role, "white")
-            console.print(f"  [{role_style}]{agent.name}[/{role_style}] — {agent.role} ({agent.persona.style})")
+        for actor in self.agents:
+            role_style = _ROLE_COLORS.get(actor.role.name, "white")
+            console.print(f"  [{role_style}]{actor.name}[/{role_style}] — {actor.role.name} ({actor.state.persona.style})")
         console.print()

@@ -79,7 +79,8 @@ LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検
 
 - エージェントの状態（役職・信念・記憶・人格パラメータ）を管理
 - 状態は `state/agents/{name}.json` に永続化
-- Pydanticモデルは `src/domain/agent.py` で定義（`AgentState`, `Belief`, `Persona`）
+- Pydanticモデルは `src/domain/actor.py` で定義（`ActorState`, `Belief`, `Persona`）
+- ランタイムラッパー `Actor`（dataclass）は `state: ActorState` と `role: Role` を持つ。永続化対象は `ActorState` のみ
 
 #### Persona フィールド
 
@@ -98,11 +99,11 @@ LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検
 
 #### claimed_role（公開役職）と intended_co（前夜CO意思）
 
-`AgentState` に以下のフィールドを持つ。
+`ActorState` に以下のフィールドを持つ。
 
 | フィールド | 内容 |
 |---|---|
-| `role` | 真の役職（システム管理。LLMには渡さない） |
+| `role` | 真の役職文字列（システム管理。LLMには渡さない。ランタイムでは `Actor.role`（Role instance）を使う） |
 | `claimed_role` | エージェントが公言した役職（CO済みなら設定。未COはNull） |
 | `intended_co` | 前夜ターンで「初日COする」と決めた場合 `True`（Day 1 OPENINGプロンプトに反映後は参照不要） |
 

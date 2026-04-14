@@ -2,7 +2,7 @@ from rich.text import Text
 from rich.console import Console
 
 from src.domain.event import LogEvent, EventType
-from src.domain.agent import AgentState
+from src.domain.actor import Actor
 
 console = Console()
 
@@ -17,32 +17,32 @@ _ROLE_COLORS: dict[str, str] = {
 }
 
 
-def _get_agent(agent_name: str | None, agents: list[AgentState]) -> AgentState | None:
+def _get_agent(agent_name: str | None, agents: list[Actor]) -> Actor | None:
     if agent_name is None:
         return None
     return next((a for a in agents if a.name == agent_name), None)
 
 
-def _speech_style(agent_name: str | None, agents: list[AgentState], spectator_mode: bool) -> str:
+def _speech_style(agent_name: str | None, agents: list[Actor], spectator_mode: bool) -> str:
     """Return Rich color style for a speech event.
 
     Spectator mode: color by true role.
     Public mode: color by claimed role (CO'd role only), default white.
     """
-    agent = _get_agent(agent_name, agents)
-    if agent is None:
+    actor = _get_agent(agent_name, agents)
+    if actor is None:
         return "white"
     if spectator_mode:
-        return _ROLE_COLORS.get(agent.role, "white")
+        return _ROLE_COLORS.get(actor.role.name, "white")
     # public mode: only color if the agent has CO'd
-    if agent.claimed_role:
-        return _ROLE_COLORS.get(agent.claimed_role, "white")
+    if actor.state.claimed_role:
+        return _ROLE_COLORS.get(actor.state.claimed_role, "white")
     return "white"
 
 
 def render_event(
     event: LogEvent,
-    agents: list[AgentState],
+    agents: list[Actor],
     spectator_mode: bool = False,
 ) -> Text | None:
     """
@@ -97,8 +97,8 @@ def render_event(
 
     elif event.event_type == EventType.PRE_NIGHT_DECISION:
         # Spectator only — role color
-        agent_state = _get_agent(event.agent, agents)
-        role = agent_state.role if agent_state else ""
+        actor = _get_agent(event.agent, agents)
+        role = actor.role.name if actor else ""
         style = _ROLE_COLORS.get(role, "cyan")
         text.append(f"[PRE-NIGHT] {event.content}", style=style)
 

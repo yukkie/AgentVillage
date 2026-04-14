@@ -7,7 +7,7 @@
 from unittest.mock import MagicMock, patch
 
 
-from src.domain.agent import AgentState, Persona
+from src.domain.actor import ActorState, Actor, Persona, make_actor
 from src.engine.game import GameEngine
 from src.engine.phase import Phase
 from src.llm.prompt import PublicContext, SpeechDirection, WolfSpecificContext, build_pre_night_prompt, build_system_prompt
@@ -16,8 +16,8 @@ from src.domain.event import EventType, LogEvent
 from src.logger.writer import LogWriter
 
 
-def _make_agent(name: str, role: str) -> AgentState:
-    return AgentState(
+def _make_agent(name: str, role: str) -> Actor:
+    state = ActorState(
         name=name,
         role=role,
         persona=Persona(style="calm", lie_tendency=0.1, aggression=0.2),
@@ -25,9 +25,10 @@ def _make_agent(name: str, role: str) -> AgentState:
         memory_summary=[],
         is_alive=True,
     )
+    return make_actor(state)
 
 
-def _make_engine(agents: list[AgentState]) -> tuple[GameEngine, list[LogEvent]]:
+def _make_engine(agents: list[Actor]) -> tuple[GameEngine, list[LogEvent]]:
     events: list[LogEvent] = []
     log_writer = MagicMock(spec=LogWriter)
     log_writer.write.side_effect = lambda e: events.append(e)
@@ -137,7 +138,7 @@ class TestRunPreNight:
             engine._run_pre_night()
 
         seer = next(a for a in agents if a.name == "Gina")
-        assert seer.intended_co is True
+        assert seer.state.intended_co is True
 
     def test_wait_decision_sets_intended_co_false(self):
         agents = [_make_agent("Gina", "Seer"), _make_agent("SQ", "Villager")]
@@ -150,7 +151,7 @@ class TestRunPreNight:
             engine._run_pre_night()
 
         seer = next(a for a in agents if a.name == "Gina")
-        assert seer.intended_co is False
+        assert seer.state.intended_co is False
 
     def test_decision_events_are_spectator_only(self):
         agents = [_make_agent("Gina", "Seer"), _make_agent("SQ", "Villager")]

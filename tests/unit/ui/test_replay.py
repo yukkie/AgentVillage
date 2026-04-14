@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.domain.agent import AgentState, Persona
+from src.domain.actor import ActorState, Persona
 from src.domain.event import EventType, LogEvent
 from src.ui.replay import ArchiveSelector, ReplayPager, run_replay
 
@@ -20,7 +20,7 @@ from src.ui.replay import ArchiveSelector, ReplayPager, run_replay
 
 
 def _make_agent_json(name: str, role: str) -> dict:
-    return AgentState(
+    return ActorState(
         name=name,
         role=role,
         persona=Persona(style="calm"),
@@ -89,7 +89,7 @@ def test_replay_spectator_does_not_call_llm(tmp_archive: Path) -> None:
 
 
 def test_pager_loads_agents(tmp_archive: Path) -> None:
-    """アーカイブから正しく AgentState が読み込まれること。"""
+    """アーカイブから正しく Actor が読み込まれること。"""
     pager = ReplayPager(tmp_archive, spectator_mode=False)
     names = {a.name for a in pager._agents}
     assert names == {"Alice", "Bob"}
