@@ -13,6 +13,9 @@
 
 | # | 種別 | 優先度 | タイトル | 内容 |
 |---|---|---|---|---|
+| yukkie/AgentVillage#74 | tech-debt | 🟢 | Split ActorState into ActorProfile (static) and ActorState (dynamic) | name/role/model/persona を ActorProfile に分離。ActorState は動的フィールドのみ |
+| yukkie/AgentVillage#71 | tech-debt | 🟢 | Eliminate redundant role: str from ActorState | ActorState.role: str と Actor.role.name の冗長性を解消 |
+| yukkie/AgentVillage#72 | tech-debt | 🟢 | Replace role name strings with Role type in Intent, ActorState.claimed_role, LogEvent | Intent.co / claimed_role / LogEvent.claimed_role を str から Role 型に変更 |
 | yukkie/AgentVillage#68 | tech-debt | 🟢 | Introduce Actor class; rename AgentState to ActorState | Actor(state: ActorState, role: Role) を導入。AgentState を ActorState にリネーム。#66 の前提 |
 | yukkie/AgentVillage#66 | tech-debt | 🟢 | Add color property to Role classes and resolve MEDIUM_RESULT color mismatch | Role クラスに color プロパティ追加・renderer.py の _ROLE_COLORS 廃止（#68 完了後に着手） |
 | yukkie/AgentVillage#61 | tech-debt | 🟢 | Move common prompt content to Role ABC default methods | prompt.py のコンテンツ文字列を Role ABC のデフォルトメソッドに移動し、prompt.py をアセンブルのみに |
