@@ -43,6 +43,20 @@ class TestRoleProperties:
         assert role.faction == faction
         assert role.night_action == night_action
 
+    @pytest.mark.parametrize(
+        "role_name, expected_color",
+        [
+            ("Villager", "white"),
+            ("Werewolf", "red"),
+            ("Seer", "blue"),
+            ("Knight", "bright_green"),
+            ("Medium", "cyan"),
+            ("Madman", "orange3"),
+        ],
+    )
+    def test_color(self, role_name, expected_color):
+        assert get_role(role_name).color == expected_color
+
 
 class TestRolePrompt:
     def test_villager(self):

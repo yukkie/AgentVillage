@@ -7,6 +7,10 @@ class Knight(Role):
         return "Knight"
 
     @property
+    def color(self) -> str:
+        return "bright_green"
+
+    @property
     def faction(self) -> str:
         return "village"
 

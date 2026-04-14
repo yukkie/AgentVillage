@@ -7,6 +7,10 @@ class Villager(Role):
         return "Villager"
 
     @property
+    def color(self) -> str:
+        return "white"
+
+    @property
     def faction(self) -> str:
         return "village"
 

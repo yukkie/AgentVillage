@@ -7,6 +7,10 @@ class Madman(Role):
         return "Madman"
 
     @property
+    def color(self) -> str:
+        return "orange3"
+
+    @property
     def faction(self) -> str:
         return "werewolf"
 

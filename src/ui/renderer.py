@@ -3,18 +3,9 @@ from rich.console import Console
 
 from src.domain.event import LogEvent, EventType
 from src.domain.actor import Actor
+from src.domain.roles import get_role
 
 console = Console()
-
-
-_ROLE_COLORS: dict[str, str] = {
-    "Werewolf": "red",
-    "Madman": "orange3",
-    "Seer": "blue",
-    "Medium": "cyan",
-    "Knight": "bright_green",
-    "Villager": "white",
-}
 
 
 def _get_agent(agent_name: str | None, agents: list[Actor]) -> Actor | None:
@@ -33,10 +24,10 @@ def _speech_style(agent_name: str | None, agents: list[Actor], spectator_mode: b
     if actor is None:
         return "white"
     if spectator_mode:
-        return _ROLE_COLORS.get(actor.role.name, "white")
+        return actor.role.color
     # public mode: only color if the agent has CO'd
     if actor.state.claimed_role:
-        return _ROLE_COLORS.get(actor.state.claimed_role, "white")
+        return get_role(actor.state.claimed_role).color
     return "white"
 
 
@@ -98,8 +89,7 @@ def render_event(
     elif event.event_type == EventType.PRE_NIGHT_DECISION:
         # Spectator only — role color
         actor = _get_agent(event.agent, agents)
-        role = actor.role.name if actor else ""
-        style = _ROLE_COLORS.get(role, "cyan")
+        style = actor.role.color if actor else "cyan"
         text.append(f"[PRE-NIGHT] {event.content}", style=style)
 
     elif event.event_type == EventType.WOLF_CHAT:
@@ -119,8 +109,8 @@ def render_event(
         text.append(f"[CO] {event.content}", style="bold white")
 
     elif event.event_type == EventType.MEDIUM_RESULT:
-        # Spectator only — yellow
-        text.append(f"[MEDIUM] {event.content}", style="yellow")
+        # Spectator only — cyan (Medium's role color)
+        text.append(f"[MEDIUM] {event.content}", style="cyan")
 
     elif event.event_type == EventType.GAME_OVER:
         text.append(f"\n{'=' * 50}\n", style="bold yellow")

@@ -3,7 +3,7 @@ from rich.panel import Panel
 
 from src.domain.event import LogEvent
 from src.domain.actor import Actor
-from src.ui.renderer import render_event, _ROLE_COLORS
+from src.ui.renderer import render_event
 
 console = Console()
 
@@ -24,7 +24,7 @@ class CLI:
         console.print()
         console.print("[bold yellow]=== ROLE REVEAL ===[/bold yellow]")
         for actor in self.agents:
-            role_style = _ROLE_COLORS.get(actor.role.name, "white")
+            role_style = actor.role.color
             status = "" if actor.is_alive else " [dim](eliminated)[/dim]"
             console.print(f"  [{role_style}]{actor.name}[/{role_style}] — {actor.role.name}{status}")
         console.print()
@@ -55,6 +55,6 @@ class CLI:
             return
         console.print("\n[bold cyan]Agent Roster:[/bold cyan]")
         for actor in self.agents:
-            role_style = _ROLE_COLORS.get(actor.role.name, "white")
+            role_style = actor.role.color
             console.print(f"  [{role_style}]{actor.name}[/{role_style}] — {actor.role.name} ({actor.state.persona.style})")
         console.print()
