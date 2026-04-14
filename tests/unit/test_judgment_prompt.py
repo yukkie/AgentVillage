@@ -1,4 +1,4 @@
-from src.domain.agent import AgentState, Persona, Belief
+from src.domain.actor import ActorState, Actor, Persona, Belief, make_actor
 from src.llm.prompt import build_judgment_prompt
 from src.domain.schema import SpeechEntry
 
@@ -8,8 +8,8 @@ def _make_agent(
     role: str = "Villager",
     memory: list[str] | None = None,
     claimed_role: str | None = None,
-) -> AgentState:
-    return AgentState(
+) -> Actor:
+    state = ActorState(
         name=name,
         role=role,
         persona=Persona(style="calm", lie_tendency=0.1, aggression=0.2),
@@ -18,6 +18,7 @@ def _make_agent(
         is_alive=True,
         claimed_role=claimed_role,
     )
+    return make_actor(state)
 
 
 def _make_log(*texts: str) -> list[SpeechEntry]:

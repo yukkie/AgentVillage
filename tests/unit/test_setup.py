@@ -9,7 +9,7 @@ from src.engine.setup import initialize_agents
 
 
 def test_initialize_agents_count():
-    """5人分のAgentStateが返ること。"""
+    """5人分のActorが返ること。"""
     with patch("src.agent.store.save"):
         result = initialize_agents(5)
 
@@ -21,7 +21,7 @@ def test_initialize_agents_roles_distribution():
     with patch("src.agent.store.save"):
         agents = initialize_agents(5)
 
-    roles = [a.role for a in agents]
+    roles = [a.role.name for a in agents]
     roles_config = json.loads(Path("config/roles.json").read_text(encoding="utf-8"))
     expected = sorted(roles_config["5"])
     assert sorted(roles) == expected
@@ -42,7 +42,7 @@ def test_initialize_agents_beliefs_exclude_self():
         agents = initialize_agents(5)
 
     for agent in agents:
-        assert agent.name not in agent.beliefs
+        assert agent.name not in agent.state.beliefs
 
 
 def test_initialize_agents_invalid_player_count():

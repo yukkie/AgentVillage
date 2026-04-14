@@ -12,7 +12,7 @@ from rich.console import Console
 from rich.text import Text
 
 from src.agent import store
-from src.domain.agent import AgentState
+from src.domain.actor import Actor, make_actor
 from src.domain.event import EventType, LogEvent
 from src.logger.reader import load_events
 from src.ui.renderer import render_event
@@ -95,7 +95,7 @@ class ReplayPager:
         self._agents = self._load_agents()
         self._lines = self._build_lines()
 
-    def _load_agents(self) -> list[AgentState]:
+    def _load_agents(self) -> list[Actor]:
         return store.load_all_from_dir(self._archive / "agents")
 
     def _load_events(self) -> list[LogEvent]:
@@ -108,18 +108,21 @@ class ReplayPager:
 
         # Reset claimed_role to None so public-mode colors reflect what was
         # publicly known at each moment, not the end-of-game state.
-        dynamic_agents = {a.name: a.model_copy() for a in self._agents}
-        for a in dynamic_agents.values():
-            a.claimed_role = None
+        dynamic_actors: dict[str, Actor] = {
+            a.name: make_actor(a.state.model_copy())
+            for a in self._agents
+        }
+        for a in dynamic_actors.values():
+            a.state.claimed_role = None
 
         all_lines: list[str] = []
         for event in events:
             # Use event.claimed_role (structured field) rather than parsing content text.
             if event.event_type == EventType.CO_ANNOUNCEMENT and event.agent and event.claimed_role:
-                if event.agent in dynamic_agents:
-                    dynamic_agents[event.agent].claimed_role = event.claimed_role
+                if event.agent in dynamic_actors:
+                    dynamic_actors[event.agent].state.claimed_role = event.claimed_role
 
-            rich_text = render_event(event, list(dynamic_agents.values()), self._spectator)
+            rich_text = render_event(event, list(dynamic_actors.values()), self._spectator)
             if rich_text is None:
                 continue
             rendered = _render_rich_to_lines(rich_text, width)

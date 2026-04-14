@@ -43,7 +43,7 @@
 
 | モジュール | 責務 |
 |---|---|
-| `agent.py` | `AgentState`, `Belief`, `Persona` のPydanticモデル定義 |
+| `actor.py` | `ActorState`, `Belief`, `Persona` のPydanticモデル定義 + `Actor` dataclass（`state: ActorState`, `role: Role`） |
 | `event.py` | `EventType`, `LogEvent` のPydanticモデル定義 |
 | `role.py` | `Role` ABC + 具象クラス（Villager, Werewolf, Seer, Knight, Medium, Madman）+ `get_role()` ファクトリ。役職の定義を一箇所に集約する |
 | `schema.py` | `AgentOutput`, `SpeechEntry`, `JudgmentOutput` 等のPydanticモデル定義 |
@@ -85,6 +85,16 @@ def get_role(role: str) -> Role:
 | `memory.py` | 短期・中期・長期記憶の更新ロジック |
 | `belief.py` | 疑い・信頼スコアの更新（`memory_update` を受けて反映） |
 | `store.py` | JSONファイルへのread/write |
+
+### Actor と ActorState の分離
+
+`Actor`（dataclass）はランタイムのみで使われる：
+- `state: ActorState` — JSON 永続化される Pydantic モデル
+- `role: Role` — 役職 Strategy インスタンス（`get_role(state.role)` で構築）
+- 便利 property: `name`（`state.name`）、`is_alive`（`state.is_alive`）
+- 永続化は `state` のみ。`store.save(actor)` は `actor.state` を書き出す
+
+`Actor.role` により `get_role(agent.role)` の繰り返し呼び出しが不要になる。
 
 ### エージェント状態JSONスキーマ例
 

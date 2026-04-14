@@ -4,12 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from src.domain.agent import AgentState, Persona
+from src.domain.actor import Actor, ActorState, Persona
 from src.agent import store
 
 
 def _make_agent_json(name: str, role: str) -> dict:
-    return AgentState(
+    return ActorState(
         name=name,
         role=role,
         persona=Persona(style="calm"),
@@ -33,7 +33,7 @@ def agents_dir(tmp_path: Path) -> Path:
 
 
 def test_load_all_from_dir_returns_agents(agents_dir: Path) -> None:
-    """指定ディレクトリから AgentState を全件読み込めること。"""
+    """指定ディレクトリから Actor を全件読み込めること。"""
     agents = store.load_all_from_dir(agents_dir)
     assert len(agents) == 2
     names = {a.name for a in agents}
@@ -53,7 +53,7 @@ def test_load_all_delegates_to_load_all_from_dir(agents_dir: Path, monkeypatch) 
 
     original = store.load_all_from_dir
 
-    def spy(path: Path) -> list[AgentState]:
+    def spy(path: Path) -> list[Actor]:
         called_with.append(path)
         return original(path)
 

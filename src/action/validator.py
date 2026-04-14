@@ -1,10 +1,11 @@
 from src.action.types import Vote, Inspect, Attack, CO
-from src.domain.agent import AgentState
+from src.domain.actor import Actor
+from src.domain.roles import Seer, Werewolf
 
 ActionType = Vote | Inspect | Attack | CO
 
 
-def validate(action: ActionType, actor: AgentState, alive_players: list[str]) -> bool:
+def validate(action: ActionType, actor: Actor, alive_players: list[str]) -> bool:
     """
     Validate that an action is legal given the current game state.
     Returns True if the action is valid, False otherwise.
@@ -15,13 +16,13 @@ def validate(action: ActionType, actor: AgentState, alive_players: list[str]) ->
 
     elif isinstance(action, Inspect):
         # Only Seer can inspect
-        if actor.role != "Seer":
+        if not isinstance(actor.role, Seer):
             return False
         return action.target in alive_players and action.target != actor.name
 
     elif isinstance(action, Attack):
         # Only Werewolf can attack
-        if actor.role != "Werewolf":
+        if not isinstance(actor.role, Werewolf):
             return False
         return action.target in alive_players and action.target != actor.name
 

@@ -1,7 +1,7 @@
 import random
 from typing import Callable
 
-from src.domain.agent import AgentState, Belief
+from src.domain.actor import Actor, Belief
 from src.agent import store, memory as memory_mod
 from src.engine.phase import Phase
 from src.engine.vote import tally_votes
@@ -13,13 +13,14 @@ from src.action.types import Vote, Inspect, Attack
 from src.action.validator import validate
 from src.action.resolver import resolve_inspect, resolve_attack
 from src.domain.event import LogEvent, EventType
+from src.domain.roles import Werewolf, Knight, Seer, Medium
 from src.logger.writer import LogWriter
 
 
 class GameEngine:
     def __init__(
         self,
-        agents: list[AgentState],
+        agents: list[Actor],
         log_writer: LogWriter,
         event_callback: Callable[[LogEvent], None] | None = None,
         lang: str = "English",
@@ -42,7 +43,7 @@ class GameEngine:
         self.log_writer.write(event)
         self.event_callback(event)
 
-    def _alive_agents(self) -> list[AgentState]:
+    def _alive_agents(self) -> list[Actor]:
         return [a for a in self.agents if a.is_alive]
 
     def _alive_names(self) -> list[str]:
@@ -51,17 +52,17 @@ class GameEngine:
     def _dead_names(self) -> list[str]:
         return [a.name for a in self.agents if not a.is_alive]
 
-    def _get_agent(self, name: str) -> AgentState | None:
+    def _get_agent(self, name: str) -> Actor | None:
         for a in self.agents:
             if a.name == name:
                 return a
         return None
 
     def _eliminate(self, name: str, event_type: EventType, phase_str: str) -> None:
-        agent = self._get_agent(name)
-        if agent:
-            agent.is_alive = False
-            store.save(agent)
+        actor = self._get_agent(name)
+        if actor:
+            actor.state.is_alive = False
+            store.save(actor)
             if event_type == EventType.NIGHT_ATTACK:
                 content = f"Werewolves attacked {name}! {name} was found dead at dawn."
                 cause = "attack"
@@ -136,15 +137,15 @@ class GameEngine:
 
     def _do_speak(
         self,
-        agent: AgentState,
+        actor: Actor,
         phase: Phase,
         reply_to_entry: SpeechEntry | None = None,
         force_co: bool = False,
     ) -> SpeechEntry:
-        """Generate a speech for agent, emit events, update memory, and append to today_log.
+        """Generate a speech for actor, emit events, update memory, and append to today_log.
 
         force_co=True injects the CO instruction into the speech prompt without mutating
-        agent.intended_co. Used when the agent chose "co" in the discussion judgment phase.
+        actor.state.intended_co. Used when the actor chose "co" in the discussion judgment phase.
         """
         ctx = PublicContext(
             today_log=list(self.today_log),
@@ -158,51 +159,51 @@ class GameEngine:
         direction = SpeechDirection(
             lang=self.lang,
             reply_to_entry=reply_to_entry,
-            intended_co=agent.intended_co or force_co,
+            intended_co=actor.state.intended_co or force_co,
         )
         # TODO(#36): Add SeerSpecificContext / KnightSpecificContext / MediumSpecificContext
         role_ctx = (
             WolfSpecificContext(
-                wolf_partners=[a.name for a in self._alive_agents() if a.role == "Werewolf" and a.name != agent.name]
+                wolf_partners=[a.name for a in self._alive_agents() if isinstance(a.role, Werewolf) and a.name != actor.name]
             )
-            if agent.role == "Werewolf"
+            if isinstance(actor.role, Werewolf)
             else None
         )
-        output = llm_client.call(agent, ctx, direction, role_ctx)
-        self._day_outputs[agent.name] = output
+        output = llm_client.call(actor, ctx, direction, role_ctx)
+        self._day_outputs[actor.name] = output
 
         # Safety net: enforce pre-night CO decision on the opening speech.
         # Werewolf and Madman fall back to "Seer" (fake CO); others use their true role.
-        if agent.intended_co and phase == Phase.DAY_OPENING and not output.intent.co:
-            output.intent.co = "Seer" if agent.role in ("Werewolf", "Madman") else agent.role
+        if actor.state.intended_co and phase == Phase.DAY_OPENING and not output.intent.co:
+            output.intent.co = "Seer" if isinstance(actor.role, (Werewolf,)) else actor.role.name
 
         # Update claimed_role BEFORE emitting the speech so the CO speech itself
         # is rendered with the correct role color.
         # Only emit CO_ANNOUNCEMENT when the claimed role actually changes
         # (prevents duplicate announcements when LLM spontaneously repeats intent.co).
-        if output.intent.co and output.intent.co != agent.claimed_role:
-            agent.claimed_role = output.intent.co
-            agent.intended_co = False  # clear once CO is made
-            store.save(agent)
+        if output.intent.co and output.intent.co != actor.state.claimed_role:
+            actor.state.claimed_role = output.intent.co
+            actor.state.intended_co = False  # clear once CO is made
+            store.save(actor)
             self._emit(LogEvent.make(
                 day=self.day,
                 phase=phase.value,
                 event_type=EventType.CO_ANNOUNCEMENT,
-                agent=agent.name,
-                content=f"{agent.name} claims to be {agent.claimed_role}",
+                agent=actor.name,
+                content=f"{actor.name} claims to be {actor.state.claimed_role}",
                 is_public=True,
-                claimed_role=agent.claimed_role,
+                claimed_role=actor.state.claimed_role,
             ))
 
         speech_id = self._next_speech_id()
-        entry = SpeechEntry(speech_id=speech_id, agent=agent.name, text=output.speech)
+        entry = SpeechEntry(speech_id=speech_id, agent=actor.name, text=output.speech)
         self.today_log.append(entry)
 
         self._emit(LogEvent.make(
             day=self.day,
             phase=phase.value,
             event_type=EventType.SPEECH,
-            agent=agent.name,
+            agent=actor.name,
             content=output.speech,
             is_public=True,
             speech_id=speech_id,
@@ -212,14 +213,14 @@ class GameEngine:
             day=self.day,
             phase=phase.value,
             event_type=EventType.SPEECH,
-            agent=agent.name,
+            agent=actor.name,
             content=f"[THINK] {output.thought}",
             is_public=False,
             speech_id=speech_id,
         ))
 
         if output.memory_update:
-            memory_mod.update_memory(agent, output.memory_update)
+            memory_mod.update_memory(actor, output.memory_update)
 
         return entry
 
@@ -229,25 +230,26 @@ class GameEngine:
         Only runs once at game start. Results logged as spectator-only.
         Filter: role != "Villager" — covers Seer (true CO) and Werewolf (fake CO as Seer).
         """
-        targets = [a for a in self._alive_agents() if a.role != "Villager"]
+        from src.domain.roles import Villager
+        targets = [a for a in self._alive_agents() if not isinstance(a.role, Villager)]
         if not targets:
             return
 
         self._phase_start(Phase.PRE_NIGHT)
 
-        for agent, output in llm_client.call_pre_night_parallel(
+        for actor, output in llm_client.call_pre_night_parallel(
             targets, self._alive_names(), self.lang, self.agents
         ):
-            agent.intended_co = output.decision == "co"
-            memory_mod.update_memory(agent, [f"Pre-game decision: {output.reasoning}"])
+            actor.state.intended_co = output.decision == "co"
+            memory_mod.update_memory(actor, [f"Pre-game decision: {output.reasoning}"])
 
-            decision_label = "decided to CO" if agent.intended_co else "decided to wait"
+            decision_label = "decided to CO" if actor.state.intended_co else "decided to wait"
             self._emit(LogEvent.make(
                 day=self.day,
                 phase=Phase.PRE_NIGHT.value,
                 event_type=EventType.PRE_NIGHT_DECISION,
-                agent=agent.name,
-                content=f"{agent.name} ({agent.role}) {decision_label}. Reasoning: {output.reasoning}",
+                agent=actor.name,
+                content=f"{actor.name} ({actor.role.name}) {decision_label}. Reasoning: {output.reasoning}",
                 is_public=False,
             ))
 
@@ -260,8 +262,8 @@ class GameEngine:
 
         opening_order = self._alive_agents()
         random.shuffle(opening_order)
-        for agent in opening_order:
-            self._do_speak(agent, Phase.DAY_OPENING)
+        for actor in opening_order:
+            self._do_speak(actor, Phase.DAY_OPENING)
 
         # --- DISCUSSION × 2: 並列判断 → レスポンス順発言 ---
         self.phase = Phase.DAY_DISCUSSION
@@ -272,7 +274,7 @@ class GameEngine:
             judgment_snapshot = list(self.today_log)
             spoke_anyone = False
 
-            for agent, judgment in llm_client.call_judgment_parallel(
+            for actor, judgment in llm_client.call_judgment_parallel(
                 alive, judgment_snapshot, self._alive_names(), self.day, self.lang
             ):
                 if judgment.decision == "silent":
@@ -280,8 +282,8 @@ class GameEngine:
                         day=self.day,
                         phase=Phase.DAY_DISCUSSION.value,
                         event_type=EventType.SPEECH,
-                        agent=agent.name,
-                        content=f"{agent.name} is watching the village silently...",
+                        agent=actor.name,
+                        content=f"{actor.name} is watching the village silently...",
                         is_public=True,
                     ))
                     continue
@@ -289,7 +291,8 @@ class GameEngine:
 
                 # "co" is only valid for agents that have not yet claimed a role
                 # and are not a plain Villager. Fall back to "speak" if ineligible.
-                is_co_eligible = agent.claimed_role is None and agent.role != "Villager"
+                from src.domain.roles import Villager
+                is_co_eligible = actor.state.claimed_role is None and not isinstance(actor.role, Villager)
                 force_co = judgment.decision == "co" and is_co_eligible
 
                 reply_to_entry: SpeechEntry | None = None
@@ -299,7 +302,7 @@ class GameEngine:
                         None,
                     )
 
-                self._do_speak(agent, Phase.DAY_DISCUSSION, reply_to_entry=reply_to_entry, force_co=force_co)
+                self._do_speak(actor, Phase.DAY_DISCUSSION, reply_to_entry=reply_to_entry, force_co=force_co)
 
             if not spoke_anyone:
                 break  # 全員silentなら2巡目はスキップ
@@ -311,8 +314,8 @@ class GameEngine:
         votes: dict[str, str] = {}
         alive_names = self._alive_names()
 
-        for agent in self._alive_agents():
-            output = self._day_outputs.get(agent.name)
+        for actor in self._alive_agents():
+            output = self._day_outputs.get(actor.name)
             target = None
 
             if output and output.intent.vote_candidates:
@@ -322,25 +325,25 @@ class GameEngine:
                     reverse=True,
                 )
                 for vc in sorted_candidates:
-                    if vc.target in alive_names and vc.target != agent.name:
+                    if vc.target in alive_names and vc.target != actor.name:
                         target = vc.target
                         break
 
             if target is None:
-                others = [n for n in alive_names if n != agent.name]
+                others = [n for n in alive_names if n != actor.name]
                 target = others[0] if others else None
 
             if target:
                 vote_action = Vote(target=target)
-                if validate(vote_action, agent, alive_names):
-                    votes[agent.name] = target
+                if validate(vote_action, actor, alive_names):
+                    votes[actor.name] = target
                     self._emit(LogEvent.make(
                         day=self.day,
                         phase=Phase.DAY_VOTE.value,
                         event_type=EventType.VOTE,
-                        agent=agent.name,
+                        agent=actor.name,
                         target=target,
-                        content=f"{agent.name} votes for {target}",
+                        content=f"{actor.name} votes for {target}",
                         is_public=True,
                     ))
 
@@ -350,11 +353,11 @@ class GameEngine:
             self._eliminate(eliminated, EventType.ELIMINATION, Phase.DAY_VOTE.value)
 
             # Notify Medium of the executed player's alignment (Werewolf or Not Werewolf)
-            medium = next((a for a in self._alive_agents() if a.role == "Medium"), None)
+            medium = next((a for a in self._alive_agents() if isinstance(a.role, Medium)), None)
             if medium:
-                executed_agent = self._get_agent(eliminated)
-                if executed_agent:
-                    result = "Werewolf" if executed_agent.role == "Werewolf" else "Not Werewolf"
+                executed_actor = self._get_agent(eliminated)
+                if executed_actor:
+                    result = "Werewolf" if isinstance(executed_actor.role, Werewolf) else "Not Werewolf"
                     memory_mod.update_memory(
                         medium,
                         [f"Day {self.day}: {eliminated} was executed, they were {result}"],
@@ -383,7 +386,7 @@ class GameEngine:
         guard_target: str | None = None
 
         # --- ① 狼同士の会話（最大3往復） ---
-        wolves = [a for a in self._alive_agents() if a.role == "Werewolf"]
+        wolves = [a for a in self._alive_agents() if isinstance(a.role, Werewolf)]
         if len(wolves) >= 2:
             self.phase = Phase.NIGHT_WOLF_CHAT
             self._phase_start(Phase.NIGHT_WOLF_CHAT)
@@ -426,12 +429,12 @@ class GameEngine:
 
         # --- ② 狼単体フォールバック（チャットで合意できなかった場合） ---
         if attack_target is None:
-            for agent in self._alive_agents():
-                if agent.role != "Werewolf":
+            for actor in self._alive_agents():
+                if not isinstance(actor.role, Werewolf):
                     continue
-                target_name = llm_client.call_night_action(agent, night_context, alive_names)
+                target_name = llm_client.call_night_action(actor, night_context, alive_names)
                 attack = Attack(target=target_name)
-                if validate(attack, agent, alive_names):
+                if validate(attack, actor, alive_names):
                     attack_target = resolve_attack(attack, self.agents)
                     break
 
@@ -447,31 +450,31 @@ class GameEngine:
             ))
 
         # --- ③ 全役職が行動意思を決定（騎士・占い師） ---
-        seer_inspect: tuple[AgentState, Inspect] | None = None  # (seer, inspect_action)
+        seer_inspect: tuple[Actor, Inspect] | None = None  # (seer, inspect_action)
 
-        knight: AgentState | None = None
-        for agent in self._alive_agents():
-            if agent.role == "Knight":
-                knight = agent
-                target_name = llm_client.call_night_action(agent, night_context, alive_names)
-                candidates = [n for n in alive_names if n != agent.name]
+        knight: Actor | None = None
+        for actor in self._alive_agents():
+            if isinstance(actor.role, Knight):
+                knight = actor
+                target_name = llm_client.call_night_action(actor, night_context, alive_names)
+                candidates = [n for n in alive_names if n != actor.name]
                 if target_name in candidates:
                     guard_target = target_name
                     self._emit(LogEvent.make(
                         day=self.day,
                         phase=Phase.NIGHT.value,
                         event_type=EventType.GUARD,
-                        agent=agent.name,
+                        agent=actor.name,
                         target=guard_target,
-                        content=f"{agent.name} guards {guard_target}",
+                        content=f"{actor.name} guards {guard_target}",
                         is_public=False,
                     ))
 
-            elif agent.role == "Seer":
-                target_name = llm_client.call_night_action(agent, night_context, alive_names)
+            elif isinstance(actor.role, Seer):
+                target_name = llm_client.call_night_action(actor, night_context, alive_names)
                 inspect = Inspect(target=target_name)
-                if validate(inspect, agent, alive_names):
-                    seer_inspect = (agent, inspect)  # 結果適用は後回し
+                if validate(inspect, actor, alive_names):
+                    seer_inspect = (actor, inspect)  # 結果適用は後回し
 
         # --- ④ 解決フェーズ ---
         # 騎士の護衛判定 → 狼の襲撃判定 → 占い師の占い判定
@@ -511,16 +514,16 @@ class GameEngine:
         if seer_inspect and seer_survived:
             seer, inspect = seer_inspect
             name, result = resolve_inspect(inspect, self.agents)
-            if name not in seer.beliefs:
-                seer.beliefs[name] = Belief()
+            if name not in seer.state.beliefs:
+                seer.state.beliefs[name] = Belief()
             if result == "Werewolf":
-                seer.beliefs[name].suspicion = 1.0
-                seer.beliefs[name].trust = 0.0
-                seer.beliefs[name].reason.append(f"Day {self.day}: inspected as Werewolf")
+                seer.state.beliefs[name].suspicion = 1.0
+                seer.state.beliefs[name].trust = 0.0
+                seer.state.beliefs[name].reason.append(f"Day {self.day}: inspected as Werewolf")
             else:
-                seer.beliefs[name].suspicion = 0.0
-                seer.beliefs[name].trust = 1.0
-                seer.beliefs[name].reason.append(f"Day {self.day}: inspected as Not Werewolf")
+                seer.state.beliefs[name].suspicion = 0.0
+                seer.state.beliefs[name].trust = 1.0
+                seer.state.beliefs[name].reason.append(f"Day {self.day}: inspected as Not Werewolf")
             store.save(seer)
             self._emit(LogEvent.make(
                 day=self.day,
