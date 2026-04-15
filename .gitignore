@@ -6,7 +6,8 @@ __pycache__/
 .venv/
 state/
 state_archive/
-.claude/
 ideas_archive/
 .vscode/
 issues/
+.claude/worktrees/
+.claude/skills/
