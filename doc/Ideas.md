@@ -34,6 +34,7 @@
 | yukkie/AgentVillage#30 | enhancement | 🟢 | 13 | State management DB migration | JSON → DB 移行 |
 | yukkie/AgentVillage#79 | enhancement | 🟢 | - | Log analysis agent skill for post-game review | ゲームログをAgentに委譲して解析・サマリーを返すスキル |
 | yukkie/AgentVillage#84 | enhancement | 🟢 | - | Parallelize LLM requests in day speech phase | 発言順確定後にThreadPoolExecutorで並列リクエスト発行しゲームを高速化 |
+| yukkie/AgentVillage#86 | enhancement | 🟢 | - | Parallelize judgment+speech chain in day discussion phase | DISCUSSIONで判断+発言をアクターごとにチェーンし並列実行 |
 
 ---
 
