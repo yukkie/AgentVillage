@@ -124,23 +124,6 @@ def call_judgment(
         return JudgmentOutput(decision="silent")
 
 
-def call_judgment_parallel(
-    agents: list[Actor],
-    today_log: list[SpeechEntry],
-    alive_players: list[str],
-    day: int = 1,
-    lang: str = "English",
-) -> Iterator[tuple[Actor, JudgmentOutput]]:
-    """Call judgment for all agents in parallel; yield results in completion order."""
-    with ThreadPoolExecutor() as executor:
-        future_to_agent = {
-            executor.submit(call_judgment, actor, today_log, alive_players, day, lang): actor
-            for actor in agents
-        }
-        for future in as_completed(future_to_agent):
-            actor = future_to_agent[future]
-            yield actor, future.result()
-
 
 def call_speech_parallel(
     calls: list[tuple[Actor, PublicContext, SpeechDirection, RoleSpecificContext | None]]

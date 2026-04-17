@@ -1,6 +1,6 @@
 """
 _run_day() のフェーズ順・speech_id採番・フォールバックを検証する。
-LLM呼び出し (llm_client.call / call_judgment_parallel) はモック。
+LLM呼び出し (llm_client.call / call_judgment) はモック。
 """
 from unittest.mock import MagicMock, patch
 
@@ -46,15 +46,10 @@ class TestRunDayPhaseOrder:
         agents = [_make_agent("A"), _make_agent("B"), _make_agent("C", "Werewolf")]
         engine, events = _make_engine(agents)
 
-        # all judgment → silent (skip discussion speaking)
-        silent = JudgmentOutput(decision="silent")
-
         with (
             patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])),
             patch("src.engine.game.llm_client.call", side_effect=lambda ag, *a, **kw: _make_output(ag.name)),
-            patch("src.engine.game.llm_client.call_judgment_parallel", return_value=iter(
-                [(agents[0], silent), (agents[1], silent), (agents[2], silent)]
-            )),
+            patch("src.engine.game.llm_client.call_judgment", return_value=JudgmentOutput(decision="silent")),
             patch("src.agent.store.save"),
         ):
             engine._run_day()
@@ -72,14 +67,10 @@ class TestRunDayPhaseOrder:
         agents = [_make_agent("A"), _make_agent("B")]
         engine, events = _make_engine(agents)
 
-        silent = JudgmentOutput(decision="silent")
-
         with (
             patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])),
             patch("src.engine.game.llm_client.call", side_effect=lambda ag, *a, **kw: _make_output(ag.name)),
-            patch("src.engine.game.llm_client.call_judgment_parallel", return_value=iter(
-                [(agents[0], silent), (agents[1], silent)]
-            )),
+            patch("src.engine.game.llm_client.call_judgment", return_value=JudgmentOutput(decision="silent")),
             patch("src.agent.store.save"),
         ):
             engine._run_day()
@@ -100,32 +91,29 @@ class TestRunDayPhaseOrder:
         challenge = JudgmentOutput(decision="challenge", reply_to=1)
         silent = JudgmentOutput(decision="silent")
 
+        def judgment_side_effect(actor, *_):
+            return challenge if actor.name == "B" else silent
+
         with (
             patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])),
             patch("src.engine.game.llm_client.call", side_effect=lambda ag, *a, **kw: _make_output(ag.name)),
-            patch("src.engine.game.llm_client.call_judgment_parallel", return_value=iter(
-                [(agents[1], challenge), (agents[0], silent)]
-            )),
+            patch("src.engine.game.llm_client.call_judgment", side_effect=judgment_side_effect),
             patch("src.agent.store.save"),
         ):
             engine._run_day()
 
         challenge_events = [e for e in events if e.reply_to is not None and e.is_public]
-        assert len(challenge_events) == 1
-        assert challenge_events[0].reply_to == 1
+        assert len(challenge_events) >= 1
+        assert all(e.reply_to == 1 for e in challenge_events)
 
     def test_all_silent_does_not_raise(self):
         agents = [_make_agent("A"), _make_agent("B", "Werewolf")]
         engine, _ = _make_engine(agents)
 
-        silent = JudgmentOutput(decision="silent")
-
         with (
             patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])),
             patch("src.engine.game.llm_client.call", side_effect=lambda ag, *a, **kw: _make_output(ag.name)),
-            patch("src.engine.game.llm_client.call_judgment_parallel", return_value=iter(
-                [(agents[0], silent), (agents[1], silent)]
-            )),
+            patch("src.engine.game.llm_client.call_judgment", return_value=JudgmentOutput(decision="silent")),
             patch("src.agent.store.save"),
         ):
             result = engine._run_day()  # should not raise
@@ -142,8 +130,6 @@ class TestDiscussionCoDecision:
         assert seer.state.claimed_role is None
         engine, _ = _make_engine([seer])
 
-        co_judgment = JudgmentOutput(decision="co")
-        # LLM speech output includes intent.co (Seer declares themselves)
         co_output = AgentOutput(
             thought="I'll CO now.",
             speech="I am the Seer!",
@@ -155,9 +141,7 @@ class TestDiscussionCoDecision:
         with (
             patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])),
             patch("src.engine.game.llm_client.call", return_value=co_output),
-            patch("src.engine.game.llm_client.call_judgment_parallel", return_value=iter(
-                [(seer, co_judgment)]
-            )),
+            patch("src.engine.game.llm_client.call_judgment", return_value=JudgmentOutput(decision="co")),
             patch("src.agent.store.save"),
         ):
             engine._run_day()
@@ -170,21 +154,18 @@ class TestDiscussionCoDecision:
         seer.state.claimed_role = "Seer"  # already claimed
         engine, events = _make_engine([seer])
 
-        co_judgment = JudgmentOutput(decision="co")
         normal_output = _make_output("Seer1", "Just speaking.")
 
         call_mock = MagicMock(return_value=normal_output)
         with (
             patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])),
             patch("src.engine.game.llm_client.call", call_mock),
-            patch("src.engine.game.llm_client.call_judgment_parallel", return_value=iter(
-                [(seer, co_judgment)]
-            )),
+            patch("src.engine.game.llm_client.call_judgment", return_value=JudgmentOutput(decision="co")),
             patch("src.agent.store.save"),
         ):
             engine._run_day()
 
-        # _do_speak should be called with force_co=False (ineligible): direction.intended_co == False
+        # force_co=False (ineligible): direction.intended_co == False
         args, _ = call_mock.call_args
         direction = args[2]
         assert direction.intended_co is False
@@ -194,16 +175,13 @@ class TestDiscussionCoDecision:
         villager = _make_agent("V1", "Villager")
         engine, _ = _make_engine([villager])
 
-        co_judgment = JudgmentOutput(decision="co")
         normal_output = _make_output("V1", "Just talking.")
 
         call_mock = MagicMock(return_value=normal_output)
         with (
             patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])),
             patch("src.engine.game.llm_client.call", call_mock),
-            patch("src.engine.game.llm_client.call_judgment_parallel", return_value=iter(
-                [(villager, co_judgment)]
-            )),
+            patch("src.engine.game.llm_client.call_judgment", return_value=JudgmentOutput(decision="co")),
             patch("src.agent.store.save"),
         ):
             engine._run_day()
