@@ -20,6 +20,21 @@
 | yukkie/AgentVillage#74 | tech-debt | 🟡 | 5 | Split ActorState into ActorProfile (static) and ActorState (dynamic) | name/role/model/persona を ActorProfile に分離。ActorState は動的フィールドのみ |
 | yukkie/AgentVillage#81 | tech-debt | 🟡 | 5 | Separate night action declaration and resolution phases | 夜フェーズの宣言・実行・公表を3段階に分離。seer_survived フラグ削除。キツネ等の複雑な相互作用に対応 |
 | yukkie/AgentVillage#58 | tech-debt | 🟡 | 8 | Split GameEngine phases into dedicated modules | game.py を前夜・昼・夜フェーズモジュールに分割 |
+| yukkie/AgentVillage#90 | tech-debt | 🟡 | - | Extract shared _call_llm helper in client.py | call関数6種が同じAPIコール→JSON→fallbackパターンを重複している |
+| yukkie/AgentVillage#91 | tech-debt | 🟢 | - | Hardcoded discussion/wolf-chat round counts in GameEngine | range(2)/range(3)が直書き。設定変更にコード編集が必要 |
+| yukkie/AgentVillage#92 | tech-debt | 🟢 | - | Hardcoded relative path STATE_DIR in store.py and setup.py | カレントディレクトリ依存の相対パスが2箇所に重複 |
+| yukkie/AgentVillage#93 | tech-debt | 🟢 | - | Module-level Anthropic client singleton makes testing difficult | _clientがモジュールロード時に生成されテスト時に差し替え不可 |
+| yukkie/AgentVillage#94 | tech-debt | 🟢 | - | store.load() does not handle FileNotFoundError | ファイル不在時に未ハンドルの例外が伝播する |
+| yukkie/AgentVillage#95 | tech-debt | 🟢 | - | resolve_inspect() returns 'Unknown' but callers assume Werewolf/Not Werewolf | "Unknown"ケースをgame.py側が未処理。beliefs不整合の温床 |
+| yukkie/AgentVillage#96 | tech-debt | 🟢 | - | Duplicated JSON format string in build_judgment_prompt | co_eligible分岐でフォーマット文字列がほぼ重複 |
+| yukkie/AgentVillage#97 | tech-debt | 🟢 | - | Move local imports to module top level in prompt.py and game.py | 関数内ローカルインポートがアーキテクチャ原則に違反 |
+| yukkie/AgentVillage#99 | tech-debt | 🟢 | - | setup.py silently ignores JSON parse errors in config files | config JSON破損時にトレースバックが素通りする |
+| yukkie/AgentVillage#100 | tech-debt | 🟢 | - | Madman fake-CO role hardcoded to Seer instead of delegating to Role class | Madman偽COがRole未委譲でgame.pyにハードコード |
+| yukkie/AgentVillage#101 | tech-debt | 🟢 | - | check_victory() only supports two-faction win conditions | 二項対立のみ。第三陣営・Madman単独勝利に対応不可 |
+| yukkie/AgentVillage#102 | tech-debt | 🟢 | - | memory.update_memory() silently propagates IOError from store.save() | IOError無言伝播。呼び出し元で対処不可 |
+| yukkie/AgentVillage#103 | tech-debt | 🟢 | - | LogWriter.write() does not handle IOError — log failure crashes the game | ログ書き込み失敗でゲームが止まる |
+| yukkie/AgentVillage#104 | tech-debt | 🟢 | - | load_events() fails entirely if any log line is corrupted | 1行でも壊れると全ログが読めなくなる |
+| yukkie/AgentVillage#105 | tech-debt | 🟢 | - | ReplayPager crashes if archive agents/ dir is missing or has invalid JSON | アーカイブ破損時にリプレイ起動でクラッシュ |
 | yukkie/AgentVillage#33 | enhancement | 🟢 | 5 | Wolf chat improvements | 早期終了・偽CO協議・テスト |
 | yukkie/AgentVillage#36 | enhancement | 🟢 | 5 | Belief updates from agent reasoning | suspicion/trust を推理結果から更新 |
 | yukkie/AgentVillage#47 | enhancement | 🟢 | 3 | Reasoning field for Vote/Guard/Divination/Judgment | 各アクションに reasoning を追加し spectator ログ・memory_update に記録 |
