@@ -1,6 +1,30 @@
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, BeforeValidator, PlainSerializer
+
+from src.domain.roles import Role, get_role
+
+
+def _role_from_json(v: object) -> Role | None:
+    if v is None:
+        return None
+    if isinstance(v, Role):
+        return v
+    try:
+        return get_role(str(v))
+    except ValueError:
+        return None
+
+
+def _role_to_json(v: Role | None) -> str | None:
+    return v.name if v is not None else None
+
+
+RoleField = Annotated[
+    Role | None,
+    BeforeValidator(_role_from_json),
+    PlainSerializer(_role_to_json, when_used="json"),
+]
 
 
 class PreNightOutput(BaseModel):
@@ -27,7 +51,7 @@ class VoteCandidate(BaseModel):
 
 class Intent(BaseModel):
     vote_candidates: list[VoteCandidate] = []
-    co: str | None = None
+    co: RoleField = None
 
 
 class AgentOutput(BaseModel):

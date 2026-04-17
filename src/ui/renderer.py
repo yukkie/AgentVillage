@@ -3,7 +3,6 @@ from rich.console import Console
 
 from src.domain.event import LogEvent, EventType
 from src.domain.actor import Actor
-from src.domain.roles import get_role
 
 console = Console()
 
@@ -27,7 +26,7 @@ def _speech_style(agent_name: str | None, agents: list[Actor], spectator_mode: b
         return actor.role.color
     # public mode: only color if the agent has CO'd
     if actor.state.claimed_role:
-        return get_role(actor.state.claimed_role).color
+        return actor.state.claimed_role.color
     return "white"
 
 

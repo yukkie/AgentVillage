@@ -9,6 +9,7 @@ from src.engine.game import GameEngine
 from src.engine.phase import Phase
 from src.domain.schema import AgentOutput, Intent, JudgmentOutput
 from src.domain.event import EventType, LogEvent
+from src.domain.roles import Seer
 from src.logger.writer import LogWriter
 
 
@@ -146,7 +147,7 @@ class TestDiscussionCoDecision:
         ):
             engine._run_day()
 
-        assert seer.state.claimed_role == "Seer"
+        assert isinstance(seer.state.claimed_role, Seer)
 
     def test_ineligible_agent_co_treated_as_speak(self):
         """Agent that already claimed a role cannot CO again — falls back to speak."""

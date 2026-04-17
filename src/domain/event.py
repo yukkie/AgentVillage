@@ -3,6 +3,8 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 
+from src.domain.schema import RoleField
+
 
 class EventType(Enum):
     SPEECH = "speech"
@@ -32,7 +34,7 @@ class LogEvent(BaseModel):
     is_public: bool = True
     speech_id: int | None = None
     reply_to: int | None = None
-    claimed_role: str | None = None
+    claimed_role: RoleField = None
 
     @classmethod
     def make(
@@ -46,7 +48,7 @@ class LogEvent(BaseModel):
         is_public: bool = True,
         speech_id: int | None = None,
         reply_to: int | None = None,
-        claimed_role: str | None = None,
+        claimed_role: RoleField = None,
     ) -> "LogEvent":
         return cls(
             day=day,
