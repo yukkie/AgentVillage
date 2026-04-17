@@ -19,13 +19,12 @@ from src.logger.writer import LogWriter
 def _make_agent(name: str, role: str) -> Actor:
     state = ActorState(
         name=name,
-        role=role,
         persona=Persona(style="calm", lie_tendency=0.1, aggression=0.2),
         beliefs={},
         memory_summary=[],
         is_alive=True,
     )
-    return make_actor(state)
+    return make_actor(state, role)
 
 
 def _make_engine(agents: list[Actor]) -> tuple[GameEngine, list[LogEvent]]:

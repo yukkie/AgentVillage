@@ -9,14 +9,15 @@ from src.agent import store
 
 
 def _make_agent_json(name: str, role: str) -> dict:
-    return ActorState(
+    data = ActorState(
         name=name,
-        role=role,
         persona=Persona(style="calm"),
         beliefs={},
         memory_summary=[],
         is_alive=True,
     ).model_dump()
+    data["role"] = role
+    return data
 
 
 @pytest.fixture()

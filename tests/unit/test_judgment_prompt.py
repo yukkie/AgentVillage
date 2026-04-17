@@ -11,14 +11,13 @@ def _make_agent(
 ) -> Actor:
     state = ActorState(
         name=name,
-        role=role,
         persona=Persona(style="calm", lie_tendency=0.1, aggression=0.2),
         beliefs={"SQ": Belief()},
         memory_summary=memory or [],
         is_alive=True,
         claimed_role=claimed_role,
     )
-    return make_actor(state)
+    return make_actor(state, role)
 
 
 def _make_log(*texts: str) -> list[SpeechEntry]:

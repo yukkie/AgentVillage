@@ -13,20 +13,22 @@ def _ensure_dir() -> None:
 def save(actor: Actor) -> None:
     _ensure_dir()
     path = STATE_DIR / f"{actor.name.lower()}.json"
-    path.write_text(actor.state.model_dump_json(indent=2), encoding="utf-8")
+    data = json.loads(actor.state.model_dump_json())
+    data["role"] = actor.role.name
+    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
 def load(name: str) -> Actor:
     path = STATE_DIR / f"{name.lower()}.json"
     data = json.loads(path.read_text(encoding="utf-8"))
-    return make_actor(ActorState.model_validate(data))
+    return make_actor(ActorState.model_validate(data), data["role"])
 
 
 def load_all_from_dir(path: Path) -> list[Actor]:
     actors = []
     for p in sorted(path.glob("*.json")):
         data = json.loads(p.read_text(encoding="utf-8"))
-        actors.append(make_actor(ActorState.model_validate(data)))
+        actors.append(make_actor(ActorState.model_validate(data), data["role"]))
     return actors
 
 

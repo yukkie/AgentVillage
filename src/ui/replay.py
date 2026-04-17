@@ -109,7 +109,7 @@ class ReplayPager:
         # Reset claimed_role to None so public-mode colors reflect what was
         # publicly known at each moment, not the end-of-game state.
         dynamic_actors: dict[str, Actor] = {
-            a.name: make_actor(a.state.model_copy())
+            a.name: make_actor(a.state.model_copy(), a.role.name)
             for a in self._agents
         }
         for a in dynamic_actors.values():
