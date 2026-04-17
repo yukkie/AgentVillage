@@ -35,6 +35,11 @@
 | yukkie/AgentVillage#103 | tech-debt | 🟢 | - | LogWriter.write() does not handle IOError — log failure crashes the game | ログ書き込み失敗でゲームが止まる |
 | yukkie/AgentVillage#104 | tech-debt | 🟢 | - | load_events() fails entirely if any log line is corrupted | 1行でも壊れると全ログが読めなくなる |
 | yukkie/AgentVillage#105 | tech-debt | 🟢 | - | ReplayPager crashes if archive agents/ dir is missing or has invalid JSON | アーカイブ破損時にリプレイ起動でクラッシュ |
+| yukkie/AgentVillage#107 | tech-debt | 🟢 | - | PR #106: _discussion_chain default-arg snapshot capture — smelly closure pattern | default引数でクロージャ問題を回避するやっつけパターン |
+| yukkie/AgentVillage#108 | tech-debt | 🟢 | - | PR #106: _discussion_chain nested in _run_day() worsens GameEngine bloat (#58) | ネスト関数がIssue #58の解決をさらに難しくした |
+| yukkie/AgentVillage#109 | tech-debt | 🟢 | - | PR #106: local import of Villager moved deeper into nested function, worsening #97 | ローカルインポートがさらに深いネストに埋没 |
+| yukkie/AgentVillage#110 | tech-debt | 🔴 | - | PR #106: ThreadPoolExecutor in game.py breaks client.py parallel execution convention | client.pyが並列実行を持つ規約をgame.pyが破った |
+| yukkie/AgentVillage#111 | tech-debt | 🟢 | - | PR #106: test_challenge_reply_to_recorded mock is not round-aware | モックがラウンド区別不可でアサーションが緩められた |
 | yukkie/AgentVillage#33 | enhancement | 🟢 | 5 | Wolf chat improvements | 早期終了・偽CO協議・テスト |
 | yukkie/AgentVillage#36 | enhancement | 🟢 | 5 | Belief updates from agent reasoning | suspicion/trust を推理結果から更新 |
 | yukkie/AgentVillage#47 | enhancement | 🟢 | 3 | Reasoning field for Vote/Guard/Divination/Judgment | 各アクションに reasoning を追加し spectator ログ・memory_update に記録 |
