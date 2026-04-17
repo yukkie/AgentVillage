@@ -35,6 +35,7 @@
 | yukkie/AgentVillage#79 | enhancement | 🟢 | - | Log analysis agent skill for post-game review | ゲームログをAgentに委譲して解析・サマリーを返すスキル |
 | yukkie/AgentVillage#84 | enhancement | 🟢 | - | Parallelize LLM requests in day speech phase | 発言順確定後にThreadPoolExecutorで並列リクエスト発行しゲームを高速化 |
 | yukkie/AgentVillage#86 | enhancement | 🟢 | - | Parallelize judgment+speech chain in day discussion phase | DISCUSSIONで判断+発言をアクターごとにチェーンし並列実行 |
+| yukkie/AgentVillage#88 | enhancement | 🟢 | - | Merge judgment and speech into single LLM call using tool use | tool useで発言+アクション構造化を1ステップ化。OPENING/DISCUSSION設計を統一 |
 
 ---
 
