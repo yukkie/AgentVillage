@@ -90,9 +90,9 @@ def get_role(role: str) -> Role:
 
 `Actor`（dataclass）はランタイムのみで使われる：
 - `state: ActorState` — JSON 永続化される Pydantic モデル
-- `role: Role` — 役職 Strategy インスタンス（`get_role(state.role)` で構築）
+- `role: Role` — 役職 Strategy インスタンス（`make_actor(state, role_name)` で構築）
 - 便利 property: `name`（`state.name`）、`is_alive`（`state.is_alive`）
-- 永続化は `state` のみ。`store.save(actor)` は `actor.state` を書き出す
+- 永続化は `state` + `role.name`。`store.save(actor)` は `ActorState` フィールドに `role` を加えた JSON を書き出す
 
 `Actor.role` により `get_role(agent.role)` の繰り返し呼び出しが不要になる。
 

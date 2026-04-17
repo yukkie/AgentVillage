@@ -40,13 +40,12 @@ def initialize_agents(num_players: int) -> list[Actor]:
         }
         state = ActorState(
             name=name,
-            role=role,
             persona=Persona.model_validate(config),
             beliefs=beliefs,
             memory_summary=[],
             is_alive=True,
         )
-        actor = make_actor(state)
+        actor = make_actor(state, role)
         store.save(actor)
         actors.append(actor)
 

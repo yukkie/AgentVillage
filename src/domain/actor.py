@@ -22,7 +22,6 @@ class Belief(BaseModel):
 
 class ActorState(BaseModel):
     name: str
-    role: str  # "Villager" | "Werewolf" | "Seer"
     model: str = "claude-haiku-4-5-20251001"
     persona: Persona
     beliefs: dict[str, Belief] = {}
@@ -46,6 +45,5 @@ class Actor:
         return self.state.is_alive
 
 
-def make_actor(state: ActorState) -> Actor:
-    """Construct an Actor from an ActorState by resolving its role."""
-    return Actor(state=state, role=get_role(state.role))
+def make_actor(state: ActorState, role_name: str) -> Actor:
+    return Actor(state=state, role=get_role(role_name))
