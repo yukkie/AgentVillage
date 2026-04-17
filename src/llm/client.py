@@ -142,6 +142,19 @@ def call_judgment_parallel(
             yield actor, future.result()
 
 
+def call_speech_parallel(
+    calls: list[tuple[Actor, PublicContext, SpeechDirection, RoleSpecificContext | None]]
+) -> Iterator[tuple[Actor, AgentOutput]]:
+    """Fire all speech calls in parallel; yield results in completion order."""
+    with ThreadPoolExecutor() as executor:
+        future_to_actor = {
+            executor.submit(call, actor, ctx, direction, role_ctx): actor
+            for actor, ctx, direction, role_ctx in calls
+        }
+        for future in as_completed(future_to_actor):
+            yield future_to_actor[future], future.result()
+
+
 def call_pre_night_action(
     actor: Actor,
     alive_players: list[str],

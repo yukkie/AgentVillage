@@ -135,41 +135,15 @@ class GameEngine:
         self._speech_id_counter += 1
         return self._speech_id_counter
 
-    def _do_speak(
+    def _apply_speech_output(
         self,
         actor: Actor,
+        output: AgentOutput,
         phase: Phase,
         reply_to_entry: SpeechEntry | None = None,
         force_co: bool = False,
     ) -> SpeechEntry:
-        """Generate a speech for actor, emit events, update memory, and append to today_log.
-
-        force_co=True injects the CO instruction into the speech prompt without mutating
-        actor.state.intended_co. Used when the actor chose "co" in the discussion judgment phase.
-        """
-        ctx = PublicContext(
-            today_log=list(self.today_log),
-            alive_players=self._alive_names(),
-            dead_players=self._dead_names(),
-            day=self.day,
-            all_agents=self.agents,
-            past_votes=self._past_votes,
-            past_deaths=self._past_deaths,
-        )
-        direction = SpeechDirection(
-            lang=self.lang,
-            reply_to_entry=reply_to_entry,
-            intended_co=actor.state.intended_co or force_co,
-        )
-        # TODO(#36): Add SeerSpecificContext / KnightSpecificContext / MediumSpecificContext
-        role_ctx = (
-            WolfSpecificContext(
-                wolf_partners=[a.name for a in self._alive_agents() if isinstance(a.role, Werewolf) and a.name != actor.name]
-            )
-            if isinstance(actor.role, Werewolf)
-            else None
-        )
-        output = llm_client.call(actor, ctx, direction, role_ctx)
+        """Post-process a speech output: emit events, update memory, append to today_log."""
         self._day_outputs[actor.name] = output
 
         # Safety net: enforce pre-night CO decision on the opening speech.
@@ -224,6 +198,52 @@ class GameEngine:
 
         return entry
 
+    def _build_speech_args(
+        self,
+        actor: Actor,
+        reply_to_entry: SpeechEntry | None = None,
+        force_co: bool = False,
+    ) -> tuple:
+        ctx = PublicContext(
+            today_log=list(self.today_log),
+            alive_players=self._alive_names(),
+            dead_players=self._dead_names(),
+            day=self.day,
+            all_agents=self.agents,
+            past_votes=self._past_votes,
+            past_deaths=self._past_deaths,
+        )
+        direction = SpeechDirection(
+            lang=self.lang,
+            reply_to_entry=reply_to_entry,
+            intended_co=actor.state.intended_co or force_co,
+        )
+        # TODO(#36): Add SeerSpecificContext / KnightSpecificContext / MediumSpecificContext
+        role_ctx = (
+            WolfSpecificContext(
+                wolf_partners=[a.name for a in self._alive_agents() if isinstance(a.role, Werewolf) and a.name != actor.name]
+            )
+            if isinstance(actor.role, Werewolf)
+            else None
+        )
+        return ctx, direction, role_ctx
+
+    def _do_speak(
+        self,
+        actor: Actor,
+        phase: Phase,
+        reply_to_entry: SpeechEntry | None = None,
+        force_co: bool = False,
+    ) -> SpeechEntry:
+        """Generate a speech for actor, emit events, update memory, and append to today_log.
+
+        force_co=True injects the CO instruction into the speech prompt without mutating
+        actor.state.intended_co. Used when the actor chose "co" in the discussion judgment phase.
+        """
+        ctx, direction, role_ctx = self._build_speech_args(actor, reply_to_entry, force_co)
+        output = llm_client.call(actor, ctx, direction, role_ctx)
+        return self._apply_speech_output(actor, output, phase, reply_to_entry, force_co)
+
     def _run_pre_night(self) -> None:
         """Pre-night phase: non-Villager agents secretly decide whether to CO on Day 1.
 
@@ -262,8 +282,10 @@ class GameEngine:
 
         opening_order = self._alive_agents()
         random.shuffle(opening_order)
-        for actor in opening_order:
-            self._do_speak(actor, Phase.DAY_OPENING)
+
+        opening_calls = [(actor, *self._build_speech_args(actor)) for actor in opening_order]
+        for actor, output in llm_client.call_speech_parallel(opening_calls):
+            self._apply_speech_output(actor, output, Phase.DAY_OPENING)
 
         # --- DISCUSSION × 2: 並列判断 → レスポンス順発言 ---
         self.phase = Phase.DAY_DISCUSSION
