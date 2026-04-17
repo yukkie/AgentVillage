@@ -117,7 +117,7 @@ CO が成立する経路は現状2つある:
 2. **議論中CO（DISCUSSION・全Day）**: 判断フェーズで `decision="co"` を選んだ適格エージェントがその場で公言（§16.2）
    - 適格条件: `claimed_role is None` かつ `role != "Villager"`
    - 発言生成プロンプトは前夜CO経路と同じ「CO指示ブロック」を再利用する（`build_system_prompt` の `intended_co=True` 分岐）
-   - エンジンは `_do_speak(..., force_co=True)` で一時的に CO 指示を有効化する。`AgentState.intended_co` 自体は変更しない
+   - エンジンは `_build_speech_args(..., force_co=True)` で一時的に CO 指示を有効化する。`AgentState.intended_co` 自体は変更しない
 
 なお Day 2+ OPENING には現状構造化された CO 判断ステップがなく、LLM が通常発言中に自発的に `intent.co` を返したケースのみ受動的に成立する。Day 2+ にも前夜判断相当のフェーズを設ける拡張案は Ideas.md §16.2a を参照。
 
@@ -149,7 +149,7 @@ Day 1 OPENINGで `intended_co=True` なのにLLMがCOを出力しなかった場
 | `call_judgment()` | 判断（DISCUSSION 並列） | 軽量（役職・性格・memory_summary・直近発言のみ） | `JudgmentOutput` |
 | `call_night_action()` | 夜行動 | 夜フェーズ専用 | `str`（ターゲット名） |
 | `call_pre_night_action()` | 前夜判断・単体呼び出し | 役職・性格・参加者情報 | `PreNightOutput` |
-| `call_pre_night_parallel()` | 前夜判断・並列呼び出し（`call_judgment_parallel` と同パターン） | 同上 | `Iterator[tuple[AgentState, PreNightOutput]]` |
+| `call_pre_night_parallel()` | 前夜判断・並列呼び出し（`call_speech_parallel` と同パターン） | 同上 | `Iterator[tuple[AgentState, PreNightOutput]]` |
 
 #### 並列実行
 
@@ -275,11 +275,11 @@ SQLite、PostgreSQL。
 昼フェーズに「判断ターン」を導入する。全エージェントに「challenge / speak / silent」の3択を並列で判断させ、発言意思があるエージェントだけ発言を生成する。発言順はAPIレスポンスが返ってきた順とする。
 
 **実装方法**
-- 判断フェーズ: `ThreadPoolExecutor` で全エージェント分の `call_judgment()` を並列投げ
-- `as_completed()` でレスポンスが返ってきた順に処理
-- silent でないエージェントはその場で `call()` を呼んで発言生成 → `today_log` に即追記
-- 追記されたログは次のエージェントの発言生成プロンプトに自動的に反映される
-- challenge 時は `reply_to`（speech_id）をプロンプトに含めることでどの発言への反応かを指示する
+- 各アクターに「`call_judgment()` → non-silent なら `call()`」をチェーンした callable を構成
+- `ThreadPoolExecutor` で全アクター分を並列実行
+- `as_completed()` でレスポンス順に post-processing（`today_log` 更新・イベント発行）を逐次実行
+- 発言コンテキストはラウンド開始時のスナップショットを共有（同ラウンド内の他者発言は見えない）
+- challenge 時は `reply_to`（speech_id）をスナップショット内で解決しプロンプトに含める
 
 **理由**
 - 判断プロンプトは軽量（memory_summary + 直近発言のみ）なので並列実行しても低コスト
