@@ -1,4 +1,3 @@
-import json
 import sys
 from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -81,15 +80,9 @@ def call(
             ],
         )
         raw = message.content[0].text
+        return AgentOutput.model_validate_json(_extract_json(raw))
     except Exception as e:
-        _log_error("call", actor.name, "api", e, raw)
-        return _default_output(actor)
-    try:
-        json_str = _extract_json(raw)
-        data = json.loads(json_str)
-        return AgentOutput.model_validate(data)
-    except Exception as e:
-        _log_error("call", actor.name, "parse", e, raw)
+        _log_error("call", actor.name, "error", e, raw)
         return _default_output(actor)
 
 
@@ -111,15 +104,9 @@ def call_judgment(
             messages=[{"role": "user", "content": prompt}],
         )
         raw = message.content[0].text
+        return JudgmentOutput.model_validate_json(_extract_json(raw))
     except Exception as e:
-        _log_error("call_judgment", actor.name, "api", e, raw)
-        return JudgmentOutput(decision="silent")
-    try:
-        json_str = _extract_json(raw)
-        data = json.loads(json_str)
-        return JudgmentOutput.model_validate(data)
-    except Exception as e:
-        _log_error("call_judgment", actor.name, "parse", e, raw)
+        _log_error("call_judgment", actor.name, "error", e, raw)
         return JudgmentOutput(decision="silent")
 
 
@@ -153,15 +140,9 @@ def call_pre_night_action(
             messages=[{"role": "user", "content": prompt}],
         )
         raw = message.content[0].text
+        return PreNightOutput.model_validate_json(_extract_json(raw))
     except Exception as e:
-        _log_error("call_pre_night_action", actor.name, "api", e, raw)
-        return PreNightOutput(thought="...", decision="wait", reasoning="Defaulting to wait.")
-    try:
-        json_str = _extract_json(raw)
-        data = json.loads(json_str)
-        return PreNightOutput.model_validate(data)
-    except Exception as e:
-        _log_error("call_pre_night_action", actor.name, "parse", e, raw)
+        _log_error("call_pre_night_action", actor.name, "error", e, raw)
         return PreNightOutput(thought="...", decision="wait", reasoning="Defaulting to wait.")
 
 
@@ -234,15 +215,9 @@ def call_wolf_chat(
             messages=[{"role": "user", "content": prompt}],
         )
         raw = message.content[0].text
+        return WolfChatOutput.model_validate_json(_extract_json(raw))
     except Exception as e:
-        _log_error("call_wolf_chat", actor.name, "api", e, raw)
-        return WolfChatOutput(thought="...", speech="...", vote_candidates=[])
-    try:
-        json_str = _extract_json(raw)
-        data = json.loads(json_str)
-        return WolfChatOutput.model_validate(data)
-    except Exception as e:
-        _log_error("call_wolf_chat", actor.name, "parse", e, raw)
+        _log_error("call_wolf_chat", actor.name, "error", e, raw)
         return WolfChatOutput(thought="...", speech="...", vote_candidates=[])
 
 
