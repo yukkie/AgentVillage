@@ -268,32 +268,20 @@ def build_judgment_prompt(
         for e in recent:
             lines.append(f"  [{e.speech_id}] {e.agent}: {e.text}")
 
+    decision_options = '"challenge" | "speak" | "silent" | "co"' if co_eligible else '"challenge" | "speak" | "silent"'
+    lines.append(f"""
+Decide your next action. Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
+{{
+  "decision": {decision_options},
+  "reply_to": <speech_id to challenge, or null>
+}}
+- "challenge": directly counter a specific speech (set reply_to to its speech_id)
+- "speak": add a new statement unprompted
+- "silent": nothing to add right now""")
     if co_eligible:
         co_hint = actor.role.co_strategy_hint()
-        lines.append(f"""
-Decide your next action. Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
-{{
-  "decision": "challenge" | "speak" | "silent" | "co",
-  "reply_to": <speech_id to challenge, or null>
-}}
-- "challenge": directly counter a specific speech (set reply_to to its speech_id)
-- "speak": add a new statement unprompted
-- "silent": nothing to add right now
-- "co": publicly declare your role (Coming-Out) in your next speech
-{co_hint}
-- The JSON must contain exactly these two fields and nothing else.
-Use {lang} only for internal reasoning if needed, but keep the JSON minimal.""")
-    else:
-        lines.append(f"""
-Decide your next action. Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
-{{
-  "decision": "challenge" | "speak" | "silent",
-  "reply_to": <speech_id to challenge, or null>
-}}
-- "challenge": directly counter a specific speech (set reply_to to its speech_id)
-- "speak": add a new statement unprompted
-- "silent": nothing to add right now
-- The JSON must contain exactly these two fields and nothing else.
+        lines.append(f'- "co": publicly declare your role (Coming-Out) in your next speech\n{co_hint}')
+    lines.append(f"""- The JSON must contain exactly these two fields and nothing else.
 Use {lang} only for internal reasoning if needed, but keep the JSON minimal.""")
     return "\n".join(lines)
 
