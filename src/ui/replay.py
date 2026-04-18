@@ -68,9 +68,14 @@ class ArchiveSelector:
         while True:
             _clear()
             print("Select an archive to replay:\n")
-            for i, arch in enumerate(archives):
+            size = shutil.get_terminal_size()
+            visible = max(1, size.lines - 4)
+            start = max(0, cursor - visible // 2)
+            end = min(len(archives), start + visible)
+            start = max(0, end - visible)
+            for i in range(start, end):
                 prefix = "  > " if i == cursor else "    "
-                print(f"{prefix}{arch.name}")
+                print(f"{prefix}{archives[i].name}")
             print("\n[↑↓] Move  [Enter] Select  [q] Quit")
 
             key = _getch()
