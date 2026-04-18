@@ -1,6 +1,7 @@
 import random
 from typing import Callable
 
+from src.config import DISCUSSION_ROUNDS, WOLF_CHAT_ROUNDS
 from src.domain.actor import Actor, Belief
 from src.agent import store, memory as memory_mod
 from src.engine.phase import Phase

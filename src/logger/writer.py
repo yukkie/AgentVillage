@@ -2,8 +2,8 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
+from src.config import ARCHIVE_DIR, LOG_DIR, PUBLIC_LOG, SPECTATOR_LOG
 from src.domain.event import LogEvent
-from src.logger.logger import ARCHIVE_DIR, PUBLIC_LOG, SPECTATOR_LOG, STATE_DIR
 
 
 def archive_state() -> Path | None:
@@ -16,13 +16,13 @@ def archive_state() -> Path | None:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     dest = ARCHIVE_DIR / timestamp
     ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(str(STATE_DIR), str(dest))
+    shutil.copytree(str(LOG_DIR), str(dest))
     return dest
 
 
 class LogWriter:
     def __init__(self) -> None:
-        STATE_DIR.mkdir(parents=True, exist_ok=True)
+        LOG_DIR.mkdir(parents=True, exist_ok=True)
         # Clear logs at start of new game
         PUBLIC_LOG.write_text("", encoding="utf-8")
         SPECTATOR_LOG.write_text("", encoding="utf-8")
