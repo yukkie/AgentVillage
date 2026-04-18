@@ -26,7 +26,6 @@
 | yukkie/AgentVillage#94 | tech-debt | 🟢 | - | store.load() does not handle FileNotFoundError | ファイル不在時に未ハンドルの例外が伝播する |
 | yukkie/AgentVillage#95 | tech-debt | 🟢 | - | resolve_inspect() returns 'Unknown' but callers assume Werewolf/Not Werewolf | "Unknown"ケースをgame.py側が未処理。beliefs不整合の温床 |
 | yukkie/AgentVillage#96 | tech-debt | 🟢 | - | Duplicated JSON format string in build_judgment_prompt | co_eligible分岐でフォーマット文字列がほぼ重複 |
-| yukkie/AgentVillage#116 | tech-debt | 🔴 | - | Add can_co property to Role ABC to eliminate duplicated co-eligibility logic | client.pyの2箇所にis_co_eligibleの重複式、Role ABCに委譲すべき |
 | yukkie/AgentVillage#97 | tech-debt | 🟢 | - | Move local imports to module top level in prompt.py and game.py | 関数内ローカルインポートがアーキテクチャ原則に違反 |
 | yukkie/AgentVillage#99 | tech-debt | 🟢 | - | setup.py silently ignores JSON parse errors in config files | config JSON破損時にトレースバックが素通りする |
 | yukkie/AgentVillage#101 | tech-debt | 🟢 | - | check_victory() only supports two-faction win conditions | 二項対立のみ。第三陣営・Madman単独勝利に対応不可 |
