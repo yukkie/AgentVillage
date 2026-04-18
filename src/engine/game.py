@@ -147,10 +147,18 @@ class GameEngine:
         """Post-process a speech output: emit events, update memory, append to today_log."""
         self._day_outputs[actor.name] = output
 
-        # Safety net: enforce pre-night CO decision on the opening speech.
-        # Werewolf and Madman fall back to "Seer" (fake CO); others use their true role.
+        # If the actor intended to CO but did not declare in speech, log silently and clear the flag.
         if actor.state.intended_co and phase == Phase.DAY_OPENING and not output.intent.co:
-            output.intent.co = get_role("Seer") if isinstance(actor.role, Werewolf) else actor.role
+            actor.state.intended_co = False
+            store.save(actor)
+            self._emit(LogEvent.make(
+                day=self.day,
+                phase=phase.value,
+                event_type=EventType.PRE_NIGHT_DECISION,
+                agent=actor.name,
+                content=f"{actor.name} decided to CO but did not declare in speech",
+                is_public=False,
+            ))
 
         # Update claimed_role BEFORE emitting the speech so the CO speech itself
         # is rendered with the correct role color.
