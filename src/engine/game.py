@@ -17,9 +17,6 @@ from src.domain.event import LogEvent, EventType
 from src.domain.roles import Werewolf, Knight, Seer, Medium
 from src.logger.writer import LogWriter
 
-DISCUSSION_ROUNDS = 2
-WOLF_CHAT_ROUNDS = 3
-
 
 class GameEngine:
     def __init__(
