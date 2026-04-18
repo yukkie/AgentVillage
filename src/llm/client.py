@@ -1,14 +1,14 @@
 import json
 import sys
+from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from collections.abc import Iterator
 
 import anthropic
 
 from src.domain.actor import Actor
-from src.llm.prompt import PublicContext, SpeechDirection, RoleSpecificContext, build_system_prompt, build_judgment_prompt, build_night_action_prompt, build_pre_night_prompt, build_wolf_chat_prompt
-from src.domain.schema import AgentOutput, Intent, JudgmentOutput, PreNightOutput, SpeechEntry, WolfChatOutput
 from src.domain.roles import Villager
+from src.domain.schema import AgentOutput, Intent, JudgmentOutput, PreNightOutput, SpeechEntry, WolfChatOutput
+from src.llm.prompt import PublicContext, RoleSpecificContext, SpeechDirection, build_judgment_prompt, build_night_action_prompt, build_pre_night_prompt, build_system_prompt, build_wolf_chat_prompt
 
 _client = anthropic.Anthropic()
 
@@ -181,6 +181,41 @@ def call_pre_night_parallel(
         for future in as_completed(future_to_agent):
             actor = future_to_agent[future]
             yield actor, future.result()
+
+
+def call_discussion_parallel(
+    actors: list[Actor],
+    today_log_snapshot: list[SpeechEntry],
+    alive_names: list[str],
+    day: int,
+    lang: str,
+    build_speech_args: Callable[
+        [Actor, SpeechEntry | None, bool, list[SpeechEntry]],
+        tuple[PublicContext, SpeechDirection, RoleSpecificContext | None],
+    ],
+) -> Iterator[tuple[Actor, JudgmentOutput, AgentOutput | None, SpeechEntry | None, bool]]:
+    """Run judgment→speech chain for all actors in parallel; yield results in completion order."""
+
+    def _chain(actor: Actor) -> tuple[Actor, JudgmentOutput, AgentOutput | None, SpeechEntry | None, bool]:
+        judgment = call_judgment(actor, today_log_snapshot, alive_names, day, lang)
+        if judgment.decision == "silent":
+            return actor, judgment, None, None, False
+        is_co_eligible = actor.state.claimed_role is None and not isinstance(actor.role, Villager)
+        force_co = judgment.decision == "co" and is_co_eligible
+        reply_to_entry: SpeechEntry | None = None
+        if judgment.decision == "challenge" and judgment.reply_to is not None:
+            reply_to_entry = next(
+                (e for e in today_log_snapshot if e.speech_id == judgment.reply_to),
+                None,
+            )
+        ctx, direction, role_ctx = build_speech_args(actor, reply_to_entry, force_co, today_log_snapshot)
+        output = call(actor, ctx, direction, role_ctx)
+        return actor, judgment, output, reply_to_entry, force_co
+
+    with ThreadPoolExecutor() as executor:
+        futures = {executor.submit(_chain, actor): actor for actor in actors}
+        for future in as_completed(futures):
+            yield future.result()
 
 
 def call_wolf_chat(
