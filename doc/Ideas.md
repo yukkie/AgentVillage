@@ -28,7 +28,6 @@
 | yukkie/AgentVillage#96 | tech-debt | 🟢 | - | Duplicated JSON format string in build_judgment_prompt | co_eligible分岐でフォーマット文字列がほぼ重複 |
 | yukkie/AgentVillage#97 | tech-debt | 🟢 | - | Move local imports to module top level in prompt.py and game.py | 関数内ローカルインポートがアーキテクチャ原則に違反 |
 | yukkie/AgentVillage#99 | tech-debt | 🟢 | - | setup.py silently ignores JSON parse errors in config files | config JSON破損時にトレースバックが素通りする |
-| yukkie/AgentVillage#100 | tech-debt | 🟢 | - | Madman fake-CO role hardcoded to Seer instead of delegating to Role class | Madman偽COがRole未委譲でgame.pyにハードコード |
 | yukkie/AgentVillage#101 | tech-debt | 🟢 | - | check_victory() only supports two-faction win conditions | 二項対立のみ。第三陣営・Madman単独勝利に対応不可 |
 | yukkie/AgentVillage#102 | tech-debt | 🟢 | - | memory.update_memory() silently propagates IOError from store.save() | IOError無言伝播。呼び出し元で対処不可 |
 | yukkie/AgentVillage#103 | tech-debt | 🟢 | - | LogWriter.write() does not handle IOError — log failure crashes the game | ログ書き込み失敗でゲームが止まる |
