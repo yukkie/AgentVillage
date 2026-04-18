@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
 
+from pydantic import GetCoreSchemaHandler
+from pydantic_core import core_schema
+
 
 class Role(ABC):
     """Abstract base class for werewolf game roles (Strategy pattern)."""
@@ -36,3 +39,7 @@ class Role(ABC):
 
     @abstractmethod
     def co_strategy_hint(self) -> str: ...
+
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source: type, handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
+        return core_schema.is_instance_schema(cls)

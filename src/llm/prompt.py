@@ -128,7 +128,7 @@ def build_public_info_prompt(ctx: PublicContext) -> str:
 
     if ctx.all_agents:
         claims = [
-            f"{a.name} claims {a.state.claimed_role}"
+            f"{a.name} claims {a.state.claimed_role.name}"
             for a in ctx.all_agents
             if a.state.claimed_role is not None
         ]

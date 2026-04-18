@@ -14,7 +14,7 @@ from src.action.types import Vote, Inspect, Attack
 from src.action.validator import validate
 from src.action.resolver import resolve_inspect, resolve_attack
 from src.domain.event import LogEvent, EventType
-from src.domain.roles import Werewolf, Knight, Seer, Medium
+from src.domain.roles import Werewolf, Knight, Seer, Medium, get_role
 from src.logger.writer import LogWriter
 
 
@@ -150,13 +150,13 @@ class GameEngine:
         # Safety net: enforce pre-night CO decision on the opening speech.
         # Werewolf and Madman fall back to "Seer" (fake CO); others use their true role.
         if actor.state.intended_co and phase == Phase.DAY_OPENING and not output.intent.co:
-            output.intent.co = "Seer" if isinstance(actor.role, (Werewolf,)) else actor.role.name
+            output.intent.co = get_role("Seer") if isinstance(actor.role, Werewolf) else actor.role
 
         # Update claimed_role BEFORE emitting the speech so the CO speech itself
         # is rendered with the correct role color.
         # Only emit CO_ANNOUNCEMENT when the claimed role actually changes
         # (prevents duplicate announcements when LLM spontaneously repeats intent.co).
-        if output.intent.co and output.intent.co != actor.state.claimed_role:
+        if output.intent.co and type(output.intent.co) is not type(actor.state.claimed_role):
             actor.state.claimed_role = output.intent.co
             actor.state.intended_co = False  # clear once CO is made
             store.save(actor)
@@ -165,7 +165,7 @@ class GameEngine:
                 phase=phase.value,
                 event_type=EventType.CO_ANNOUNCEMENT,
                 agent=actor.name,
-                content=f"{actor.name} claims to be {actor.state.claimed_role}",
+                content=f"{actor.name} claims to be {actor.state.claimed_role.name}",
                 is_public=True,
                 claimed_role=actor.state.claimed_role,
             ))

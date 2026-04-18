@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from pydantic import BaseModel
 
 from src.domain.roles import Role, get_role
+from src.domain.schema import RoleField
 
 
 class Persona(BaseModel):
@@ -27,7 +28,7 @@ class ActorState(BaseModel):
     beliefs: dict[str, Belief] = {}
     memory_summary: list[str] = []
     is_alive: bool = True
-    claimed_role: str | None = None  # publicly claimed role via CO; None until CO
+    claimed_role: RoleField = None  # publicly claimed role via CO; None until CO
     intended_co: bool = False  # set True by pre-night phase if agent decided to CO on Day 1
 
 
