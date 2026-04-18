@@ -78,6 +78,12 @@ Rules:
 - Do NOT include your real role in speech unless you are doing a CO
 """
 
+    def __eq__(self, other: object) -> bool:
+        return type(self) is type(other)
+
+    def __hash__(self) -> int:
+        return hash(type(self))
+
     @classmethod
     def __get_pydantic_core_schema__(cls, source: type, handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
         return core_schema.is_instance_schema(cls)
