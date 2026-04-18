@@ -14,7 +14,6 @@
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#90 | tech-debt | 🔴 | 2 | Extract shared _call_llm helper in client.py | call関数6種が同じAPIコール→JSON→fallbackパターンを重複している |
-| yukkie/AgentVillage#92 | tech-debt | 🔴 | 2 | Hardcoded relative path STATE_DIR in store.py and setup.py | カレントディレクトリ依存の相対パスが2箇所に重複 |
 | yukkie/AgentVillage#96 | tech-debt | 🔴 | 1 | Duplicated JSON format string in build_judgment_prompt | co_eligible分岐でフォーマット文字列がほぼ重複 |
 | yukkie/AgentVillage#107 | tech-debt | 🔴 | 2 | PR #106: _discussion_chain uses default-arg trick | snapshotをdefault引数で捕捉するスメルパターン |
 | yukkie/AgentVillage#108 | tech-debt | 🔴 | 1 | PR #106: _discussion_chain nested inside _run_day() (#58のブロッカー) | ネスト関数が#58の分割を難しくしている |
