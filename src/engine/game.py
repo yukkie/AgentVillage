@@ -14,7 +14,7 @@ from src.action.types import Vote, Inspect, Attack
 from src.action.validator import validate
 from src.action.resolver import resolve_inspect, resolve_attack
 from src.domain.event import LogEvent, EventType
-from src.domain.roles import Werewolf, Knight, Seer, Medium, get_role
+from src.domain.roles import Werewolf, Knight, Seer, Medium
 from src.logger.writer import LogWriter
 
 
