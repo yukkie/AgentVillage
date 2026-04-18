@@ -16,6 +16,9 @@ from src.domain.event import LogEvent, EventType
 from src.domain.roles import Werewolf, Knight, Seer, Medium
 from src.logger.writer import LogWriter
 
+DISCUSSION_ROUNDS = 2
+WOLF_CHAT_ROUNDS = 3
+
 
 class GameEngine:
     def __init__(
@@ -282,7 +285,7 @@ class GameEngine:
 
         # --- DISCUSSION × 2: 全アクターの（判断→発言）チェーンを並列実行 ---
         self.phase = Phase.DAY_DISCUSSION
-        for _round in range(2):
+        for _round in range(DISCUSSION_ROUNDS):
             self._phase_start(Phase.DAY_DISCUSSION)
             alive = self._alive_agents()
             snapshot = list(self.today_log)
@@ -401,7 +404,7 @@ class GameEngine:
             wolf_names = [w.name for w in wolves]
             last_wolf_outputs = {w.name: None for w in wolves}
 
-            for _round in range(3):
+            for _round in range(WOLF_CHAT_ROUNDS):
                 for wolf in wolves:
                     partners = [n for n in wolf_names if n != wolf.name]
                     output = llm_client.call_wolf_chat(
