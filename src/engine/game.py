@@ -164,7 +164,7 @@ class GameEngine:
         # is rendered with the correct role color.
         # Only emit CO_ANNOUNCEMENT when the claimed role actually changes
         # (prevents duplicate announcements when LLM spontaneously repeats intent.co).
-        if output.intent.co and type(output.intent.co) is not type(actor.state.claimed_role):
+        if output.intent.co and not isinstance(actor.state.claimed_role, type(output.intent.co)):
             actor.state.claimed_role = output.intent.co
             actor.state.intended_co = False  # clear once CO is made
             store.save(actor)
