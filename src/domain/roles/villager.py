@@ -18,6 +18,10 @@ class Villager(Role):
     def night_action(self) -> str | None:
         return None
 
+    @property
+    def can_co(self) -> bool:
+        return False
+
     def role_prompt(self, wolf_partners: list[str] | None = None) -> str:
         return (
             "You are a Villager. Your goal is to identify and eliminate the Werewolf through "

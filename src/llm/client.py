@@ -6,7 +6,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import anthropic
 
 from src.domain.actor import Actor
-from src.domain.roles import Villager
 from src.domain.schema import AgentOutput, Intent, JudgmentOutput, PreNightOutput, SpeechEntry, WolfChatOutput
 from src.llm.prompt import PublicContext, RoleSpecificContext, SpeechDirection, build_judgment_prompt, build_night_action_prompt, build_pre_night_prompt, build_system_prompt, build_wolf_chat_prompt
 
@@ -102,7 +101,7 @@ def call_judgment(
     lang: str = "English",
 ) -> JudgmentOutput:
     """Call LLM for the lightweight parallel judgment decision."""
-    co_eligible = actor.state.claimed_role is None and not isinstance(actor.role, Villager)
+    co_eligible = actor.state.claimed_role is None and actor.role.can_co
     prompt = build_judgment_prompt(actor, today_log, alive_players, day, lang, co_eligible)
     raw = ""
     try:
@@ -200,7 +199,7 @@ def call_discussion_parallel(
         judgment = call_judgment(actor, today_log_snapshot, alive_names, day, lang)
         if judgment.decision == "silent":
             return actor, judgment, None, None, False
-        is_co_eligible = actor.state.claimed_role is None and not isinstance(actor.role, Villager)
+        is_co_eligible = actor.state.claimed_role is None and actor.role.can_co
         force_co = judgment.decision == "co" and is_co_eligible
         reply_to_entry: SpeechEntry | None = None
         if judgment.decision == "challenge" and judgment.reply_to is not None:

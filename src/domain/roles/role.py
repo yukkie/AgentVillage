@@ -23,6 +23,10 @@ class Role(ABC):
     @abstractmethod
     def night_action(self) -> str | None: ...
 
+    @property
+    def can_co(self) -> bool:
+        return True
+
     @abstractmethod
     def role_prompt(self, wolf_partners: list[str] | None = None) -> str: ...
 
