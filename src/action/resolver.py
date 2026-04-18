@@ -10,17 +10,16 @@ def resolve_vote(action: Vote, agents: list[Actor]) -> str:
     return action.target
 
 
-def resolve_inspect(action: Inspect, agents: list[Actor]) -> tuple[str, str]:
+def resolve_inspect(action: Inspect, agents: list[Actor]) -> tuple[str, Werewolf | None]:
     """
     Resolve a Seer's inspect action.
-    Returns (target_name, result) where result is "Werewolf" or "Not Werewolf".
+    Returns (target_name, result) where result is Werewolf instance if target is a Werewolf, else None.
     The Seer only learns alignment, not the specific role.
     """
     for actor in agents:
         if actor.name == action.target:
-            result = "Werewolf" if isinstance(actor.role, Werewolf) else "Not Werewolf"
-            return (actor.name, result)
-    return (action.target, "Unknown")
+            return (actor.name, actor.role if isinstance(actor.role, Werewolf) else None)
+    raise ValueError(f"resolve_inspect: target '{action.target}' not found in agents")
 
 
 def resolve_attack(action: Attack, agents: list[Actor]) -> str:
