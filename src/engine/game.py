@@ -523,7 +523,7 @@ class GameEngine:
             name, result = resolve_inspect(inspect, self.agents)
             if name not in seer.state.beliefs:
                 seer.state.beliefs[name] = Belief()
-            if result == "Werewolf":
+            if isinstance(result, Werewolf):
                 seer.state.beliefs[name].suspicion = 1.0
                 seer.state.beliefs[name].trust = 0.0
                 seer.state.beliefs[name].reason.append(f"Day {self.day}: inspected as Werewolf")

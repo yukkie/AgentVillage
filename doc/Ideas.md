@@ -14,7 +14,6 @@
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#61 | tech-debt | 🔴 | 3 | Move common prompt content to Role ABC default methods | prompt.py のコンテンツ文字列を Role ABC のデフォルトメソッドに移動し、prompt.py をアセンブルのみに |
-| yukkie/AgentVillage#41 | tech-debt | 🔴 | 1 | Replace role string literals | タイポ時に実行時エラーにならない。#24 のRole化で定数に集約 |
 | yukkie/AgentVillage#76 | tech-debt | 🟡 | 3 | Refactor renderer.py into Renderer class with GUI migration hint | Renderer クラス化・イベントスタイルを整理・GUI化時の EventPresenter 設計ヒントをコメントで残す |
 | yukkie/AgentVillage#74 | tech-debt | 🟡 | 5 | Split ActorState into ActorProfile (static) and ActorState (dynamic) | name/role/model/persona を ActorProfile に分離。ActorState は動的フィールドのみ |
 | yukkie/AgentVillage#81 | tech-debt | 🟡 | 5 | Separate night action declaration and resolution phases | 夜フェーズの宣言・実行・公表を3段階に分離。seer_survived フラグ削除。キツネ等の複雑な相互作用に対応 |
@@ -24,7 +23,6 @@
 | yukkie/AgentVillage#92 | tech-debt | 🟢 | - | Hardcoded relative path STATE_DIR in store.py and setup.py | カレントディレクトリ依存の相対パスが2箇所に重複 |
 | yukkie/AgentVillage#93 | tech-debt | 🟢 | - | Module-level Anthropic client singleton makes testing difficult | _clientがモジュールロード時に生成されテスト時に差し替え不可 |
 | yukkie/AgentVillage#94 | tech-debt | 🟢 | - | store.load() does not handle FileNotFoundError | ファイル不在時に未ハンドルの例外が伝播する |
-| yukkie/AgentVillage#95 | tech-debt | 🟢 | - | resolve_inspect() returns 'Unknown' but callers assume Werewolf/Not Werewolf | "Unknown"ケースをgame.py側が未処理。beliefs不整合の温床 |
 | yukkie/AgentVillage#96 | tech-debt | 🟢 | - | Duplicated JSON format string in build_judgment_prompt | co_eligible分岐でフォーマット文字列がほぼ重複 |
 | yukkie/AgentVillage#119 | tech-debt | 🟡 | - | Unify co-intent flags: rename force_co and type intended_co as Role \| None | force_coとintended_coの二重フラグを統合。Step1:force_co削除、Step2:bool→Role\|None型変更（2段階） |
 | yukkie/AgentVillage#97 | tech-debt | 🟢 | - | Move local imports to module top level in prompt.py and game.py | 関数内ローカルインポートがアーキテクチャ原則に違反 |
