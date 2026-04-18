@@ -1,9 +1,8 @@
 import json
 from pathlib import Path
 
+from src.config import STATE_DIR
 from src.domain.actor import Actor, ActorState, make_actor
-
-STATE_DIR = Path("state/agents")
 
 
 def _ensure_dir() -> None:
