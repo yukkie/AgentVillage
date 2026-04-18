@@ -146,6 +146,24 @@ class TestNightActionPrompt:
         assert get_role("Madman").night_action_prompt("Mad", ["Alice"], "ctx") == ""
 
 
+class TestOutputFormatPrompt:
+    def test_default_method_exists_on_all_roles(self):
+        for role_name in ["Villager", "Werewolf", "Seer", "Knight", "Medium", "Madman"]:
+            result = get_role(role_name).output_format_prompt()
+            assert "thought" in result
+            assert "speech" in result
+            assert "intent" in result
+
+    def test_lang_is_injected(self):
+        result = get_role("Villager").output_format_prompt(lang="Japanese")
+        assert "Japanese" in result
+
+    def test_returns_json_schema_instruction(self):
+        result = get_role("Seer").output_format_prompt()
+        assert "OUTPUT FORMAT" in result
+        assert "memory_update" in result
+
+
 class TestCoStrategyHint:
     def test_villager_empty(self):
         assert get_role("Villager").co_strategy_hint() == ""
