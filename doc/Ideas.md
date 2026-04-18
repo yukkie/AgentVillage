@@ -49,6 +49,7 @@
 | yukkie/AgentVillage#79 | enhancement | 🟢 | - | Log analysis agent skill for post-game review | ゲームログをAgentに委譲して解析・サマリーを返すスキル |
 | yukkie/AgentVillage#84 | enhancement | 🟢 | - | Parallelize LLM requests in day speech phase | 発言順確定後にThreadPoolExecutorで並列リクエスト発行しゲームを高速化 |
 | yukkie/AgentVillage#88 | enhancement | 🟢 | - | Merge judgment and speech into single LLM call using tool use | tool useで発言+アクション構造化を1ステップ化。OPENING/DISCUSSION設計を統一 |
+| yukkie/AgentVillage#121 | bug | 🔴 | - | fix: restore cursor-key log selection in replay UI | readchar移行後にreplayのカーソルキー選択が動かなくなったデグレ。原因はbefe3df（推測）|
 
 ---
 
