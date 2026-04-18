@@ -150,11 +150,17 @@ Day 1 OPENINGで `intended_co=True` なのにLLMがCOを出力しなかった場
 | `call_night_action()` | 夜行動 | 夜フェーズ専用 | `str`（ターゲット名） |
 | `call_pre_night_action()` | 前夜判断・単体呼び出し | 役職・性格・参加者情報 | `PreNightOutput` |
 | `call_pre_night_parallel()` | 前夜判断・並列呼び出し（`call_speech_parallel` と同パターン） | 同上 | `Iterator[tuple[AgentState, PreNightOutput]]` |
+| `call_discussion_parallel()` | 昼DISCUSSION 判断→発言チェーンの並列実行 | — | `Iterator[tuple[Actor, JudgmentOutput, AgentOutput \| None, SpeechEntry \| None, bool]]` |
 
 #### 並列実行
 
-`call_judgment()` は全生存エージェント分を `concurrent.futures.ThreadPoolExecutor` で並列実行する。
-outputが数トークンで済むため、全員分をほぼ同時に完了できる。
+並列 LLM 実行の責任は **client.py が一元管理する**。`ThreadPoolExecutor` は game.py に書かない。
+
+| 並列関数 | 用途 |
+|---|---|
+| `call_speech_parallel()` | DAY_OPENING — 全員発言を並列実行 |
+| `call_pre_night_parallel()` | PRE_NIGHT — CO判断を並列実行 |
+| `call_discussion_parallel()` | DAY_DISCUSSION — 判断→発言チェーンを並列実行 |
 
 #### Extended thinking
 
@@ -275,8 +281,9 @@ SQLite、PostgreSQL。
 昼フェーズに「判断ターン」を導入する。全エージェントに「challenge / speak / silent」の3択を並列で判断させ、発言意思があるエージェントだけ発言を生成する。発言順はAPIレスポンスが返ってきた順とする。
 
 **実装方法**
-- 各アクターに「`call_judgment()` → non-silent なら `call()`」をチェーンした callable を構成
-- `ThreadPoolExecutor` で全アクター分を並列実行
+- 各アクターに「`call_judgment()` → non-silent なら `build_speech_args()` → `call()`」をチェーンした callable を構成
+- `call_discussion_parallel()` が `ThreadPoolExecutor` で全アクター分を並列実行（client.py 内）
+- game.py はチェーン用の `build_speech_args` コールバックを渡し、並列実行自体は client.py に委譲する
 - `as_completed()` でレスポンス順に post-processing（`today_log` 更新・イベント発行）を逐次実行
 - 発言コンテキストはラウンド開始時のスナップショットを共有（同ラウンド内の他者発言は見えない）
 - challenge 時は `reply_to`（speech_id）をスナップショット内で解決しプロンプトに含める

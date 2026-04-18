@@ -1,5 +1,4 @@
 import random
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable
 
 from src.domain.actor import Actor, Belief
@@ -288,49 +287,29 @@ class GameEngine:
             alive = self._alive_agents()
             snapshot = list(self.today_log)
 
-            def _discussion_chain(
-                actor: Actor,
-                _snap: list[SpeechEntry] = snapshot,
-            ) -> tuple:
-                from src.domain.roles import Villager
-                judgment = llm_client.call_judgment(
-                    actor, _snap, self._alive_names(), self.day, self.lang
-                )
-                if judgment.decision == "silent":
-                    return actor, judgment, None, None, False
-                is_co_eligible = actor.state.claimed_role is None and not isinstance(actor.role, Villager)
-                force_co = judgment.decision == "co" and is_co_eligible
-                reply_to_entry: SpeechEntry | None = None
-                if judgment.decision == "challenge" and judgment.reply_to is not None:
-                    reply_to_entry = next(
-                        (e for e in _snap if e.speech_id == judgment.reply_to),
-                        None,
-                    )
-                ctx, direction, role_ctx = self._build_speech_args(
-                    actor, reply_to_entry, force_co, today_log_snapshot=_snap
-                )
-                output = llm_client.call(actor, ctx, direction, role_ctx)
-                return actor, judgment, output, reply_to_entry, force_co
-
             spoke_anyone = False
-            with ThreadPoolExecutor() as executor:
-                futures = {executor.submit(_discussion_chain, actor): actor for actor in alive}
-                for future in as_completed(futures):
-                    actor, judgment, output, reply_to_entry, force_co = future.result()
-                    if output is None:
-                        self._emit(LogEvent.make(
-                            day=self.day,
-                            phase=Phase.DAY_DISCUSSION.value,
-                            event_type=EventType.SPEECH,
-                            agent=actor.name,
-                            content=f"{actor.name} is watching the village silently...",
-                            is_public=True,
-                        ))
-                    else:
-                        spoke_anyone = True
-                        self._apply_speech_output(
-                            actor, output, Phase.DAY_DISCUSSION, reply_to_entry, force_co
-                        )
+            for actor, judgment, output, reply_to_entry, force_co in llm_client.call_discussion_parallel(
+                alive,
+                snapshot,
+                self._alive_names(),
+                self.day,
+                self.lang,
+                self._build_speech_args,
+            ):
+                if output is None:
+                    self._emit(LogEvent.make(
+                        day=self.day,
+                        phase=Phase.DAY_DISCUSSION.value,
+                        event_type=EventType.SPEECH,
+                        agent=actor.name,
+                        content=f"{actor.name} is watching the village silently...",
+                        is_public=True,
+                    ))
+                else:
+                    spoke_anyone = True
+                    self._apply_speech_output(
+                        actor, output, Phase.DAY_DISCUSSION, reply_to_entry, force_co
+                    )
 
             if not spoke_anyone:
                 break  # 全員silentなら2巡目はスキップ
