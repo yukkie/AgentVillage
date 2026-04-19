@@ -96,6 +96,7 @@ class TestRunDayPhaseOrder:
             return challenge if actor.name == "B" else silent
 
         with (
+            patch("src.engine.game.DISCUSSION_ROUNDS", 1),
             patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])),
             patch("src.engine.game.llm_client.call", side_effect=lambda ag, *a, **kw: _make_output(ag.name)),
             patch("src.engine.game.llm_client.call_judgment", side_effect=judgment_side_effect),
@@ -104,7 +105,7 @@ class TestRunDayPhaseOrder:
             engine._run_day()
 
         challenge_events = [e for e in events if e.reply_to is not None and e.is_public]
-        assert len(challenge_events) >= 1
+        assert len(challenge_events) == 1
         assert all(e.reply_to == 1 for e in challenge_events)
 
     def test_all_silent_does_not_raise(self):
