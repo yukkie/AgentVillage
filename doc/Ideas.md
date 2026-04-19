@@ -13,7 +13,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#111 | tech-debt | 🔴 | 2 | PR #106: test_challenge_reply_to_recorded mock is not round-aware | モックがラウンド区別不可でアサーションが緩められた |
 | yukkie/AgentVillage#93 | tech-debt | 🟡 | 3 | Module-level Anthropic client singleton makes testing difficult | _clientがモジュールロード時に生成されテスト時に差し替え不可 |
 | yukkie/AgentVillage#97 | tech-debt | 🟡 | 3 | Move local imports to module top level in prompt.py and game.py | 関数内ローカルインポートがアーキテクチャ原則に違反 |
 | yukkie/AgentVillage#101 | tech-debt | 🟡 | 3 | check_victory() only supports two-faction win conditions | 二項対立のみ。第三陣営・Madman単独勝利に対応不可 |
