@@ -10,5 +10,4 @@ ideas_archive/
 .vscode/
 issues/
 .claude/worktrees/
-.claude/skills/
 .claude/settings.local.json
