@@ -55,3 +55,37 @@ def test_load_events_skips_blank_lines(tmp_path: Path) -> None:
 
     result = load_events(p)
     assert len(result) == 1
+
+
+def test_load_events_skips_corrupted_lines_with_warning(tmp_path: Path) -> None:
+    """壊れた行はスキップされ、警告が出て、正常な行は読み込まれること。"""
+    good = _make_event(day=1)
+    p = tmp_path / "log.jsonl"
+    p.write_text(
+        good.model_dump_json() + "\n" + "NOT_JSON\n" + _make_event(day=2).model_dump_json() + "\n",
+        encoding="utf-8",
+    )
+
+    import warnings
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        result = load_events(p)
+
+    assert len(result) == 2
+    assert any("corrupted" in str(w.message).lower() for w in caught)
+
+
+def test_load_events_skips_invalid_schema_with_warning(tmp_path: Path) -> None:
+    """JSON だがスキーマが壊れた行もスキップされること。"""
+    p = tmp_path / "log.jsonl"
+    p.write_text('{"invalid": true}\n', encoding="utf-8")
+
+    import warnings
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        result = load_events(p)
+
+    assert result == []
+    assert len(caught) == 1
