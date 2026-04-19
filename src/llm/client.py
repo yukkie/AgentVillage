@@ -8,8 +8,6 @@ from src.domain.actor import Actor
 from src.domain.schema import AgentOutput, Intent, JudgmentOutput, PreNightOutput, SpeechEntry, WolfChatOutput
 from src.llm.prompt import PublicContext, RoleSpecificContext, SpeechDirection, build_judgment_prompt, build_night_action_prompt, build_pre_night_prompt, build_system_prompt, build_wolf_chat_prompt
 
-_client = anthropic.Anthropic()
-
 
 def _default_output(actor: Actor) -> AgentOutput:
     """Fallback AgentOutput when LLM call or parse fails."""
@@ -63,12 +61,14 @@ def call(
     ctx: PublicContext,
     direction: SpeechDirection,
     role_ctx: RoleSpecificContext | None = None,
+    *,
+    client: anthropic.Anthropic,
 ) -> AgentOutput:
     """Call LLM for day-phase speech and return structured AgentOutput."""
     system_prompt = build_system_prompt(actor, ctx, direction, role_ctx)
     raw = ""
     try:
-        message = _client.messages.create(
+        message = client.messages.create(
             model=actor.state.model,
             max_tokens=2048,
             system=system_prompt,
@@ -92,13 +92,15 @@ def call_judgment(
     alive_players: list[str],
     day: int = 1,
     lang: str = "English",
+    *,
+    client: anthropic.Anthropic,
 ) -> JudgmentOutput:
     """Call LLM for the lightweight parallel judgment decision."""
     co_eligible = actor.state.claimed_role is None and actor.role.can_co
     prompt = build_judgment_prompt(actor, today_log, alive_players, day, lang, co_eligible)
     raw = ""
     try:
-        message = _client.messages.create(
+        message = client.messages.create(
             model=actor.state.model,
             max_tokens=1024,
             messages=[{"role": "user", "content": prompt}],
@@ -110,14 +112,15 @@ def call_judgment(
         return JudgmentOutput(decision="silent")
 
 
-
 def call_speech_parallel(
-    calls: list[tuple[Actor, PublicContext, SpeechDirection, RoleSpecificContext | None]]
+    calls: list[tuple[Actor, PublicContext, SpeechDirection, RoleSpecificContext | None]],
+    *,
+    client: anthropic.Anthropic,
 ) -> Iterator[tuple[Actor, AgentOutput]]:
     """Fire all speech calls in parallel; yield results in completion order."""
     with ThreadPoolExecutor() as executor:
         future_to_actor = {
-            executor.submit(call, actor, ctx, direction, role_ctx): actor
+            executor.submit(call, actor, ctx, direction, role_ctx, client=client): actor
             for actor, ctx, direction, role_ctx in calls
         }
         for future in as_completed(future_to_actor):
@@ -129,12 +132,14 @@ def call_pre_night_action(
     alive_players: list[str],
     lang: str = "English",
     all_agents: list[Actor] | None = None,
+    *,
+    client: anthropic.Anthropic,
 ) -> PreNightOutput:
     """Call LLM for pre-night CO decision and return structured PreNightOutput."""
     prompt = build_pre_night_prompt(actor, alive_players, lang, all_agents)
     raw = ""
     try:
-        message = _client.messages.create(
+        message = client.messages.create(
             model=actor.state.model,
             max_tokens=1024,
             messages=[{"role": "user", "content": prompt}],
@@ -151,11 +156,13 @@ def call_pre_night_parallel(
     alive_players: list[str],
     lang: str = "English",
     all_agents: list[Actor] | None = None,
+    *,
+    client: anthropic.Anthropic,
 ) -> Iterator[tuple[Actor, PreNightOutput]]:
     """Call pre-night CO decision for all agents in parallel; yield results in completion order."""
     with ThreadPoolExecutor() as executor:
         future_to_agent = {
-            executor.submit(call_pre_night_action, actor, alive_players, lang, all_agents): actor
+            executor.submit(call_pre_night_action, actor, alive_players, lang, all_agents, client=client): actor
             for actor in agents
         }
         for future in as_completed(future_to_agent):
@@ -173,11 +180,13 @@ def call_discussion_parallel(
         [Actor, SpeechEntry | None, bool, list[SpeechEntry]],
         tuple[PublicContext, SpeechDirection, RoleSpecificContext | None],
     ],
+    *,
+    client: anthropic.Anthropic,
 ) -> Iterator[tuple[Actor, JudgmentOutput, AgentOutput | None, SpeechEntry | None, bool]]:
     """Run judgment→speech chain for all actors in parallel; yield results in completion order."""
 
     def _chain(actor: Actor) -> tuple[Actor, JudgmentOutput, AgentOutput | None, SpeechEntry | None, bool]:
-        judgment = call_judgment(actor, today_log_snapshot, alive_names, day, lang)
+        judgment = call_judgment(actor, today_log_snapshot, alive_names, day, lang, client=client)
         if judgment.decision == "silent":
             return actor, judgment, None, None, False
         is_co_eligible = actor.state.claimed_role is None and actor.role.can_co
@@ -189,7 +198,7 @@ def call_discussion_parallel(
                 None,
             )
         ctx, direction, role_ctx = build_speech_args(actor, reply_to_entry, force_co, today_log_snapshot)
-        output = call(actor, ctx, direction, role_ctx)
+        output = call(actor, ctx, direction, role_ctx, client=client)
         return actor, judgment, output, reply_to_entry, force_co
 
     with ThreadPoolExecutor() as executor:
@@ -204,12 +213,14 @@ def call_wolf_chat(
     alive_players: list[str],
     wolf_chat_log: list[SpeechEntry],
     lang: str = "English",
+    *,
+    client: anthropic.Anthropic,
 ) -> WolfChatOutput:
     """Call LLM for werewolf team night chat and return structured WolfChatOutput."""
     prompt = build_wolf_chat_prompt(actor, wolf_partners, alive_players, wolf_chat_log, lang)
     raw = ""
     try:
-        message = _client.messages.create(
+        message = client.messages.create(
             model=actor.state.model,
             max_tokens=2048,
             messages=[{"role": "user", "content": prompt}],
@@ -225,6 +236,8 @@ def call_night_action(
     actor: Actor,
     context: str,
     alive_players: list[str],
+    *,
+    client: anthropic.Anthropic,
 ) -> str:
     """Call LLM for night action and return target player name."""
     prompt = build_night_action_prompt(actor, alive_players, context)
@@ -234,7 +247,7 @@ def call_night_action(
     candidates = [p for p in alive_players if p != actor.name]
     raw = ""
     try:
-        message = _client.messages.create(
+        message = client.messages.create(
             model=actor.state.model,
             max_tokens=64,
             messages=[

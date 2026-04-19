@@ -38,7 +38,8 @@ def _make_engine(agents: list[Actor]) -> tuple[GameEngine, list[LogEvent]]:
     events: list[LogEvent] = []
     log_writer = MagicMock(spec=LogWriter)
     log_writer.write.side_effect = lambda e: events.append(e)
-    engine = GameEngine(agents=agents, log_writer=log_writer, lang="English")
+    with patch("src.engine.game.llm_factory.create_client", return_value=MagicMock()):
+        engine = GameEngine(agents=agents, log_writer=log_writer, lang="English")
     return engine, events
 
 
@@ -48,7 +49,7 @@ class TestRunDayPhaseOrder:
         engine, events = _make_engine(agents)
 
         with (
-            patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])),
+            patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls, **kw: iter([(a, _make_output(a.name)) for a, *_ in calls])),
             patch("src.engine.game.llm_client.call", side_effect=lambda ag, *a, **kw: _make_output(ag.name)),
             patch("src.engine.game.llm_client.call_judgment", return_value=JudgmentOutput(decision="silent")),
             patch("src.agent.store.save"),
@@ -69,7 +70,7 @@ class TestRunDayPhaseOrder:
         engine, events = _make_engine(agents)
 
         with (
-            patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])),
+            patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls, **kw: iter([(a, _make_output(a.name)) for a, *_ in calls])),
             patch("src.engine.game.llm_client.call", side_effect=lambda ag, *a, **kw: _make_output(ag.name)),
             patch("src.engine.game.llm_client.call_judgment", return_value=JudgmentOutput(decision="silent")),
             patch("src.agent.store.save"),
@@ -92,12 +93,12 @@ class TestRunDayPhaseOrder:
         challenge = JudgmentOutput(decision="challenge", reply_to=1)
         silent = JudgmentOutput(decision="silent")
 
-        def judgment_side_effect(actor, *_):
+        def judgment_side_effect(actor, *_, **__):
             return challenge if actor.name == "B" else silent
 
         with (
             patch("src.engine.game.DISCUSSION_ROUNDS", 1),
-            patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])),
+            patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls, **kw: iter([(a, _make_output(a.name)) for a, *_ in calls])),
             patch("src.engine.game.llm_client.call", side_effect=lambda ag, *a, **kw: _make_output(ag.name)),
             patch("src.engine.game.llm_client.call_judgment", side_effect=judgment_side_effect),
             patch("src.agent.store.save"),
@@ -113,7 +114,7 @@ class TestRunDayPhaseOrder:
         engine, _ = _make_engine(agents)
 
         with (
-            patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])),
+            patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls, **kw: iter([(a, _make_output(a.name)) for a, *_ in calls])),
             patch("src.engine.game.llm_client.call", side_effect=lambda ag, *a, **kw: _make_output(ag.name)),
             patch("src.engine.game.llm_client.call_judgment", return_value=JudgmentOutput(decision="silent")),
             patch("src.agent.store.save"),
@@ -141,7 +142,7 @@ class TestDiscussionCoDecision:
         )
 
         with (
-            patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])),
+            patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls, **kw: iter([(a, _make_output(a.name)) for a, *_ in calls])),
             patch("src.engine.game.llm_client.call", return_value=co_output),
             patch("src.engine.game.llm_client.call_judgment", return_value=JudgmentOutput(decision="co")),
             patch("src.agent.store.save"),
@@ -160,7 +161,7 @@ class TestDiscussionCoDecision:
 
         call_mock = MagicMock(return_value=normal_output)
         with (
-            patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])),
+            patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls, **kw: iter([(a, _make_output(a.name)) for a, *_ in calls])),
             patch("src.engine.game.llm_client.call", call_mock),
             patch("src.engine.game.llm_client.call_judgment", return_value=JudgmentOutput(decision="co")),
             patch("src.agent.store.save"),
@@ -181,7 +182,7 @@ class TestDiscussionCoDecision:
 
         call_mock = MagicMock(return_value=normal_output)
         with (
-            patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])),
+            patch("src.engine.game.llm_client.call_speech_parallel", side_effect=lambda calls, **kw: iter([(a, _make_output(a.name)) for a, *_ in calls])),
             patch("src.engine.game.llm_client.call", call_mock),
             patch("src.engine.game.llm_client.call_judgment", return_value=JudgmentOutput(decision="co")),
             patch("src.agent.store.save"),

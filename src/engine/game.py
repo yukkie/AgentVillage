@@ -8,6 +8,7 @@ from src.engine.phase import Phase
 from src.engine.vote import tally_votes
 from src.engine.victory import check_victory
 from src.llm import client as llm_client
+from src.llm import factory as llm_factory
 from src.llm.prompt import PublicContext, SpeechDirection, WolfSpecificContext
 from src.domain.schema import AgentOutput, SpeechEntry
 from src.action.types import Vote, Inspect, Attack
@@ -30,6 +31,7 @@ class GameEngine:
         self.log_writer = log_writer
         self.event_callback = event_callback or (lambda e: None)
         self.lang = lang
+        self._llm_client = llm_factory.create_client()
         self.day = 1
         self.phase = Phase.DAY_OPENING
         self.today_log: list[SpeechEntry] = []
@@ -250,7 +252,7 @@ class GameEngine:
         self._phase_start(Phase.PRE_NIGHT)
 
         for actor, output in llm_client.call_pre_night_parallel(
-            targets, self._alive_names(), self.lang, self.agents
+            targets, self._alive_names(), self.lang, self.agents, client=self._llm_client
         ):
             actor.state.intended_co = output.decision == "co"
             memory_mod.update_memory(actor, [f"Pre-game decision: {output.reasoning}"])
@@ -276,7 +278,7 @@ class GameEngine:
         random.shuffle(opening_order)
 
         opening_calls = [(actor, *self._build_speech_args(actor)) for actor in opening_order]
-        for actor, output in llm_client.call_speech_parallel(opening_calls):
+        for actor, output in llm_client.call_speech_parallel(opening_calls, client=self._llm_client):
             self._apply_speech_output(actor, output, Phase.DAY_OPENING)
 
         # --- DISCUSSION × 2: 全アクターの（判断→発言）チェーンを並列実行 ---
@@ -294,6 +296,7 @@ class GameEngine:
                 self.day,
                 self.lang,
                 self._build_speech_args,
+                client=self._llm_client,
             ):
                 if output is None:
                     self._emit(LogEvent.make(
@@ -404,7 +407,7 @@ class GameEngine:
                 for wolf in wolves:
                     partners = [n for n in wolf_names if n != wolf.name]
                     output = llm_client.call_wolf_chat(
-                        wolf, partners, alive_names, wolf_chat_log, self.lang
+                        wolf, partners, alive_names, wolf_chat_log, self.lang, client=self._llm_client
                     )
                     last_wolf_outputs[wolf.name] = output
                     entry = SpeechEntry(
@@ -438,7 +441,7 @@ class GameEngine:
             for actor in self._alive_agents():
                 if not isinstance(actor.role, Werewolf):
                     continue
-                target_name = llm_client.call_night_action(actor, night_context, alive_names)
+                target_name = llm_client.call_night_action(actor, night_context, alive_names, client=self._llm_client)
                 attack = Attack(target=target_name)
                 if validate(attack, actor, alive_names):
                     attack_target = resolve_attack(attack, self.agents)
@@ -462,7 +465,7 @@ class GameEngine:
         for actor in self._alive_agents():
             if isinstance(actor.role, Knight):
                 knight = actor
-                target_name = llm_client.call_night_action(actor, night_context, alive_names)
+                target_name = llm_client.call_night_action(actor, night_context, alive_names, client=self._llm_client)
                 candidates = [n for n in alive_names if n != actor.name]
                 if target_name in candidates:
                     guard_target = target_name
@@ -477,7 +480,7 @@ class GameEngine:
                     ))
 
             elif isinstance(actor.role, Seer):
-                target_name = llm_client.call_night_action(actor, night_context, alive_names)
+                target_name = llm_client.call_night_action(actor, night_context, alive_names, client=self._llm_client)
                 inspect = Inspect(target=target_name)
                 if validate(inspect, actor, alive_names):
                     seer_inspect = (actor, inspect)  # 結果適用は後回し

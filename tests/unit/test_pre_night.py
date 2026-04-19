@@ -31,7 +31,8 @@ def _make_engine(agents: list[Actor]) -> tuple[GameEngine, list[LogEvent]]:
     events: list[LogEvent] = []
     log_writer = MagicMock(spec=LogWriter)
     log_writer.write.side_effect = lambda e: events.append(e)
-    engine = GameEngine(agents=agents, log_writer=log_writer, lang="English")
+    with patch("src.engine.game.llm_factory.create_client", return_value=MagicMock()):
+        engine = GameEngine(agents=agents, log_writer=log_writer, lang="English")
     return engine, events
 
 
