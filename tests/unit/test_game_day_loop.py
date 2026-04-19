@@ -5,6 +5,9 @@ LLM呼び出し (LLMClient メソッド) はモック。
 from unittest.mock import MagicMock, patch
 
 from src.engine.game import GameEngine
+from src.engine.phase_day import run_day_phase
+from src.engine.phase_night import run_night_phase
+from src.engine.phase_pre_night import run_pre_night_phase
 from src.engine.phase import Phase
 from src.domain.schema import AgentOutput, Intent, JudgmentOutput
 from src.domain.event import EventType
@@ -37,6 +40,11 @@ class TestGameEngineLlmInjection:
         )
 
         assert engine._llm_client is injected_llm
+
+    def test_phase_modules_import_independently(self):
+        assert callable(run_pre_night_phase)
+        assert callable(run_day_phase)
+        assert callable(run_night_phase)
 
 
 def _silent_discussion(actors, *_, **__):
@@ -98,7 +106,7 @@ class TestRunDayPhaseOrder:
         engine._llm_client.call_discussion_parallel.side_effect = discussion_with_challenge
 
         with (
-            patch("src.engine.game.DISCUSSION_ROUNDS", 1),
+            patch("src.engine.phase_day.DISCUSSION_ROUNDS", 1),
             patch("src.agent.store.save"),
         ):
             engine._run_day()
