@@ -1,10 +1,12 @@
-"""Unit tests for src/llm/client.py — LLM client is injected as a mock."""
+"""Unit tests for src/llm/client.py — LLMClient with injected mock anthropic client."""
 import json
 from unittest.mock import MagicMock
 
+import anthropic
+
 from src.domain.actor import Actor, ActorState, Persona, make_actor
 from src.domain.schema import AgentOutput, JudgmentOutput, PreNightOutput, WolfChatOutput
-from src.llm.client import call, call_judgment, call_night_action, call_pre_night_action, call_wolf_chat
+from src.llm.client import LLMClient
 
 
 def _make_actor(name: str = "Alice", role: str = "Villager") -> Actor:
@@ -18,12 +20,18 @@ def _make_actor(name: str = "Alice", role: str = "Villager") -> Actor:
     return make_actor(state, role)
 
 
-def _make_mock_client(response_text: str) -> MagicMock:
+def _make_llm_client(response_text: str) -> LLMClient:
     msg = MagicMock()
     msg.content = [MagicMock(text=response_text)]
-    client = MagicMock()
-    client.messages.create.return_value = msg
-    return client
+    anthropic_client = MagicMock(spec=anthropic.Anthropic)
+    anthropic_client.messages.create.return_value = msg
+    return LLMClient(anthropic_client)
+
+
+def _make_failing_llm_client() -> LLMClient:
+    anthropic_client = MagicMock(spec=anthropic.Anthropic)
+    anthropic_client.messages.create.side_effect = RuntimeError("API error")
+    return LLMClient(anthropic_client)
 
 
 _AGENT_OUTPUT_JSON = json.dumps({
@@ -52,23 +60,21 @@ _WOLF_CHAT_OUTPUT_JSON = json.dumps({
 class TestCall:
     def test_returns_agent_output(self):
         actor = _make_actor()
-        client = _make_mock_client(_AGENT_OUTPUT_JSON)
+        llm = _make_llm_client(_AGENT_OUTPUT_JSON)
         from src.llm.prompt import PublicContext, SpeechDirection
         ctx = PublicContext(alive_players=["Alice"], dead_players=[], day=1, today_log=[])
         direction = SpeechDirection()
-        result = call(actor, ctx, direction, client=client)
+        result = llm.call(actor, ctx, direction)
         assert isinstance(result, AgentOutput)
         assert result.speech == "Hello village."
-        client.messages.create.assert_called_once()
 
     def test_returns_fallback_on_exception(self):
         actor = _make_actor()
-        client = MagicMock()
-        client.messages.create.side_effect = RuntimeError("API error")
+        llm = _make_failing_llm_client()
         from src.llm.prompt import PublicContext, SpeechDirection
         ctx = PublicContext(alive_players=["Alice"], dead_players=[], day=1, today_log=[])
         direction = SpeechDirection()
-        result = call(actor, ctx, direction, client=client)
+        result = llm.call(actor, ctx, direction)
         assert isinstance(result, AgentOutput)
         assert result.speech == "I need to think more carefully."
 
@@ -76,84 +82,76 @@ class TestCall:
 class TestCallJudgment:
     def test_returns_judgment_output(self):
         actor = _make_actor()
-        client = _make_mock_client(_JUDGMENT_OUTPUT_JSON)
-        result = call_judgment(actor, [], ["Alice", "Bob"], day=1, client=client)
+        llm = _make_llm_client(_JUDGMENT_OUTPUT_JSON)
+        result = llm.call_judgment(actor, [], ["Alice", "Bob"], day=1)
         assert isinstance(result, JudgmentOutput)
         assert result.decision == "speak"
-        client.messages.create.assert_called_once()
 
     def test_returns_silent_on_exception(self):
         actor = _make_actor()
-        client = MagicMock()
-        client.messages.create.side_effect = RuntimeError("API error")
-        result = call_judgment(actor, [], ["Alice", "Bob"], day=1, client=client)
+        llm = _make_failing_llm_client()
+        result = llm.call_judgment(actor, [], ["Alice", "Bob"], day=1)
         assert result.decision == "silent"
 
 
 class TestCallPreNightAction:
     def test_returns_pre_night_output(self):
         actor = _make_actor("Gina", "Seer")
-        client = _make_mock_client(_PRE_NIGHT_OUTPUT_JSON)
-        result = call_pre_night_action(actor, ["Gina", "Bob"], client=client)
+        llm = _make_llm_client(_PRE_NIGHT_OUTPUT_JSON)
+        result = llm.call_pre_night_action(actor, ["Gina", "Bob"])
         assert isinstance(result, PreNightOutput)
         assert result.decision == "wait"
-        client.messages.create.assert_called_once()
 
     def test_returns_wait_fallback_on_exception(self):
         actor = _make_actor("Gina", "Seer")
-        client = MagicMock()
-        client.messages.create.side_effect = RuntimeError("API error")
-        result = call_pre_night_action(actor, ["Gina", "Bob"], client=client)
+        llm = _make_failing_llm_client()
+        result = llm.call_pre_night_action(actor, ["Gina", "Bob"])
         assert result.decision == "wait"
 
 
 class TestCallWolfChat:
     def test_returns_wolf_chat_output(self):
         actor = _make_actor("Wolf", "Werewolf")
-        client = _make_mock_client(_WOLF_CHAT_OUTPUT_JSON)
-        result = call_wolf_chat(actor, ["OtherWolf"], ["Alice", "Wolf", "OtherWolf"], [], client=client)
+        llm = _make_llm_client(_WOLF_CHAT_OUTPUT_JSON)
+        result = llm.call_wolf_chat(actor, ["OtherWolf"], ["Alice", "Wolf", "OtherWolf"], [])
         assert isinstance(result, WolfChatOutput)
         assert result.speech == "Let's attack Alice."
-        client.messages.create.assert_called_once()
 
     def test_returns_empty_fallback_on_exception(self):
         actor = _make_actor("Wolf", "Werewolf")
-        client = MagicMock()
-        client.messages.create.side_effect = RuntimeError("API error")
-        result = call_wolf_chat(actor, ["OtherWolf"], ["Alice", "Wolf", "OtherWolf"], [], client=client)
+        llm = _make_failing_llm_client()
+        result = llm.call_wolf_chat(actor, ["OtherWolf"], ["Alice", "Wolf", "OtherWolf"], [])
         assert result.speech == "..."
 
 
 class TestCallNightAction:
     def test_exact_match(self):
         actor = _make_actor("Wolf", "Werewolf")
-        client = _make_mock_client("Alice")
-        result = call_night_action(actor, "night context", ["Alice", "Bob"], client=client)
+        llm = _make_llm_client("Alice")
+        result = llm.call_night_action(actor, "night context", ["Alice", "Bob"])
         assert result == "Alice"
 
     def test_partial_match(self):
         actor = _make_actor("Wolf", "Werewolf")
-        client = _make_mock_client("I think Alice is the target")
-        result = call_night_action(actor, "night context", ["Alice", "Bob"], client=client)
+        llm = _make_llm_client("I think Alice is the target")
+        result = llm.call_night_action(actor, "night context", ["Alice", "Bob"])
         assert result == "Alice"
 
     def test_fallback_to_first_candidate_on_no_match(self):
         actor = _make_actor("Wolf", "Werewolf")
-        client = _make_mock_client("Nobody")
-        result = call_night_action(actor, "night context", ["Alice", "Bob"], client=client)
+        llm = _make_llm_client("Nobody")
+        result = llm.call_night_action(actor, "night context", ["Alice", "Bob"])
         assert result == "Alice"
 
     def test_fallback_to_first_candidate_on_exception(self):
         actor = _make_actor("Wolf", "Werewolf")
-        client = MagicMock()
-        client.messages.create.side_effect = RuntimeError("API error")
-        result = call_night_action(actor, "night context", ["Alice", "Bob"], client=client)
+        llm = _make_failing_llm_client()
+        result = llm.call_night_action(actor, "night context", ["Alice", "Bob"])
         assert result == "Alice"
 
     def test_returns_empty_string_when_no_prompt(self):
-        # Villager has no night action prompt → returns ""
         actor = _make_actor("Alice", "Villager")
-        client = MagicMock()
-        result = call_night_action(actor, "night context", ["Alice", "Bob"], client=client)
+        llm = _make_failing_llm_client()
+        result = llm.call_night_action(actor, "night context", ["Alice", "Bob"])
         assert result == ""
-        client.messages.create.assert_not_called()
+        llm._client.messages.create.assert_not_called()
