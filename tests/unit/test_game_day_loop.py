@@ -4,25 +4,13 @@ LLM呼び出し (LLMClient メソッド) はモック。
 """
 from unittest.mock import MagicMock, patch
 
-from src.domain.actor import ActorState, Actor, Persona, make_actor
 from src.engine.game import GameEngine
 from src.engine.phase import Phase
 from src.domain.schema import AgentOutput, Intent, JudgmentOutput
-from src.domain.event import EventType, LogEvent
+from src.domain.event import EventType
 from src.domain.roles import Seer
 from src.llm.client import LLMClient
 from src.logger.writer import LogWriter
-
-
-def _make_agent(name: str, role: str = "Villager") -> Actor:
-    state = ActorState(
-        name=name,
-        persona=Persona(style="calm", lie_tendency=0.1, aggression=0.2),
-        beliefs={},
-        memory_summary=[],
-        is_alive=True,
-    )
-    return make_actor(state, role)
 
 
 def _make_output(name: str, speech: str = "Hello.") -> AgentOutput:
@@ -35,23 +23,9 @@ def _make_output(name: str, speech: str = "Hello.") -> AgentOutput:
     )
 
 
-def _make_engine(agents: list[Actor]) -> tuple[GameEngine, list[LogEvent]]:
-    events: list[LogEvent] = []
-    log_writer = MagicMock(spec=LogWriter)
-    log_writer.write.side_effect = lambda e: events.append(e)
-    llm_client = MagicMock(spec=LLMClient)
-    engine = GameEngine(
-        agents=agents,
-        log_writer=log_writer,
-        lang="English",
-        llm_client=llm_client,
-    )
-    return engine, events
-
-
 class TestGameEngineLlmInjection:
-    def test_uses_injected_llm_client_without_factory_patch(self):
-        agents = [_make_agent("A")]
+    def test_uses_injected_llm_client_without_factory_patch(self, make_test_actor):
+        agents = [make_test_actor("A")]
         log_writer = MagicMock(spec=LogWriter)
         injected_llm = MagicMock(spec=LLMClient)
 
@@ -71,9 +45,9 @@ def _silent_discussion(actors, *_, **__):
 
 
 class TestRunDayPhaseOrder:
-    def test_opening_then_discussion_then_vote(self):
-        agents = [_make_agent("A"), _make_agent("B"), _make_agent("C", "Werewolf")]
-        engine, events = _make_engine(agents)
+    def test_opening_then_discussion_then_vote(self, make_test_actor, make_test_engine):
+        agents = [make_test_actor("A"), make_test_actor("B"), make_test_actor("C", "Werewolf")]
+        engine, events = make_test_engine(agents)
         engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
         engine._llm_client.call_discussion_parallel.side_effect = _silent_discussion
 
@@ -88,9 +62,9 @@ class TestRunDayPhaseOrder:
         assert phases.index(Phase.DAY_OPENING.value) < phases.index(Phase.DAY_DISCUSSION.value)
         assert phases.index(Phase.DAY_DISCUSSION.value) < phases.index(Phase.DAY_VOTE.value)
 
-    def test_speech_ids_are_sequential(self):
-        agents = [_make_agent("A"), _make_agent("B")]
-        engine, events = _make_engine(agents)
+    def test_speech_ids_are_sequential(self, make_test_actor, make_test_engine):
+        agents = [make_test_actor("A"), make_test_actor("B")]
+        engine, events = make_test_engine(agents)
         engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
         engine._llm_client.call_discussion_parallel.side_effect = _silent_discussion
 
@@ -105,9 +79,9 @@ class TestRunDayPhaseOrder:
         assert ids == sorted(ids)
         assert ids == list(range(1, len(ids) + 1))
 
-    def test_challenge_reply_to_recorded(self):
-        agents = [_make_agent("A"), _make_agent("B")]
-        engine, events = _make_engine(agents)
+    def test_challenge_reply_to_recorded(self, make_test_actor, make_test_engine):
+        agents = [make_test_actor("A"), make_test_actor("B")]
+        engine, events = make_test_engine(agents)
         engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
 
         # B challenges speech_id=1 (A's opening speech)
@@ -117,8 +91,8 @@ class TestRunDayPhaseOrder:
             # find speech_id=1 entry from today_log
             reply_to_entry = next((e for e in today_log if e.speech_id == 1), None)
             return iter([
-                (_make_agent("A"), JudgmentOutput(decision="silent"), None, None, False),
-                (_make_agent("B"), challenge, _make_output("B"), reply_to_entry, False),
+                (make_test_actor("A"), JudgmentOutput(decision="silent"), None, None, False),
+                (make_test_actor("B"), challenge, _make_output("B"), reply_to_entry, False),
             ])
 
         engine._llm_client.call_discussion_parallel.side_effect = discussion_with_challenge
@@ -133,9 +107,9 @@ class TestRunDayPhaseOrder:
         assert len(challenge_events) == 1
         assert all(e.reply_to == 1 for e in challenge_events)
 
-    def test_all_silent_does_not_raise(self):
-        agents = [_make_agent("A"), _make_agent("B", "Werewolf")]
-        engine, _ = _make_engine(agents)
+    def test_all_silent_does_not_raise(self, make_test_actor, make_test_engine):
+        agents = [make_test_actor("A"), make_test_actor("B", "Werewolf")]
+        engine, _ = make_test_engine(agents)
         engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
         engine._llm_client.call_discussion_parallel.side_effect = _silent_discussion
 
@@ -148,11 +122,11 @@ class TestRunDayPhaseOrder:
 class TestDiscussionCoDecision:
     """Tests for the "co" judgment option in discussion phase."""
 
-    def test_eligible_agent_co_sets_claimed_role(self):
+    def test_eligible_agent_co_sets_claimed_role(self, make_test_actor, make_test_engine):
         """Seer (unclaimed) chooses co → claimed_role is set after speaking."""
-        seer = _make_agent("Seer1", "Seer")
+        seer = make_test_actor("Seer1", "Seer")
         assert seer.state.claimed_role is None
-        engine, _ = _make_engine([seer])
+        engine, _ = make_test_engine([seer])
 
         co_output = AgentOutput(
             thought="I'll CO now.",
@@ -171,11 +145,11 @@ class TestDiscussionCoDecision:
 
         assert isinstance(seer.state.claimed_role, Seer)
 
-    def test_ineligible_agent_co_treated_as_speak(self):
+    def test_ineligible_agent_co_treated_as_speak(self, make_test_actor, make_test_engine):
         """Agent that already claimed a role cannot CO again — falls back to speak."""
-        seer = _make_agent("Seer1", "Seer")
+        seer = make_test_actor("Seer1", "Seer")
         seer.state.claimed_role = "Seer"  # already claimed
-        engine, _ = _make_engine([seer])
+        engine, _ = make_test_engine([seer])
 
         normal_output = _make_output("Seer1", "Just speaking.")
         engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
@@ -190,10 +164,10 @@ class TestDiscussionCoDecision:
         # co intent is None in normal_output → claimed_role unchanged
         assert seer.state.claimed_role is not None  # still the old value, not set again
 
-    def test_villager_co_treated_as_speak(self):
+    def test_villager_co_treated_as_speak(self, make_test_actor, make_test_engine):
         """Villager cannot CO — co judgment falls back to speak (force_co=False)."""
-        villager = _make_agent("V1", "Villager")
-        engine, _ = _make_engine([villager])
+        villager = make_test_actor("V1", "Villager")
+        engine, _ = make_test_engine([villager])
 
         normal_output = _make_output("V1", "Just talking.")
         engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])

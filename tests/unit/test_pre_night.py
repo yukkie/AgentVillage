@@ -4,50 +4,20 @@
 - build_system_prompt の intended_co 反映
 - _run_pre_night のフロー（LLM・store.save をモック）
 """
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-
-from src.domain.actor import ActorState, Actor, Persona, make_actor
-from src.engine.game import GameEngine
 from src.engine.phase import Phase
-from src.llm.client import LLMClient
 from src.llm.prompt import PublicContext, SpeechDirection, WolfSpecificContext, build_pre_night_prompt, build_system_prompt
 from src.domain.schema import PreNightOutput
-from src.domain.event import EventType, LogEvent
-from src.logger.writer import LogWriter
-
-
-def _make_agent(name: str, role: str) -> Actor:
-    state = ActorState(
-        name=name,
-        persona=Persona(style="calm", lie_tendency=0.1, aggression=0.2),
-        beliefs={},
-        memory_summary=[],
-        is_alive=True,
-    )
-    return make_actor(state, role)
-
-
-def _make_engine(agents: list[Actor]) -> tuple[GameEngine, list[LogEvent]]:
-    events: list[LogEvent] = []
-    log_writer = MagicMock(spec=LogWriter)
-    log_writer.write.side_effect = lambda e: events.append(e)
-    llm_client = MagicMock(spec=LLMClient)
-    engine = GameEngine(
-        agents=agents,
-        log_writer=log_writer,
-        lang="English",
-        llm_client=llm_client,
-    )
-    return engine, events
+from src.domain.event import EventType
 
 
 # ── build_pre_night_prompt ──────────────────────────────────────────────────
 
 
 class TestBuildPreNightPrompt:
-    def test_seer_prompt_contains_true_co_description(self):
-        agent = _make_agent("Gina", "Seer")
+    def test_seer_prompt_contains_true_co_description(self, make_test_actor):
+        agent = make_test_actor("Gina", "Seer")
         prompt = build_pre_night_prompt(agent, ["Gina", "SQ", "Raqio"])
         assert "Seer" in prompt
         assert "co" in prompt
@@ -55,8 +25,8 @@ class TestBuildPreNightPrompt:
         # Should NOT mention fake-CO language
         assert "fake" not in prompt.lower()
 
-    def test_werewolf_prompt_contains_fake_co_description(self):
-        agent = _make_agent("SQ", "Werewolf")
+    def test_werewolf_prompt_contains_fake_co_description(self, make_test_actor):
+        agent = make_test_actor("SQ", "Werewolf")
         prompt = build_pre_night_prompt(agent, ["Gina", "SQ", "Raqio"])
         assert "Seer" in prompt
         assert "co" in prompt
@@ -64,8 +34,8 @@ class TestBuildPreNightPrompt:
         # Should mention deception
         assert "fake" in prompt.lower() or "false" in prompt.lower() or "confuse" in prompt.lower()
 
-    def test_prompt_includes_all_players(self):
-        agent = _make_agent("Gina", "Seer")
+    def test_prompt_includes_all_players(self, make_test_actor):
+        agent = make_test_actor("Gina", "Seer")
         players = ["Gina", "SQ", "Raqio", "Zephyr", "Setsu"]
         prompt = build_pre_night_prompt(agent, players)
         for p in players:
@@ -76,14 +46,14 @@ class TestBuildPreNightPrompt:
 
 
 class TestBuildSystemPromptIntendedCo:
-    def test_no_intended_co_section_by_default(self):
-        agent = _make_agent("Gina", "Seer")
+    def test_no_intended_co_section_by_default(self, make_test_actor):
+        agent = make_test_actor("Gina", "Seer")
         ctx = PublicContext(today_log=[], alive_players=["Gina", "SQ"], dead_players=[], day=1)
         prompt = build_system_prompt(agent, ctx, SpeechDirection())
         assert "CO DECISION" not in prompt
 
-    def test_seer_intended_co_adds_true_co_instruction(self):
-        agent = _make_agent("Gina", "Seer")
+    def test_seer_intended_co_adds_true_co_instruction(self, make_test_actor):
+        agent = make_test_actor("Gina", "Seer")
         ctx = PublicContext(today_log=[], alive_players=["Gina", "SQ"], dead_players=[], day=1)
         prompt = build_system_prompt(agent, ctx, SpeechDirection(intended_co=True))
         assert "CO DECISION" in prompt
@@ -92,8 +62,8 @@ class TestBuildSystemPromptIntendedCo:
         # Must NOT instruct Seer to fake
         assert "fake" not in prompt.lower()
 
-    def test_werewolf_intended_co_adds_fake_co_instruction(self):
-        agent = _make_agent("SQ", "Werewolf")
+    def test_werewolf_intended_co_adds_fake_co_instruction(self, make_test_actor):
+        agent = make_test_actor("SQ", "Werewolf")
         ctx = PublicContext(today_log=[], alive_players=["Gina", "SQ"], dead_players=[], day=1)
         role_ctx = WolfSpecificContext(wolf_partners=[])
         prompt = build_system_prompt(agent, ctx, SpeechDirection(intended_co=True), role_ctx)
@@ -111,14 +81,14 @@ class TestRunPreNight:
     def _make_output(self, decision: str) -> PreNightOutput:
         return PreNightOutput(thought="thinking", decision=decision, reasoning="reason")
 
-    def test_only_non_villager_agents_participate(self):
+    def test_only_non_villager_agents_participate(self, make_test_actor, make_test_engine):
         agents = [
-            _make_agent("A", "Villager"),
-            _make_agent("B", "Villager"),
-            _make_agent("C", "Seer"),
-            _make_agent("D", "Werewolf"),
+            make_test_actor("A", "Villager"),
+            make_test_actor("B", "Villager"),
+            make_test_actor("C", "Seer"),
+            make_test_actor("D", "Werewolf"),
         ]
-        engine, events = _make_engine(agents)
+        engine, events = make_test_engine(agents)
         engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
             [(actor, self._make_output("wait")) for actor in targets]
         )
@@ -132,9 +102,9 @@ class TestRunPreNight:
         agents_in_events = {e.agent for e in decision_events}
         assert agents_in_events == {"C", "D"}
 
-    def test_co_decision_sets_intended_co_true(self):
-        agents = [_make_agent("Gina", "Seer"), _make_agent("SQ", "Villager")]
-        engine, _ = _make_engine(agents)
+    def test_co_decision_sets_intended_co_true(self, make_test_actor, make_test_engine):
+        agents = [make_test_actor("Gina", "Seer"), make_test_actor("SQ", "Villager")]
+        engine, _ = make_test_engine(agents)
         engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
             [(actor, self._make_output("co")) for actor in targets]
         )
@@ -145,9 +115,9 @@ class TestRunPreNight:
         seer = next(a for a in agents if a.name == "Gina")
         assert seer.state.intended_co is True
 
-    def test_wait_decision_sets_intended_co_false(self):
-        agents = [_make_agent("Gina", "Seer"), _make_agent("SQ", "Villager")]
-        engine, _ = _make_engine(agents)
+    def test_wait_decision_sets_intended_co_false(self, make_test_actor, make_test_engine):
+        agents = [make_test_actor("Gina", "Seer"), make_test_actor("SQ", "Villager")]
+        engine, _ = make_test_engine(agents)
         engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
             [(actor, self._make_output("wait")) for actor in targets]
         )
@@ -158,9 +128,9 @@ class TestRunPreNight:
         seer = next(a for a in agents if a.name == "Gina")
         assert seer.state.intended_co is False
 
-    def test_decision_events_are_spectator_only(self):
-        agents = [_make_agent("Gina", "Seer"), _make_agent("SQ", "Villager")]
-        engine, events = _make_engine(agents)
+    def test_decision_events_are_spectator_only(self, make_test_actor, make_test_engine):
+        agents = [make_test_actor("Gina", "Seer"), make_test_actor("SQ", "Villager")]
+        engine, events = make_test_engine(agents)
         engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
             [(actor, self._make_output("co")) for actor in targets]
         )
@@ -171,9 +141,9 @@ class TestRunPreNight:
         decision_events = [e for e in events if e.event_type == EventType.PRE_NIGHT_DECISION]
         assert all(not e.is_public for e in decision_events)
 
-    def test_phase_start_event_is_spectator_only(self):
-        agents = [_make_agent("Gina", "Seer"), _make_agent("SQ", "Villager")]
-        engine, events = _make_engine(agents)
+    def test_phase_start_event_is_spectator_only(self, make_test_actor, make_test_engine):
+        agents = [make_test_actor("Gina", "Seer"), make_test_actor("SQ", "Villager")]
+        engine, events = make_test_engine(agents)
         engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
             [(actor, self._make_output("wait")) for actor in targets]
         )
@@ -188,9 +158,9 @@ class TestRunPreNight:
         assert len(phase_starts) == 1
         assert not phase_starts[0].is_public
 
-    def test_no_villagers_only_skips_phase(self):
-        agents = [_make_agent("A", "Villager"), _make_agent("B", "Villager")]
-        engine, events = _make_engine(agents)
+    def test_no_villagers_only_skips_phase(self, make_test_actor, make_test_engine):
+        agents = [make_test_actor("A", "Villager"), make_test_actor("B", "Villager")]
+        engine, events = make_test_engine(agents)
 
         engine._run_pre_night()
 
