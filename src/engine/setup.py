@@ -13,8 +13,23 @@ def initialize_agents(num_players: int) -> list[Actor]:
     """Create and persist initial agent states with randomized roles."""
     STATE_DIR.mkdir(parents=True, exist_ok=True)
 
-    agent_configs = json.loads(Path("config/agents.json").read_text(encoding="utf-8"))
-    roles_config = json.loads(Path("config/roles.json").read_text(encoding="utf-8"))
+    try:
+        agent_configs = json.loads(Path("config/agents.json").read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        print("Error: config/agents.json not found.")
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        print(f"Error: config/agents.json is not valid JSON: {e}")
+        sys.exit(1)
+
+    try:
+        roles_config = json.loads(Path("config/roles.json").read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        print("Error: config/roles.json not found.")
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        print(f"Error: config/roles.json is not valid JSON: {e}")
+        sys.exit(1)
 
     key = str(num_players)
     if key not in roles_config:

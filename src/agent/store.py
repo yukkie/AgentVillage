@@ -19,6 +19,8 @@ def save(actor: Actor) -> None:
 
 def load(name: str) -> Actor:
     path = STATE_DIR / f"{name.lower()}.json"
+    if not path.exists():
+        raise FileNotFoundError(f"Agent state file not found: {path}")
     data = json.loads(path.read_text(encoding="utf-8"))
     return make_actor(ActorState.model_validate(data), data["role"])
 
