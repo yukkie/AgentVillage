@@ -13,6 +13,8 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| yukkie/AgentVillage#151 | tech-debt | 🟡 | 2 | Make LLMClient injectable into GameEngine via constructor argument | GameEngineのコンストラクタにllm_client引数を追加し、テストでpatch不要にする |
+| yukkie/AgentVillage#152 | tech-debt | 🟡 | 2 | Consolidate duplicate test helpers into tests/unit/conftest.py | _make_agent/_make_engineが5ファイルで重複。conftest.pyに集約（#151完了後にpatchも除去可能） |
 | yukkie/AgentVillage#97 | tech-debt | 🟡 | 3 | Move local imports to module top level in prompt.py and game.py | 関数内ローカルインポートがアーキテクチャ原則に違反 |
 | yukkie/AgentVillage#119 | tech-debt | 🟡 | 3 | Unify co-intent flags: rename force_co and type intended_co as Role \| None | force_coとintended_coの二重フラグを統合。Step1:force_co削除、Step2:bool→Role\|None型変更（2段階） |
 | yukkie/AgentVillage#76 | tech-debt | 🟡 | 3 | Refactor renderer.py into Renderer class with GUI migration hint | Renderer クラス化・イベントスタイルを整理・GUI化時の EventPresenter 設計ヒントをコメントで残す |
