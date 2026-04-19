@@ -31,7 +31,8 @@ def _make_engine(agents: list[Actor]) -> tuple[GameEngine, list[LogEvent]]:
     events: list[LogEvent] = []
     log_writer = MagicMock(spec=LogWriter)
     log_writer.write.side_effect = lambda e: events.append(e)
-    engine = GameEngine(agents=agents, log_writer=log_writer, lang="English")
+    with patch("src.engine.game.llm_factory.create_client", return_value=MagicMock()):
+        engine = GameEngine(agents=agents, log_writer=log_writer, lang="English")
     return engine, events
 
 
@@ -112,12 +113,11 @@ class TestRunPreNight:
             _make_agent("D", "Werewolf"),
         ]
         engine, events = _make_engine(agents)
+        engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
+            [(actor, self._make_output("wait")) for actor in targets]
+        )
 
-        call_results = [self._make_output("wait"), self._make_output("wait")]
-        with (
-            patch("src.engine.game.llm_client.call_pre_night_action", side_effect=call_results),
-            patch("src.agent.store.save"),
-        ):
+        with patch("src.agent.store.save"):
             engine._run_pre_night()
 
         decision_events = [e for e in events if e.event_type == EventType.PRE_NIGHT_DECISION]
@@ -129,11 +129,11 @@ class TestRunPreNight:
     def test_co_decision_sets_intended_co_true(self):
         agents = [_make_agent("Gina", "Seer"), _make_agent("SQ", "Villager")]
         engine, _ = _make_engine(agents)
+        engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
+            [(actor, self._make_output("co")) for actor in targets]
+        )
 
-        with (
-            patch("src.engine.game.llm_client.call_pre_night_action", return_value=self._make_output("co")),
-            patch("src.agent.store.save"),
-        ):
+        with patch("src.agent.store.save"):
             engine._run_pre_night()
 
         seer = next(a for a in agents if a.name == "Gina")
@@ -142,11 +142,11 @@ class TestRunPreNight:
     def test_wait_decision_sets_intended_co_false(self):
         agents = [_make_agent("Gina", "Seer"), _make_agent("SQ", "Villager")]
         engine, _ = _make_engine(agents)
+        engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
+            [(actor, self._make_output("wait")) for actor in targets]
+        )
 
-        with (
-            patch("src.engine.game.llm_client.call_pre_night_action", return_value=self._make_output("wait")),
-            patch("src.agent.store.save"),
-        ):
+        with patch("src.agent.store.save"):
             engine._run_pre_night()
 
         seer = next(a for a in agents if a.name == "Gina")
@@ -155,11 +155,11 @@ class TestRunPreNight:
     def test_decision_events_are_spectator_only(self):
         agents = [_make_agent("Gina", "Seer"), _make_agent("SQ", "Villager")]
         engine, events = _make_engine(agents)
+        engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
+            [(actor, self._make_output("co")) for actor in targets]
+        )
 
-        with (
-            patch("src.engine.game.llm_client.call_pre_night_action", return_value=self._make_output("co")),
-            patch("src.agent.store.save"),
-        ):
+        with patch("src.agent.store.save"):
             engine._run_pre_night()
 
         decision_events = [e for e in events if e.event_type == EventType.PRE_NIGHT_DECISION]
@@ -168,11 +168,11 @@ class TestRunPreNight:
     def test_phase_start_event_is_spectator_only(self):
         agents = [_make_agent("Gina", "Seer"), _make_agent("SQ", "Villager")]
         engine, events = _make_engine(agents)
+        engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
+            [(actor, self._make_output("wait")) for actor in targets]
+        )
 
-        with (
-            patch("src.engine.game.llm_client.call_pre_night_action", return_value=self._make_output("wait")),
-            patch("src.agent.store.save"),
-        ):
+        with patch("src.agent.store.save"):
             engine._run_pre_night()
 
         phase_starts = [
@@ -186,8 +186,7 @@ class TestRunPreNight:
         agents = [_make_agent("A", "Villager"), _make_agent("B", "Villager")]
         engine, events = _make_engine(agents)
 
-        with patch("src.engine.game.llm_client.call_pre_night_action") as mock_call:
-            engine._run_pre_night()
+        engine._run_pre_night()
 
-        mock_call.assert_not_called()
+        engine._llm_client.call_pre_night_parallel.assert_not_called()
         assert not any(e.event_type == EventType.PRE_NIGHT_DECISION for e in events)
