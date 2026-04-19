@@ -17,9 +17,6 @@
 | yukkie/AgentVillage#93 | tech-debt | 🟡 | 3 | Module-level Anthropic client singleton makes testing difficult | _clientがモジュールロード時に生成されテスト時に差し替え不可 |
 | yukkie/AgentVillage#97 | tech-debt | 🟡 | 3 | Move local imports to module top level in prompt.py and game.py | 関数内ローカルインポートがアーキテクチャ原則に違反 |
 | yukkie/AgentVillage#101 | tech-debt | 🟡 | 3 | check_victory() only supports two-faction win conditions | 二項対立のみ。第三陣営・Madman単独勝利に対応不可 |
-| yukkie/AgentVillage#103 | tech-debt | 🔴 | 1 | LogWriter.write() does not handle IOError — log failure crashes the game ⚠️unit test mandatory | ログ書き込み失敗でゲームが止まる |
-| yukkie/AgentVillage#104 | tech-debt | 🔴 | 1 | load_events() fails entirely if any log line is corrupted ⚠️unit test mandatory | 1行でも壊れると全ログが読めなくなる |
-| yukkie/AgentVillage#105 | tech-debt | 🔴 | 1 | ReplayPager crashes if archive agents/ dir is missing or has invalid JSON ⚠️unit test mandatory | アーカイブ破損時にリプレイ起動でクラッシュ |
 | yukkie/AgentVillage#119 | tech-debt | 🟡 | 3 | Unify co-intent flags: rename force_co and type intended_co as Role \| None | force_coとintended_coの二重フラグを統合。Step1:force_co削除、Step2:bool→Role\|None型変更（2段階） |
 | yukkie/AgentVillage#76 | tech-debt | 🟡 | 3 | Refactor renderer.py into Renderer class with GUI migration hint | Renderer クラス化・イベントスタイルを整理・GUI化時の EventPresenter 設計ヒントをコメントで残す |
 | yukkie/AgentVillage#74 | tech-debt | 🟡 | 5 | Split ActorState into ActorProfile (static) and ActorState (dynamic) | name/role/model/persona を ActorProfile に分離。ActorState は動的フィールドのみ |
