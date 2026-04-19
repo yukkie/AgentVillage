@@ -1,4 +1,5 @@
 import shutil
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -29,10 +30,13 @@ class LogWriter:
 
     def write(self, event: LogEvent) -> None:
         line = event.model_dump_json() + "\n"
-        # Spectator log contains everything
-        with SPECTATOR_LOG.open("a", encoding="utf-8") as f:
-            f.write(line)
-        # Public log only contains public events
-        if event.is_public:
-            with PUBLIC_LOG.open("a", encoding="utf-8") as f:
+        try:
+            # Spectator log contains everything
+            with SPECTATOR_LOG.open("a", encoding="utf-8") as f:
                 f.write(line)
+            # Public log only contains public events
+            if event.is_public:
+                with PUBLIC_LOG.open("a", encoding="utf-8") as f:
+                    f.write(line)
+        except IOError as e:
+            print(f"[LogWriter] write failed: {e}", file=sys.stderr)
