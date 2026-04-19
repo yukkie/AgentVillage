@@ -17,3 +17,9 @@ dev = [
     "ruff>=0.4.0",
     "pre-commit>=4.0.0",
 ]
+
+[tool.pytest.ini_options]
+markers = [
+    "unit: unit tests (no I/O, no network)",
+    "integration: integration tests (real I/O or multi-module)",
+]
