@@ -10,6 +10,7 @@ from src.engine.phase import Phase
 from src.domain.schema import AgentOutput, Intent, JudgmentOutput
 from src.domain.event import EventType, LogEvent
 from src.domain.roles import Seer
+from src.llm.client import LLMClient
 from src.logger.writer import LogWriter
 
 
@@ -38,9 +39,30 @@ def _make_engine(agents: list[Actor]) -> tuple[GameEngine, list[LogEvent]]:
     events: list[LogEvent] = []
     log_writer = MagicMock(spec=LogWriter)
     log_writer.write.side_effect = lambda e: events.append(e)
-    with patch("src.engine.game.llm_factory.create_client", return_value=MagicMock()):
-        engine = GameEngine(agents=agents, log_writer=log_writer, lang="English")
+    llm_client = MagicMock(spec=LLMClient)
+    engine = GameEngine(
+        agents=agents,
+        log_writer=log_writer,
+        lang="English",
+        llm_client=llm_client,
+    )
     return engine, events
+
+
+class TestGameEngineLlmInjection:
+    def test_uses_injected_llm_client_without_factory_patch(self):
+        agents = [_make_agent("A")]
+        log_writer = MagicMock(spec=LogWriter)
+        injected_llm = MagicMock(spec=LLMClient)
+
+        engine = GameEngine(
+            agents=agents,
+            log_writer=log_writer,
+            lang="English",
+            llm_client=injected_llm,
+        )
+
+        assert engine._llm_client is injected_llm
 
 
 def _silent_discussion(actors, *_, **__):

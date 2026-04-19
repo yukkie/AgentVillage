@@ -8,6 +8,7 @@ from src.engine.phase import Phase
 from src.engine.vote import tally_votes
 from src.engine.victory import check_victory
 from src.llm import factory as llm_factory
+from src.llm.client import LLMClient
 from src.llm.prompt import PublicContext, SpeechDirection, WolfSpecificContext
 from src.domain.schema import AgentOutput, SpeechEntry
 from src.action.types import Vote, Inspect, Attack
@@ -25,12 +26,13 @@ class GameEngine:
         log_writer: LogWriter,
         event_callback: Callable[[LogEvent], None] | None = None,
         lang: str = "English",
+        llm_client: LLMClient | None = None,
     ):
         self.agents = agents
         self.log_writer = log_writer
         self.event_callback = event_callback or (lambda e: None)
         self.lang = lang
-        self._llm_client = llm_factory.create_client()
+        self._llm_client = llm_client or llm_factory.create_client()
         self.day = 1
         self.phase = Phase.DAY_OPENING
         self.today_log: list[SpeechEntry] = []
