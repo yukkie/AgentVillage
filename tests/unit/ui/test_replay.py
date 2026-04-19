@@ -126,3 +126,65 @@ def test_selector_returns_none_when_dir_missing(tmp_path: Path) -> None:
     selector = ArchiveSelector(tmp_path / "nonexistent")
     result = selector.select()
     assert result is None
+
+
+# ── ReplayPager エラーハンドリング (#105) ─────────────────────────────────────
+
+
+def test_pager_loads_empty_when_agents_dir_missing(tmp_path: Path) -> None:
+    """agents/ ディレクトリが存在しないとき空リストを返し、クラッシュしないこと。"""
+    archive = tmp_path / "20260101_000000"
+    archive.mkdir()
+    event = LogEvent.make(
+        day=1,
+        phase="day_opening",
+        event_type=EventType.SPEECH,
+        agent="Alice",
+        content="Hello.",
+        is_public=True,
+    )
+    (archive / "public_log.jsonl").write_text(event.model_dump_json(), encoding="utf-8")
+    (archive / "spectator_log.jsonl").write_text(event.model_dump_json(), encoding="utf-8")
+
+    import sys
+    from io import StringIO
+
+    captured = StringIO()
+    with patch.object(sys, "stderr", captured):
+        pager = ReplayPager(archive, spectator_mode=False)
+
+    assert pager._agents == []
+    assert "agents/ directory not found" in captured.getvalue()
+
+
+def test_pager_skips_corrupt_agent_file(tmp_path: Path) -> None:
+    """agents/ 内の壊れた JSON ファイルはスキップされ、正常ファイルは読み込まれること。"""
+    archive = tmp_path / "20260101_000000"
+    agents_dir = archive / "agents"
+    agents_dir.mkdir(parents=True)
+
+    good_data = _make_agent_json("Alice", "Villager")
+    (agents_dir / "alice.json").write_text(json.dumps(good_data), encoding="utf-8")
+    (agents_dir / "bob.json").write_text("NOT_JSON", encoding="utf-8")
+
+    event = LogEvent.make(
+        day=1,
+        phase="day_opening",
+        event_type=EventType.SPEECH,
+        agent="Alice",
+        content="Hello.",
+        is_public=True,
+    )
+    (archive / "public_log.jsonl").write_text(event.model_dump_json(), encoding="utf-8")
+    (archive / "spectator_log.jsonl").write_text(event.model_dump_json(), encoding="utf-8")
+
+    import sys
+    from io import StringIO
+
+    captured = StringIO()
+    with patch.object(sys, "stderr", captured):
+        pager = ReplayPager(archive, spectator_mode=False)
+
+    assert len(pager._agents) == 1
+    assert pager._agents[0].name == "Alice"
+    assert "bob.json" in captured.getvalue()
