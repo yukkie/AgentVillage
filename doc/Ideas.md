@@ -21,9 +21,6 @@
 | yukkie/AgentVillage#74 | tech-debt | 🟡 | 5 | Split ActorState into ActorProfile (static) and ActorState (dynamic) | name/role/model/persona を ActorProfile に分離。ActorState は動的フィールドのみ |
 | yukkie/AgentVillage#81 | tech-debt | 🟡 | 5 | Separate night action declaration and resolution phases | 夜フェーズの宣言・実行・公表を3段階に分離。seer_survived フラグ削除。キツネ等の複雑な相互作用に対応 |
 | yukkie/AgentVillage#58 | tech-debt | 🟡 | 8 | Split GameEngine phases into dedicated modules | game.py を前夜・昼・夜フェーズモジュールに分割 |
-| yukkie/AgentVillage#94 | tech-debt | 🟢 | 1 | store.load() does not handle FileNotFoundError ⚠️unit test mandatory | ファイル不在時に未ハンドルの例外が伝播する |
-| yukkie/AgentVillage#99 | tech-debt | 🟢 | 1 | setup.py silently ignores JSON parse errors in config files ⚠️unit test mandatory | config JSON破損時にトレースバックが素通りする |
-| yukkie/AgentVillage#102 | tech-debt | 🟢 | 1 | memory.update_memory() silently propagates IOError from store.save() ⚠️unit test mandatory | IOError無言伝播。呼び出し元で対処不可 |
 | yukkie/AgentVillage#33 | enhancement | 🟢 | 5 | Wolf chat improvements | 早期終了・偽CO協議・テスト |
 | yukkie/AgentVillage#36 | enhancement | 🟢 | 5 | Belief updates from agent reasoning | suspicion/trust を推理結果から更新 |
 | yukkie/AgentVillage#47 | enhancement | 🟢 | 3 | Reasoning field for Vote/Guard/Divination/Judgment | 各アクションに reasoning を追加し spectator ログ・memory_update に記録 |
