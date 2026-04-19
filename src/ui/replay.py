@@ -11,8 +11,9 @@ import readchar
 from rich.console import Console
 from rich.text import Text
 
-from src.agent import store
-from src.domain.actor import Actor, make_actor
+import json
+
+from src.domain.actor import Actor, ActorState, make_actor
 from src.domain.event import EventType, LogEvent
 from src.logger.reader import load_events
 from src.ui.renderer import render_event
@@ -101,7 +102,18 @@ class ReplayPager:
         self._lines = self._build_lines()
 
     def _load_agents(self) -> list[Actor]:
-        return store.load_all_from_dir(self._archive / "agents")
+        agents_dir = self._archive / "agents"
+        if not agents_dir.exists():
+            print(f"[ReplayPager] agents/ directory not found: {agents_dir}", file=sys.stderr)
+            return []
+        actors = []
+        for p in sorted(agents_dir.glob("*.json")):
+            try:
+                data = json.loads(p.read_text(encoding="utf-8"))
+                actors.append(make_actor(ActorState.model_validate(data), data["role"]))
+            except Exception as e:
+                print(f"[ReplayPager] skipping corrupt agent file {p.name}: {e}", file=sys.stderr)
+        return actors
 
     def _load_events(self) -> list[LogEvent]:
         log_file = "spectator_log.jsonl" if self._spectator else "public_log.jsonl"
