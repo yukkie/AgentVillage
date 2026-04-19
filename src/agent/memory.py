@@ -1,9 +1,5 @@
-import logging
-
 from src.domain.actor import Actor
 from src.agent import store
-
-logger = logging.getLogger(__name__)
 
 
 def update_memory(actor: Actor, memory_updates: list[str]) -> Actor:
