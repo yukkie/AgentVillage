@@ -49,3 +49,42 @@ def test_initialize_agents_invalid_player_count():
     """存在しないプレイヤー数を指定したとき sys.exit が呼ばれること。"""
     with pytest.raises(SystemExit):
         initialize_agents(99)
+
+
+def test_initialize_agents_corrupt_agents_json(monkeypatch):
+    """
+    SUT: initialize_agents()
+    Mock: monkeypatch で Path.read_text を差し替え、agents.json 読み込み時に不正JSONを返す
+    Level: unit
+    Objective: agents.json が不正な JSON のとき sys.exit(1) が呼ばれること。
+    """
+    original_read = Path.read_text
+
+    def fake_read(self, **kwargs):
+        if self.name == "agents.json":
+            return "{not valid json"
+        return original_read(self, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", fake_read)
+    with pytest.raises(SystemExit):
+        initialize_agents(5)
+
+
+def test_initialize_agents_corrupt_roles_json(monkeypatch):
+    """
+    SUT: initialize_agents()
+    Mock: monkeypatch で Path.read_text を差し替え、roles.json 読み込み時に不正JSONを返す
+    Level: unit
+    Objective: roles.json が不正な JSON のとき sys.exit(1) が呼ばれること。
+    """
+    original_read = Path.read_text
+
+    def fake_read(self, **kwargs):
+        if self.name == "roles.json":
+            return "{not valid json"
+        return original_read(self, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", fake_read)
+    with patch("src.agent.store.save"):
+        with pytest.raises(SystemExit):
+            initialize_agents(5)

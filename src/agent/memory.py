@@ -7,5 +7,8 @@ def update_memory(actor: Actor, memory_updates: list[str]) -> Actor:
     for item in memory_updates:
         if item and item not in actor.state.memory_summary:
             actor.state.memory_summary.append(item)
-    store.save(actor)
+    try:
+        store.save(actor)
+    except OSError as e:
+        raise OSError(f"Failed to persist memory for {actor.name}: {e}") from e
     return actor
