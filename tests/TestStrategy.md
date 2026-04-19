@@ -38,13 +38,19 @@
 - **条件**: 実LLM API呼び出しは含まない（コストとFlakyリスクのため）
 - **速度**: 秒単位まで許容
 
+### E2E Test (`@pytest.mark.e2e`)
+
+- **対象**: ゲーム開始から終了までの一連のフロー全体
+- **条件**: 実LLM API呼び出しを含む場合がある。CI では原則スキップ（手動実行）
+- **速度**: 分単位まで許容
+
 マーカーを省略した場合は `unit` として扱う（CI設定に準じる）。
 
 ---
 
 ## 3. docstring 規約
 
-各テスト関数には以下の3要素をdocstringで明示する:
+各テスト関数には以下の4要素をdocstringで明示する:
 
 ```python
 def test_load_events_skips_blank_lines(tmp_path: Path) -> None:
@@ -52,11 +58,19 @@ def test_load_events_skips_blank_lines(tmp_path: Path) -> None:
     SUT: load_events()
     Mock: なし（tmp_path で実ファイルI/Oを使用）
     Level: unit
-    空行を含むJSONLファイルから、空行をスキップしてイベントを読み込めること。
+    Objective: 空行を含むJSONLファイルから、空行をスキップしてイベントを読み込めること。
     """
 ```
 
-既存テストで1行docstringのみの場合は、新規追加・修正時に合わせて補完する。
+- **SUT**: テスト対象の関数・クラス・メソッド名
+- **Mock**: 使用するMock/monkeypatchとその目的。なければ「なし」と明記
+- **Level**: `unit` / `integration` / `e2e` のいずれか
+- **Objective**: このテストが何を検証するかを1文で記述する
+
+### クリーンアップ規約
+
+既存テストを変更する場合は、変更対象のテスト関数のdocstringを本規約に沿って修正する。
+新規追加のテストは最初から本規約に従うこと。
 
 ---
 

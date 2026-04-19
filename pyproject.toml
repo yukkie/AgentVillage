@@ -22,4 +22,5 @@ dev = [
 markers = [
     "unit: unit tests (no I/O, no network)",
     "integration: integration tests (real I/O or multi-module)",
+    "e2e: end-to-end tests covering full game flow (may call real LLM API; skipped in CI by default)",
 ]
