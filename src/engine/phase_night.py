@@ -76,9 +76,9 @@ def _resolve_fallback_attack(engine: GameEngine, alive_names: list[str]) -> str 
 
 def _declare_role_actions(
     engine: GameEngine, alive_names: list[str], night_context: str
-) -> tuple[str | None, tuple | None, Actor | None]:
+) -> tuple[str | None, tuple[Actor, Inspect] | None, Actor | None]:
     guard_target: str | None = None
-    seer_inspect: tuple | None = None
+    seer_inspect: tuple[Actor, Inspect] | None = None
     knight: Actor | None = None
 
     for actor in engine._alive_agents():
@@ -111,7 +111,7 @@ def _resolve_night_attack(
     attack_target: str,
     guard_target: str | None,
     knight: Actor | None,
-    seer_inspect: tuple | None,
+    seer_inspect: tuple[Actor, Inspect] | None,
 ) -> bool:
     if guard_target == attack_target:
         engine._emit(LogEvent.make(
@@ -141,7 +141,7 @@ def _resolve_night_attack(
     return seer_survived
 
 
-def _resolve_inspection(engine: GameEngine, seer_inspect: tuple) -> None:
+def _resolve_inspection(engine: GameEngine, seer_inspect: tuple[Actor, Inspect]) -> None:
     seer, inspect = seer_inspect
     name, result = resolve_inspect(inspect, engine.agents)
     if name not in seer.state.beliefs:
