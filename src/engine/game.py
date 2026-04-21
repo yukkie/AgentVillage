@@ -9,7 +9,7 @@ from src.engine.phase_night import run_night_phase
 from src.engine.phase_pre_night import run_pre_night_phase
 from src.llm import factory as llm_factory
 from src.llm.client import LLMClient
-from src.llm.prompt import PublicContext, SpeechDirection, WolfSpecificContext
+from src.llm.prompt import PastDeath, PastVote, PublicContext, SpeechDirection, WolfSpecificContext
 from src.domain.schema import AgentOutput, SpeechEntry
 from src.action.types import Vote
 from src.action.validator import validate
@@ -39,8 +39,8 @@ class GameEngine:
         self._day_turn: int = 0
         self._day_outputs: dict[str, AgentOutput] = {}
         # Public history passed to agent prompts
-        self._past_votes: list[dict] = []   # [{"day": n, "votes": {"voter": "target"}}]
-        self._past_deaths: list[dict] = []  # [{"day": n, "name": str, "cause": "execution"|"attack"}]
+        self._past_votes: list[PastVote] = []
+        self._past_deaths: list[PastDeath] = []
         self._wolf_chat_rounds = WOLF_CHAT_ROUNDS
 
     def _emit(self, event: LogEvent) -> None:
