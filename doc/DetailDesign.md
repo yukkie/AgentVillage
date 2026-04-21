@@ -246,7 +246,7 @@ LLMの提案をゲームエンジンに渡す橋渡し役。
 | モジュール | 責務 |
 |---|---|
 | `cli.py` | Richを使ったCLI表示。フェーズ区切り・発言・死亡通知を色付きで出力 |
-| `renderer.py` | イベントを受け取って表示文字列に変換（cliから切り離して将来のWeb対応を容易に） |
+| `renderer.py` | `Renderer` クラス（`on_event()`）でイベントを Rich `Text` に変換。将来的に EventPresenter（中立の `DisplayEvent`）→ `ConsoleRenderer` / `WebRenderer` へ分割する前提のシーム |
 | `replay.py` | アーカイブ選択UI + ページャー。LLMを一切呼ばずにJSONLログを再生する |
 
 ### replay.py — クラス構成
@@ -278,7 +278,7 @@ class ReplayPager:
 **初期化:**
 1. `archive_path/agents/*.json` を `AgentState` としてロード（`src.agent.state` の Pydantic モデルを直接使用）
 2. `spectator_mode` に応じて `spectator_log.jsonl` または `public_log.jsonl` を読み込み
-3. 各 `LogEvent` を `renderer.render_event()` で描画し、`list[str]`（ANSI 文字列）としてバッファに積む
+3. 各 `LogEvent` を `Renderer.on_event()` で描画し、`list[str]`（ANSI 文字列）としてバッファに積む
 
 **`_build_lines()` の claimed_role 動的追跡:**
 アーカイブの agent JSON は end-of-game 状態（CO済み）を持つ。そのまま使うと、CO前の発言もCO後の色で表示されてしまう。
