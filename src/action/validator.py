@@ -1,8 +1,6 @@
-from src.action.types import Vote, Inspect, Attack, CO
+from src.action.types import ActionType, Attack, CO, Inspect, Vote
 from src.domain.actor import Actor
 from src.domain.roles import Seer, Werewolf
-
-ActionType = Vote | Inspect | Attack | CO
 
 
 def validate(action: ActionType, actor: Actor, alive_players: list[str]) -> bool:

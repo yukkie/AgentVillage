@@ -19,3 +19,6 @@ class Attack:
 @dataclass
 class CO:
     role: str
+
+
+ActionType = Vote | Inspect | Attack | CO

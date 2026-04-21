@@ -11,7 +11,7 @@ from src.llm import factory as llm_factory
 from src.llm.client import LLMClient
 from src.llm.prompt import PastDeath, PastVote, PublicContext, SpeechDirection, WolfSpecificContext
 from src.domain.schema import AgentOutput, SpeechEntry
-from src.action.types import Vote
+from src.action.types import ActionType, Vote
 from src.action.validator import validate
 from src.domain.event import LogEvent, EventType
 from src.domain.roles import Werewolf
@@ -109,7 +109,7 @@ class GameEngine:
     def _make_vote(self, target: str) -> Vote:
         return Vote(target=target)
 
-    def _validate_action(self, action: object, actor: Actor, alive_names: list[str]) -> bool:
+    def _validate_action(self, action: ActionType, actor: Actor, alive_names: list[str]) -> bool:
         return validate(action, actor, alive_names)
 
     def run(self) -> str:
