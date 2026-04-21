@@ -16,7 +16,7 @@ import json
 from src.domain.actor import Actor, ActorState, make_actor
 from src.domain.event import EventType, LogEvent
 from src.logger.reader import load_events
-from src.ui.renderer import render_event
+from src.ui.renderer import Renderer
 
 ARCHIVE_DIR = Path("state_archive")
 
@@ -132,6 +132,7 @@ class ReplayPager:
         for a in dynamic_actors.values():
             a.state.claimed_role = None
 
+        renderer = Renderer(list(dynamic_actors.values()), self._spectator)
         all_lines: list[str] = []
         for event in events:
             # Use event.claimed_role (structured field) rather than parsing content text.
@@ -139,7 +140,7 @@ class ReplayPager:
                 if event.agent in dynamic_actors:
                     dynamic_actors[event.agent].state.claimed_role = event.claimed_role
 
-            rich_text = render_event(event, list(dynamic_actors.values()), self._spectator)
+            rich_text = renderer.on_event(event)
             if rich_text is None:
                 continue
             rendered = _render_rich_to_lines(rich_text, width)

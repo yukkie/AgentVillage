@@ -3,7 +3,7 @@ from rich.panel import Panel
 
 from src.domain.event import LogEvent
 from src.domain.actor import Actor
-from src.ui.renderer import render_event
+from src.ui.renderer import Renderer
 
 console = Console()
 
@@ -12,10 +12,11 @@ class CLI:
     def __init__(self, agents: list[Actor], spectator_mode: bool = False):
         self.agents = agents
         self.spectator_mode = spectator_mode
+        self._renderer = Renderer(agents, spectator_mode)
 
     def on_event(self, event: LogEvent) -> None:
         """Callback for the game engine to call when an event occurs."""
-        text = render_event(event, self.agents, self.spectator_mode)
+        text = self._renderer.on_event(event)
         if text is not None:
             console.print(text)
 
