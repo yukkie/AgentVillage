@@ -1,8 +1,6 @@
-from src.action.types import Vote, Inspect, Attack, CO
+from src.action.types import Attack, CO, Inspect, Vote
 from src.domain.actor import Actor
 from src.domain.roles import Werewolf
-
-ActionType = Vote | Inspect | Attack | CO
 
 
 def resolve_vote(action: Vote, agents: list[Actor]) -> str:
