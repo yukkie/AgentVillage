@@ -13,14 +13,10 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#97 | tech-debt | 🟡 | 3 | Move local imports to module top level in prompt.py and game.py | 関数内ローカルインポートがアーキテクチャ原則に違反 |
 | yukkie/AgentVillage#119 | tech-debt | 🟡 | 3 | Unify co-intent flags: rename force_co and type intended_co as Role \| None | force_coとintended_coの二重フラグを統合。Step1:force_co削除、Step2:bool→Role\|None型変更（2段階） |
 | yukkie/AgentVillage#76 | tech-debt | 🟡 | 3 | Refactor renderer.py into Renderer class with GUI migration hint | Renderer クラス化・イベントスタイルを整理・GUI化時の EventPresenter 設計ヒントをコメントで残す |
 | yukkie/AgentVillage#74 | tech-debt | 🟡 | 5 | Split ActorState into ActorProfile (static) and ActorState (dynamic) | name/role/model/persona を ActorProfile に分離。ActorState は動的フィールドのみ |
 | yukkie/AgentVillage#81 | tech-debt | 🟡 | 5 | Separate night action declaration and resolution phases | 夜フェーズの宣言・実行・公表を3段階に分離。seer_survived フラグ削除。キツネ等の複雑な相互作用に対応 |
-| yukkie/AgentVillage#58 | tech-debt | 🟡 | 8 | Split GameEngine phases into dedicated modules | game.py を前夜・昼・夜フェーズモジュールに分割 |
-| yukkie/AgentVillage#157 | tech-debt | 🟡 | 5 | Refactor phase_night.py into smaller functions | 夜フェーズを狼会話・宣言・解決などの読みやすい関数へ分割し、#81 の土台を作る |
-| yukkie/AgentVillage#158 | tech-debt | 🟡 | 3 | Refactor phase_day.py into smaller functions | 昼フェーズを opening / discussion / vote / post-vote に関数分割して見通しとテスト性を上げる |
 | yukkie/AgentVillage#33 | enhancement | 🟢 | 5 | Wolf chat improvements | 早期終了・偽CO協議・テスト |
 | yukkie/AgentVillage#36 | enhancement | 🟢 | 5 | Belief updates from agent reasoning | suspicion/trust を推理結果から更新 |
 | yukkie/AgentVillage#47 | enhancement | 🟢 | 3 | Reasoning field for Vote/Guard/Divination/Judgment | 各アクションに reasoning を追加し spectator ログ・memory_update に記録 |
