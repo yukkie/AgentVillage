@@ -1,3 +1,4 @@
+from collections import Counter
 from dataclasses import dataclass, field
 
 from src.domain.actor import Actor
@@ -101,7 +102,6 @@ def build_role_prompt(role: Role, wolf_partners: list[str] | None = None) -> str
 
 def build_public_info_prompt(ctx: PublicContext) -> str:
     """Build prompt section with public game information."""
-    from collections import Counter
     lines = [f"\n--- PUBLIC INFORMATION (Day {ctx.day}) ---"]
 
     if ctx.all_agents:
@@ -219,7 +219,6 @@ def build_pre_night_prompt(
     ]
 
     if all_agents:
-        from collections import Counter
         role_counts = Counter(a.role.name for a in all_agents)
         role_summary = ", ".join(f"{count} {role}" for role, count in sorted(role_counts.items()))
         lines.append(f"Role distribution in this game: {role_summary}")
