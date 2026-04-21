@@ -147,8 +147,8 @@ class PublicContext:
     dead_players: list[str]
     day: int
     all_agents: list[AgentState] | None = None   # 役職分布・CO状況
-    past_votes: list[dict] | None = None
-    past_deaths: list[dict] | None = None
+    past_votes: list[PastVote] | None = None   # TypedDict: {day, votes}
+    past_deaths: list[PastDeath] | None = None  # TypedDict: {day, name, cause}
 
 @dataclass
 class SpeechDirection:

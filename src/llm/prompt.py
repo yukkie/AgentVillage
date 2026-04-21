@@ -1,9 +1,21 @@
 from collections import Counter
 from dataclasses import dataclass, field
+from typing import Literal, TypedDict
 
 from src.domain.actor import Actor
 from src.domain.roles import Role, Werewolf
 from src.domain.schema import SpeechEntry
+
+
+class PastVote(TypedDict):
+    day: int
+    votes: dict[str, str]
+
+
+class PastDeath(TypedDict):
+    day: int
+    name: str
+    cause: Literal["execution", "attack"]
 
 
 @dataclass
@@ -13,8 +25,8 @@ class PublicContext:
     dead_players: list[str]
     day: int
     all_agents: list[Actor] | None = None
-    past_votes: list[dict] | None = None
-    past_deaths: list[dict] | None = None
+    past_votes: list[PastVote] | None = None
+    past_deaths: list[PastDeath] | None = None
 
 
 @dataclass
