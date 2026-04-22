@@ -78,14 +78,14 @@ LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検
 
 ### 3.2 Agent State（`src/agent/`）
 
-- エージェントの状態（役職・信念・記憶・人格パラメータ）を管理
+- エージェントの静的プロフィールと動的状態を管理
 - 状態は `state/agents/{name}.json` に永続化
-- Pydanticモデルは `src/domain/actor.py` で定義（`ActorState`, `Belief`, `Persona`）
-- ランタイムラッパー `Actor`（dataclass）は `state: ActorState` と `role: Role` を持つ。永続化対象は `ActorState` のみ
+- Pydanticモデルは `src/domain/actor.py` で定義（`ActorProfile`, `ActorState`, `Belief`, `Persona`）
+- ランタイムラッパー `Actor`（dataclass）は `profile: ActorProfile`, `state: ActorState`, `role: Role` を持つ
 
 #### Persona フィールド
 
-`Persona` モデルは以下のフィールドを持つ。
+`Persona` モデルは `ActorProfile.persona` に保持され、以下のフィールドを持つ。
 
 | フィールド | 型 | デフォルト | 説明 |
 |---|---|---|---|
@@ -104,9 +104,13 @@ LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検
 
 | フィールド | 内容 |
 |---|---|
-| `role` | 真の役職文字列（システム管理。LLMには渡さない。ランタイムでは `Actor.role`（Role instance）を使う） |
+| `beliefs` | 他プレイヤーへの疑い・信頼・理由 |
+| `memory_summary` | 今回のゲームで蓄積された中期記憶 |
+| `is_alive` | 生存フラグ |
 | `claimed_role` | エージェントが公言した役職（CO済みなら設定。未COはNull） |
 | `intended_co` | 前夜ターンで「初日COする」と決めた場合 `True`（Day 1 OPENINGプロンプトに反映後は参照不要） |
+
+静的な `name`, `model`, `persona` は `ActorProfile` に分離される。真の役職は保存JSON上では `role` 文字列、ランタイムでは `Actor.role`（`Role` instance）として扱う。
 
 - `intent.co` がLLM出力に含まれたタイミングでGame Engineが `claimed_role` に保存
 - `claimed_role` は **Public情報** として全エージェントのプロンプトに渡す
@@ -150,7 +154,7 @@ Day 1 OPENINGで `intended_co=True` なのにLLMがCOを出力しなかった場
 | `call_judgment()` | 判断（DISCUSSION 並列） | 軽量（役職・性格・memory_summary・直近発言のみ） | `JudgmentOutput` |
 | `call_night_action()` | 夜行動 | 夜フェーズ専用 | `str`（ターゲット名） |
 | `call_pre_night_action()` | 前夜判断・単体呼び出し | 役職・性格・参加者情報 | `PreNightOutput` |
-| `call_pre_night_parallel()` | 前夜判断・並列呼び出し（`call_speech_parallel` と同パターン） | 同上 | `Iterator[tuple[AgentState, PreNightOutput]]` |
+| `call_pre_night_parallel()` | 前夜判断・並列呼び出し（`call_speech_parallel` と同パターン） | 同上 | `Iterator[tuple[Actor, PreNightOutput]]` |
 | `call_discussion_parallel()` | 昼DISCUSSION 判断→発言チェーンの並列実行 | — | `Iterator[tuple[Actor, JudgmentOutput, AgentOutput \| None, SpeechEntry \| None, bool]]` |
 
 #### 並列実行

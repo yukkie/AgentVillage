@@ -2,24 +2,49 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.domain.actor import Actor, ActorState, Persona, make_actor
+from src.domain.actor import Actor, ActorProfile, ActorState, Persona, make_actor
 from src.domain.event import LogEvent
 from src.engine.game import GameEngine
 from src.llm.client import LLMClient
 from src.logger.writer import LogWriter
 
 
+def make_legacy_agent_json(name: str, role: str) -> dict:
+    return {
+        "name": name,
+        "persona": Persona(style="calm").model_dump(mode="json"),
+        "beliefs": {},
+        "memory_summary": [],
+        "is_alive": True,
+        "role": role,
+    }
+
+
+def make_split_agent_json(name: str, role: str) -> dict:
+    return {
+        "profile": ActorProfile(name=name, persona=Persona(style="calm")).model_dump(mode="json"),
+        "state": ActorState(
+            beliefs={},
+            memory_summary=[],
+            is_alive=True,
+        ).model_dump(mode="json"),
+        "role": role,
+    }
+
+
 @pytest.fixture
 def make_test_actor():
     def _make_test_actor(name: str, role: str = "Villager") -> Actor:
-        state = ActorState(
+        profile = ActorProfile(
             name=name,
             persona=Persona(style="calm", lie_tendency=0.1, aggression=0.2),
+        )
+        state = ActorState(
             beliefs={},
             memory_summary=[],
             is_alive=True,
         )
-        return make_actor(state, role)
+        return make_actor(profile, state, role)
 
     return _make_test_actor
 

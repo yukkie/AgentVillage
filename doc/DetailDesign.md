@@ -46,7 +46,7 @@
 
 | モジュール | 責務 |
 |---|---|
-| `actor.py` | `ActorState`, `Belief`, `Persona` のPydanticモデル定義 + `Actor` dataclass（`state: ActorState`, `role: Role`） |
+| `actor.py` | `ActorProfile`, `ActorState`, `Belief`, `Persona` のPydanticモデル定義 + `Actor` dataclass（`profile: ActorProfile`, `state: ActorState`, `role: Role`） |
 | `event.py` | `EventType`, `LogEvent` のPydanticモデル定義 |
 | `role.py` | `Role` ABC + 具象クラス（Villager, Werewolf, Seer, Knight, Medium, Madman）+ `get_role()` ファクトリ。役職の定義を一箇所に集約する |
 | `schema.py` | `AgentOutput`, `SpeechEntry`, `JudgmentOutput` 等のPydanticモデル定義 |
@@ -90,13 +90,14 @@ def get_role(role: str) -> Role:
 | `belief.py` | 疑い・信頼スコアの更新（`memory_update` を受けて反映） |
 | `store.py` | JSONファイルへのread/write |
 
-### Actor と ActorState の分離
+### Actor / ActorProfile / ActorState の分離
 
 `Actor`（dataclass）はランタイムのみで使われる：
-- `state: ActorState` — JSON 永続化される Pydantic モデル
-- `role: Role` — 役職 Strategy インスタンス（`make_actor(state, role_name)` で構築）
-- 便利 property: `name`（`state.name`）、`is_alive`（`state.is_alive`）
-- 永続化は `state` + `role.name`。`store.save(actor)` は `ActorState` フィールドに `role` を加えた JSON を書き出す
+- `profile: ActorProfile` — ゲーム中に不変なプロフィール（`name`, `model`, `persona`）
+- `state: ActorState` — ゲーム中に変化する状態（`beliefs`, `memory_summary`, `is_alive`, `claimed_role`, `intended_co`）
+- `role: Role` — 役職 Strategy インスタンス（`make_actor(profile, state, role_name)` で構築）
+- 便利 property: `name`（`profile.name`）、`model`（`profile.model`）、`persona`（`profile.persona`）、`is_alive`（`state.is_alive`）
+- 永続化は `profile` + `state` + `role.name`。`store.save(actor)` は分離JSONを書き出す
 
 `Actor.role` により `get_role(agent.role)` の繰り返し呼び出しが不要になる。
 
@@ -104,25 +105,32 @@ def get_role(role: str) -> Role:
 
 ```json
 {
-  "name": "Setsu",
+  "profile": {
+    "name": "Setsu",
+    "model": "claude-haiku-4-5-20251001",
+    "persona": {
+      "style": "logical, calm, empathic",
+      "lie_tendency": 0.1,
+      "aggression": 0.2,
+      "gender": "female",
+      "age": "adult",
+      "speech_style": "polite"
+    }
+  },
+  "state": {
+    "beliefs": {
+      "SQ": { "suspicion": 0.62, "trust": 0.18, "reason": ["Day2で票替え"] }
+    },
+    "memory_summary": ["Day1: SQはジナを擁護"],
+    "is_alive": true,
+    "claimed_role": null,
+    "intended_co": false
+  },
   "role": "Villager",
-  "persona": {
-    "style": "logical, calm, empathic",
-    "lie_tendency": 0.1,
-    "aggression": 0.2,
-    "gender": "female",
-    "age": "adult",
-    "speech_style": "polite"
-  },
-  "beliefs": {
-    "SQ": { "suspicion": 0.62, "trust": 0.18, "reason": ["Day2で票替え"] }
-  },
-  "claims": { "self_co": null, "others": {} },
-  "memory_summary": ["Day1: SQはジナを擁護"],
-  "goal": "survive and eliminate werewolves",
-  "last_action": { "type": "vote", "target": "SQ" }
 }
 ```
+
+`actor_from_dict()` は読込境界の adapter として機能し、新しい分離JSONを優先しつつ、過去アーカイブの旧フラットJSONも正規化して `Actor(profile, state, role)` に変換する。
 
 ---
 
@@ -146,7 +154,7 @@ class PublicContext:
     alive_players: list[str]
     dead_players: list[str]
     day: int
-    all_agents: list[AgentState] | None = None   # 役職分布・CO状況
+    all_agents: list[Actor] | None = None   # 役職分布・CO状況
     past_votes: list[PastVote] | None = None   # TypedDict: {day, votes}
     past_deaths: list[PastDeath] | None = None  # TypedDict: {day, name, cause}
 
@@ -276,7 +284,7 @@ class ReplayPager:
 ```
 
 **初期化:**
-1. `archive_path/agents/*.json` を `AgentState` としてロード（`src.agent.state` の Pydantic モデルを直接使用）
+1. `archive_path/agents/*.json` を `actor_from_dict()` 経由で `Actor` としてロード
 2. `spectator_mode` に応じて `spectator_log.jsonl` または `public_log.jsonl` を読み込み
 3. 各 `LogEvent` を `Renderer.on_event()` で描画し、`list[str]`（ANSI 文字列）としてバッファに積む
 
@@ -285,6 +293,8 @@ class ReplayPager:
 これを防ぐため、`_build_lines()` ではエージェントのコピーを作り `claimed_role` を全員 `None` にリセットした上で、
 イベントを順に処理しながら `CO_ANNOUNCEMENT` が来たタイミングで `claimed_role` を更新する。
 spectatorモードは `agent.role`（変化しない真の役職）を使うため影響なし。
+
+旧アーカイブ互換のため、`profile` が存在しない旧JSONは `name` / `model` / `persona` をトップレベルから読み取り、必要に応じて `config/agents.json` のカタログで補完する。
 
 **ページャーループ:**
 - `shutil.get_terminal_size().lines` でターミナル高さを取得

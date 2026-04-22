@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 from src.config import STATE_DIR
-from src.domain.actor import Actor, ActorState, Belief, Persona, make_actor
+from src.domain.actor import Actor, ActorProfile, ActorState, Belief, Persona, make_actor
 from src.agent import store
 
 
@@ -54,14 +54,17 @@ def initialize_agents(num_players: int) -> list[Actor]:
             for other in selected_configs
             if other["name"] != name
         }
-        state = ActorState(
+        profile = ActorProfile(
             name=name,
+            model=config.get("model", ActorProfile.model_fields["model"].default),
             persona=Persona.model_validate(config),
+        )
+        state = ActorState(
             beliefs=beliefs,
             memory_summary=[],
             is_alive=True,
         )
-        actor = make_actor(state, role)
+        actor = make_actor(profile, state, role)
         store.save(actor)
         actors.append(actor)
 
