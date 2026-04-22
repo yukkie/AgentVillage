@@ -11,24 +11,9 @@ from unittest.mock import patch
 
 import pytest
 
-from src.domain.actor import ActorState, Persona
 from src.domain.event import EventType, LogEvent
 from src.ui.replay import ArchiveSelector, ReplayPager, run_replay
-
-
-# ── helpers ─────────────────────────────────────────────────────────────────
-
-
-def _make_agent_json(name: str, role: str) -> dict:
-    data = ActorState(
-        name=name,
-        persona=Persona(style="calm"),
-        beliefs={},
-        memory_summary=[],
-        is_alive=True,
-    ).model_dump()
-    data["role"] = role
-    return data
+from tests.unit.conftest import make_legacy_agent_json, make_split_agent_json
 
 
 def _make_event_jsonl(*events: LogEvent) -> str:
@@ -43,10 +28,10 @@ def tmp_archive(tmp_path: Path) -> Path:
     agents_dir.mkdir(parents=True)
 
     (agents_dir / "alice.json").write_text(
-        json.dumps(_make_agent_json("Alice", "Villager")), encoding="utf-8"
+        json.dumps(make_legacy_agent_json("Alice", "Villager")), encoding="utf-8"
     )
     (agents_dir / "bob.json").write_text(
-        json.dumps(_make_agent_json("Bob", "Werewolf")), encoding="utf-8"
+        json.dumps(make_split_agent_json("Bob", "Werewolf")), encoding="utf-8"
     )
 
     event = LogEvent.make(
@@ -163,7 +148,7 @@ def test_pager_skips_corrupt_agent_file(tmp_path: Path) -> None:
     agents_dir = archive / "agents"
     agents_dir.mkdir(parents=True)
 
-    good_data = _make_agent_json("Alice", "Villager")
+    good_data = make_split_agent_json("Alice", "Villager")
     (agents_dir / "alice.json").write_text(json.dumps(good_data), encoding="utf-8")
     (agents_dir / "bob.json").write_text("NOT_JSON", encoding="utf-8")
 
@@ -188,3 +173,29 @@ def test_pager_skips_corrupt_agent_file(tmp_path: Path) -> None:
     assert len(pager._agents) == 1
     assert pager._agents[0].name == "Alice"
     assert "bob.json" in captured.getvalue()
+
+
+def test_pager_loads_legacy_agent_json_without_profile(tmp_path: Path) -> None:
+    archive = tmp_path / "20260101_000000"
+    agents_dir = archive / "agents"
+    agents_dir.mkdir(parents=True)
+
+    (agents_dir / "alice.json").write_text(
+        json.dumps(make_legacy_agent_json("Alice", "Villager")),
+        encoding="utf-8",
+    )
+    event = LogEvent.make(
+        day=1,
+        phase="day_opening",
+        event_type=EventType.SPEECH,
+        agent="Alice",
+        content="Hello.",
+        is_public=True,
+    )
+    (archive / "public_log.jsonl").write_text(event.model_dump_json(), encoding="utf-8")
+    (archive / "spectator_log.jsonl").write_text(event.model_dump_json(), encoding="utf-8")
+
+    pager = ReplayPager(archive, spectator_mode=False)
+
+    assert len(pager._agents) == 1
+    assert pager._agents[0].name == "Alice"

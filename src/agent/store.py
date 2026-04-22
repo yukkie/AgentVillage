@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from src.config import STATE_DIR
-from src.domain.actor import Actor, ActorState, make_actor
+from src.domain.actor import Actor, actor_from_dict, actor_to_dict
 
 
 def _ensure_dir() -> None:
@@ -12,8 +12,7 @@ def _ensure_dir() -> None:
 def save(actor: Actor) -> None:
     _ensure_dir()
     path = STATE_DIR / f"{actor.name.lower()}.json"
-    data = json.loads(actor.state.model_dump_json())
-    data["role"] = actor.role.name
+    data = actor_to_dict(actor)
     path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
@@ -22,14 +21,14 @@ def load(name: str) -> Actor:
     if not path.exists():
         raise FileNotFoundError(f"Agent state file not found: {path}")
     data = json.loads(path.read_text(encoding="utf-8"))
-    return make_actor(ActorState.model_validate(data), data["role"])
+    return actor_from_dict(data)
 
 
 def load_all_from_dir(path: Path) -> list[Actor]:
     actors = []
     for p in sorted(path.glob("*.json")):
         data = json.loads(p.read_text(encoding="utf-8"))
-        actors.append(make_actor(ActorState.model_validate(data), data["role"]))
+        actors.append(actor_from_dict(data))
     return actors
 
 

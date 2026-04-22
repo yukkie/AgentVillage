@@ -13,7 +13,7 @@ from rich.text import Text
 
 import json
 
-from src.domain.actor import Actor, ActorState, make_actor
+from src.domain.actor import Actor, actor_from_dict, load_agent_catalog, make_actor
 from src.domain.event import EventType, LogEvent
 from src.logger.reader import load_events
 from src.ui.renderer import Renderer
@@ -106,11 +106,12 @@ class ReplayPager:
         if not agents_dir.exists():
             print(f"[ReplayPager] agents/ directory not found: {agents_dir}", file=sys.stderr)
             return []
+        agent_catalog = load_agent_catalog()
         actors = []
         for p in sorted(agents_dir.glob("*.json")):
             try:
                 data = json.loads(p.read_text(encoding="utf-8"))
-                actors.append(make_actor(ActorState.model_validate(data), data["role"]))
+                actors.append(actor_from_dict(data, agent_catalog))
             except Exception as e:
                 print(f"[ReplayPager] skipping corrupt agent file {p.name}: {e}", file=sys.stderr)
         return actors
@@ -126,7 +127,7 @@ class ReplayPager:
         # Reset claimed_role to None so public-mode colors reflect what was
         # publicly known at each moment, not the end-of-game state.
         dynamic_actors: dict[str, Actor] = {
-            a.name: make_actor(a.state.model_copy(), a.role.name)
+            a.name: make_actor(a.profile.model_copy(), a.state.model_copy(), a.role.name)
             for a in self._agents
         }
         for a in dynamic_actors.values():

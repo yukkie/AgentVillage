@@ -4,20 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from src.domain.actor import Actor, ActorState, Persona
+from src.domain.actor import Actor, ActorProfile, ActorState, Persona
+from src.domain.roles import get_role
 from src.agent import store
-
-
-def _make_agent_json(name: str, role: str) -> dict:
-    data = ActorState(
-        name=name,
-        persona=Persona(style="calm"),
-        beliefs={},
-        memory_summary=[],
-        is_alive=True,
-    ).model_dump()
-    data["role"] = role
-    return data
+from tests.unit.conftest import make_legacy_agent_json, make_split_agent_json
 
 
 @pytest.fixture()
@@ -25,10 +15,10 @@ def agents_dir(tmp_path: Path) -> Path:
     d = tmp_path / "agents"
     d.mkdir()
     (d / "alice.json").write_text(
-        json.dumps(_make_agent_json("Alice", "Villager")), encoding="utf-8"
+        json.dumps(make_legacy_agent_json("Alice", "Villager")), encoding="utf-8"
     )
     (d / "bob.json").write_text(
-        json.dumps(_make_agent_json("Bob", "Werewolf")), encoding="utf-8"
+        json.dumps(make_split_agent_json("Bob", "Werewolf")), encoding="utf-8"
     )
     return d
 
@@ -75,3 +65,18 @@ def test_load_all_delegates_to_load_all_from_dir(agents_dir: Path, monkeypatch) 
 
     store.load_all()
     assert called_with == [agents_dir]
+
+
+def test_save_writes_split_json(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(store, "STATE_DIR", tmp_path)
+    actor = Actor(
+        profile=ActorProfile(name="Alice", persona=Persona(style="calm")),
+        state=ActorState(beliefs={}, memory_summary=[], is_alive=True),
+        role=get_role("Villager"),
+    )
+    store.save(actor)
+
+    written = json.loads((tmp_path / "alice.json").read_text(encoding="utf-8"))
+    assert "profile" in written
+    assert "state" in written
+    assert written["role"] == "Villager"

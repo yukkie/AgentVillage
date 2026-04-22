@@ -72,7 +72,7 @@ class LLMClient:
         raw = ""
         try:
             message = self._client.messages.create(
-                model=actor.state.model,
+                model=actor.model,
                 max_tokens=2048,
                 system=system_prompt,
                 messages=[
@@ -102,7 +102,7 @@ class LLMClient:
         raw = ""
         try:
             message = self._client.messages.create(
-                model=actor.state.model,
+                model=actor.model,
                 max_tokens=1024,
                 messages=[{"role": "user", "content": prompt}],
             )
@@ -137,7 +137,7 @@ class LLMClient:
         raw = ""
         try:
             message = self._client.messages.create(
-                model=actor.state.model,
+                model=actor.model,
                 max_tokens=1024,
                 messages=[{"role": "user", "content": prompt}],
             )
@@ -212,7 +212,7 @@ class LLMClient:
         raw = ""
         try:
             message = self._client.messages.create(
-                model=actor.state.model,
+                model=actor.model,
                 max_tokens=2048,
                 messages=[{"role": "user", "content": prompt}],
             )
@@ -237,7 +237,7 @@ class LLMClient:
         raw = ""
         try:
             message = self._client.messages.create(
-                model=actor.state.model,
+                model=actor.model,
                 max_tokens=64,
                 messages=[
                     {

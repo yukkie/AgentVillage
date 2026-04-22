@@ -65,15 +65,15 @@ _SPEECH_STYLE_PROMPTS: dict[str, str] = {
 
 def build_persona_prompt(actor: Actor) -> str:
     """Generate personality prompt from actor persona."""
-    style = actor.state.persona.style
-    lie = actor.state.persona.lie_tendency
-    agg = actor.state.persona.aggression
+    style = actor.persona.style
+    lie = actor.persona.lie_tendency
+    agg = actor.persona.aggression
 
     identity_parts = [actor.name]
-    if actor.state.persona.age is not None:
-        identity_parts.append(f"age {actor.state.persona.age}")
-    if actor.state.persona.gender is not None:
-        identity_parts.append(actor.state.persona.gender)
+    if actor.persona.age is not None:
+        identity_parts.append(f"age {actor.persona.age}")
+    if actor.persona.gender is not None:
+        identity_parts.append(actor.persona.gender)
     identity = ", ".join(identity_parts)
 
     lines = [
@@ -81,11 +81,11 @@ def build_persona_prompt(actor: Actor) -> str:
         f"Your personality style: {style}.",
     ]
 
-    speech_prompt = _SPEECH_STYLE_PROMPTS.get(actor.state.persona.speech_style)
+    speech_prompt = _SPEECH_STYLE_PROMPTS.get(actor.persona.speech_style)
     if speech_prompt:
         lines.append(speech_prompt)
-    elif actor.state.persona.speech_style != "casual":
-        lines.append(f"Your speaking style: {actor.state.persona.speech_style}.")
+    elif actor.persona.speech_style != "casual":
+        lines.append(f"Your speaking style: {actor.persona.speech_style}.")
 
     if lie > 0.5:
         lines.append("You are comfortable bending the truth when it serves your survival.")
@@ -224,7 +224,7 @@ def build_pre_night_prompt(
 
     lines = [
         f"You are {actor.name}, a player in a social deduction game (Werewolf/Mafia).",
-        f"Your personality style: {actor.state.persona.style}.",
+        f"Your personality style: {actor.persona.style}.",
         "",
         f"Your secret role is: {actor.role.name}",
         f"Players in this game: {', '.join(alive_players)}",

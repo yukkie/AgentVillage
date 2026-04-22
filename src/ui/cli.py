@@ -57,5 +57,5 @@ class CLI:
         console.print("\n[bold cyan]Agent Roster:[/bold cyan]")
         for actor in self.agents:
             role_style = actor.role.color
-            console.print(f"  [{role_style}]{actor.name}[/{role_style}] — {actor.role.name} ({actor.state.persona.style})")
+            console.print(f"  [{role_style}]{actor.name}[/{role_style}] — {actor.role.name} ({actor.persona.style})")
         console.print()
