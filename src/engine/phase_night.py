@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from src.agent import memory as memory_mod, store
@@ -14,6 +15,32 @@ from src.engine.victory import check_victory
 
 if TYPE_CHECKING:
     from src.engine.game import GameEngine
+
+
+@dataclass
+class NightDeclarations:
+    attack_target: str | None
+    attack_actor: Actor | None
+    guard_target: str | None
+    knight: Actor | None
+    seer_inspect: tuple[Actor, Inspect] | None
+
+
+@dataclass
+class InspectionResolution:
+    seer: Actor
+    target_name: str
+    result: Werewolf | None
+
+
+@dataclass
+class NightResolution:
+    attack_target: str | None
+    attack_actor: Actor | None
+    guard_target: str | None
+    knight: Actor | None
+    attack_blocked: bool = False
+    inspection: InspectionResolution | None = None
 
 
 def _run_wolf_chat(engine: GameEngine) -> str | None:
@@ -74,9 +101,17 @@ def _resolve_fallback_attack(engine: GameEngine, alive_names: list[str]) -> str 
     return None
 
 
-def _declare_role_actions(
+def _declare_night_actions(
     engine: GameEngine, alive_names: list[str], night_context: str
-) -> tuple[str | None, tuple[Actor, Inspect] | None, Actor | None]:
+) -> NightDeclarations:
+    attack_target = _run_wolf_chat(engine)
+
+    if attack_target is None:
+        attack_target = _resolve_fallback_attack(engine, alive_names)
+
+    wolves = [a for a in engine._alive_agents() if isinstance(a.role, Werewolf)]
+    attack_actor = wolves[0] if attack_target and wolves else None
+
     guard_target: str | None = None
     seer_inspect: tuple[Actor, Inspect] | None = None
     knight: Actor | None = None
@@ -88,62 +123,62 @@ def _declare_role_actions(
             candidates = [n for n in alive_names if n != actor.name]
             if target_name in candidates:
                 guard_target = target_name
-                engine._emit(LogEvent.make(
-                    day=engine.day,
-                    phase=Phase.NIGHT.value,
-                    event_type=EventType.GUARD,
-                    agent=actor.name,
-                    target=guard_target,
-                    content=f"{actor.name} guards {guard_target}",
-                    is_public=False,
-                ))
         elif isinstance(actor.role, Seer):
             target_name = engine._llm_client.call_night_action(actor, night_context, alive_names)
             inspect = Inspect(target=target_name)
             if engine._validate_action(inspect, actor, alive_names):
                 seer_inspect = (actor, inspect)
 
-    return guard_target, seer_inspect, knight
+    return NightDeclarations(
+        attack_target=attack_target,
+        attack_actor=attack_actor,
+        guard_target=guard_target,
+        knight=knight,
+        seer_inspect=seer_inspect,
+    )
 
 
-def _resolve_night_attack(
-    engine: GameEngine,
-    attack_target: str,
-    guard_target: str | None,
-    knight: Actor | None,
-    seer_inspect: tuple[Actor, Inspect] | None,
-) -> bool:
-    if guard_target == attack_target:
-        engine._emit(LogEvent.make(
-            day=engine.day,
-            phase=Phase.NIGHT.value,
-            event_type=EventType.GUARD_BLOCK,
-            target=attack_target,
-            content=f"{attack_target} was protected by the Knight! The attack was blocked.",
-            is_public=False,
-        ))
-        engine._emit(LogEvent.make(
-            day=engine.day,
-            phase=Phase.NIGHT.value,
-            event_type=EventType.GUARD_BLOCK,
-            content="The village woke up to find everyone safe. The werewolves' attack seems to have failed.",
-            is_public=True,
-        ))
-        if knight:
-            memory_mod.update_memory(
-                knight,
-                [f"Day {engine.day}: successfully guarded {guard_target} from werewolf attack"],
-            )
-        return True  # seer survived
+def _resolve_declared_inspection(
+    engine: GameEngine, seer_inspect: tuple[Actor, Inspect] | None
+) -> InspectionResolution | None:
+    if seer_inspect is None:
+        return None
 
-    seer_survived = not (seer_inspect and seer_inspect[0].name == attack_target)
-    engine._eliminate(attack_target, EventType.NIGHT_ATTACK, Phase.NIGHT.value)
-    return seer_survived
-
-
-def _resolve_inspection(engine: GameEngine, seer_inspect: tuple[Actor, Inspect]) -> None:
     seer, inspect = seer_inspect
     name, result = resolve_inspect(inspect, engine.agents)
+    return InspectionResolution(seer=seer, target_name=name, result=result)
+
+
+def _resolve_night_outcomes(
+    engine: GameEngine, declarations: NightDeclarations
+) -> NightResolution:
+    resolution = NightResolution(
+        attack_target=declarations.attack_target,
+        attack_actor=declarations.attack_actor,
+        guard_target=declarations.guard_target,
+        knight=declarations.knight,
+        inspection=_resolve_declared_inspection(engine, declarations.seer_inspect),
+    )
+
+    if not declarations.attack_target:
+        return resolution
+
+    if declarations.guard_target == declarations.attack_target:
+        resolution.attack_blocked = True
+        return resolution
+
+    engine._eliminate(
+        declarations.attack_target,
+        EventType.NIGHT_ATTACK,
+        Phase.NIGHT.value,
+    )
+    return resolution
+
+
+def _publish_inspection(engine: GameEngine, inspection: InspectionResolution) -> None:
+    seer = inspection.seer
+    name = inspection.target_name
+    result = inspection.result
     if name not in seer.state.beliefs:
         seer.state.beliefs[name] = Belief()
     if isinstance(result, Werewolf):
@@ -166,6 +201,55 @@ def _resolve_inspection(engine: GameEngine, seer_inspect: tuple[Actor, Inspect])
     ))
 
 
+def _publish_night_results(engine: GameEngine, resolution: NightResolution) -> None:
+    if resolution.guard_target and resolution.knight:
+        engine._emit(LogEvent.make(
+            day=engine.day,
+            phase=Phase.NIGHT.value,
+            event_type=EventType.GUARD,
+            agent=resolution.knight.name,
+            target=resolution.guard_target,
+            content=f"{resolution.knight.name} guards {resolution.guard_target}",
+            is_public=False,
+        ))
+
+    if resolution.attack_target:
+        engine._emit(LogEvent.make(
+            day=engine.day,
+            phase=Phase.NIGHT.value,
+            event_type=EventType.NIGHT_ATTACK,
+            agent=resolution.attack_actor.name if resolution.attack_actor else None,
+            target=resolution.attack_target,
+            content=f"Werewolves attack {resolution.attack_target}",
+            is_public=False,
+        ))
+
+    if resolution.attack_blocked and resolution.attack_target:
+        engine._emit(LogEvent.make(
+            day=engine.day,
+            phase=Phase.NIGHT.value,
+            event_type=EventType.GUARD_BLOCK,
+            target=resolution.attack_target,
+            content=f"{resolution.attack_target} was protected by the Knight! The attack was blocked.",
+            is_public=False,
+        ))
+        engine._emit(LogEvent.make(
+            day=engine.day,
+            phase=Phase.NIGHT.value,
+            event_type=EventType.GUARD_BLOCK,
+            content="The village woke up to find everyone safe. The werewolves' attack seems to have failed.",
+            is_public=True,
+        ))
+        if resolution.knight and resolution.guard_target:
+            memory_mod.update_memory(
+                resolution.knight,
+                [f"Day {engine.day}: successfully guarded {resolution.guard_target} from werewolf attack"],
+            )
+
+    if resolution.inspection and resolution.inspection.seer.is_alive:
+        _publish_inspection(engine, resolution.inspection)
+
+
 def run_night_phase(engine: GameEngine) -> str | None:
     engine.phase = Phase.NIGHT
     engine._phase_start(Phase.NIGHT)
@@ -174,30 +258,8 @@ def run_night_phase(engine: GameEngine) -> str | None:
     alive_names = engine._alive_names()
     night_context = f"Day {engine.day} night. Alive: {', '.join(alive_names)}"
 
-    attack_target = _run_wolf_chat(engine)
-
-    if attack_target is None:
-        attack_target = _resolve_fallback_attack(engine, alive_names)
-
-    if attack_target:
-        wolves = [a for a in engine._alive_agents() if isinstance(a.role, Werewolf)]
-        engine._emit(LogEvent.make(
-            day=engine.day,
-            phase=Phase.NIGHT.value,
-            event_type=EventType.NIGHT_ATTACK,
-            agent=wolves[0].name if wolves else None,
-            target=attack_target,
-            content=f"Werewolves attack {attack_target}",
-            is_public=False,
-        ))
-
-    guard_target, seer_inspect, knight = _declare_role_actions(engine, alive_names, night_context)
-
-    seer_survived = True
-    if attack_target:
-        seer_survived = _resolve_night_attack(engine, attack_target, guard_target, knight, seer_inspect)
-
-    if seer_inspect and seer_survived:
-        _resolve_inspection(engine, seer_inspect)
+    declarations = _declare_night_actions(engine, alive_names, night_context)
+    resolution = _resolve_night_outcomes(engine, declarations)
+    _publish_night_results(engine, resolution)
 
     return check_victory(engine.agents)

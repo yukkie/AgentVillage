@@ -188,3 +188,92 @@ class TestDiscussionCoDecision:
 
         # Villager co intent is None → claimed_role stays None
         assert villager.state.claimed_role is None
+
+
+class TestRunNightPhaseOrder:
+    def test_declarations_finish_before_resolution(self, make_test_actor, make_test_engine):
+        seer = make_test_actor("Seer1", "Seer")
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        target = make_test_actor("Villager1")
+        engine, _ = make_test_engine([seer, wolf, target])
+        order: list[str] = []
+
+        def night_action(actor, _context, _alive_names):
+            order.append(f"declare:{actor.name}")
+            if actor.name == "Wolf1":
+                return "Seer1"
+            if actor.name == "Seer1":
+                return "Villager1"
+            raise AssertionError(f"unexpected actor {actor.name}")
+
+        engine._llm_client.call_night_action.side_effect = night_action
+
+        original_eliminate = engine._eliminate
+
+        def eliminate_and_record(*args, **kwargs):
+            order.append("resolve:attack")
+            return original_eliminate(*args, **kwargs)
+
+        with (
+            patch("src.agent.store.save"),
+            patch("src.engine.phase_night.resolve_inspect") as mock_resolve_inspect,
+            patch.object(engine, "_eliminate", side_effect=eliminate_and_record),
+        ):
+            mock_resolve_inspect.side_effect = lambda action, agents: (
+                order.append("resolve:inspect"),
+                ("Villager1", None),
+            )[1]
+            engine._run_night()
+
+        declare_indexes = [i for i, step in enumerate(order) if step.startswith("declare:")]
+        resolve_indexes = [i for i, step in enumerate(order) if step.startswith("resolve:")]
+        assert declare_indexes
+        assert resolve_indexes
+        assert max(declare_indexes) < min(resolve_indexes)
+
+    def test_inspection_is_not_published_if_seer_dies_at_night(self, make_test_actor, make_test_engine):
+        seer = make_test_actor("Seer1", "Seer")
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        target = make_test_actor("Villager1")
+        engine, events = make_test_engine([seer, wolf, target])
+
+        def night_action(actor, _context, _alive_names):
+            if actor.name == "Wolf1":
+                return "Seer1"
+            if actor.name == "Seer1":
+                return "Villager1"
+            raise AssertionError(f"unexpected actor {actor.name}")
+
+        engine._llm_client.call_night_action.side_effect = night_action
+
+        with patch("src.agent.store.save"):
+            engine._run_night()
+
+        assert seer.is_alive is False
+        assert seer.state.beliefs == {}
+        assert not any(e.event_type == EventType.INSPECTION for e in events)
+
+    def test_inspection_is_published_if_seer_survives(self, make_test_actor, make_test_engine):
+        seer = make_test_actor("Seer1", "Seer")
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        target = make_test_actor("Villager1")
+        engine, events = make_test_engine([seer, wolf, target])
+
+        def night_action(actor, _context, _alive_names):
+            if actor.name == "Wolf1":
+                return "Villager1"
+            if actor.name == "Seer1":
+                return "Wolf1"
+            raise AssertionError(f"unexpected actor {actor.name}")
+
+        engine._llm_client.call_night_action.side_effect = night_action
+
+        with patch("src.agent.store.save"):
+            engine._run_night()
+
+        assert seer.is_alive is True
+        assert seer.state.beliefs["Wolf1"].suspicion == 1.0
+        assert any(
+            e.event_type == EventType.INSPECTION and e.agent == "Seer1" and e.target == "Wolf1"
+            for e in events
+        )
