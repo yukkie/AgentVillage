@@ -34,7 +34,7 @@ class ActorState(BaseModel):
     memory_summary: list[str] = []
     is_alive: bool = True
     claimed_role: RoleField = None  # publicly claimed role via CO; None until CO
-    intended_co: bool = False  # set True by pre-night phase if agent decided to CO on Day 1
+    intended_co: RoleField = None  # role to claim in the next speech; None when not planning a CO
 
 
 @dataclass
@@ -116,7 +116,7 @@ def actor_from_dict(data: dict, agent_catalog: dict[str, ActorProfile] | None = 
         "memory_summary": data.get("memory_summary", []),
         "is_alive": data.get("is_alive", True),
         "claimed_role": data.get("claimed_role"),
-        "intended_co": data.get("intended_co", False),
+        "intended_co": data.get("intended_co"),
     }
     return make_actor(
         ActorProfile.model_validate(profile_data),

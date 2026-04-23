@@ -124,7 +124,7 @@ def get_role(role: str) -> Role:
     "memory_summary": ["Day1: SQはジナを擁護"],
     "is_alive": true,
     "claimed_role": null,
-    "intended_co": false
+    "intended_co": null
   },
   "role": "Villager",
 }
@@ -162,7 +162,7 @@ class PublicContext:
 class SpeechDirection:
     lang: str = "English"
     reply_to_entry: SpeechEntry | None = None   # challenge 対象
-    intended_co: bool = False
+    intended_co: Role | None = None
 
 @dataclass
 class RoleSpecificContext:

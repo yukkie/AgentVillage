@@ -35,7 +35,7 @@ def _run_discussion(engine: GameEngine) -> None:
         snapshot = list(engine.today_log)
 
         spoke_anyone = False
-        for actor, judgment, output, reply_to_entry, force_co in engine._llm_client.call_discussion_parallel(
+        for actor, judgment, output, reply_to_entry in engine._llm_client.call_discussion_parallel(
             alive,
             snapshot,
             engine._alive_names(),
@@ -55,7 +55,7 @@ def _run_discussion(engine: GameEngine) -> None:
             else:
                 spoke_anyone = True
                 engine._apply_speech_output(
-                    actor, output, Phase.DAY_DISCUSSION, reply_to_entry, force_co
+                    actor, output, Phase.DAY_DISCUSSION, reply_to_entry
                 )
 
         if not spoke_anyone:

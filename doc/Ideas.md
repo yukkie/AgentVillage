@@ -13,7 +13,7 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#119 | tech-debt | 🟡 | 3 | Unify co-intent flags: rename force_co and type intended_co as Role \| None | force_coとintended_coの二重フラグを統合。Step1:force_co削除、Step2:bool→Role\|None型変更（2段階） |
+| yukkie/AgentVillage#172 | tech-debt | 🟡 | - | Allow explicit fake CO role selection in prompts and schemas | 偽CO先の役職を pre-night / discussion の構造化出力で明示指定できるようにする。intended_co: Role \| None へ渡し、暗黙の既定値依存を減らす |
 | yukkie/AgentVillage#170 | tech-debt | 🟡 | - | Refactor night action declarations into dataclasses | 夜アクションの宣言を dataclass に構造化。GuardDeclaration に attack_blocked を持たせ、ログ責務と副作用責務の境界を保つ |
 | yukkie/AgentVillage#33 | enhancement | 🟢 | 5 | Wolf chat improvements | 早期終了・偽CO協議・テスト |
 | yukkie/AgentVillage#36 | enhancement | 🟢 | 5 | Belief updates from agent reasoning | suspicion/trust を推理結果から更新 |

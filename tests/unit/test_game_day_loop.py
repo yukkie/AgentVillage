@@ -49,7 +49,7 @@ class TestGameEngineLlmInjection:
 
 def _silent_discussion(actors, *_, **__):
     """call_discussion_parallel stub: all actors silent."""
-    return iter([(a, JudgmentOutput(decision="silent"), None, None, False) for a in actors])
+    return iter([(a, JudgmentOutput(decision="silent"), None, None) for a in actors])
 
 
 class TestRunDayPhaseOrder:
@@ -99,8 +99,8 @@ class TestRunDayPhaseOrder:
             # find speech_id=1 entry from today_log
             reply_to_entry = next((e for e in today_log if e.speech_id == 1), None)
             return iter([
-                (make_test_actor("A"), JudgmentOutput(decision="silent"), None, None, False),
-                (make_test_actor("B"), challenge, _make_output("B"), reply_to_entry, False),
+                (make_test_actor("A"), JudgmentOutput(decision="silent"), None, None),
+                (make_test_actor("B"), challenge, _make_output("B"), reply_to_entry),
             ])
 
         engine._llm_client.call_discussion_parallel.side_effect = discussion_with_challenge
@@ -145,7 +145,7 @@ class TestDiscussionCoDecision:
         )
         engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
-            (seer, JudgmentOutput(decision="co"), co_output, None, True),
+            (seer, JudgmentOutput(decision="co"), co_output, None),
         ])
 
         with patch("src.agent.store.save"):
@@ -161,9 +161,8 @@ class TestDiscussionCoDecision:
 
         normal_output = _make_output("Seer1", "Just speaking.")
         engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
-        # force_co=False because already claimed
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
-            (seer, JudgmentOutput(decision="co"), normal_output, None, False),
+            (seer, JudgmentOutput(decision="co"), normal_output, None),
         ])
 
         with patch("src.agent.store.save"):
@@ -173,14 +172,14 @@ class TestDiscussionCoDecision:
         assert seer.state.claimed_role is not None  # still the old value, not set again
 
     def test_villager_co_treated_as_speak(self, make_test_actor, make_test_engine):
-        """Villager cannot CO — co judgment falls back to speak (force_co=False)."""
+        """Villager cannot CO — co judgment falls back to speak."""
         villager = make_test_actor("V1", "Villager")
         engine, _ = make_test_engine([villager])
 
         normal_output = _make_output("V1", "Just talking.")
         engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
-            (villager, JudgmentOutput(decision="co"), normal_output, None, False),
+            (villager, JudgmentOutput(decision="co"), normal_output, None),
         ])
 
         with patch("src.agent.store.save"):
@@ -188,6 +187,21 @@ class TestDiscussionCoDecision:
 
         # Villager co intent is None → claimed_role stays None
         assert villager.state.claimed_role is None
+
+    def test_failed_discussion_co_clears_intended_co(self, make_test_actor, make_test_engine):
+        seer = make_test_actor("Seer1", "Seer")
+        engine, _ = make_test_engine([seer])
+        normal_output = _make_output("Seer1", "I have something to say.")
+
+        engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
+        engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
+            (seer, JudgmentOutput(decision="co"), normal_output, None),
+        ])
+
+        with patch("src.agent.store.save"):
+            engine._run_day()
+
+        assert seer.state.intended_co is None
 
 
 class TestRunNightPhaseOrder:

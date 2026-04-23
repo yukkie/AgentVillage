@@ -22,10 +22,10 @@ def run_pre_night_phase(engine: GameEngine) -> None:
     for actor, output in engine._llm_client.call_pre_night_parallel(
         targets, engine._alive_names(), engine.lang, engine.agents
     ):
-        actor.state.intended_co = output.decision == "co"
+        actor.state.intended_co = actor.role if output.decision == "co" else None
         memory_mod.update_memory(actor, [f"Pre-game decision: {output.reasoning}"])
 
-        decision_label = "decided to CO" if actor.state.intended_co else "decided to wait"
+        decision_label = "decided to CO" if actor.state.intended_co is not None else "decided to wait"
         engine._emit(LogEvent.make(
             day=engine.day,
             phase=Phase.PRE_NIGHT.value,

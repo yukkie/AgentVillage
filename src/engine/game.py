@@ -151,29 +151,30 @@ class GameEngine:
         output: AgentOutput,
         phase: Phase,
         reply_to_entry: SpeechEntry | None = None,
-        force_co: bool = False,
     ) -> SpeechEntry:
         """Post-process a speech output: emit events, update memory, append to today_log."""
         self._day_outputs[actor.name] = output
 
-        # If the actor intended to CO but did not declare in speech, log silently and clear the flag.
-        if actor.state.intended_co and phase == Phase.DAY_OPENING and not output.intent.co:
-            actor.state.intended_co = False
+        # If the actor intended to CO but did not declare in speech, clear the flag.
+        if actor.state.intended_co is not None and not output.intent.co:
+            missed_co_role = actor.state.intended_co
+            actor.state.intended_co = None
             store.save(actor)
-            self._emit(LogEvent.make(
-                day=self.day,
-                phase=phase.value,
-                event_type=EventType.PRE_NIGHT_DECISION,
-                agent=actor.name,
-                content=f"{actor.name} decided to CO but did not declare in speech",
-                is_public=False,
-            ))
+            if phase == Phase.DAY_OPENING:
+                self._emit(LogEvent.make(
+                    day=self.day,
+                    phase=phase.value,
+                    event_type=EventType.PRE_NIGHT_DECISION,
+                    agent=actor.name,
+                    content=f"{actor.name} decided to CO as {missed_co_role.name} but did not declare in speech",
+                    is_public=False,
+                ))
 
         # Update claimed_role BEFORE emitting the speech so the CO speech itself
         # is rendered with the correct role color.
         if output.intent.co and actor.state.claimed_role != output.intent.co:
             actor.state.claimed_role = output.intent.co
-            actor.state.intended_co = False  # clear once CO is made
+            actor.state.intended_co = None  # clear once CO is made
             store.save(actor)
             self._emit(LogEvent.make(
                 day=self.day,
@@ -218,7 +219,6 @@ class GameEngine:
         self,
         actor: Actor,
         reply_to_entry: SpeechEntry | None = None,
-        force_co: bool = False,
         today_log_snapshot: list[SpeechEntry] | None = None,
     ) -> tuple:
         ctx = PublicContext(
@@ -233,7 +233,7 @@ class GameEngine:
         direction = SpeechDirection(
             lang=self.lang,
             reply_to_entry=reply_to_entry,
-            intended_co=actor.state.intended_co or force_co,
+            intended_co=actor.state.intended_co,
         )
         # TODO(#36): Add SeerSpecificContext / KnightSpecificContext / MediumSpecificContext
         role_ctx = (

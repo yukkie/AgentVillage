@@ -55,7 +55,7 @@ class TestBuildSystemPromptIntendedCo:
     def test_seer_intended_co_adds_true_co_instruction(self, make_test_actor):
         agent = make_test_actor("Gina", "Seer")
         ctx = PublicContext(today_log=[], alive_players=["Gina", "SQ"], dead_players=[], day=1)
-        prompt = build_system_prompt(agent, ctx, SpeechDirection(intended_co=True))
+        prompt = build_system_prompt(agent, ctx, SpeechDirection(intended_co=agent.role))
         assert "CO DECISION" in prompt
         assert "Seer" in prompt
         assert "intent.co" in prompt
@@ -66,7 +66,7 @@ class TestBuildSystemPromptIntendedCo:
         agent = make_test_actor("SQ", "Werewolf")
         ctx = PublicContext(today_log=[], alive_players=["Gina", "SQ"], dead_players=[], day=1)
         role_ctx = WolfSpecificContext(wolf_partners=[])
-        prompt = build_system_prompt(agent, ctx, SpeechDirection(intended_co=True), role_ctx)
+        prompt = build_system_prompt(agent, ctx, SpeechDirection(intended_co=agent.role), role_ctx)
         assert "CO DECISION" in prompt
         assert "Seer" in prompt  # instructs to claim Seer
         assert "intent.co" in prompt
@@ -113,7 +113,7 @@ class TestRunPreNight:
             engine._run_pre_night()
 
         seer = next(a for a in agents if a.name == "Gina")
-        assert seer.state.intended_co is True
+        assert seer.state.intended_co == seer.role
 
     def test_wait_decision_sets_intended_co_false(self, make_test_actor, make_test_engine):
         agents = [make_test_actor("Gina", "Seer"), make_test_actor("SQ", "Villager")]
@@ -126,7 +126,7 @@ class TestRunPreNight:
             engine._run_pre_night()
 
         seer = next(a for a in agents if a.name == "Gina")
-        assert seer.state.intended_co is False
+        assert seer.state.intended_co is None
 
     def test_decision_events_are_spectator_only(self, make_test_actor, make_test_engine):
         agents = [make_test_actor("Gina", "Seer"), make_test_actor("SQ", "Villager")]

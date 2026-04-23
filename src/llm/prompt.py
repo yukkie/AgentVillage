@@ -4,6 +4,7 @@ from typing import Literal, TypedDict
 
 from src.domain.actor import Actor
 from src.domain.roles import Role, Werewolf
+from src.domain.schema import RoleField
 from src.domain.schema import SpeechEntry
 
 
@@ -33,7 +34,7 @@ class PublicContext:
 class SpeechDirection:
     lang: str = "English"
     reply_to_entry: SpeechEntry | None = None
-    intended_co: bool = False
+    intended_co: RoleField = None
 
 
 @dataclass
@@ -200,7 +201,7 @@ def build_system_prompt(
             f"Respond directly to this statement in your speech."
         )
     if direction.intended_co:
-        co_text = actor.role.co_prompt()
+        co_text = direction.intended_co.co_prompt()
         if co_text:
             parts.append(co_text)
     parts.append(actor.role.output_format_prompt(direction.lang))

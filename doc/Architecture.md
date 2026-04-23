@@ -99,7 +99,7 @@ LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検
 
 これらは `build_persona_prompt()` でシステムプロンプトの一部に変換される。
 
-#### claimed_role（公開役職）と intended_co（前夜CO意思）
+#### claimed_role（公開役職）と intended_co（次発言のCO予定役職）
 
 `ActorState` に以下のフィールドを持つ。
 
@@ -109,7 +109,7 @@ LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検
 | `memory_summary` | 今回のゲームで蓄積された中期記憶 |
 | `is_alive` | 生存フラグ |
 | `claimed_role` | エージェントが公言した役職（CO済みなら設定。未COはNull） |
-| `intended_co` | 前夜ターンで「初日COする」と決めた場合 `True`（Day 1 OPENINGプロンプトに反映後は参照不要） |
+| `intended_co` | 次の発言でCOする予定の役職。未予定なら `None`。前夜COでは真役職、議論中COでも同じフィールドを使う |
 
 静的な `name`, `model`, `persona` は `ActorProfile` に分離される。真の役職は保存JSON上では `role` 文字列、ランタイムでは `Actor.role`（`Role` instance）として扱う。
 
@@ -119,17 +119,17 @@ LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検
 
 CO が成立する経路は現状2つある:
 
-1. **前夜CO（Day 1 OPENING）**: `intended_co=True` のエージェントが Day 1 OPENING で公言（§16.1）
+1. **前夜CO（Day 1 OPENING）**: `intended_co` に役職が設定されたエージェントが Day 1 OPENING で公言（§16.1）
 2. **議論中CO（DISCUSSION・全Day）**: 判断フェーズで `decision="co"` を選んだ適格エージェントがその場で公言（§16.2）
    - 適格条件: `claimed_role is None` かつ `role != "Villager"`
-   - 発言生成プロンプトは前夜CO経路と同じ「CO指示ブロック」を再利用する（`build_system_prompt` の `intended_co=True` 分岐）
-   - エンジンは `_build_speech_args(..., force_co=True)` で一時的に CO 指示を有効化する。`AgentState.intended_co` 自体は変更しない
+   - 発言生成プロンプトは前夜CO経路と同じ「CO指示ブロック」を再利用する（`build_system_prompt` の `intended_co is not None` 分岐）
+   - エンジンは判断結果を `AgentState.intended_co` に直接書き込み、発言後に clear する
 
 なお Day 2+ OPENING には現状構造化された CO 判断ステップがなく、LLM が通常発言中に自発的に `intent.co` を返したケースのみ受動的に成立する。Day 2+ にも前夜判断相当のフェーズを設ける拡張案は Ideas.md §16.2a を参照。
 
 #### COフォールバックと狂人の扱い
 
-Day 1 OPENINGで `intended_co=True` なのにLLMがCOを出力しなかった場合のセーフティネット：
+Day 1 OPENINGで `intended_co` が設定されているのにLLMがCOを出力しなかった場合のセーフティネット：
 
 | 役職 | フォールバック内容 |
 |---|---|
@@ -156,7 +156,7 @@ Day 1 OPENINGで `intended_co=True` なのにLLMがCOを出力しなかった場
 | `call_night_action()` | 夜行動 | 夜フェーズ専用 | `str`（ターゲット名） |
 | `call_pre_night_action()` | 前夜判断・単体呼び出し | 役職・性格・参加者情報 | `PreNightOutput` |
 | `call_pre_night_parallel()` | 前夜判断・並列呼び出し（`call_speech_parallel` と同パターン） | 同上 | `Iterator[tuple[Actor, PreNightOutput]]` |
-| `call_discussion_parallel()` | 昼DISCUSSION 判断→発言チェーンの並列実行 | — | `Iterator[tuple[Actor, JudgmentOutput, AgentOutput \| None, SpeechEntry \| None, bool]]` |
+| `call_discussion_parallel()` | 昼DISCUSSION 判断→発言チェーンの並列実行 | — | `Iterator[tuple[Actor, JudgmentOutput, AgentOutput \| None, SpeechEntry \| None]]` |
 
 #### 並列実行
 
