@@ -172,27 +172,27 @@ class LLMClient:
         day: int,
         lang: str,
         build_speech_args: Callable[
-            [Actor, SpeechEntry | None, bool, list[SpeechEntry]],
+            [Actor, SpeechEntry | None, list[SpeechEntry]],
             tuple[PublicContext, SpeechDirection, RoleSpecificContext | None],
         ],
-    ) -> Iterator[tuple[Actor, JudgmentOutput, AgentOutput | None, SpeechEntry | None, bool]]:
+    ) -> Iterator[tuple[Actor, JudgmentOutput, AgentOutput | None, SpeechEntry | None]]:
         """Run judgment→speech chain for all actors in parallel; yield results in completion order."""
 
-        def _chain(actor: Actor) -> tuple[Actor, JudgmentOutput, AgentOutput | None, SpeechEntry | None, bool]:
+        def _chain(actor: Actor) -> tuple[Actor, JudgmentOutput, AgentOutput | None, SpeechEntry | None]:
             judgment = self.call_judgment(actor, today_log_snapshot, alive_names, day, lang)
             if judgment.decision == "silent":
-                return actor, judgment, None, None, False
+                return actor, judgment, None, None
             is_co_eligible = actor.state.claimed_role is None and actor.role.can_co
-            force_co = judgment.decision == "co" and is_co_eligible
+            actor.state.intended_co = actor.role if judgment.decision == "co" and is_co_eligible else None
             reply_to_entry: SpeechEntry | None = None
             if judgment.decision == "challenge" and judgment.reply_to is not None:
                 reply_to_entry = next(
                     (e for e in today_log_snapshot if e.speech_id == judgment.reply_to),
                     None,
                 )
-            ctx, direction, role_ctx = build_speech_args(actor, reply_to_entry, force_co, today_log_snapshot)
+            ctx, direction, role_ctx = build_speech_args(actor, reply_to_entry, today_log_snapshot)
             output = self.call(actor, ctx, direction, role_ctx)
-            return actor, judgment, output, reply_to_entry, force_co
+            return actor, judgment, output, reply_to_entry
 
         with ThreadPoolExecutor() as executor:
             futures = {executor.submit(_chain, actor): actor for actor in actors}
