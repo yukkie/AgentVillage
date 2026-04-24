@@ -5,8 +5,35 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import anthropic
 
 from src.domain.actor import Actor
+from src.domain.roles import Role
 from src.domain.schema import AgentOutput, Intent, JudgmentOutput, PreNightOutput, SpeechEntry, WolfChatOutput
 from src.llm.prompt import PublicContext, RoleSpecificContext, SpeechDirection, build_judgment_prompt, build_night_action_prompt, build_pre_night_prompt, build_system_prompt, build_wolf_chat_prompt
+
+
+def resolve_claim_role(actor: Actor, claim_role: Role | None) -> Role | None:
+    if actor.role.can_co and claim_role is not None:
+        return claim_role
+
+    # Fallback path: the model chose CO but omitted the specific claimed role.
+    if actor.role.can_co:
+        fallback_role = actor.role.default_claim_role
+        _log_warning(
+            "resolve_claim_role",
+            actor.name,
+            f"claim_role missing; falling back to default_claim_role={fallback_role.name} for role {actor.role.name}",
+        )
+        return fallback_role
+
+    # Unexpected path: a non-CO role returned a claim role anyway.
+    if claim_role is not None:
+        _log_warning(
+            "resolve_claim_role",
+            actor.name,
+            f"received unexpected claim_role={claim_role.name} for non-CO role {actor.role.name}; ignoring",
+        )
+        return None
+
+    return None
 
 
 def _default_output(actor: Actor) -> AgentOutput:
@@ -24,6 +51,10 @@ def _log_error(fn: str, agent_name: str, stage: str, e: Exception, raw: str) -> 
     print(f"[{fn}] {stage} error for {agent_name}: {e!r}", file=sys.stderr)
     if raw:
         print(f"[{fn}] raw response: {raw!r}", file=sys.stderr)
+
+
+def _log_warning(fn: str, agent_name: str, message: str) -> None:
+    print(f"[{fn}] warning for {agent_name}: {message}", file=sys.stderr)
 
 
 def _extract_json(text: str) -> str:
@@ -145,7 +176,7 @@ class LLMClient:
             return PreNightOutput.model_validate_json(_extract_json(raw))
         except Exception as e:
             _log_error("call_pre_night_action", actor.name, "error", e, raw)
-            return PreNightOutput(thought="...", decision="wait", reasoning="Defaulting to wait.")
+            return PreNightOutput(thought="...", decision="wait", claim_role=None, reasoning="Defaulting to wait.")
 
     def call_pre_night_parallel(
         self,
@@ -183,7 +214,11 @@ class LLMClient:
             if judgment.decision == "silent":
                 return actor, judgment, None, None
             is_co_eligible = actor.state.claimed_role is None and actor.role.can_co
-            actor.state.intended_co = actor.role if judgment.decision == "co" and is_co_eligible else None
+            actor.state.intended_co = (
+                resolve_claim_role(actor, judgment.claim_role)
+                if judgment.decision == "co" and is_co_eligible
+                else None
+            )
             reply_to_entry: SpeechEntry | None = None
             if judgment.decision == "challenge" and judgment.reply_to is not None:
                 reply_to_entry = next(

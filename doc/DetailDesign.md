@@ -64,6 +64,8 @@ class Role(ABC):
     def faction(self) -> str: ...        # "village" | "werewolf"
     @property
     def night_action(self) -> str | None: ...  # "attack" | "inspect" | "guard" | None
+    @property
+    def default_claim_role(self) -> Role: ...  # claim_role 未指定時の既定CO先
 
     def role_prompt(self, wolf_partners: list[str] | None = None) -> str: ...
     def co_prompt(self) -> str: ...
@@ -188,15 +190,44 @@ class AgentOutput(BaseModel):
     memory_update: list[str]
 ```
 
+### JudgmentOutput / PreNightOutput スキーマ
+
+```python
+class PreNightOutput(BaseModel):
+    thought: str
+    decision: Literal["co", "wait"]
+    claim_role: Role | None = None
+    reasoning: str
+
+class JudgmentOutput(BaseModel):
+    decision: Literal["challenge", "speak", "silent", "co"]
+    reply_to: int | None = None
+    claim_role: Role | None = None
+```
+
+- `claim_role` は `decision="co"` のときに名乗る予定の役職
+- 未指定時は `resolve_claim_role()` が `default_claim_role` を使って補完する
+- `can_co=False` の役職に `claim_role` が入った場合は想定外経路として警告ログを出し、無視する
+
 ### LLM呼び出し関数と max_tokens 設定
 
 | 関数 | 用途 | max_tokens | 理由 |
 |---|---|---|---|
 | `call()` | 昼フェーズの発言生成（OPENING / DISCUSSION） | 2048 | thought が日本語で長くなりやすい |
-| `call_judgment()` | 昼フェーズの並列判断（challenge / speak / silent / co） | 1024 | JSON 2フィールドのみだが日本語思考が付随することがある。`co_eligible=True` のときのみ `"co"` を選択肢に含める |
+| `call_judgment()` | 昼フェーズの並列判断（challenge / speak / silent / co） | 1024 | `decision`, `reply_to`, `claim_role` の軽量JSON。`co_eligible=True` のときのみ `"co"` を選択肢に含める |
 | `call_wolf_chat()` | 夜フェーズの狼チーム会話 | 2048 | thought + speech + vote_candidates。日本語で長くなりやすい |
-| `call_pre_night_action()` | 前夜フェーズの CO 判断（占い師・人狼） | 1024 | thought + decision + reasoning の3フィールド |
+| `call_pre_night_action()` | 前夜フェーズの CO 判断（村人以外） | 1024 | thought + decision + claim_role + reasoning の4フィールド |
 | `call_night_action()` | 夜フェーズの個別行動（襲撃・占い・護衛） | 64 | プレイヤー名1つだけ返す |
+
+### claim_role 解決フロー
+
+`client.py` には `resolve_claim_role(actor, claim_role)` を置く。
+
+- 正常系: `claim_role` が指定されていて、役職が `can_co=True` ならそのまま採用
+- フォールバック系: `claim_role` が未指定なら `actor.role.default_claim_role` を使って補完し、警告ログを出す
+- 想定外系: `can_co=False` の役職に `claim_role` が来た場合は警告ログを出し、`None` を返す
+
+前夜フェーズと議論フェーズの両方で、この関数を通して `ActorState.intended_co` を設定する。
 
 ---
 

@@ -6,6 +6,7 @@ from src.agent import memory as memory_mod
 from src.domain.event import EventType, LogEvent
 from src.domain.roles import Villager
 from src.engine.phase import Phase
+from src.llm.client import resolve_claim_role
 
 if TYPE_CHECKING:
     from src.engine.game import GameEngine
@@ -22,7 +23,9 @@ def run_pre_night_phase(engine: GameEngine) -> None:
     for actor, output in engine._llm_client.call_pre_night_parallel(
         targets, engine._alive_names(), engine.lang, engine.agents
     ):
-        actor.state.intended_co = actor.role if output.decision == "co" else None
+        actor.state.intended_co = (
+            resolve_claim_role(actor, output.claim_role) if output.decision == "co" else None
+        )
         memory_mod.update_memory(actor, [f"Pre-game decision: {output.reasoning}"])
 
         decision_label = "decided to CO" if actor.state.intended_co is not None else "decided to wait"

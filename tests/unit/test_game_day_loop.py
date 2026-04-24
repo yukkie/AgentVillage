@@ -203,6 +203,26 @@ class TestDiscussionCoDecision:
 
         assert seer.state.intended_co is None
 
+    def test_discussion_fake_co_uses_selected_claim_role(self, make_test_actor, make_test_engine):
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        engine, _ = make_test_engine([wolf])
+        co_output = AgentOutput(
+            thought="I'll fake medium.",
+            speech="I am the Medium.",
+            reasoning="r",
+            intent=Intent(vote_candidates=[], co="Medium"),
+            memory_update=[],
+        )
+        engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
+        engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
+            (wolf, JudgmentOutput(decision="co", claim_role="Medium"), co_output, None),
+        ])
+
+        with patch("src.agent.store.save"):
+            engine._run_day()
+
+        assert wolf.state.claimed_role.name == "Medium"
+
 
 class TestRunNightPhaseOrder:
     def test_declarations_finish_before_resolution(self, make_test_actor, make_test_engine):

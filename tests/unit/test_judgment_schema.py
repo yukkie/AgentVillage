@@ -31,15 +31,20 @@ class TestJudgmentOutput:
         assert j.decision == "silent"
 
     def test_co_decision(self):
-        j = JudgmentOutput(decision="co")
+        j = JudgmentOutput(decision="co", claim_role="Medium")
         assert j.decision == "co"
         assert j.reply_to is None
+        assert j.claim_role.name == "Medium"
 
     def test_invalid_decision_raises(self):
         with pytest.raises(ValidationError):
             JudgmentOutput(decision="attack")
 
     def test_parse_from_dict(self):
-        j = JudgmentOutput.model_validate({"decision": "challenge", "reply_to": 2})
+        j = JudgmentOutput.model_validate({"decision": "challenge", "reply_to": 2, "claim_role": None})
         assert j.decision == "challenge"
         assert j.reply_to == 2
+
+    def test_claim_role_defaults_to_none(self):
+        j = JudgmentOutput(decision="speak")
+        assert j.claim_role is None
