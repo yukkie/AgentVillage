@@ -27,7 +27,7 @@ class AttackDeclaration:
 class GuardDeclaration:
     actor: Actor
     target: str
-    attack_blocked: bool = False
+    succeeded: bool = False
 
 
 @dataclass
@@ -171,7 +171,7 @@ def _resolve_night_outcomes(
         return resolution
 
     if declarations.guard is not None and declarations.guard.target == declarations.attack.target:
-        declarations.guard.attack_blocked = True
+        declarations.guard.succeeded = True
         return resolution
 
     engine._eliminate(
@@ -233,7 +233,7 @@ def _publish_night_results(engine: GameEngine, resolution: NightResolution) -> N
 
     if (
         resolution.guard is not None
-        and resolution.guard.attack_blocked
+        and resolution.guard.succeeded
         and resolution.attack is not None
     ):
         engine._emit(LogEvent.make(
