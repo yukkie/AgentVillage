@@ -13,7 +13,7 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#172 | tech-debt | 🟡 | - | Allow explicit fake CO role selection in prompts and schemas | 偽CO先の役職を pre-night / discussion の構造化出力で明示指定できるようにする。intended_co: Role \| None へ渡し、暗黙の既定値依存を減らす |
+| yukkie/AgentVillage#176 | bug | - | - | Fix replay log role rendering regression | INSPECT などのログで role object の repr が出るデグレを修正し、過去ログ互換を保ったまま人間向けの役職名を表示する |
 | yukkie/AgentVillage#33 | enhancement | 🟢 | 5 | Wolf chat improvements | 早期終了・偽CO協議・テスト |
 | yukkie/AgentVillage#36 | enhancement | 🟢 | 5 | Belief updates from agent reasoning | suspicion/trust を推理結果から更新 |
 | yukkie/AgentVillage#47 | enhancement | 🟢 | 3 | Reasoning field for Vote/Guard/Divination/Judgment | 各アクションに reasoning を追加し spectator ログ・memory_update に記録 |
