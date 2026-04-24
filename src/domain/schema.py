@@ -30,6 +30,7 @@ RoleField = Annotated[
 class PreNightOutput(BaseModel):
     thought: str
     decision: Literal["co", "wait"]
+    claim_role: RoleField = None
     reasoning: str
 
 
@@ -42,6 +43,7 @@ class SpeechEntry(BaseModel):
 class JudgmentOutput(BaseModel):
     decision: Literal["challenge", "speak", "silent", "co"]
     reply_to: int | None = None
+    claim_role: RoleField = None
 
 
 class VoteCandidate(BaseModel):

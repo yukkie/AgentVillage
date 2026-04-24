@@ -18,6 +18,12 @@ class Werewolf(Role):
     def night_action(self) -> str | None:
         return "attack"
 
+    @property
+    def default_claim_role(self) -> Role:
+        from src.domain.roles import get_role
+
+        return get_role("Seer")
+
     def role_prompt(self, wolf_partners: list[str] | None = None) -> str:
         assert wolf_partners is not None, (
             "wolf_partners must not be None for Werewolf (use [] if last surviving)"
@@ -36,16 +42,18 @@ class Werewolf(Role):
     def co_prompt(self) -> str:
         return (
             "\n--- YOUR CO DECISION ---\n"
-            "You have decided to publicly claim to be the Seer to confuse the village. "
-            "Your speech MUST explicitly state that you are the Seer (e.g. 'I am the Seer'). "
-            'Set "intent.co" to "Seer" in your JSON output.'
+            "You have decided to publicly claim a village-side role to confuse the village. "
+            "Choose a believable claim based on the current role distribution and discussion flow. "
+            "A fake Seer claim is the default fallback, but you may choose another role if it fits the board better. "
+            "Your speech MUST explicitly state your chosen role (e.g. 'I am the Seer'). "
+            'Set "intent.co" to your chosen claimed role in your JSON output.'
         )
 
     def pre_night_prompt(self) -> str:
         return (
-            "Will you publicly claim to be the Seer in your Day 1 opening speech "
-            "to confuse the village and neutralize the real Seer?\n"
-            '- "co": you will claim to be the Seer in your opening speech\n'
+            "Will you publicly claim a village-side role in your Day 1 opening speech "
+            "to confuse the village and pressure the real claimant? Use the role distribution to judge what fake CO is most believable.\n"
+            '- "co": you will claim a role such as Seer or Medium in your opening speech\n'
             '- "wait": you will stay silent about your role for now'
         )
 
@@ -63,7 +71,7 @@ class Werewolf(Role):
 
     def co_strategy_hint(self) -> str:
         return (
-            '  "co" strategy hint: If no real Seer or Medium has claimed yet, a fake '
-            "solo CO (as Seer) lets you steal a key village role. When multiple COs are "
-            "already in play and the village is confused, a fake CO deepens the chaos."
+            '  "co" strategy hint: If no real Seer or Medium has claimed yet, stealing a key '
+            "village role with a fake CO can shape the board early. Fake Seer is the most common "
+            "default, but adapt your claimed role to the current role distribution and existing claims."
         )

@@ -217,9 +217,9 @@ def build_pre_night_prompt(
     """Build prompt for pre-night decision phase (non-Villager roles only).
 
     Seer decides whether to reveal their role on Day 1.
-    Werewolf decides whether to falsely claim to be the Seer.
-    Madman decides whether to falsely claim to be a Villager-side role.
-    All choices are encoded as "co" | "wait".
+    Werewolf decides whether to fake-CO a village-side role.
+    Madman decides whether to fake-CO a village-side role.
+    All choices are encoded as "co" | "wait", with an optional claim_role.
     """
     decision_desc = actor.role.pre_night_prompt()
 
@@ -246,10 +246,13 @@ def build_pre_night_prompt(
         "{",
         '  "thought": "<your internal reasoning>",',
         '  "decision": "co" | "wait",',
+        '  "claim_role": "<role_name or null>",',
         '  "reasoning": "<brief explanation of your choice>"',
         "}",
         f'- "thought" and "reasoning" must be written in {lang}',
         '- "decision" must be exactly "co" or "wait" (always English, no other value)',
+        '- If "decision" is "co", set "claim_role" to the role you plan to publicly claim; otherwise use null',
+        f'- Use the actual role names from this game setup (for example: {", ".join(sorted(role_counts))})' if all_agents else '- Use an exact role name from the role distribution when setting "claim_role"',
     ]
     return "\n".join(lines)
 
@@ -285,15 +288,21 @@ def build_judgment_prompt(
 Decide your next action. Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
 {{
   "decision": {decision_options},
-  "reply_to": <speech_id to challenge, or null>
+  "reply_to": <speech_id to challenge, or null>,
+  "claim_role": <role_name to claim, or null>
 }}
 - "challenge": directly counter a specific speech (set reply_to to its speech_id)
 - "speak": add a new statement unprompted
 - "silent": nothing to add right now""")
     if co_eligible:
         co_hint = actor.role.co_strategy_hint()
-        lines.append(f'- "co": publicly declare your role (Coming-Out) in your next speech\n{co_hint}')
-    lines.append(f"""- The JSON must contain exactly these two fields and nothing else.
+        lines.append(
+            '- "co": publicly declare a role (Coming-Out) in your next speech and set "claim_role" to that role\n'
+            f"{co_hint}"
+        )
+    else:
+        lines.append('- Set "claim_role" to null')
+    lines.append(f"""- The JSON must contain exactly these three fields and nothing else.
 Use {lang} only for internal reasoning if needed, but keep the JSON minimal.""")
     return "\n".join(lines)
 

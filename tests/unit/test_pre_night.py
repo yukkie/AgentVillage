@@ -7,6 +7,7 @@
 from unittest.mock import patch
 
 from src.engine.phase import Phase
+from src.domain.roles import get_role
 from src.llm.prompt import PublicContext, SpeechDirection, WolfSpecificContext, build_pre_night_prompt, build_system_prompt
 from src.domain.schema import PreNightOutput
 from src.domain.event import EventType
@@ -28,7 +29,8 @@ class TestBuildPreNightPrompt:
     def test_werewolf_prompt_contains_fake_co_description(self, make_test_actor):
         agent = make_test_actor("SQ", "Werewolf")
         prompt = build_pre_night_prompt(agent, ["Gina", "SQ", "Raqio"])
-        assert "Seer" in prompt
+        assert "claim_role" in prompt
+        assert "Seer" in prompt or "Medium" in prompt
         assert "co" in prompt
         assert "wait" in prompt
         # Should mention deception
@@ -66,9 +68,9 @@ class TestBuildSystemPromptIntendedCo:
         agent = make_test_actor("SQ", "Werewolf")
         ctx = PublicContext(today_log=[], alive_players=["Gina", "SQ"], dead_players=[], day=1)
         role_ctx = WolfSpecificContext(wolf_partners=[])
-        prompt = build_system_prompt(agent, ctx, SpeechDirection(intended_co=agent.role), role_ctx)
+        prompt = build_system_prompt(agent, ctx, SpeechDirection(intended_co=get_role("Medium")), role_ctx)
         assert "CO DECISION" in prompt
-        assert "Seer" in prompt  # instructs to claim Seer
+        assert "Medium" in prompt
         assert "intent.co" in prompt
         # Must NOT tell werewolf to reveal true role
         assert "Werewolf" not in prompt.split("--- YOUR CO DECISION ---")[1]
@@ -78,8 +80,13 @@ class TestBuildSystemPromptIntendedCo:
 
 
 class TestRunPreNight:
-    def _make_output(self, decision: str) -> PreNightOutput:
-        return PreNightOutput(thought="thinking", decision=decision, reasoning="reason")
+    def _make_output(self, decision: str, claim_role: str | None = None) -> PreNightOutput:
+        return PreNightOutput(
+            thought="thinking",
+            decision=decision,
+            claim_role=claim_role,
+            reasoning="reason",
+        )
 
     def test_only_non_villager_agents_participate(self, make_test_actor, make_test_engine):
         agents = [
@@ -114,6 +121,32 @@ class TestRunPreNight:
 
         seer = next(a for a in agents if a.name == "Gina")
         assert seer.state.intended_co == seer.role
+
+    def test_fake_co_claim_role_is_used_when_explicitly_selected(self, make_test_actor, make_test_engine):
+        agents = [make_test_actor("Wolf", "Werewolf"), make_test_actor("SQ", "Villager")]
+        engine, _ = make_test_engine(agents)
+        engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
+            [(actor, self._make_output("co", "Medium")) for actor in targets]
+        )
+
+        with patch("src.agent.store.save"):
+            engine._run_pre_night()
+
+        wolf = next(a for a in agents if a.name == "Wolf")
+        assert wolf.state.intended_co.name == "Medium"
+
+    def test_fake_co_uses_default_when_claim_role_is_omitted(self, make_test_actor, make_test_engine):
+        agents = [make_test_actor("Wolf", "Werewolf"), make_test_actor("SQ", "Villager")]
+        engine, _ = make_test_engine(agents)
+        engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
+            [(actor, self._make_output("co")) for actor in targets]
+        )
+
+        with patch("src.agent.store.save"):
+            engine._run_pre_night()
+
+        wolf = next(a for a in agents if a.name == "Wolf")
+        assert wolf.state.intended_co.name == "Seer"
 
     def test_wait_decision_sets_intended_co_false(self, make_test_actor, make_test_engine):
         agents = [make_test_actor("Gina", "Seer"), make_test_actor("SQ", "Villager")]

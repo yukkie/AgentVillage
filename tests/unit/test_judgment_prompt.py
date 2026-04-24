@@ -47,6 +47,7 @@ class TestBuildJudgmentPrompt:
         assert "challenge" in prompt
         assert "silent" in prompt
         assert "reply_to" in prompt
+        assert "claim_role" in prompt
 
     def test_co_option_absent_for_villager(self, make_test_actor):
         actor = make_test_actor("Setsu", "Villager")
@@ -59,6 +60,7 @@ class TestBuildJudgmentPrompt:
         actor.state.beliefs = {"SQ": Belief()}
         prompt = build_judgment_prompt(actor, [], ["Setsu"], day=1, co_eligible=True)
         assert '"co"' in prompt
+        assert "claim_role" in prompt
 
     def test_co_strategy_hint_seer(self, make_test_actor):
         actor = make_test_actor("Setsu", "Seer")
@@ -71,13 +73,15 @@ class TestBuildJudgmentPrompt:
         actor = make_test_actor("Setsu", "Werewolf")
         actor.state.beliefs = {"SQ": Belief()}
         prompt = build_judgment_prompt(actor, [], ["Setsu"], day=1, co_eligible=True)
-        assert "fake" in prompt.lower() or "chaos" in prompt.lower()
+        assert "fake" in prompt.lower() or "claim_role" in prompt.lower()
+        assert "Seer" in prompt or "Medium" in prompt
 
     def test_co_strategy_hint_madman(self, make_test_actor):
         actor = make_test_actor("Setsu", "Madman")
         actor.state.beliefs = {"SQ": Belief()}
         prompt = build_judgment_prompt(actor, [], ["Setsu"], day=1, co_eligible=True)
         assert "Madman" in prompt
+        assert "Seer" in prompt or "Medium" in prompt
 
     def test_co_not_in_format_when_not_eligible(self, make_test_actor):
         """Ensure the 4th choice is absent when co_eligible=False (default)."""

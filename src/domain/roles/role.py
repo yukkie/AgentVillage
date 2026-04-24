@@ -27,6 +27,10 @@ class Role(ABC):
     def can_co(self) -> bool:
         return True
 
+    @property
+    def default_claim_role(self) -> "Role":
+        return self
+
     @abstractmethod
     def role_prompt(self, wolf_partners: list[str] | None = None) -> str: ...
 
