@@ -13,6 +13,15 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| yukkie/AgentVillage#185 | tech-debt | 🔴 | - | Reduce clone code in repeated test mock setup | `test_game_day_loop.py` / `test_pre_night.py` / `test_client.py` などで重複している mock setup や side-effect scaffold を共通化して保守性を上げる |
+| yukkie/AgentVillage#184 | tech-debt | 🟢 | - | Add GameEngine tests for uncovered orchestration edge cases | `src/engine/game.py` の `run()` ループ、intended CO miss、memory update など未カバーの重要分岐を追加テストする |
+| yukkie/AgentVillage#183 | tech-debt | 🟡 | - | Add replay interaction tests for uncovered control paths | `src/ui/replay.py` のキー入力正規化、archive 選択、終端操作など replay の未カバー制御系をテストする |
+| yukkie/AgentVillage#182 | tech-debt | 🔴 | - | Add targeted tests for uncovered night phase branches | `src/engine/phase_night.py` の wolf chat、guard block、inspection 分岐など高リスクな未カバー経路をテストする |
+| yukkie/AgentVillage#181 | tech-debt | 🟡 | - | Split test strategy from test status and define sync workflow | `tests/TestStrategy.md` の戦略とステータスを分離し、更新タイミングをプロセスで定義して docs と実態のズレを防ぐ |
+| yukkie/AgentVillage#180 | tech-debt | 🟡 | - | Strengthen contract tests where heavy mocking hides interface regressions | mock が強すぎて境界契約を守れていないテストを見直し、契約テストを追加して見かけの coverage と実効的な保証のズレを減らす |
+| yukkie/AgentVillage#179 | tech-debt | 🟢 | - | Centralize legacy compatibility normalization for logs and actor state | ログ・actor state の旧形式互換処理を 1 箇所に集約し、互換責務の分散を減らす |
+| yukkie/AgentVillage#178 | tech-debt | 🟡 | - | Classify LLM fallback errors through a client helper | `client.py` の helper で LLM fallback のエラー種別を分類し、挙動を変えずに観測性を上げる |
+| yukkie/AgentVillage#177 | tech-debt | 🔴 | - | Structure inspection event results for renderer-safe logging | inspection 系のログ結果を構造化し、renderer/replay で安全に扱いつつ旧ログとの互換も保つ |
 | yukkie/AgentVillage#176 | bug | - | - | Fix replay log role rendering regression | INSPECT などのログで role object の repr が出るデグレを修正し、過去ログ互換を保ったまま人間向けの役職名を表示する |
 | yukkie/AgentVillage#33 | enhancement | 🟢 | 5 | Wolf chat improvements | 早期終了・偽CO協議・テスト |
 | yukkie/AgentVillage#36 | enhancement | 🟢 | 5 | Belief updates from agent reasoning | suspicion/trust を推理結果から更新 |
