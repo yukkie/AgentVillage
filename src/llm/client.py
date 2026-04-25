@@ -88,6 +88,15 @@ def _extract_json(text: str) -> str:
 
 
 class LLMClient:
+    """Wrapper around ``anthropic.Anthropic`` for game-specific LLM calls.
+
+    Mock-Policy: Required
+        External API. Tests must mock this client (or the underlying
+        ``anthropic.Anthropic``) — using the real API would make tests slow,
+        flaky, and costly. Mock responses must conform to the JSON schemas
+        in ``src/domain/schema.py``; off-schema mocks defeat the purpose.
+    """
+
     def __init__(self, client: anthropic.Anthropic) -> None:
         self._client = client
 

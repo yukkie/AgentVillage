@@ -137,7 +137,82 @@ def test_load_events_skips_blank_lines(tmp_path: Path) -> None:
 
 ---
 
-## 5. 意図的未カバー領域
+## 5. Mock 使用ポリシー
+
+Mock は SUT を依存から隔離する手段だが、**自分のコード同士の境界**で乱用すると
+モジュール間の契約がテストから消え、表面的な coverage と実効的な保証がズレる
+(Issue #180)。以下の3分類で運用する。
+
+### Required(モック必須)
+
+外部依存・非決定要素・遅い処理。実物を使うとコスト/Flaky/再現性の問題が出る。
+
+- LLM API (`anthropic.Anthropic.messages.create`)
+- 時刻 (`datetime.now()`)・乱数 (`random.*`)
+- ネットワーク I/O・サブプロセス起動
+
+ただしモック応答は**実物と同じ JSON スキーマ**(`src/domain/schema.py`)に従うこと。
+スキーマを外れたモック応答は契約破壊の元になる。
+
+### Forbidden(モック禁止 = 実物を使う)
+
+**自分のコード同士の間で受け渡される契約データ**。consumer 側のテストで
+これらを「合成」して渡してはいけない。代わりに以下のいずれかを使う:
+
+- 本物の producer に吐かせる(例: `GameEngine` に `LogEvent` を吐かせる)
+- 共有 fixture (`make_test_actor`, `make_test_engine` 等)
+- 契約テスト(`tests/contract/`)
+
+対象は次のクラス/型(docstring に `Mock-Policy: Forbidden` マーカー付き):
+
+| クラス/型 | ファイル | 契約の相手 |
+|---|---|---|
+| `LogEvent` | `src/domain/event.py` | Engine ↔ Renderer / Replay / LogWriter |
+| `Actor`, `ActorState` | `src/domain/actor.py` | Engine ↔ store(JSON 永続化) |
+| `AgentOutput`, `JudgmentOutput`, `PreNightOutput`, `WolfChatOutput` | `src/domain/schema.py` | LLM 応答 JSON 契約 |
+
+### Conditional(その他)
+
+上記いずれにも明記されない型はデフォルトで Conditional 扱い。
+判断に迷ったら本節を参照し、必要なら境界判定基準(下記)で評価する。
+
+### 境界判定基準
+
+ある型を Forbidden 側に分類すべきか迷ったときの3条件:
+
+1. **Producer と Consumer が分離している** — 別モジュール、永続化を挟む、プロセス境界を跨ぐ
+2. **片方を変えたとき型システムが捕まえない** — `dict` ベース、`content: str` のような自由形式フィールドを含む
+3. **壊れたときのブラスト半径が大きい** — セーブデータ、Replay ログ、LLM I/O スキーマ
+
+### コード上のマーカー
+
+主要な Forbidden / Required クラスの docstring に `Mock-Policy:` マーカーが
+付いている。新しい境界型を追加するときも同じ形式で記入すること。
+
+```python
+class LogEvent(BaseModel):
+    """...
+
+    Mock-Policy: Forbidden
+        Contract type between Engine (producer) and Renderer/Replay/LogWriter
+        (consumers). Tests must use a real producer or contract fixtures.
+    """
+```
+
+検索: `grep -rn "Mock-Policy:" src/`
+
+### 契約テスト(`tests/contract/`)
+
+Forbidden 型が絡む境界には契約テストを置く。モックではなく**本物の producer
+が吐いた値を本物の consumer に渡して**、両側が同じ契約に従っていることを確認する。
+
+例: `tests/contract/test_engine_renderer_contract.py` は
+`GameEngine` に夜フェーズを走らせて吐かれた `LogEvent` を `Renderer` に
+通し、`target` フィールドが renderer 出力に届くことを検証する。
+
+---
+
+## 6. 意図的未カバー領域
 
 | 領域 | 理由 |
 |---|---|

@@ -30,6 +30,15 @@ class ActorProfile(BaseModel):
 
 
 class ActorState(BaseModel):
+    """Mutable in-game state of an actor; persisted as JSON under ``state/agents/``.
+
+    Mock-Policy: Forbidden
+        Contract type between the engine and the JSON persistence layer
+        (``src/agent/store.py``). Tests should build state via
+        ``make_test_actor`` rather than synthesizing partial fields. See
+        ``tests/TestStrategy.md`` §5.
+    """
+
     beliefs: dict[str, Belief] = {}
     memory_summary: list[str] = []
     is_alive: bool = True
@@ -39,6 +48,14 @@ class ActorState(BaseModel):
 
 @dataclass
 class Actor:
+    """Runtime composition of profile + mutable state + role.
+
+    Mock-Policy: Forbidden
+        Use ``make_test_actor`` (in ``tests/unit/conftest.py``) to build
+        Actor instances in tests instead of mocking. See
+        ``tests/TestStrategy.md`` §5.
+    """
+
     profile: ActorProfile
     state: ActorState
     role: Role

@@ -24,6 +24,17 @@ class EventType(Enum):
 
 
 class LogEvent(BaseModel):
+    """Event payload exchanged between ``GameEngine`` (producer) and
+    ``Renderer`` / ``ReplayPager`` / ``LogWriter`` (consumers).
+
+    Mock-Policy: Forbidden
+        Contract type between modules we own. Consumer-side tests must not
+        synthesize ``LogEvent`` instances that the engine would never produce
+        (e.g. ``INSPECTION`` without ``target``). Use a real producer or a
+        contract test under ``tests/contract/`` instead. See
+        ``tests/TestStrategy.md`` §5.
+    """
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     day: int
     phase: str
