@@ -16,9 +16,11 @@ dev = [
     "pytest>=8.0.0",
     "ruff>=0.4.0",
     "pre-commit>=4.0.0",
+    "pytest-cov>=7.1.0",
 ]
 
 [tool.pytest.ini_options]
+addopts = "--cov=src --cov-report=html --cov-branch"
 markers = [
     "unit: unit tests (no I/O, no network)",
     "integration: integration tests (real I/O or multi-module)",
