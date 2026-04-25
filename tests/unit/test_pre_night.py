@@ -9,8 +9,8 @@ from unittest.mock import patch
 from src.engine.phase import Phase
 from src.domain.roles import get_role
 from src.llm.prompt import PublicContext, SpeechDirection, WolfSpecificContext, build_pre_night_prompt, build_system_prompt
-from src.domain.schema import PreNightOutput
 from src.domain.event import EventType
+from tests.conftest import make_pre_night_parallel_side_effect
 
 
 # ── build_pre_night_prompt ──────────────────────────────────────────────────
@@ -80,14 +80,6 @@ class TestBuildSystemPromptIntendedCo:
 
 
 class TestRunPreNight:
-    def _make_output(self, decision: str, claim_role: str | None = None) -> PreNightOutput:
-        return PreNightOutput(
-            thought="thinking",
-            decision=decision,
-            claim_role=claim_role,
-            reasoning="reason",
-        )
-
     def test_only_non_villager_agents_participate(self, make_test_actor, make_test_engine):
         agents = [
             make_test_actor("A", "Villager"),
@@ -96,9 +88,7 @@ class TestRunPreNight:
             make_test_actor("D", "Werewolf"),
         ]
         engine, events = make_test_engine(agents)
-        engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
-            [(actor, self._make_output("wait")) for actor in targets]
-        )
+        engine._llm_client.call_pre_night_parallel.side_effect = make_pre_night_parallel_side_effect("wait")
 
         with patch("src.agent.store.save"):
             engine._run_pre_night()
@@ -112,9 +102,7 @@ class TestRunPreNight:
     def test_co_decision_sets_intended_co_true(self, make_test_actor, make_test_engine):
         agents = [make_test_actor("Gina", "Seer"), make_test_actor("SQ", "Villager")]
         engine, _ = make_test_engine(agents)
-        engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
-            [(actor, self._make_output("co")) for actor in targets]
-        )
+        engine._llm_client.call_pre_night_parallel.side_effect = make_pre_night_parallel_side_effect("co")
 
         with patch("src.agent.store.save"):
             engine._run_pre_night()
@@ -125,9 +113,7 @@ class TestRunPreNight:
     def test_fake_co_claim_role_is_used_when_explicitly_selected(self, make_test_actor, make_test_engine):
         agents = [make_test_actor("Wolf", "Werewolf"), make_test_actor("SQ", "Villager")]
         engine, _ = make_test_engine(agents)
-        engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
-            [(actor, self._make_output("co", "Medium")) for actor in targets]
-        )
+        engine._llm_client.call_pre_night_parallel.side_effect = make_pre_night_parallel_side_effect("co", "Medium")
 
         with patch("src.agent.store.save"):
             engine._run_pre_night()
@@ -138,9 +124,7 @@ class TestRunPreNight:
     def test_fake_co_uses_default_when_claim_role_is_omitted(self, make_test_actor, make_test_engine):
         agents = [make_test_actor("Wolf", "Werewolf"), make_test_actor("SQ", "Villager")]
         engine, _ = make_test_engine(agents)
-        engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
-            [(actor, self._make_output("co")) for actor in targets]
-        )
+        engine._llm_client.call_pre_night_parallel.side_effect = make_pre_night_parallel_side_effect("co")
 
         with patch("src.agent.store.save"):
             engine._run_pre_night()
@@ -151,9 +135,7 @@ class TestRunPreNight:
     def test_wait_decision_sets_intended_co_false(self, make_test_actor, make_test_engine):
         agents = [make_test_actor("Gina", "Seer"), make_test_actor("SQ", "Villager")]
         engine, _ = make_test_engine(agents)
-        engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
-            [(actor, self._make_output("wait")) for actor in targets]
-        )
+        engine._llm_client.call_pre_night_parallel.side_effect = make_pre_night_parallel_side_effect("wait")
 
         with patch("src.agent.store.save"):
             engine._run_pre_night()
@@ -164,9 +146,7 @@ class TestRunPreNight:
     def test_decision_events_are_spectator_only(self, make_test_actor, make_test_engine):
         agents = [make_test_actor("Gina", "Seer"), make_test_actor("SQ", "Villager")]
         engine, events = make_test_engine(agents)
-        engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
-            [(actor, self._make_output("co")) for actor in targets]
-        )
+        engine._llm_client.call_pre_night_parallel.side_effect = make_pre_night_parallel_side_effect("co")
 
         with patch("src.agent.store.save"):
             engine._run_pre_night()
@@ -177,9 +157,7 @@ class TestRunPreNight:
     def test_phase_start_event_is_spectator_only(self, make_test_actor, make_test_engine):
         agents = [make_test_actor("Gina", "Seer"), make_test_actor("SQ", "Villager")]
         engine, events = make_test_engine(agents)
-        engine._llm_client.call_pre_night_parallel.side_effect = lambda targets, *a, **kw: iter(
-            [(actor, self._make_output("wait")) for actor in targets]
-        )
+        engine._llm_client.call_pre_night_parallel.side_effect = make_pre_night_parallel_side_effect("wait")
 
         with patch("src.agent.store.save"):
             engine._run_pre_night()

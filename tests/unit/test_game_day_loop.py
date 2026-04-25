@@ -14,16 +14,11 @@ from src.domain.event import EventType
 from src.domain.roles import Seer
 from src.llm.client import LLMClient
 from src.logger.writer import LogWriter
-
-
-def _make_output(name: str, speech: str = "Hello.") -> AgentOutput:
-    return AgentOutput(
-        thought="thinking",
-        speech=speech,
-        reasoning="reasoning",
-        intent=Intent(vote_candidates=[]),
-        memory_update=[],
-    )
+from tests.conftest import (
+    make_agent_output,
+    make_silent_discussion_side_effect,
+    make_speech_parallel_side_effect,
+)
 
 
 class TestGameEngineLlmInjection:
@@ -47,17 +42,12 @@ class TestGameEngineLlmInjection:
         assert callable(run_night_phase)
 
 
-def _silent_discussion(actors, *_, **__):
-    """call_discussion_parallel stub: all actors silent."""
-    return iter([(a, JudgmentOutput(decision="silent"), None, None) for a in actors])
-
-
 class TestRunDayPhaseOrder:
     def test_opening_then_discussion_then_vote(self, make_test_actor, make_test_engine):
         agents = [make_test_actor("A"), make_test_actor("B"), make_test_actor("C", "Werewolf")]
         engine, events = make_test_engine(agents)
-        engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
-        engine._llm_client.call_discussion_parallel.side_effect = _silent_discussion
+        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
+        engine._llm_client.call_discussion_parallel.side_effect = make_silent_discussion_side_effect()
 
         with patch("src.agent.store.save"):
             engine._run_day()
@@ -73,8 +63,8 @@ class TestRunDayPhaseOrder:
     def test_speech_ids_are_sequential(self, make_test_actor, make_test_engine):
         agents = [make_test_actor("A"), make_test_actor("B")]
         engine, events = make_test_engine(agents)
-        engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
-        engine._llm_client.call_discussion_parallel.side_effect = _silent_discussion
+        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
+        engine._llm_client.call_discussion_parallel.side_effect = make_silent_discussion_side_effect()
 
         with patch("src.agent.store.save"):
             engine._run_day()
@@ -90,7 +80,7 @@ class TestRunDayPhaseOrder:
     def test_challenge_reply_to_recorded(self, make_test_actor, make_test_engine):
         agents = [make_test_actor("A"), make_test_actor("B")]
         engine, events = make_test_engine(agents)
-        engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
+        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
 
         # B challenges speech_id=1 (A's opening speech)
         challenge = JudgmentOutput(decision="challenge", reply_to=1)
@@ -100,7 +90,7 @@ class TestRunDayPhaseOrder:
             reply_to_entry = next((e for e in today_log if e.speech_id == 1), None)
             return iter([
                 (make_test_actor("A"), JudgmentOutput(decision="silent"), None, None),
-                (make_test_actor("B"), challenge, _make_output("B"), reply_to_entry),
+                (make_test_actor("B"), challenge, make_agent_output("B"), reply_to_entry),
             ])
 
         engine._llm_client.call_discussion_parallel.side_effect = discussion_with_challenge
@@ -118,8 +108,8 @@ class TestRunDayPhaseOrder:
     def test_all_silent_does_not_raise(self, make_test_actor, make_test_engine):
         agents = [make_test_actor("A"), make_test_actor("B", "Werewolf")]
         engine, _ = make_test_engine(agents)
-        engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
-        engine._llm_client.call_discussion_parallel.side_effect = _silent_discussion
+        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
+        engine._llm_client.call_discussion_parallel.side_effect = make_silent_discussion_side_effect()
 
         with patch("src.agent.store.save"):
             result = engine._run_day()
@@ -143,7 +133,7 @@ class TestDiscussionCoDecision:
             intent=Intent(vote_candidates=[], co="Seer"),
             memory_update=[],
         )
-        engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
+        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
             (seer, JudgmentOutput(decision="co"), co_output, None),
         ])
@@ -159,8 +149,8 @@ class TestDiscussionCoDecision:
         seer.state.claimed_role = "Seer"  # already claimed
         engine, _ = make_test_engine([seer])
 
-        normal_output = _make_output("Seer1", "Just speaking.")
-        engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
+        normal_output = make_agent_output("Seer1", "Just speaking.")
+        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
             (seer, JudgmentOutput(decision="co"), normal_output, None),
         ])
@@ -176,8 +166,8 @@ class TestDiscussionCoDecision:
         villager = make_test_actor("V1", "Villager")
         engine, _ = make_test_engine([villager])
 
-        normal_output = _make_output("V1", "Just talking.")
-        engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
+        normal_output = make_agent_output("V1", "Just talking.")
+        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
             (villager, JudgmentOutput(decision="co"), normal_output, None),
         ])
@@ -191,9 +181,9 @@ class TestDiscussionCoDecision:
     def test_failed_discussion_co_clears_intended_co(self, make_test_actor, make_test_engine):
         seer = make_test_actor("Seer1", "Seer")
         engine, _ = make_test_engine([seer])
-        normal_output = _make_output("Seer1", "I have something to say.")
+        normal_output = make_agent_output("Seer1", "I have something to say.")
 
-        engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
+        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
             (seer, JudgmentOutput(decision="co"), normal_output, None),
         ])
@@ -213,7 +203,7 @@ class TestDiscussionCoDecision:
             intent=Intent(vote_candidates=[], co="Medium"),
             memory_update=[],
         )
-        engine._llm_client.call_speech_parallel.side_effect = lambda calls: iter([(a, _make_output(a.name)) for a, *_ in calls])
+        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
             (wolf, JudgmentOutput(decision="co", claim_role="Medium"), co_output, None),
         ])
