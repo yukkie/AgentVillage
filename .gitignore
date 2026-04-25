@@ -11,3 +11,4 @@ ideas_archive/
 issues/
 .claude/worktrees/
 .claude/settings.local.json
+.tracecov/
