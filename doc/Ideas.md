@@ -14,7 +14,6 @@
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#184 | tech-debt | 🟡 | 3 | Add GameEngine tests for uncovered orchestration edge cases | `src/engine/game.py` の `run()` ループ、intended CO miss、memory update など未カバーの重要分岐を追加テストする |
-| yukkie/AgentVillage#183 | tech-debt | 🔴 | 2 | Add replay interaction tests for uncovered control paths | `src/ui/replay.py` のキー入力正規化、archive 選択、終端操作など replay の未カバー制御系をテストする |
 | yukkie/AgentVillage#182 | tech-debt | 🔴 | 3 | Add targeted tests for uncovered night phase branches | `src/engine/phase_night.py` の wolf chat、guard block、inspection 分岐など高リスクな未カバー経路をテストする |
 | yukkie/AgentVillage#179 | tech-debt | 🔴 | 3 | Structure inspection event results for renderer-safe logging | inspection 系のログ結果を構造化し、renderer/replay で安全に扱いつつ旧ログとの互換も保つ |
 | yukkie/AgentVillage#178 | tech-debt | 🔴 | 2 | Classify LLM fallback errors through a client helper | `client.py` の helper で LLM fallback のエラー種別を分類し、挙動を変えずに観測性を上げる（⚠️unit test mandatory） |
