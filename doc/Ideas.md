@@ -18,7 +18,6 @@
 | yukkie/AgentVillage#183 | tech-debt | 🔴 | 2 | Add replay interaction tests for uncovered control paths | `src/ui/replay.py` のキー入力正規化、archive 選択、終端操作など replay の未カバー制御系をテストする |
 | yukkie/AgentVillage#182 | tech-debt | 🔴 | 3 | Add targeted tests for uncovered night phase branches | `src/engine/phase_night.py` の wolf chat、guard block、inspection 分岐など高リスクな未カバー経路をテストする |
 | yukkie/AgentVillage#181 | tech-debt | 🔴 | 2 | Split test strategy from test status and define sync workflow | `tests/TestStrategy.md` の戦略とステータスを分離し、更新タイミングをプロセスで定義して docs と実態のズレを防ぐ |
-| yukkie/AgentVillage#180 | tech-debt | 🔴 | 5 | Strengthen contract tests where heavy mocking hides interface regressions | mock が強すぎて境界契約を守れていないテストを見直し、契約テストを追加して見かけの coverage と実効的な保証のズレを減らす |
 | yukkie/AgentVillage#179 | tech-debt | 🔴 | 3 | Structure inspection event results for renderer-safe logging | inspection 系のログ結果を構造化し、renderer/replay で安全に扱いつつ旧ログとの互換も保つ |
 | yukkie/AgentVillage#178 | tech-debt | 🔴 | 2 | Classify LLM fallback errors through a client helper | `client.py` の helper で LLM fallback のエラー種別を分類し、挙動を変えずに観測性を上げる（⚠️unit test mandatory） |
 | yukkie/AgentVillage#177 | tech-debt | 🟢 | 5 | Centralize legacy compatibility normalization for logs and actor state | ログ・actor state の旧形式互換処理を 1 箇所に集約し、互換責務の分散を減らす |
