@@ -7,7 +7,7 @@ import pytest
 from src.domain.actor import Actor, ActorProfile, ActorState, Persona
 from src.domain.roles import get_role
 from src.agent import store
-from tests.unit.conftest import make_legacy_agent_json, make_split_agent_json
+from tests.conftest import make_legacy_agent_json, make_split_agent_json
 
 
 @pytest.fixture()

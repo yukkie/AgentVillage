@@ -13,7 +13,7 @@ import pytest
 
 from src.domain.event import EventType, LogEvent
 from src.ui.replay import ArchiveSelector, ReplayPager, run_replay
-from tests.unit.conftest import make_legacy_agent_json, make_split_agent_json
+from tests.conftest import make_legacy_agent_json, make_split_agent_json
 
 
 def _make_event_jsonl(*events: LogEvent) -> str:
