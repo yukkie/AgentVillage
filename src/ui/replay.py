@@ -22,7 +22,7 @@ ARCHIVE_DIR = Path("state_archive")
 
 
 def _getch() -> str:
-    """Read a single keypress from the terminal (cross-platform)."""
+    """External-Boundary: readchar — read a single keypress from the terminal (cross-platform)."""
     key = readchar.readkey()
     mapping = {
         readchar.key.UP: "UP",
