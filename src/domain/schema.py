@@ -2,18 +2,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, BeforeValidator, PlainSerializer
 
-from src.domain.roles import Role, get_role
-
-
-def _role_from_json(v: object) -> Role | None:
-    if v is None:
-        return None
-    if isinstance(v, Role):
-        return v
-    try:
-        return get_role(str(v))
-    except ValueError:
-        return None
+from src.domain.roles import Role
+from src.legacy.role_normalizer import normalize_role_field
 
 
 def _role_to_json(v: Role | None) -> str | None:
@@ -22,7 +12,7 @@ def _role_to_json(v: Role | None) -> str | None:
 
 RoleField = Annotated[
     Role | None,
-    BeforeValidator(_role_from_json),
+    BeforeValidator(normalize_role_field),
     PlainSerializer(_role_to_json, when_used="json"),
 ]
 

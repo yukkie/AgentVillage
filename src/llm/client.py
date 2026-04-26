@@ -108,6 +108,7 @@ def _extract_json(text: str) -> str:
 class LLMClient:
     """Wrapper around ``anthropic.Anthropic`` for game-specific LLM calls.
 
+    External-Boundary: anthropic SDK
     Mock-Policy: Required
         External API. Tests must mock this client (or the underlying
         ``anthropic.Anthropic``) — using the real API would make tests slow,
