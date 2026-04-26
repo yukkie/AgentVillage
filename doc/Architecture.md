@@ -23,6 +23,7 @@ AgentVillage/
 │   ├── llm/                    # LLMクライアント・プロンプト生成
 │   ├── action/                 # 構造化アクション処理
 │   ├── logger/                 # ログ保存・リプレイ
+│   ├── legacy/                 # Legacy-Adapter: 旧フォーマットの正規化のみ。adaptation以外のコード禁止
 │   └── ui/                     # UIレイヤー（CLI / 将来Web）
 ├── state/
 │   ├── world.json              # ゲーム全体の状態
@@ -179,17 +180,27 @@ CO には2種類のフォールバックがある。
 占い師COへの反応・投票前詰め等、重要局面では `call()` に `extended_thinking=True` を渡せるようにする。
 （MVP では任意フラグ。デフォルトはoff）
 
-### 3.4 Action System（`src/action/`）
+### 3.4 Legacy Adapter（`src/legacy/`）
+
+過去フォーマットのデータを現行スキーマへ正規化するアダプター群。
+
+- **配置ルール**: このフォルダには adaptation ロジックのみ置く。ゲームロジック・ドメイン判断は一切含めない
+- **検索マーカー**: 各関数の docstring に `Legacy-Adapter:` を記載し、`grep "Legacy-Adapter:"` で全箇所を一覧できる
+- **現在のモジュール**:
+  - `actor_normalizer.py` — Actor の旧フラット形式（`profile`/`state` 分割前）を `ActorProfile` + `ActorState` へ変換。`actor_from_dict` のフォールバックパスから呼ばれる
+  - `role_normalizer.py` — 旧 JSON に含まれるロール名文字列を `Role` インスタンスへ変換。`RoleField` の `BeforeValidator` として `schema.py` から呼ばれる
+
+### 3.5 Action System（`src/action/`）
 
 - LLMが提案した行動を検証し、ゲームエンジンに渡す
 - 不正な行動（権限外のアクション等）はシステムが棄却
 
-### 3.5 Logger（`src/logger/`）
+### 3.6 Logger（`src/logger/`）
 
 - 公開ログ（`public_log.jsonl`）と観戦者ログ（真実込み）を分けて保存
 - リプレイ機能の基盤
 
-### 3.6 UI / CLI（`src/ui/`）
+### 3.7 UI / CLI（`src/ui/`）
 
 - Richを使ったカラー表示
 - 表示内容の色分けは Spec.md §5 を参照

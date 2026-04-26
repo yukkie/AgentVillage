@@ -110,33 +110,7 @@ def actor_from_dict(data: dict, agent_catalog: dict[str, ActorProfile] | None = 
         state = ActorState.model_validate(data["state"])
         return make_actor(profile, state, role_name)
 
-    # Backward-compatibility path for archived/top-level JSON. Normalize the
-    # legacy flat shape into the new ActorProfile + ActorState structure here
-    # so the rest of the codebase only deals with the new model.
-    fallback_name = data.get("name")
-    if fallback_name and agent_catalog and fallback_name in agent_catalog:
-        profile = agent_catalog[fallback_name]
-        profile_data = {
-            "name": data.get("name", profile.name),
-            "model": data.get("model", profile.model),
-            "persona": data.get("persona", profile.persona.model_dump(mode="json")),
-        }
-    else:
-        profile_data = {
-            "name": data["name"],
-            "model": data.get("model", ActorProfile.model_fields["model"].default),
-            "persona": data["persona"],
-        }
-
-    state_data = {
-        "beliefs": data.get("beliefs", {}),
-        "memory_summary": data.get("memory_summary", []),
-        "is_alive": data.get("is_alive", True),
-        "claimed_role": data.get("claimed_role"),
-        "intended_co": data.get("intended_co"),
-    }
-    return make_actor(
-        ActorProfile.model_validate(profile_data),
-        ActorState.model_validate(state_data),
-        role_name,
-    )
+    # Legacy flat format — delegate to the adapter.
+    from src.legacy.actor_normalizer import normalize_actor_dict
+    profile, state = normalize_actor_dict(data, agent_catalog)
+    return make_actor(profile, state, role_name)
