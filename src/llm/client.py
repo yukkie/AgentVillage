@@ -1,8 +1,10 @@
+import json
 import sys
 from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import anthropic
+import pydantic
 
 from src.domain.actor import Actor
 from src.domain.roles import Role
@@ -47,10 +49,26 @@ def _default_output(actor: Actor) -> AgentOutput:
     )
 
 
+def _classify_error(e: Exception) -> str:
+    """Classify an LLM call exception into one of four categories."""
+    if isinstance(e, anthropic.APIError):
+        return "api"
+    if isinstance(e, pydantic.ValidationError):
+        return "validation"
+    if isinstance(e, json.JSONDecodeError):
+        return "extraction"
+    return "unexpected"
+
+
 def _log_error(fn: str, agent_name: str, stage: str, e: Exception, raw: str) -> None:
     print(f"[{fn}] {stage} error for {agent_name}: {e!r}", file=sys.stderr)
     if raw:
         print(f"[{fn}] raw response: {raw!r}", file=sys.stderr)
+
+
+def _classify_and_log_error(fn: str, agent_name: str, e: Exception, raw: str) -> None:
+    kind = _classify_error(e)
+    _log_error(fn, agent_name, kind, e, raw)
 
 
 def _log_warning(fn: str, agent_name: str, message: str) -> None:
@@ -125,7 +143,7 @@ class LLMClient:
             raw = message.content[0].text
             return AgentOutput.model_validate_json(_extract_json(raw))
         except Exception as e:
-            _log_error("call", actor.name, "error", e, raw)
+            _classify_and_log_error("call", actor.name, e, raw)
             return _default_output(actor)
 
     def call_judgment(
@@ -149,7 +167,7 @@ class LLMClient:
             raw = message.content[0].text
             return JudgmentOutput.model_validate_json(_extract_json(raw))
         except Exception as e:
-            _log_error("call_judgment", actor.name, "error", e, raw)
+            _classify_and_log_error("call_judgment", actor.name, e, raw)
             return JudgmentOutput(decision="silent")
 
     def call_speech_parallel(
@@ -184,7 +202,7 @@ class LLMClient:
             raw = message.content[0].text
             return PreNightOutput.model_validate_json(_extract_json(raw))
         except Exception as e:
-            _log_error("call_pre_night_action", actor.name, "error", e, raw)
+            _classify_and_log_error("call_pre_night_action", actor.name, e, raw)
             return PreNightOutput(thought="...", decision="wait", claim_role=None, reasoning="Defaulting to wait.")
 
     def call_pre_night_parallel(
@@ -263,7 +281,7 @@ class LLMClient:
             raw = message.content[0].text
             return WolfChatOutput.model_validate_json(_extract_json(raw))
         except Exception as e:
-            _log_error("call_wolf_chat", actor.name, "error", e, raw)
+            _classify_and_log_error("call_wolf_chat", actor.name, e, raw)
             return WolfChatOutput(thought="...", speech="...", vote_candidates=[])
 
     def call_night_action(
@@ -292,7 +310,7 @@ class LLMClient:
             )
             raw = message.content[0].text.strip()
         except Exception as e:
-            _log_error("call_night_action", actor.name, "api", e, raw)
+            _classify_and_log_error("call_night_action", actor.name, e, raw)
             return candidates[0] if candidates else ""
         # Validate that the returned name is a valid alive player
         for candidate in candidates:

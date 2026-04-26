@@ -1,7 +1,13 @@
 """Unit tests for src/llm/client.py — LLMClient with injected mock anthropic client."""
+import json
+
+import anthropic
+import pydantic
+import pytest
+
 from src.domain.schema import AgentOutput, JudgmentOutput, PreNightOutput, WolfChatOutput
 from src.domain.roles import get_role
-from src.llm.client import resolve_claim_role
+from src.llm.client import _classify_error, resolve_claim_role
 from tests.conftest import (
     AGENT_OUTPUT_JSON,
     JUDGMENT_CO_OUTPUT_JSON,
@@ -149,3 +155,116 @@ class TestResolveClaimRole:
         assert result.name == "Seer"
         assert "resolve_claim_role" in captured.err
         assert "falling back to default_claim_role=Seer" in captured.err
+
+
+@pytest.mark.unit
+class TestClassifyError:
+    def test_classifies_anthropic_api_error(self):
+        """
+        SUT: _classify_error()
+        Mock: なし
+        Level: unit
+        Objective: anthropic.APIError のサブクラスが "api" に分類されること。
+        """
+        import httpx
+        request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+        response = httpx.Response(429, request=request)
+        e = anthropic.RateLimitError(message="rate limit", response=response, body={})
+        assert _classify_error(e) == "api"
+
+    def test_classifies_pydantic_validation_error(self):
+        """
+        SUT: _classify_error()
+        Mock: なし
+        Level: unit
+        Objective: pydantic.ValidationError が "validation" に分類されること。
+        """
+        try:
+            pydantic.TypeAdapter(int).validate_python("not-an-int")
+        except pydantic.ValidationError as e:
+            assert _classify_error(e) == "validation"
+        else:
+            pytest.fail("Expected ValidationError")
+
+    def test_classifies_json_decode_error(self):
+        """
+        SUT: _classify_error()
+        Mock: なし
+        Level: unit
+        Objective: json.JSONDecodeError が "extraction" に分類されること。
+        """
+        try:
+            json.loads("{invalid}")
+        except json.JSONDecodeError as e:
+            assert _classify_error(e) == "extraction"
+        else:
+            pytest.fail("Expected JSONDecodeError")
+
+    def test_classifies_unexpected_error(self):
+        """
+        SUT: _classify_error()
+        Mock: なし
+        Level: unit
+        Objective: 上記以外の例外が "unexpected" に分類されること。
+        """
+        assert _classify_error(RuntimeError("boom")) == "unexpected"
+        assert _classify_error(ValueError("bad")) == "unexpected"
+        assert _classify_error(KeyError("missing")) == "unexpected"
+
+
+@pytest.mark.unit
+class TestClassifyAndLogError:
+    def test_api_error_logged_with_api_kind(self, capsys):
+        """
+        SUT: _classify_and_log_error()
+        Mock: なし
+        Level: unit
+        Objective: anthropic.APIError 系の例外が "api error" としてログ出力されること。
+        """
+        import httpx
+        from src.llm.client import _classify_and_log_error
+        request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+        response = httpx.Response(429, request=request)
+        e = anthropic.RateLimitError(message="rate limit", response=response, body={})
+        _classify_and_log_error("call", "Alice", e, "")
+        captured = capsys.readouterr()
+        assert "api error" in captured.err
+
+    def test_validation_error_logged_with_validation_kind(self, capsys):
+        """
+        SUT: _classify_and_log_error()
+        Mock: なし
+        Level: unit
+        Objective: pydantic.ValidationError が "validation error" としてログ出力されること。
+        """
+        from src.llm.client import _classify_and_log_error
+        try:
+            pydantic.TypeAdapter(int).validate_python("bad")
+        except pydantic.ValidationError as e:
+            _classify_and_log_error("call", "Alice", e, '{"bad": true}')
+            captured = capsys.readouterr()
+            assert "validation error" in captured.err
+
+    def test_unexpected_error_logged_with_unexpected_kind(self, capsys):
+        """
+        SUT: _classify_and_log_error()
+        Mock: なし
+        Level: unit
+        Objective: 未分類例外が "unexpected error" としてログ出力されること。
+        """
+        from src.llm.client import _classify_and_log_error
+        _classify_and_log_error("call", "Alice", RuntimeError("boom"), "")
+        captured = capsys.readouterr()
+        assert "unexpected error" in captured.err
+
+    def test_raw_response_logged_when_present(self, capsys):
+        """
+        SUT: _classify_and_log_error()
+        Mock: なし
+        Level: unit
+        Objective: raw が空でない場合にレスポンス内容もログ出力されること。
+        """
+        from src.llm.client import _classify_and_log_error
+        _classify_and_log_error("call", "Alice", RuntimeError("boom"), "some raw text")
+        captured = capsys.readouterr()
+        assert "some raw text" in captured.err
