@@ -13,7 +13,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#184 | tech-debt | 🟡 | 3 | Add GameEngine tests for uncovered orchestration edge cases | `src/engine/game.py` の `run()` ループ、intended CO miss、memory update など未カバーの重要分岐を追加テストする |
 | yukkie/AgentVillage#177 | tech-debt | 🟢 | 5 | Centralize legacy compatibility normalization for logs and actor state | ログ・actor state の旧形式互換処理を 1 箇所に集約し、互換責務の分散を減らす |
 | yukkie/AgentVillage#176 | bug | 🟢 | 2 | Fix replay log role rendering regression | INSPECT などのログで role object の repr が出るデグレを修正し、過去ログ互換を保ったまま人間向けの役職名を表示する |
 | yukkie/AgentVillage#33 | enhancement | 🟢 | 5 | Wolf chat improvements | 早期終了・偽CO協議・テスト |
