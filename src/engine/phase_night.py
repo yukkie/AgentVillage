@@ -197,13 +197,15 @@ def _publish_inspection(engine: GameEngine, inspection: InspectionResult) -> Non
         seer.state.beliefs[name].trust = 1.0
         seer.state.beliefs[name].reason.append(f"Day {engine.day}: inspected as Not Werewolf")
     store.save(seer)
+    role_name = result.name if result is not None else "Villager"
     engine._emit(LogEvent.make(
         day=engine.day,
         phase=Phase.NIGHT.value,
         event_type=EventType.INSPECTION,
         agent=seer.name,
         target=name,
-        content=f"{seer.name} inspects {name}: {result}",
+        content=f"{seer.name} inspects {name}: {'Werewolf' if isinstance(result, Werewolf) else 'Not Werewolf'}",
+        inspection_role=role_name,
         is_public=False,
     ))
 

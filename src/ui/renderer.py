@@ -21,10 +21,9 @@ class Renderer:
 
     # Simple events where the output is ``[PREFIX] {content}`` in a fixed style.
     # Events needing dynamic style or extra fields (SPEECH, VOTE, PHASE_START,
-    # PRE_NIGHT_DECISION, GAME_OVER) are handled separately in ``on_event``.
+    # PRE_NIGHT_DECISION, INSPECTION, GAME_OVER) are handled separately in ``on_event``.
     _SIMPLE_EVENT_STYLES: dict[EventType, tuple[str, str]] = {
         EventType.NIGHT_ATTACK: ("[NIGHT] ", "red"),
-        EventType.INSPECTION: ("[INSPECT] ", "cyan"),
         EventType.WOLF_CHAT: ("[WOLF] ", "red"),
         EventType.GUARD: ("[GUARD] ", "bright_green"),
         EventType.GUARD_BLOCK: ("[GUARD BLOCK] ", "bold bright_green"),
@@ -72,6 +71,9 @@ class Renderer:
             else:
                 text.append(f"[NIGHT] {event.content}", style="red")
 
+        elif event.event_type == EventType.INSPECTION:
+            self._render_inspection(event, text)
+
         elif event.event_type == EventType.PRE_NIGHT_DECISION:
             # Spectator only — color by the speaker's true role.
             actor = self._get_agent(event.agent)
@@ -91,6 +93,14 @@ class Renderer:
             text.append(event.content)
 
         return text if len(text) > 0 else None
+
+    def _render_inspection(self, event: LogEvent, text: Text) -> None:
+        if event.inspection_role is not None:
+            result_str = "Werewolf" if event.inspection_role.name == "Werewolf" else "Not Werewolf"
+            display = f"{event.agent} inspects {event.target}: {result_str}"
+        else:
+            display = event.content
+        text.append(f"[INSPECT] {display}", style="cyan")
 
     def _render_speech(self, event: LogEvent, text: Text) -> None:
         if event.content.startswith("[THINK]"):

@@ -310,6 +310,100 @@ class TestPublishInspection:
         assert inspection_events[0].agent == "Seer1"
         assert inspection_events[0].target == "Alice"
 
+    def test_inspect_werewolf_sets_inspection_role_field(self, make_test_actor, make_test_engine):
+        """
+        SUT: _publish_inspection
+        Mock: store.save — ファイルI/Oを回避
+        Level: unit
+        Objective: Werewolf を占ったとき INSPECTION イベントの inspection_role.name が "Werewolf" であること。
+        """
+        from src.domain.roles import Werewolf as WerewolfRole
+
+        seer = make_test_actor("Seer1", "Seer")
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        engine, events = make_test_engine([seer, wolf])
+
+        wolf_role_instance = wolf.role
+        assert isinstance(wolf_role_instance, WerewolfRole)
+
+        declaration = InspectDeclaration(actor=seer, target="Wolf1")
+        inspection = InspectionResult(declaration=declaration, result=wolf_role_instance)
+
+        with patch("src.engine.phase_night.store.save"):
+            _publish_inspection(engine, inspection)
+
+        ev = next(e for e in events if e.event_type == EventType.INSPECTION)
+        assert ev.inspection_role is not None
+        assert ev.inspection_role.name == "Werewolf"
+
+    def test_inspect_non_werewolf_sets_inspection_role_villager(self, make_test_actor, make_test_engine):
+        """
+        SUT: _publish_inspection
+        Mock: store.save — ファイルI/Oを回避
+        Level: unit
+        Objective: 村人を占ったとき INSPECTION イベントの inspection_role.name が "Villager" であること。
+        """
+        seer = make_test_actor("Seer1", "Seer")
+        villager = make_test_actor("Alice")
+        engine, events = make_test_engine([seer, villager])
+
+        declaration = InspectDeclaration(actor=seer, target="Alice")
+        inspection = InspectionResult(declaration=declaration, result=None)
+
+        with patch("src.engine.phase_night.store.save"):
+            _publish_inspection(engine, inspection)
+
+        ev = next(e for e in events if e.event_type == EventType.INSPECTION)
+        assert ev.inspection_role is not None
+        assert ev.inspection_role.name == "Villager"
+
+    def test_inspect_seer_sets_inspection_role_villager(self, make_test_actor, make_test_engine):
+        """
+        SUT: _publish_inspection
+        Mock: store.save — ファイルI/Oを回避
+        Level: unit
+        Objective: Seer（占い師）を占ったとき INSPECTION イベントの inspection_role.name が "Villager" であること。
+        """
+        seer1 = make_test_actor("Seer1", "Seer")
+        seer2 = make_test_actor("Seer2", "Seer")
+        engine, events = make_test_engine([seer1, seer2])
+
+        declaration = InspectDeclaration(actor=seer1, target="Seer2")
+        inspection = InspectionResult(declaration=declaration, result=None)
+
+        with patch("src.engine.phase_night.store.save"):
+            _publish_inspection(engine, inspection)
+
+        ev = next(e for e in events if e.event_type == EventType.INSPECTION)
+        assert ev.inspection_role is not None
+        assert ev.inspection_role.name == "Villager"
+
+    def test_inspect_content_is_human_readable(self, make_test_actor, make_test_engine):
+        """
+        SUT: _publish_inspection
+        Mock: store.save — ファイルI/Oを回避
+        Level: unit
+        Objective: INSPECTION イベントの content が Python repr ではなく固定文字列であること。
+        """
+        from src.domain.roles import Werewolf as WerewolfRole
+
+        seer = make_test_actor("Seer1", "Seer")
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        engine, events = make_test_engine([seer, wolf])
+
+        wolf_role_instance = wolf.role
+        assert isinstance(wolf_role_instance, WerewolfRole)
+
+        declaration = InspectDeclaration(actor=seer, target="Wolf1")
+        inspection = InspectionResult(declaration=declaration, result=wolf_role_instance)
+
+        with patch("src.engine.phase_night.store.save"):
+            _publish_inspection(engine, inspection)
+
+        ev = next(e for e in events if e.event_type == EventType.INSPECTION)
+        assert "Werewolf" in ev.content
+        assert "<" not in ev.content  # no Python repr like <src.domain.roles.Werewolf object>
+
     def test_inspect_updates_existing_belief(self, make_test_actor, make_test_engine):
         """
         SUT: _publish_inspection
