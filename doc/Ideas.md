@@ -14,7 +14,6 @@
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#184 | tech-debt | 🟡 | 3 | Add GameEngine tests for uncovered orchestration edge cases | `src/engine/game.py` の `run()` ループ、intended CO miss、memory update など未カバーの重要分岐を追加テストする |
-| yukkie/AgentVillage#179 | tech-debt | 🔴 | 3 | Structure inspection event results for renderer-safe logging | inspection 系のログ結果を構造化し、renderer/replay で安全に扱いつつ旧ログとの互換も保つ |
 | yukkie/AgentVillage#178 | tech-debt | 🔴 | 2 | Classify LLM fallback errors through a client helper | `client.py` の helper で LLM fallback のエラー種別を分類し、挙動を変えずに観測性を上げる（⚠️unit test mandatory） |
 | yukkie/AgentVillage#177 | tech-debt | 🟢 | 5 | Centralize legacy compatibility normalization for logs and actor state | ログ・actor state の旧形式互換処理を 1 箇所に集約し、互換責務の分散を減らす |
 | yukkie/AgentVillage#176 | bug | 🟢 | 2 | Fix replay log role rendering regression | INSPECT などのログで role object の repr が出るデグレを修正し、過去ログ互換を保ったまま人間向けの役職名を表示する |
