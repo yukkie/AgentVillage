@@ -278,6 +278,10 @@ LLMの提案をゲームエンジンに渡す橋渡し役。
 `content` の文字列フォーマット（`"{name} claims to be {role}"`）に依存せず、型安全に公言役職名を参照できる。
 既存アーカイブとの後方互換は `default=None` で対応する。
 
+`INSPECTION` イベントには `inspection_role: str | None` フィールドを使う。
+占い師が確認した役職名（`"Werewolf"` または `"Villager"`）を格納し、レンダラーが文字列パースなしに役職情報を参照できる。
+既存アーカイブとの後方互換は `default=None` で対応し、`None` の場合は `content` フォールバックで表示する。
+
 ---
 
 ## src/ui/ — UIレイヤー

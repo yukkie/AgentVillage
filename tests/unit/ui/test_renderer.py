@@ -93,14 +93,58 @@ def test_vote_renders_agent_and_target(make_test_actor) -> None:
     assert result.plain == "[VOTE] Alice → Bob"
 
 
-def test_simple_event_uses_mapping_prefix(make_test_actor) -> None:
+def test_inspection_structured_field_used_when_present(make_test_actor) -> None:
+    """
+    SUT: Renderer._render_inspection
+    Mock: なし
+    Level: unit
+    Objective: inspection_role が設定されているとき content に依存せず構造化フィールドから描画されること。
+    """
+    from src.domain.roles import get_role
     renderer = Renderer([], spectator_mode=True)
-    event = _make_event(EventType.INSPECTION, content="Seer saw Bob is Werewolf", is_public=False)
+    event = _make_event(
+        EventType.INSPECTION,
+        agent="Seer1",
+        target="Wolf1",
+        content="Seer1 inspects Wolf1: Not Werewolf",  # wrong content — should be ignored
+        inspection_role=get_role("Werewolf"),
+        is_public=False,
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert result.plain == "[INSPECT] Seer1 inspects Wolf1: Werewolf"
+
+
+def test_inspection_falls_back_to_content_for_legacy_events(make_test_actor) -> None:
+    """
+    SUT: Renderer._render_inspection
+    Mock: なし
+    Level: unit
+    Objective: inspection_role が None のレガシーイベントは content をそのまま表示すること。
+    """
+    renderer = Renderer([], spectator_mode=True)
+    event = _make_event(
+        EventType.INSPECTION,
+        content="Seer saw Bob is Werewolf",
+        is_public=False,
+    )
 
     result = renderer.on_event(event)
 
     assert result is not None
     assert result.plain == "[INSPECT] Seer saw Bob is Werewolf"
+
+
+def test_simple_event_uses_mapping_prefix(make_test_actor) -> None:
+    renderer = Renderer([], spectator_mode=True)
+    event = _make_event(EventType.GUARD, content="Knight guards Alice", is_public=False)
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert result.plain == "[GUARD] Knight guards Alice"
 
 
 def test_night_attack_without_agent_falls_back_to_content(make_test_actor) -> None:
