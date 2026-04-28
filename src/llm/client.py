@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import anthropic
 import pydantic
 
+from src.config import MAX_TOKENS
 from src.domain.actor import Actor
 from src.domain.roles import Role
 from src.domain.schema import AgentOutput, Intent, JudgmentOutput, PreNightOutput, SpeechEntry, WolfChatOutput
@@ -132,7 +133,7 @@ class LLMClient:
         try:
             message = self._client.messages.create(
                 model=actor.model,
-                max_tokens=2048,
+                max_tokens=MAX_TOKENS["call_speech"],
                 system=system_prompt,
                 messages=[
                     {
@@ -162,7 +163,7 @@ class LLMClient:
         try:
             message = self._client.messages.create(
                 model=actor.model,
-                max_tokens=1024,
+                max_tokens=MAX_TOKENS["call_judgment"],
                 messages=[{"role": "user", "content": prompt}],
             )
             raw = message.content[0].text
@@ -197,7 +198,7 @@ class LLMClient:
         try:
             message = self._client.messages.create(
                 model=actor.model,
-                max_tokens=1024,
+                max_tokens=MAX_TOKENS["call_pre_night_action"],
                 messages=[{"role": "user", "content": prompt}],
             )
             raw = message.content[0].text
@@ -276,7 +277,7 @@ class LLMClient:
         try:
             message = self._client.messages.create(
                 model=actor.model,
-                max_tokens=2048,
+                max_tokens=MAX_TOKENS["call_wolf_chat"],
                 messages=[{"role": "user", "content": prompt}],
             )
             raw = message.content[0].text
@@ -301,7 +302,7 @@ class LLMClient:
         try:
             message = self._client.messages.create(
                 model=actor.model,
-                max_tokens=64,
+                max_tokens=MAX_TOKENS["call_night_action"],
                 messages=[
                     {
                         "role": "user",
