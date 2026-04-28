@@ -169,3 +169,8 @@ WOLF_CHAT_OUTPUT_JSON = json.dumps({
     "speech": "Let's attack Alice.",
     "vote_candidates": [{"target": "Alice", "score": 0.9}],
 })
+
+NIGHT_ACTION_OUTPUT_JSON = json.dumps({
+    "target": "Alice",
+    "reasoning": "She is the most suspicious.",
+})

@@ -256,6 +256,30 @@ class TestPublishNightResults:
         assert not any(e.event_type == EventType.GUARD_BLOCK for e in events)
 
 
+class TestGuardReasoning:
+    def test_guard_reasoning_stored_in_log_event(self, make_test_actor, make_test_engine):
+        """
+        SUT: _publish_night_results
+        Mock: なし
+        Level: unit
+        Objective: GuardDeclaration.reasoning が GUARD LogEvent の reasoning フィールドに渡ること
+        """
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        knight = make_test_actor("Knight1", "Knight")
+        alice = make_test_actor("Alice")
+        engine, events = make_test_engine([wolf, knight, alice])
+
+        attack = AttackDeclaration(actor=wolf, target="Alice")
+        guard = GuardDeclaration(actor=knight, target="Alice", succeeded=False, reasoning="Alice is the Seer candidate.")
+        resolution = NightResolution(attack=attack, guard=guard, inspection=None)
+
+        _publish_night_results(engine, resolution)
+
+        guard_events = [e for e in events if e.event_type == EventType.GUARD]
+        assert len(guard_events) == 1
+        assert guard_events[0].reasoning == "Alice is the Seer candidate."
+
+
 class TestPublishInspection:
     def test_inspect_werewolf_sets_suspicion_max(self, make_test_actor, make_test_engine):
         """
@@ -403,6 +427,26 @@ class TestPublishInspection:
         ev = next(e for e in events if e.event_type == EventType.INSPECTION)
         assert "Werewolf" in ev.content
         assert "<" not in ev.content  # no Python repr like <src.domain.roles.Werewolf object>
+
+    def test_inspect_reasoning_stored_in_log_event(self, make_test_actor, make_test_engine):
+        """
+        SUT: _publish_inspection
+        Mock: store.save — ファイルI/Oを回避
+        Level: unit
+        Objective: InspectDeclaration.reasoning が INSPECTION LogEvent の reasoning フィールドに渡ること
+        """
+        seer = make_test_actor("Seer1", "Seer")
+        villager = make_test_actor("Alice")
+        engine, events = make_test_engine([seer, villager])
+
+        declaration = InspectDeclaration(actor=seer, target="Alice", reasoning="Alice seems evasive.")
+        inspection = InspectionResult(declaration=declaration, result=None)
+
+        with patch("src.engine.phase_night.store.save"):
+            _publish_inspection(engine, inspection)
+
+        ev = next(e for e in events if e.event_type == EventType.INSPECTION)
+        assert ev.reasoning == "Alice seems evasive."
 
     def test_inspect_updates_existing_belief(self, make_test_actor, make_test_engine):
         """

@@ -10,6 +10,7 @@ class EventType(Enum):
     SPEECH = "speech"
     REASONING = "reasoning"
     VOTE = "vote"
+    JUDGMENT = "judgment"
     ELIMINATION = "elimination"
     NIGHT_ATTACK = "night_attack"
     INSPECTION = "inspection"
@@ -47,6 +48,7 @@ class LogEvent(BaseModel):
     reply_to: int | None = None
     claimed_role: RoleField = None
     inspection_role: RoleField = None
+    reasoning: str = ""
 
     @classmethod
     def make(
@@ -62,6 +64,7 @@ class LogEvent(BaseModel):
         reply_to: int | None = None,
         claimed_role: RoleField = None,
         inspection_role: RoleField = None,
+        reasoning: str = "",
     ) -> "LogEvent":
         return cls(
             day=day,
@@ -75,4 +78,5 @@ class LogEvent(BaseModel):
             reply_to=reply_to,
             claimed_role=claimed_role,
             inspection_role=inspection_role,
+            reasoning=reasoning,
         )

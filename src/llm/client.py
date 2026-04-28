@@ -6,9 +6,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import anthropic
 import pydantic
 
+from src.config import MAX_TOKENS
 from src.domain.actor import Actor
 from src.domain.roles import Role
-from src.domain.schema import AgentOutput, Intent, JudgmentOutput, PreNightOutput, SpeechEntry, WolfChatOutput
+from src.domain.schema import AgentOutput, Intent, JudgmentOutput, NightActionOutput, PreNightOutput, SpeechEntry, WolfChatOutput
 from src.llm.prompt import PublicContext, RoleSpecificContext, SpeechDirection, build_judgment_prompt, build_night_action_prompt, build_pre_night_prompt, build_system_prompt, build_wolf_chat_prompt
 
 
@@ -132,7 +133,7 @@ class LLMClient:
         try:
             message = self._client.messages.create(
                 model=actor.model,
-                max_tokens=2048,
+                max_tokens=MAX_TOKENS["call_speech"],
                 system=system_prompt,
                 messages=[
                     {
@@ -162,14 +163,14 @@ class LLMClient:
         try:
             message = self._client.messages.create(
                 model=actor.model,
-                max_tokens=1024,
+                max_tokens=MAX_TOKENS["call_judgment"],
                 messages=[{"role": "user", "content": prompt}],
             )
             raw = message.content[0].text
             return JudgmentOutput.model_validate_json(_extract_json(raw))
         except Exception as e:
             _classify_and_log_error("call_judgment", actor.name, e, raw)
-            return JudgmentOutput(decision="silent")
+            return JudgmentOutput(decision="silent", reasoning="")
 
     def call_speech_parallel(
         self,
@@ -197,7 +198,7 @@ class LLMClient:
         try:
             message = self._client.messages.create(
                 model=actor.model,
-                max_tokens=1024,
+                max_tokens=MAX_TOKENS["call_pre_night_action"],
                 messages=[{"role": "user", "content": prompt}],
             )
             raw = message.content[0].text
@@ -276,7 +277,7 @@ class LLMClient:
         try:
             message = self._client.messages.create(
                 model=actor.model,
-                max_tokens=2048,
+                max_tokens=MAX_TOKENS["call_wolf_chat"],
                 messages=[{"role": "user", "content": prompt}],
             )
             raw = message.content[0].text
@@ -290,18 +291,18 @@ class LLMClient:
         actor: Actor,
         context: str,
         alive_players: list[str],
-    ) -> str:
-        """Call LLM for night action and return target player name."""
+    ) -> NightActionOutput:
+        """Call LLM for night action and return structured NightActionOutput."""
         prompt = build_night_action_prompt(actor, alive_players, context)
         if not prompt:
-            return ""
+            return NightActionOutput(target="", reasoning="")
 
         candidates = [p for p in alive_players if p != actor.name]
         raw = ""
         try:
             message = self._client.messages.create(
                 model=actor.model,
-                max_tokens=64,
+                max_tokens=MAX_TOKENS["call_night_action"],
                 messages=[
                     {
                         "role": "user",
@@ -310,16 +311,20 @@ class LLMClient:
                 ],
             )
             raw = message.content[0].text.strip()
+            parsed = NightActionOutput.model_validate_json(_extract_json(raw))
         except Exception as e:
             _classify_and_log_error("call_night_action", actor.name, e, raw)
-            return candidates[0] if candidates else ""
-        # Validate that the returned name is a valid alive player
+            return NightActionOutput(target=candidates[0] if candidates else "", reasoning="")
+
+        # Validate target is a live player; fall back to first candidate on mismatch
+        target = parsed.target
         for candidate in candidates:
-            if candidate.lower() == raw.lower():
-                return candidate
-        # If exact match fails, try partial match
+            if candidate.lower() == target.lower():
+                return NightActionOutput(target=candidate, reasoning=parsed.reasoning)
         for candidate in candidates:
-            if candidate.lower() in raw.lower():
-                return candidate
-        # Fallback: first candidate
-        return candidates[0] if candidates else ""
+            if candidate.lower() in target.lower():
+                return NightActionOutput(target=candidate, reasoning=parsed.reasoning)
+        return NightActionOutput(
+            target=candidates[0] if candidates else "",
+            reasoning=parsed.reasoning,
+        )

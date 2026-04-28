@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 # Game settings
@@ -11,3 +12,8 @@ LOG_DIR = PROJECT_ROOT / "state"
 PUBLIC_LOG = LOG_DIR / "public_log.jsonl"
 SPECTATOR_LOG = LOG_DIR / "spectator_log.jsonl"
 ARCHIVE_DIR = PROJECT_ROOT / "state_archive"
+
+# LLM token limits
+MAX_TOKENS: dict[str, int] = json.loads(
+    (PROJECT_ROOT / "config" / "tokens.json").read_text(encoding="utf-8")
+)

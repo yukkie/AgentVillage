@@ -49,6 +49,19 @@ class JudgmentOutput(BaseModel):
     decision: Literal["challenge", "speak", "silent", "co"]
     reply_to: int | None = None
     claim_role: RoleField = None
+    reasoning: str = ""
+
+
+class NightActionOutput(BaseModel):
+    """LLM response schema for night actions (guard / inspect / attack-fallback).
+
+    Mock-Policy: Forbidden
+        LLM I/O contract. See ``PreNightOutput`` and
+        ``tests/TestStrategy.md`` §5.
+    """
+
+    target: str
+    reasoning: str = ""
 
 
 class VoteCandidate(BaseModel):

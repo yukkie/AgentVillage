@@ -50,8 +50,9 @@ class Knight(Role):
             f"Context: {context}\n"
             f"Alive players (excluding you): {', '.join(candidates)}\n"
             f"Your task: choose one player to GUARD (protect from werewolf attack) tonight.\n"
-            "Pick a player you want to protect. You cannot guard yourself. "
-            "Respond with ONLY the player's exact name, nothing else."
+            "Pick a player you want to protect. You cannot guard yourself.\n"
+            "Respond with ONLY valid JSON, no other text:\n"
+            '{"target": "<player name>", "reasoning": "<one sentence why>"}'
         )
 
     def co_strategy_hint(self) -> str:

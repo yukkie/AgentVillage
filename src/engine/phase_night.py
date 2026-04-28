@@ -28,12 +28,14 @@ class GuardDeclaration:
     actor: Actor
     target: str
     succeeded: bool = False
+    reasoning: str = ""
 
 
 @dataclass
 class InspectDeclaration:
     actor: Actor
     target: str
+    reasoning: str = ""
 
 
 @dataclass
@@ -107,8 +109,8 @@ def _resolve_fallback_attack(engine: GameEngine, alive_names: list[str]) -> str 
     for actor in engine._alive_agents():
         if not isinstance(actor.role, Werewolf):
             continue
-        target_name = engine._llm_client.call_night_action(actor, night_context, alive_names)
-        attack = Attack(target=target_name)
+        result = engine._llm_client.call_night_action(actor, night_context, alive_names)
+        attack = Attack(target=result.target)
         if engine._validate_action(attack, actor, alive_names):
             return resolve_attack(attack, engine.agents)
     return None
@@ -132,15 +134,15 @@ def _declare_night_actions(
 
     for actor in engine._alive_agents():
         if isinstance(actor.role, Knight):
-            target_name = engine._llm_client.call_night_action(actor, night_context, alive_names)
+            result = engine._llm_client.call_night_action(actor, night_context, alive_names)
             candidates = [n for n in alive_names if n != actor.name]
-            if target_name in candidates:
-                guard = GuardDeclaration(actor=actor, target=target_name)
+            if result.target in candidates:
+                guard = GuardDeclaration(actor=actor, target=result.target, reasoning=result.reasoning)
         elif isinstance(actor.role, Seer):
-            target_name = engine._llm_client.call_night_action(actor, night_context, alive_names)
-            inspect_action = Inspect(target=target_name)
+            result = engine._llm_client.call_night_action(actor, night_context, alive_names)
+            inspect_action = Inspect(target=result.target)
             if engine._validate_action(inspect_action, actor, alive_names):
-                inspect = InspectDeclaration(actor=actor, target=inspect_action.target)
+                inspect = InspectDeclaration(actor=actor, target=inspect_action.target, reasoning=result.reasoning)
 
     return NightDeclarations(attack=attack, guard=guard, inspect=inspect)
 
@@ -207,6 +209,7 @@ def _publish_inspection(engine: GameEngine, inspection: InspectionResult) -> Non
         content=f"{seer.name} inspects {name}: {'Werewolf' if isinstance(result, Werewolf) else 'Not Werewolf'}",
         inspection_role=role_name,
         is_public=False,
+        reasoning=inspection.declaration.reasoning,
     ))
 
 
@@ -220,6 +223,7 @@ def _publish_night_results(engine: GameEngine, resolution: NightResolution) -> N
             target=resolution.guard.target,
             content=f"{resolution.guard.actor.name} guards {resolution.guard.target}",
             is_public=False,
+            reasoning=resolution.guard.reasoning,
         ))
 
     if resolution.attack is not None:
