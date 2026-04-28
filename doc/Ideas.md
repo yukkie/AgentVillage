@@ -30,6 +30,14 @@
 
 ---
 
+## 技術的負債 (tech-debt)
+
+| # | 種別 | 優先度 | SP | タイトル | 内容 |
+|---|---|---|---|---|---|
+| yukkie/AgentVillage#201 | tech-debt | ❌ | 1 | Consolidate repeated test side-effect helpers into conftest | night_action・wolf_chat_side_effect の重複 inner function を conftest に集約 |
+
+---
+
 ## 未整理メモ
 
 *新しいアイデアはここに追記する*
