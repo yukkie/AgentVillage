@@ -66,7 +66,9 @@ class Werewolf(Role):
             f"Context: {context}\n"
             f"Alive players (excluding you): {', '.join(candidates)}\n"
             f"Your task: choose one player to ATTACK (eliminate) tonight.\n"
-            "You must pick a non-Werewolf target. Respond with ONLY the player's exact name, nothing else."
+            "You must pick a non-Werewolf target.\n"
+            "Respond with ONLY valid JSON, no other text:\n"
+            '{"target": "<player name>", "reasoning": "<one sentence why>"}'
         )
 
     def co_strategy_hint(self) -> str:

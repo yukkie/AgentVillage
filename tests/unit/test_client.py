@@ -5,13 +5,14 @@ import anthropic
 import pydantic
 import pytest
 
-from src.domain.schema import AgentOutput, JudgmentOutput, PreNightOutput, WolfChatOutput
+from src.domain.schema import AgentOutput, JudgmentOutput, NightActionOutput, PreNightOutput, WolfChatOutput
 from src.domain.roles import get_role
 from src.llm.client import _classify_error, resolve_claim_role
 from tests.conftest import (
     AGENT_OUTPUT_JSON,
     JUDGMENT_CO_OUTPUT_JSON,
     JUDGMENT_OUTPUT_JSON,
+    NIGHT_ACTION_OUTPUT_JSON,
     PRE_NIGHT_CO_OUTPUT_JSON,
     PRE_NIGHT_OUTPUT_JSON,
     WOLF_CHAT_OUTPUT_JSON,
@@ -103,34 +104,83 @@ class TestCallWolfChat:
 
 class TestCallNightAction:
     def test_exact_match(self, make_test_actor):
+        """
+        SUT: LLMClient.call_night_action
+        Mock: anthropic SDK — returns JSON with target matching a candidate exactly
+        Level: unit
+        Objective: exact name match resolves to correct NightActionOutput.target
+        """
         actor = make_test_actor("Wolf", "Werewolf")
-        llm = make_llm_client_with_response("Alice")
+        llm = make_llm_client_with_response(NIGHT_ACTION_OUTPUT_JSON)
         result = llm.call_night_action(actor, "night context", ["Alice", "Bob"])
-        assert result == "Alice"
+        assert isinstance(result, NightActionOutput)
+        assert result.target == "Alice"
+
+    def test_reasoning_is_extracted(self, make_test_actor):
+        """
+        SUT: LLMClient.call_night_action
+        Mock: anthropic SDK — returns JSON with reasoning field
+        Level: unit
+        Objective: reasoning field is preserved in NightActionOutput
+        """
+        actor = make_test_actor("Wolf", "Werewolf")
+        llm = make_llm_client_with_response(NIGHT_ACTION_OUTPUT_JSON)
+        result = llm.call_night_action(actor, "night context", ["Alice", "Bob"])
+        assert result.reasoning == "She is the most suspicious."
 
     def test_partial_match(self, make_test_actor):
+        """
+        SUT: LLMClient.call_night_action
+        Mock: anthropic SDK — returns JSON with target embedded in longer string
+        Level: unit
+        Objective: partial name match still resolves to correct target
+        """
         actor = make_test_actor("Wolf", "Werewolf")
-        llm = make_llm_client_with_response("I think Alice is the target")
+        llm = make_llm_client_with_response(
+            json.dumps({"target": "I think Alice", "reasoning": "suspicious"})
+        )
         result = llm.call_night_action(actor, "night context", ["Alice", "Bob"])
-        assert result == "Alice"
+        assert result.target == "Alice"
 
     def test_fallback_to_first_candidate_on_no_match(self, make_test_actor):
+        """
+        SUT: LLMClient.call_night_action
+        Mock: anthropic SDK — returns JSON with unrecognized target
+        Level: unit
+        Objective: falls back to first candidate when target cannot be matched
+        """
         actor = make_test_actor("Wolf", "Werewolf")
-        llm = make_llm_client_with_response("Nobody")
+        llm = make_llm_client_with_response(
+            json.dumps({"target": "Nobody", "reasoning": ""})
+        )
         result = llm.call_night_action(actor, "night context", ["Alice", "Bob"])
-        assert result == "Alice"
+        assert result.target == "Alice"
 
     def test_fallback_to_first_candidate_on_exception(self, make_test_actor):
+        """
+        SUT: LLMClient.call_night_action
+        Mock: anthropic SDK — raises RuntimeError
+        Level: unit
+        Objective: returns empty reasoning and first candidate on API failure
+        """
         actor = make_test_actor("Wolf", "Werewolf")
         llm = make_failing_llm_client()
         result = llm.call_night_action(actor, "night context", ["Alice", "Bob"])
-        assert result == "Alice"
+        assert result.target == "Alice"
+        assert result.reasoning == ""
 
-    def test_returns_empty_string_when_no_prompt(self, make_test_actor):
+    def test_returns_empty_when_no_prompt(self, make_test_actor):
+        """
+        SUT: LLMClient.call_night_action
+        Mock: anthropic SDK — not called (Villager has no night_action_prompt)
+        Level: unit
+        Objective: returns NightActionOutput with empty target when no prompt is generated
+        """
         actor = make_test_actor("Alice", "Villager")
         llm = make_failing_llm_client()
         result = llm.call_night_action(actor, "night context", ["Alice", "Bob"])
-        assert result == ""
+        assert result.target == ""
+        assert result.reasoning == ""
         llm._client.messages.create.assert_not_called()
 
 

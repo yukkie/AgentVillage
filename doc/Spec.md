@@ -168,13 +168,12 @@ LLMの出力は必ずJSONで受け取る。フェーズによって2種類のフ
 
 #### (B) 判断フォーマット（DISCUSSIONの判断フェーズ・軽量）
 
-outputが数トークンで済むよう最小限の構造にする。
-
 ```json
 {
   "decision": "challenge",
   "reply_to": 3,
-  "claim_role": null
+  "claim_role": null,
+  "reasoning": "Alice's claim contradicts yesterday's vote pattern."
 }
 ```
 
@@ -183,6 +182,7 @@ outputが数トークンで済むよう最小限の構造にする。
 | `decision` | `"challenge"` \| `"speak"` \| `"silent"` \| `"co"` | 行動の選択。`"co"` は適格エージェント（未COの非村人役職）のみ有効 |
 | `reply_to` | `int` \| `null` | `challenge` 時に突っ込む発言のspeech_id。他は null |
 | `claim_role` | `str` \| `null` | `decision="co"` のときに公言する役職。他は null。未指定時は役職ごとのデフォルトにフォールバック |
+| `reasoning` | `str` | なぜこの行動を選んだかの短文（観戦者向け）。省略時は `""` |
 
 判断プロンプトには、適格エージェントに対してのみ `"co"` の選択肢と役職別の戦略ヒント（例: 占い師の単独CO、人狼の偽CO、狂人の勝利確定COなど）を含める。不適格なエージェントが万一 `"co"` を返した場合、エンジン側で `"speak"` にフォールバックする。
 

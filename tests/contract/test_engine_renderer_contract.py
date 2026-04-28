@@ -31,12 +31,13 @@ from src.ui.renderer import Renderer
 def _run_night(engine, attack_target: str, inspect_target: str) -> None:
     """Drive a real night phase: wolves attack ``attack_target``, seer
     inspects ``inspect_target``. Other roles auto-resolve to no action."""
+    from src.domain.schema import NightActionOutput
 
     def night_action(actor, _context, _alive_names):
         if actor.role.name == "Werewolf":
-            return attack_target
+            return NightActionOutput(target=attack_target, reasoning="")
         if actor.role.name == "Seer":
-            return inspect_target
+            return NightActionOutput(target=inspect_target, reasoning="")
         # Other roles (e.g. Knight) are not exercised in these tests; if a
         # caller sets up such an actor they need to extend this helper.
         raise AssertionError(f"unexpected actor role in test: {actor.role.name}")

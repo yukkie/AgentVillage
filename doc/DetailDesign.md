@@ -203,6 +203,12 @@ class JudgmentOutput(BaseModel):
     decision: Literal["challenge", "speak", "silent", "co"]
     reply_to: int | None = None
     claim_role: Role | None = None
+    reasoning: str = ""   # why this action was chosen (spectator-only)
+
+
+class NightActionOutput(BaseModel):
+    target: str           # validated alive player name
+    reasoning: str = ""   # why this target was chosen (spectator-only)
 ```
 
 - `claim_role` は `decision="co"` のときに名乗る予定の役職
@@ -217,7 +223,7 @@ class JudgmentOutput(BaseModel):
 | `call_judgment()` | 昼フェーズの並列判断（challenge / speak / silent / co） | 1024 | `decision`, `reply_to`, `claim_role` の軽量JSON。`co_eligible=True` のときのみ `"co"` を選択肢に含める |
 | `call_wolf_chat()` | 夜フェーズの狼チーム会話 | 2048 | thought + speech + vote_candidates。日本語で長くなりやすい |
 | `call_pre_night_action()` | 前夜フェーズの CO 判断（村人以外） | 1024 | thought + decision + claim_role + reasoning の4フィールド |
-| `call_night_action()` | 夜フェーズの個別行動（襲撃・占い・護衛） | 64 | プレイヤー名1つだけ返す |
+| `call_night_action()` | 夜フェーズの個別行動（襲撃・占い・護衛） | 256 | `NightActionOutput` (target + reasoning) |
 
 ### claim_role 解決フロー
 
@@ -259,12 +265,13 @@ LLMの提案をゲームエンジンに渡す橋渡し役。
 | EventType | is_public | 説明 |
 |---|---|---|
 | `SPEECH` | True | エージェントの発言 |
-| `VOTE` | True | 投票行動 |
+| `VOTE` | True | 投票行動。`reasoning` フィールドに投票理由（観戦者のみ表示） |
+| `JUDGMENT` | False | 昼DISCUSSION判断フェーズの行動選択理由（観戦者のみ） |
 | `ELIMINATION` | True | 昼の処刑 |
 | `NIGHT_ATTACK` | False | 狼の夜襲（観戦者のみ） |
-| `INSPECTION` | False | 占い師の占い結果（観戦者のみ） |
+| `INSPECTION` | False | 占い師の占い結果（観戦者のみ）。`reasoning` フィールドに占い対象を選んだ理由 |
 | `MEDIUM_RESULT` | False | 霊媒師が受け取った処刑者の役職（観戦者のみ・黄色表示） |
-| `GUARD` | False | 騎士の護衛行動（観戦者のみ） |
+| `GUARD` | False | 騎士の護衛行動（観戦者のみ）。`reasoning` フィールドに護衛対象を選んだ理由 |
 | `GUARD_BLOCK` | False / True | 護衛成功の詳細（観戦者）/ 全体通知（村人全員） |
 | `WOLF_CHAT` | False | 狼チャット（観戦者のみ） |
 | `PRE_NIGHT_DECISION` | False | 前夜CO判断（観戦者のみ） |
@@ -281,6 +288,10 @@ LLMの提案をゲームエンジンに渡す橋渡し役。
 `INSPECTION` イベントには `inspection_role: str | None` フィールドを使う。
 占い師が確認した役職名（`"Werewolf"` または `"Villager"`）を格納し、レンダラーが文字列パースなしに役職情報を参照できる。
 既存アーカイブとの後方互換は `default=None` で対応し、`None` の場合は `content` フォールバックで表示する。
+
+`VOTE` / `GUARD` / `INSPECTION` / `JUDGMENT` イベントには `reasoning: str` フィールドを使う。
+エージェントが行動を選んだ理由を格納し、観戦者モードで表示する。他エージェントのゲーム状態には含めない（`is_public=False` または表示フィルタで制御）。
+既存アーカイブとの後方互換は `default=""` で対応する。
 
 ---
 

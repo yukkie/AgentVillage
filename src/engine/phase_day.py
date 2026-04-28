@@ -43,6 +43,16 @@ def _run_discussion(engine: GameEngine) -> None:
             engine.lang,
             engine._build_speech_args,
         ):
+            if judgment.reasoning:
+                engine._emit(LogEvent.make(
+                    day=engine.day,
+                    phase=Phase.DAY_DISCUSSION.value,
+                    event_type=EventType.JUDGMENT,
+                    agent=actor.name,
+                    content=f"{actor.name} [{judgment.decision}]: {judgment.reasoning}",
+                    is_public=False,
+                    reasoning=judgment.reasoning,
+                ))
             if output is None:
                 engine._emit(LogEvent.make(
                     day=engine.day,
@@ -92,6 +102,7 @@ def _run_vote(engine: GameEngine) -> str | None:
             vote_action = engine._make_vote(target)
             if engine._validate_action(vote_action, actor, alive_names):
                 votes[actor.name] = target
+                vote_reasoning = output.reasoning if output else ""
                 engine._emit(LogEvent.make(
                     day=engine.day,
                     phase=Phase.DAY_VOTE.value,
@@ -100,6 +111,7 @@ def _run_vote(engine: GameEngine) -> str | None:
                     target=target,
                     content=f"{actor.name} votes for {target}",
                     is_public=True,
+                    reasoning=vote_reasoning,
                 ))
 
     if not votes:

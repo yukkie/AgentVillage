@@ -289,7 +289,8 @@ Decide your next action. Respond with ONLY valid JSON. No extra fields, no expla
 {{
   "decision": {decision_options},
   "reply_to": <speech_id to challenge, or null>,
-  "claim_role": <role_name to claim, or null>
+  "claim_role": <role_name to claim, or null>,
+  "reasoning": "<one sentence: why you chose this action>"
 }}
 - "challenge": directly counter a specific speech (set reply_to to its speech_id)
 - "speak": add a new statement unprompted
@@ -302,8 +303,9 @@ Decide your next action. Respond with ONLY valid JSON. No extra fields, no expla
         )
     else:
         lines.append('- Set "claim_role" to null')
-    lines.append(f"""- The JSON must contain exactly these three fields and nothing else.
-Use {lang} only for internal reasoning if needed, but keep the JSON minimal.""")
+    lines.append(f"""- The JSON must contain exactly these four fields and nothing else.
+- "reasoning" must be written in {lang}
+- Keep the JSON minimal — "reasoning" should be one short sentence.""")
     return "\n".join(lines)
 
 

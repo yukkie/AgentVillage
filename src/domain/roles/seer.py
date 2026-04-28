@@ -50,7 +50,9 @@ class Seer(Role):
             f"Context: {context}\n"
             f"Alive players (excluding you): {', '.join(candidates)}\n"
             f"Your task: choose one player to INSPECT (learn their alignment) tonight.\n"
-            "Pick a player you want to investigate. Respond with ONLY the player's exact name, nothing else."
+            "Pick a player you want to investigate.\n"
+            "Respond with ONLY valid JSON, no other text:\n"
+            '{"target": "<player name>", "reasoning": "<one sentence why>"}'
         )
 
     def co_strategy_hint(self) -> str:

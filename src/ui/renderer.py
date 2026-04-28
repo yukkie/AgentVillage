@@ -20,12 +20,11 @@ class Renderer:
     """Convert ``LogEvent`` instances into Rich ``Text`` for console output."""
 
     # Simple events where the output is ``[PREFIX] {content}`` in a fixed style.
-    # Events needing dynamic style or extra fields (SPEECH, VOTE, PHASE_START,
-    # PRE_NIGHT_DECISION, INSPECTION, GAME_OVER) are handled separately in ``on_event``.
+    # Events needing dynamic style or extra fields (SPEECH, VOTE, JUDGMENT, PHASE_START,
+    # PRE_NIGHT_DECISION, INSPECTION, GUARD, GAME_OVER) are handled separately in ``on_event``.
     _SIMPLE_EVENT_STYLES: dict[EventType, tuple[str, str]] = {
         EventType.NIGHT_ATTACK: ("[NIGHT] ", "red"),
         EventType.WOLF_CHAT: ("[WOLF] ", "red"),
-        EventType.GUARD: ("[GUARD] ", "bright_green"),
         EventType.GUARD_BLOCK: ("[GUARD BLOCK] ", "bold bright_green"),
         EventType.CO_ANNOUNCEMENT: ("[CO] ", "bold white"),
         EventType.MEDIUM_RESULT: ("[MEDIUM] ", "cyan"),
@@ -56,7 +55,13 @@ class Renderer:
             text.append(event.content, style="magenta")
 
         elif event.event_type == EventType.VOTE:
-            text.append(f"[VOTE] {event.agent} → {event.target}", style="white")
+            vote_text = f"[VOTE] {event.agent} → {event.target}"
+            if self.spectator_mode and event.reasoning:
+                vote_text += f" — {event.reasoning}"
+            text.append(vote_text, style="white")
+
+        elif event.event_type == EventType.JUDGMENT:
+            text.append(f"[JUDGMENT] {event.agent}: {event.reasoning}", style="dim cyan")
 
         elif event.event_type == EventType.ELIMINATION:
             text.append(f"\n{event.content}\n", style="bold red")
@@ -70,6 +75,12 @@ class Renderer:
                 )
             else:
                 text.append(f"[NIGHT] {event.content}", style="red")
+
+        elif event.event_type == EventType.GUARD:
+            guard_text = f"[GUARD] {event.content}"
+            if self.spectator_mode and event.reasoning:
+                guard_text += f" — {event.reasoning}"
+            text.append(guard_text, style="bright_green")
 
         elif event.event_type == EventType.INSPECTION:
             self._render_inspection(event, text)
@@ -100,6 +111,8 @@ class Renderer:
             display = f"{event.agent} inspects {event.target}: {result_str}"
         else:
             display = event.content
+        if self.spectator_mode and event.reasoning:
+            display += f" — {event.reasoning}"
         text.append(f"[INSPECT] {display}", style="cyan")
 
     def _render_speech(self, event: LogEvent, text: Text) -> None:
