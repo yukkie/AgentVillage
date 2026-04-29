@@ -176,3 +176,145 @@ def test_game_over_has_header_and_footer(make_test_actor) -> None:
     assert result is not None
     assert "Village wins!" in result.plain
     assert result.plain.count("=" * 50) == 2
+
+
+# ── #203: JUDGMENT decision フィールド ──────────────────────────────────────────
+
+
+def test_judgment_shows_decision_field() -> None:
+    """
+    SUT: Renderer.on_event (JUDGMENT)
+    Mock: なし
+    Level: unit
+    Objective: JUDGMENT イベントの decision フィールドがエージェント名の後に表示されること。
+    """
+    renderer = Renderer([], spectator_mode=True)
+    event = _make_event(
+        EventType.JUDGMENT,
+        agent="Gina",
+        decision="speak",
+        reasoning="情報が少ないため発言する。",
+        is_public=False,
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert "[JUDGMENT] Gina: speak" in result.plain
+
+
+def test_judgment_reasoning_follows_decision_on_newline() -> None:
+    """
+    SUT: Renderer.on_event (JUDGMENT)
+    Mock: なし
+    Level: unit
+    Objective: reasoning が decision の後に改行で続くこと。
+    """
+    renderer = Renderer([], spectator_mode=True)
+    event = _make_event(
+        EventType.JUDGMENT,
+        agent="Gina",
+        decision="speak",
+        reasoning="情報が少ないため発言する。",
+        is_public=False,
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert "[JUDGMENT] Gina: speak\n情報が少ないため発言する。" in result.plain
+
+
+# ── #205: reasoning の dim 表示 ──────────────────────────────────────────────────
+
+
+def test_vote_reasoning_is_dimmed_in_spectator_mode(make_test_actor) -> None:
+    """
+    SUT: Renderer.on_event (VOTE)
+    Mock: なし
+    Level: unit
+    Objective: spectator モードで reasoning が dim スタイルの別 span として追加されること。
+    """
+    renderer = Renderer([], spectator_mode=True)
+    event = _make_event(
+        EventType.VOTE, agent="Alice", target="Bob", reasoning="Bobが怪しい。"
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert "Bobが怪しい。" in result.plain
+    dim_spans = [s for s in result.spans if "dim" in str(s.style)]
+    assert len(dim_spans) >= 1
+
+
+def test_guard_reasoning_is_dimmed_in_spectator_mode() -> None:
+    """
+    SUT: Renderer.on_event (GUARD)
+    Mock: なし
+    Level: unit
+    Objective: spectator モードで reasoning が dim スタイルの別 span として追加されること。
+    """
+    renderer = Renderer([], spectator_mode=True)
+    event = _make_event(
+        EventType.GUARD,
+        content="Knight guards Alice",
+        reasoning="Aliceが占い師候補。",
+        is_public=False,
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert "Aliceが占い師候補。" in result.plain
+    dim_spans = [s for s in result.spans if "dim" in str(s.style)]
+    assert len(dim_spans) >= 1
+
+
+def test_inspection_reasoning_is_dimmed_in_spectator_mode() -> None:
+    """
+    SUT: Renderer._render_inspection
+    Mock: なし
+    Level: unit
+    Objective: spectator モードで reasoning が dim スタイルの別 span として追加されること。
+    """
+    from src.domain.roles import get_role
+    renderer = Renderer([], spectator_mode=True)
+    event = _make_event(
+        EventType.INSPECTION,
+        agent="Seer1",
+        target="Wolf1",
+        inspection_role=get_role("Werewolf"),
+        reasoning="Wolfの行動パターンが一致。",
+        is_public=False,
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert "Wolfの行動パターンが一致。" in result.plain
+    dim_spans = [s for s in result.spans if "dim" in str(s.style)]
+    assert len(dim_spans) >= 1
+
+
+def test_judgment_reasoning_is_dimmed() -> None:
+    """
+    SUT: Renderer.on_event (JUDGMENT)
+    Mock: なし
+    Level: unit
+    Objective: reasoning が dim スタイルの別 span として追加されること。
+    """
+    renderer = Renderer([], spectator_mode=True)
+    event = _make_event(
+        EventType.JUDGMENT,
+        agent="Gina",
+        decision="silent",
+        reasoning="今は静観が最善。",
+        is_public=False,
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    dim_spans = [s for s in result.spans if "dim" in str(s.style)]
+    assert len(dim_spans) >= 1

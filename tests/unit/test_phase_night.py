@@ -16,6 +16,7 @@ from src.engine.phase_night import (
     NightResolution,
     _publish_inspection,
     _publish_night_results,
+    _resolve_declared_inspection,
     _resolve_night_outcomes,
     _run_wolf_chat,
 )
@@ -471,3 +472,36 @@ class TestPublishInspection:
 
         assert seer.state.beliefs["Alice"].trust == 1.0
         assert len([e for e in events if e.event_type == EventType.INSPECTION]) == 1
+
+
+class TestResolveDeclaredInspection:
+    def test_reasoning_is_preserved_after_target_resolution(self, make_test_actor, make_test_engine):
+        """
+        SUT: _resolve_declared_inspection
+        Mock: なし
+        Level: unit
+        Objective: dataclasses.replace で target を上書きしても reasoning が失われないこと。
+        """
+        seer = make_test_actor("Seer1", "Seer")
+        villager = make_test_actor("Alice")
+        engine, _ = make_test_engine([seer, villager])
+
+        declaration = InspectDeclaration(actor=seer, target="Alice", reasoning="Alice looks suspicious.")
+        result = _resolve_declared_inspection(engine, declaration)
+
+        assert result is not None
+        assert result.declaration.reasoning == "Alice looks suspicious."
+
+    def test_none_input_returns_none(self, make_test_actor, make_test_engine):
+        """
+        SUT: _resolve_declared_inspection
+        Mock: なし
+        Level: unit
+        Objective: inspect=None のとき None を返すこと。
+        """
+        seer = make_test_actor("Seer1", "Seer")
+        engine, _ = make_test_engine([seer])
+
+        result = _resolve_declared_inspection(engine, None)
+
+        assert result is None
