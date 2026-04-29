@@ -271,6 +271,7 @@ Rich を使用したカラー表示。
 | 前夜判断ログ・狂人（観戦者のみ） | オレンジ | |
 | 死亡通知 | 赤・太字 | |
 | フェーズ区切り | 黄・太字 | |
+| reasoning テキスト（観戦者ログ） | dim（薄色） | VOTE / GUARD / INSPECTION / JUDGMENT の補足情報。主要情報と同一スパンに混在させない |
 
 **public モードと spectator モードの色の扱い**
 - public モード: `claimed_role` が設定されている場合のみ役職色を適用。未COのエージェントは白

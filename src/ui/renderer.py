@@ -55,13 +55,14 @@ class Renderer:
             text.append(event.content, style="magenta")
 
         elif event.event_type == EventType.VOTE:
-            vote_text = f"[VOTE] {event.agent} → {event.target}"
+            text.append(f"[VOTE] {event.agent} → {event.target}", style="white")
             if self.spectator_mode and event.reasoning:
-                vote_text += f" — {event.reasoning}"
-            text.append(vote_text, style="white")
+                text.append(f" — {event.reasoning}", style="dim")
 
         elif event.event_type == EventType.JUDGMENT:
-            text.append(f"[JUDGMENT] {event.agent}: {event.reasoning}", style="dim cyan")
+            text.append(f"[JUDGMENT] {event.agent}: {event.decision}", style="cyan")
+            if event.reasoning:
+                text.append(f"\n{event.reasoning}", style="dim")
 
         elif event.event_type == EventType.ELIMINATION:
             text.append(f"\n{event.content}\n", style="bold red")
@@ -77,10 +78,9 @@ class Renderer:
                 text.append(f"[NIGHT] {event.content}", style="red")
 
         elif event.event_type == EventType.GUARD:
-            guard_text = f"[GUARD] {event.content}"
+            text.append(f"[GUARD] {event.content}", style="bright_green")
             if self.spectator_mode and event.reasoning:
-                guard_text += f" — {event.reasoning}"
-            text.append(guard_text, style="bright_green")
+                text.append(f" — {event.reasoning}", style="dim")
 
         elif event.event_type == EventType.INSPECTION:
             self._render_inspection(event, text)
@@ -111,9 +111,9 @@ class Renderer:
             display = f"{event.agent} inspects {event.target}: {result_str}"
         else:
             display = event.content
-        if self.spectator_mode and event.reasoning:
-            display += f" — {event.reasoning}"
         text.append(f"[INSPECT] {display}", style="cyan")
+        if self.spectator_mode and event.reasoning:
+            text.append(f" — {event.reasoning}", style="dim")
 
     def _render_speech(self, event: LogEvent, text: Text) -> None:
         if event.content.startswith("[THINK]"):

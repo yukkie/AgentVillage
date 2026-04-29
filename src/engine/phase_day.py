@@ -51,6 +51,7 @@ def _run_discussion(engine: GameEngine) -> None:
                     agent=actor.name,
                     content=f"{actor.name} [{judgment.decision}]: {judgment.reasoning}",
                     is_public=False,
+                    decision=judgment.decision,
                     reasoning=judgment.reasoning,
                 ))
             if output is None:

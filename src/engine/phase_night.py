@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 from src.agent import memory as memory_mod, store
@@ -155,7 +155,7 @@ def _resolve_declared_inspection(
 
     name, result = resolve_inspect(Inspect(target=inspect.target), engine.agents)
     return InspectionResult(
-        declaration=InspectDeclaration(actor=inspect.actor, target=name),
+        declaration=replace(inspect, target=name),
         result=result,
     )
 
