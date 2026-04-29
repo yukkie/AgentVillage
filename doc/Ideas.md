@@ -13,9 +13,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#203 | bug | ❌ | - | [JUDGMENT] log missing decision field in renderer output | [JUDGMENT] ログに decision が表示されず何を決定したか不明 |
-| yukkie/AgentVillage#205 | bug | ❌ | - | Renderer: reasoning text should be visually dimmed in spectator log | VOTE/GUARD/INSPECTION/JUDGMENT の reasoning が薄い色で表示されない |
-| yukkie/AgentVillage#206 | bug | ❌ | - | GUARD/INSPECTION reasoning not shown in spectator log | 夜フェーズの GUARD/INSPECTION ログに reasoning が表示されない |
 | yukkie/AgentVillage#21 | enhancement | 🔴 | 5 | Day 2+ pre-night judgment phase | 昼開始前の判断フェーズを Day 2+ にも拡張 |
 | yukkie/AgentVillage#33 | enhancement | 🔴 | 5 | Wolf chat improvements | 早期終了・偽CO協議・テスト |
 | yukkie/AgentVillage#23 | enhancement | 🟡 | 3 | Auto-summarize memory_summary | 記憶が長くなったら LLM で自動要約 |
