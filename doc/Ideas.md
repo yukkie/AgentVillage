@@ -13,6 +13,7 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| yukkie/AgentVillage#210 | bug | ❌ | - | NIGHT_ATTACK: werewolf attack reasoning not passed to LogEvent | 狼が1体のとき wolf chat なしで攻撃するが reasoning が観戦者ログに表示されない |
 | yukkie/AgentVillage#21 | enhancement | 🔴 | 5 | Day 2+ pre-night judgment phase | 昼開始前の判断フェーズを Day 2+ にも拡張 |
 | yukkie/AgentVillage#33 | enhancement | 🔴 | 5 | Wolf chat improvements | 早期終了・偽CO協議・テスト |
 | yukkie/AgentVillage#23 | enhancement | 🟡 | 3 | Auto-summarize memory_summary | 記憶が長くなったら LLM で自動要約 |
