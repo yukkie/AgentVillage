@@ -14,7 +14,7 @@
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#207 | tech-debt | ❌ | 2 | Add 'Why' rationale to project-discipline.md for key development process decisions | 主要プロセス決定の Why を project-discipline.md に記載し SKILL.md から参照する |
-| yukkie/AgentVillage#216 | enhancement / tech-debt | ❌ | - | Replace vote_candidates with dedicated VOTE phase prompt | 投票フェーズを専用 LLM 呼び出しに置き換え、Intent.vote_candidates を廃止する |
+| yukkie/AgentVillage#216 | enhancement / tech-debt | ❌ | - | Replace vote_candidates with dedicated VOTE phase prompt | 投票フェーズを専用 LLM 呼び出しに置き換え、発話フェーズの最終 vote_candidates を VOTE プロンプトへの入力として渡す |
 | yukkie/AgentVillage#219 | enhancement | ❌ | 2 | Emit vote_candidates updates as spectator-only log events during speech phases | 発言フェーズごとに vote_candidates の更新を spectator 専用ログイベントとして emit する |
 | yukkie/AgentVillage#21 | enhancement | 🔴 | 5 | Day 2+ pre-night judgment phase | 昼開始前の判断フェーズを Day 2+ にも拡張 |
 | yukkie/AgentVillage#33 | enhancement | 🔴 | 5 | Wolf chat improvements | 早期終了・偽CO協議・テスト |
