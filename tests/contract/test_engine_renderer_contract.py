@@ -33,7 +33,7 @@ def _run_night(engine, attack_target: str, inspect_target: str) -> None:
     inspects ``inspect_target``. Other roles auto-resolve to no action."""
     from src.domain.schema import NightActionOutput
 
-    def night_action(actor, _context, _alive_names):
+    def night_action_by_role(actor, _context, _alive_names):
         if actor.role.name == "Werewolf":
             return NightActionOutput(target=attack_target, reasoning="")
         if actor.role.name == "Seer":
@@ -42,7 +42,7 @@ def _run_night(engine, attack_target: str, inspect_target: str) -> None:
         # caller sets up such an actor they need to extend this helper.
         raise AssertionError(f"unexpected actor role in test: {actor.role.name}")
 
-    engine._llm_client.call_night_action.side_effect = night_action
+    engine._llm_client.call_night_action.side_effect = night_action_by_role
 
     with patch("src.agent.store.save"):
         engine._run_night()
