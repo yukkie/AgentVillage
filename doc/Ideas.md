@@ -13,6 +13,8 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| yukkie/AgentVillage#201 | tech-debt | ❌ | 1 | Consolidate repeated test side-effect helpers into conftest | night_action・wolf_chat_side_effect の重複 inner function を conftest に集約 |
+| yukkie/AgentVillage#207 | tech-debt | ❌ | 2 | Add 'Why' rationale to project-discipline.md for key development process decisions | 主要プロセス決定の Why を project-discipline.md に記載し SKILL.md から参照する |
 | yukkie/AgentVillage#212 | enhancement | ❌ | - | Werewolf vote with wolf-aware strategy option | 狼が昼投票時に村人として振る舞うか狼有利に投票するか選択できるようにする |
 | yukkie/AgentVillage#21 | enhancement | 🔴 | 5 | Day 2+ pre-night judgment phase | 昼開始前の判断フェーズを Day 2+ にも拡張 |
 | yukkie/AgentVillage#33 | enhancement | 🔴 | 5 | Wolf chat improvements | 早期終了・偽CO協議・テスト |
@@ -28,15 +30,6 @@
 | yukkie/AgentVillage#29 | enhancement | 🟢 | 8 | Persona community sharing | キャラテンプレートの共有 |
 | yukkie/AgentVillage#27 | enhancement | 🟢 | 13 | Web / mobile app | FastAPI + WebSocket + React |
 | yukkie/AgentVillage#30 | enhancement | 🟢 | 13 | State management DB migration | JSON → DB 移行 |
-
----
-
-## 技術的負債 (tech-debt)
-
-| # | 種別 | 優先度 | SP | タイトル | 内容 |
-|---|---|---|---|---|---|
-| yukkie/AgentVillage#201 | tech-debt | ❌ | 1 | Consolidate repeated test side-effect helpers into conftest | night_action・wolf_chat_side_effect の重複 inner function を conftest に集約 |
-| yukkie/AgentVillage#207 | tech-debt | ❌ | 2 | Add 'Why' rationale to project-discipline.md for key development process decisions | 主要プロセス決定の Why を project-discipline.md に記載し SKILL.md から参照する |
 
 ---
 
