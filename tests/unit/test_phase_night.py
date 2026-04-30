@@ -256,6 +256,26 @@ class TestPublishNightResults:
 
         assert not any(e.event_type == EventType.GUARD_BLOCK for e in events)
 
+    def test_attack_reasoning_stored_in_night_attack_log_event(self, make_test_actor, make_test_engine):
+        """
+        SUT: _publish_night_results
+        Mock: なし
+        Level: unit
+        Objective: AttackDeclaration.reasoning が NIGHT_ATTACK LogEvent の reasoning フィールドに渡ること
+        """
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        alice = make_test_actor("Alice")
+        engine, events = make_test_engine([wolf, alice])
+
+        attack = AttackDeclaration(actor=wolf, target="Alice", reasoning="Alice is likely the Seer.")
+        resolution = NightResolution(attack=attack, guard=None, inspection=None)
+
+        _publish_night_results(engine, resolution)
+
+        attack_events = [e for e in events if e.event_type == EventType.NIGHT_ATTACK]
+        assert len(attack_events) == 1
+        assert attack_events[0].reasoning == "Alice is likely the Seer."
+
 
 class TestGuardReasoning:
     def test_guard_reasoning_stored_in_log_event(self, make_test_actor, make_test_engine):

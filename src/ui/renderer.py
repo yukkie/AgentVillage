@@ -76,6 +76,8 @@ class Renderer:
                 )
             else:
                 text.append(f"[NIGHT] {event.content}", style="red")
+            if self.spectator_mode and event.reasoning:
+                text.append(f" — {event.reasoning}", style="dim")
 
         elif event.event_type == EventType.GUARD:
             text.append(f"[GUARD] {event.content}", style="bright_green")
