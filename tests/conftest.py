@@ -131,6 +131,54 @@ def make_pre_night_parallel_side_effect(decision: str, claim_role: str | None = 
     return _side_effect
 
 
+def make_night_action_side_effect(targets: dict[str, str]) -> callable:
+    """Side effect for call_night_action: map actor role/name to night action target.
+
+    Args:
+        targets: dict mapping actor name to target name (e.g. {"Wolf1": "Alice", "Seer1": "Wolf1"})
+
+    Returns:
+        callable that accepts (actor: Actor, context, alive_names) and returns NightActionOutput
+    """
+    from src.domain.schema import NightActionOutput
+
+    def _side_effect(actor, _context, _alive_names):
+        if actor.name in targets:
+            return NightActionOutput(target=targets[actor.name], reasoning="")
+        raise AssertionError(f"unexpected actor {actor.name} in night_action side effect")
+
+    return _side_effect
+
+
+def make_wolf_chat_side_effect(score: float = 0.8) -> callable:
+    """Side effect for call_wolf_chat: wolves vote to attack a target.
+
+    Args:
+        score: confidence score for the vote candidate (0.0-1.0)
+
+    Returns:
+        callable that accepts (actor: Actor, wolf_partners: list[str], alive: list[str], log, lang)
+        and returns WolfChatOutput with a non-wolf target.
+    """
+    from src.domain.schema import VoteCandidate, WolfChatOutput
+
+    def _side_effect(actor, wolf_partners, alive, log, lang):
+        # actor: Actor instance
+        # wolf_partners: list of actor names (strings) — other wolf partners
+        # alive: list of alive actor names (strings)
+        wolf_names = {actor.name} | set(wolf_partners)
+        non_wolf_targets = [name for name in alive if name not in wolf_names]
+        target = non_wolf_targets[0] if non_wolf_targets else None
+
+        return WolfChatOutput(
+            thought="thinking",
+            speech=f"{actor.name} votes to attack {target}" if target else "no valid target",
+            vote_candidates=[VoteCandidate(target=target, score=score)] if target else [],
+        )
+
+    return _side_effect
+
+
 # ── Shared JSON Constants for Client Tests ──────────────────────────────
 
 

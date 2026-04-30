@@ -16,6 +16,7 @@ from src.llm.client import LLMClient
 from src.logger.writer import LogWriter
 from tests.conftest import (
     make_agent_output,
+    make_night_action_side_effect,
     make_silent_discussion_side_effect,
     make_speech_parallel_side_effect,
 )
@@ -222,14 +223,11 @@ class TestRunNightPhaseOrder:
         engine, _ = make_test_engine([seer, wolf, target])
         order: list[str] = []
 
+        base_side_effect = make_night_action_side_effect({"Wolf1": "Seer1", "Seer1": "Villager1"})
+
         def night_action(actor, _context, _alive_names):
-            from src.domain.schema import NightActionOutput
             order.append(f"declare:{actor.name}")
-            if actor.name == "Wolf1":
-                return NightActionOutput(target="Seer1", reasoning="")
-            if actor.name == "Seer1":
-                return NightActionOutput(target="Villager1", reasoning="")
-            raise AssertionError(f"unexpected actor {actor.name}")
+            return base_side_effect(actor, _context, _alive_names)
 
         engine._llm_client.call_night_action.side_effect = night_action
 
@@ -262,15 +260,10 @@ class TestRunNightPhaseOrder:
         target = make_test_actor("Villager1")
         engine, events = make_test_engine([seer, wolf, target])
 
-        def night_action(actor, _context, _alive_names):
-            from src.domain.schema import NightActionOutput
-            if actor.name == "Wolf1":
-                return NightActionOutput(target="Seer1", reasoning="")
-            if actor.name == "Seer1":
-                return NightActionOutput(target="Villager1", reasoning="")
-            raise AssertionError(f"unexpected actor {actor.name}")
-
-        engine._llm_client.call_night_action.side_effect = night_action
+        engine._llm_client.call_night_action.side_effect = make_night_action_side_effect({
+            "Wolf1": "Seer1",
+            "Seer1": "Villager1",
+        })
 
         with patch("src.agent.store.save"):
             engine._run_night()
@@ -285,15 +278,10 @@ class TestRunNightPhaseOrder:
         target = make_test_actor("Villager1")
         engine, events = make_test_engine([seer, wolf, target])
 
-        def night_action(actor, _context, _alive_names):
-            from src.domain.schema import NightActionOutput
-            if actor.name == "Wolf1":
-                return NightActionOutput(target="Villager1", reasoning="")
-            if actor.name == "Seer1":
-                return NightActionOutput(target="Wolf1", reasoning="")
-            raise AssertionError(f"unexpected actor {actor.name}")
-
-        engine._llm_client.call_night_action.side_effect = night_action
+        engine._llm_client.call_night_action.side_effect = make_night_action_side_effect({
+            "Wolf1": "Villager1",
+            "Seer1": "Wolf1",
+        })
 
         with patch("src.agent.store.save"):
             engine._run_night()

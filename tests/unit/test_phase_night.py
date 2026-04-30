@@ -20,6 +20,7 @@ from src.engine.phase_night import (
     _resolve_night_outcomes,
     _run_wolf_chat,
 )
+from tests.conftest import make_wolf_chat_side_effect
 
 
 class TestRunWolfChat:
@@ -52,14 +53,7 @@ class TestRunWolfChat:
         engine, events = make_test_engine([wolf1, wolf2, villager])
         engine._wolf_chat_rounds = 1
 
-        def wolf_chat_side_effect(actor, partners, alive, log, lang):
-            return WolfChatOutput(
-                thought="thinking",
-                speech=f"{actor.name} says attack Alice",
-                vote_candidates=[VoteCandidate(target="Alice", score=0.8)],
-            )
-
-        engine._llm_client.call_wolf_chat.side_effect = wolf_chat_side_effect
+        engine._llm_client.call_wolf_chat.side_effect = make_wolf_chat_side_effect(score=0.8)
 
         result = _run_wolf_chat(engine)
 
@@ -103,7 +97,7 @@ class TestRunWolfChat:
         engine, _ = make_test_engine([wolf1, wolf2, villager])
         engine._wolf_chat_rounds = 1
 
-        def wolf_chat_side_effect(actor, partners, alive, log, lang):
+        def wolf_chat_with_wolf_target(actor, partners, alive, log, lang):
             return WolfChatOutput(
                 thought="thinking",
                 speech="...",
@@ -113,7 +107,7 @@ class TestRunWolfChat:
                 ],
             )
 
-        engine._llm_client.call_wolf_chat.side_effect = wolf_chat_side_effect
+        engine._llm_client.call_wolf_chat.side_effect = wolf_chat_with_wolf_target
 
         result = _run_wolf_chat(engine)
 
