@@ -104,6 +104,7 @@ def _run_vote(engine: GameEngine) -> str | None:
             if engine._validate_action(vote_action, actor, alive_names):
                 votes[actor.name] = target
                 vote_reasoning = output.reasoning if output else ""
+                strategy = output.intent.strategy if output and output.intent.strategy else ""
                 engine._emit(LogEvent.make(
                     day=engine.day,
                     phase=Phase.DAY_VOTE.value,
@@ -113,6 +114,7 @@ def _run_vote(engine: GameEngine) -> str | None:
                     content=f"{actor.name} votes for {target}",
                     is_public=True,
                     reasoning=vote_reasoning,
+                    decision=strategy,
                 ))
 
     if not votes:

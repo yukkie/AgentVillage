@@ -37,6 +37,16 @@ class Werewolf(Role):
             base += f"\nYour wolf partner(s): {', '.join(wolf_partners)}. Keep this secret."
         else:
             base += "\nYou are the last surviving Werewolf. You must act alone."
+        base += (
+            "\n\n--- VOTE STRATEGY ---\n"
+            "When you set vote_candidates, also pick a vote strategy in intent.strategy:\n"
+            '- "village_side": vote like a Villager would. You may even vote for a wolf partner '
+            "if it builds trust (the \"line-cutting\" play). Use this when you need to look innocent.\n"
+            '- "wolf_side": vote to advance the werewolf win condition. Target key village roles '
+            "(claimed Seer, Medium, Knight) or pile votes on a confirmed villager. "
+            "Be aware: an obviously wolf-aligned vote can draw suspicion from the village, "
+            "so use this only when the gain outweighs that risk."
+        )
         return base
 
     def co_prompt(self) -> str:
@@ -77,3 +87,40 @@ class Werewolf(Role):
             "village role with a fake CO can shape the board early. Fake Seer is the most common "
             "default, but adapt your claimed role to the current role distribution and existing claims."
         )
+
+    def output_format_prompt(self, lang: str = "English") -> str:
+        """Werewolf-specific output format including vote strategy field.
+
+        Adds intent.strategy on top of the shared speech schema.
+        See VOTE STRATEGY block in role_prompt() for usage.
+        """
+        return f"""
+--- OUTPUT FORMAT ---
+You MUST respond with ONLY valid JSON matching this exact schema. No other text.
+
+{{
+  "thought": "<your internal reasoning, hidden from others>",
+  "speech": "<what you say aloud to the group>",
+  "reasoning": "<your public deduction: who you suspect and why>",
+  "intent": {{
+    "vote_candidates": [
+      {{"target": "<player_name>", "score": <0.0-1.0>}},
+      ...
+    ],
+    "co": "<role_name or null>",
+    "strategy": "village_side" | "wolf_side"
+  }},
+  "memory_update": ["<key thing to remember for future turns>", ...]
+}}
+
+Rules:
+- "thought", "speech", "reasoning", "memory_update" must be written in {lang}
+- "thought" is your private inner monologue
+- "speech" is your actual spoken words (1-3 sentences)
+- "reasoning" is your public deduction statement (1-2 sentences)
+- "intent.vote_candidates" lists who you'd vote to eliminate (highest score = most suspect)
+- "intent.co" is your role claim if you choose to reveal it, otherwise null
+- "intent.strategy" is "village_side" or "wolf_side" (always English, see VOTE STRATEGY above)
+- "memory_update" lists 0-3 key observations to remember
+- Do NOT include your real role in speech unless you are doing a CO
+"""

@@ -215,6 +215,119 @@ class TestDiscussionCoDecision:
         assert wolf.state.claimed_role.name == "Medium"
 
 
+class TestVoteStrategyLogged:
+    """#212 — wolf strategy in Intent flows into VOTE LogEvent."""
+
+    def test_wolf_side_strategy_recorded_in_vote_event(self, make_test_actor, make_test_engine):
+        """
+        SUT: _run_vote
+        Mock: call_speech_parallel / call_discussion_parallel
+        Level: unit
+        Objective: 狼が intent.strategy="wolf_side" を返したとき、その値が VOTE LogEvent の decision に記録されること。
+        """
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        seer = make_test_actor("Seer1", "Seer")
+        engine, events = make_test_engine([wolf, seer])
+
+        wolf_output = AgentOutput(
+            thought="t",
+            speech="s",
+            reasoning="Seer1 should be eliminated.",
+            intent=Intent(
+                vote_candidates=[{"target": "Seer1", "score": 0.9}],
+                strategy="wolf_side",
+            ),
+            memory_update=[],
+        )
+        seer_output = make_agent_output("Seer1")
+
+        def speech_side_effect(calls):
+            outputs = {"Wolf1": wolf_output, "Seer1": seer_output}
+            return iter([(a, outputs[a.name]) for a, *_ in calls])
+
+        engine._llm_client.call_speech_parallel.side_effect = speech_side_effect
+        engine._llm_client.call_discussion_parallel.side_effect = make_silent_discussion_side_effect()
+
+        with patch("src.agent.store.save"):
+            engine._run_day()
+
+        vote_events = [e for e in events if e.event_type == EventType.VOTE and e.agent == "Wolf1"]
+        assert len(vote_events) == 1
+        assert vote_events[0].decision == "wolf_side"
+        assert vote_events[0].reasoning == "Seer1 should be eliminated."
+        assert vote_events[0].target == "Seer1"
+
+    def test_villager_vote_has_no_strategy(self, make_test_actor, make_test_engine):
+        """
+        SUT: _run_vote
+        Mock: call_speech_parallel / call_discussion_parallel
+        Level: unit
+        Objective: 村人エージェントの VOTE LogEvent には strategy（decision）が空文字で入ること（村人プロンプトは strategy を出力しない）。
+        """
+        villager = make_test_actor("V1", "Villager")
+        target = make_test_actor("V2", "Villager")
+        engine, events = make_test_engine([villager, target])
+
+        v_output = AgentOutput(
+            thought="t",
+            speech="s",
+            reasoning="suspicion",
+            intent=Intent(vote_candidates=[{"target": "V2", "score": 0.5}]),
+            memory_update=[],
+        )
+
+        def speech_side_effect(calls):
+            return iter([(a, v_output) for a, *_ in calls])
+
+        engine._llm_client.call_speech_parallel.side_effect = speech_side_effect
+        engine._llm_client.call_discussion_parallel.side_effect = make_silent_discussion_side_effect()
+
+        with patch("src.agent.store.save"):
+            engine._run_day()
+
+        vote_events = [e for e in events if e.event_type == EventType.VOTE and e.agent == "V1"]
+        assert len(vote_events) == 1
+        assert vote_events[0].decision == ""
+
+    def test_village_side_allows_voting_for_wolf_partner(self, make_test_actor, make_test_engine):
+        """
+        SUT: _run_vote
+        Mock: call_speech_parallel / call_discussion_parallel
+        Level: unit
+        Objective: 狼が intent.strategy="village_side" で仲間（別の狼）を投票先に指定したとき、そのままその仲間に投票できること（ライン切り戦略）。
+        """
+        wolf1 = make_test_actor("Wolf1", "Werewolf")
+        wolf2 = make_test_actor("Wolf2", "Werewolf")
+        engine, events = make_test_engine([wolf1, wolf2])
+
+        wolf1_output = AgentOutput(
+            thought="line cut",
+            speech="s",
+            reasoning="line-cutting",
+            intent=Intent(
+                vote_candidates=[{"target": "Wolf2", "score": 0.8}],
+                strategy="village_side",
+            ),
+            memory_update=[],
+        )
+        wolf2_output = make_agent_output("Wolf2")
+
+        def speech_side_effect(calls):
+            outputs = {"Wolf1": wolf1_output, "Wolf2": wolf2_output}
+            return iter([(a, outputs[a.name]) for a, *_ in calls])
+
+        engine._llm_client.call_speech_parallel.side_effect = speech_side_effect
+        engine._llm_client.call_discussion_parallel.side_effect = make_silent_discussion_side_effect()
+
+        with patch("src.agent.store.save"):
+            engine._run_day()
+
+        wolf1_votes = [e for e in events if e.event_type == EventType.VOTE and e.agent == "Wolf1"]
+        assert len(wolf1_votes) == 1
+        assert wolf1_votes[0].target == "Wolf2"
+        assert wolf1_votes[0].decision == "village_side"
+
+
 class TestRunNightPhaseOrder:
     def test_declarations_finish_before_resolution(self, make_test_actor, make_test_engine):
         seer = make_test_actor("Seer1", "Seer")

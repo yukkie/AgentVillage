@@ -248,6 +248,52 @@ def test_vote_reasoning_is_dimmed_in_spectator_mode(make_test_actor) -> None:
     assert len(dim_spans) >= 1
 
 
+def test_vote_strategy_shown_in_spectator_mode() -> None:
+    """
+    SUT: Renderer.on_event (VOTE)
+    Mock: なし
+    Level: unit
+    Objective: spectator モードで decision (strategy) が VOTE イベントに表示されること（#212）。
+    """
+    renderer = Renderer([], spectator_mode=True)
+    event = _make_event(
+        EventType.VOTE,
+        agent="Wolf1",
+        target="Seer1",
+        reasoning="Seer は処刑したい。",
+        decision="wolf_side",
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert "wolf_side" in result.plain
+    assert "[VOTE] Wolf1 → Seer1" in result.plain
+
+
+def test_vote_strategy_hidden_in_public_mode() -> None:
+    """
+    SUT: Renderer.on_event (VOTE)
+    Mock: なし
+    Level: unit
+    Objective: public モードでは strategy（decision）が露出しないこと（観戦者専用情報）。
+    """
+    renderer = Renderer([], spectator_mode=False)
+    event = _make_event(
+        EventType.VOTE,
+        agent="Wolf1",
+        target="Seer1",
+        reasoning="Seer は処刑したい。",
+        decision="wolf_side",
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert "wolf_side" not in result.plain
+    assert "Seer は処刑したい。" not in result.plain
+
+
 def test_guard_reasoning_is_dimmed_in_spectator_mode() -> None:
     """
     SUT: Renderer.on_event (GUARD)

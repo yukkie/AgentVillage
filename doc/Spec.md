@@ -135,16 +135,28 @@ LLMの出力は必ずJSONで受け取る。フェーズによって2種類のフ
 {
   "thought": "SQは昨日の票替えが不自然。おそらく人狼。",
   "speech": "今日はSQを疑っています。昨日の票替えが不自然でした。",
+  "reasoning": "SQの票替えとタイミングから人狼濃厚と判断。",
   "intent": {
     "vote_candidates": [
       {"target": "SQ", "score": 0.74},
       {"target": "Raqio", "score": 0.42}
     ],
-    "co": null
+    "co": null,
+    "strategy": "wolf_side"
   },
   "memory_update": ["SQの票替えを黒要素として維持"]
 }
 ```
+
+| フィールド | 型 | 内容 |
+|---|---|---|
+| `intent.vote_candidates` | `list` | 投票候補（target と score のリスト）。`_run_vote` が最高スコアの生存者を投票先に選ぶ |
+| `intent.co` | `str \| null` | 公言する役職（CO 時のみ） |
+| `intent.strategy` | `"village_side" \| "wolf_side" \| null` | **狼のみ**設定。`village_side` は村人として自然な投票（仲間への投票も許容、ライン切り戦略を含む）／ `wolf_side` は狼として有利な投票先（村側キーマンを狙う等）。村人陣営は常に `null` |
+
+> **Note**: `strategy` は #212 で発話プロンプト経由の暫定実装として導入された。
+> #216 で投票専用 LLM 呼び出し `call_vote` を実装する際、`vote_candidates` の廃止と
+> 併せて新スキーマ `VoteOutput` に移行する予定。
 
 #### (C) 前夜判断フォーマット（前夜フェーズ専用・村人以外）
 

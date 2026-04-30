@@ -72,6 +72,10 @@ class VoteCandidate(BaseModel):
 class Intent(BaseModel):
     vote_candidates: list[VoteCandidate] = []
     co: RoleField = None
+    # TODO(#216): Werewolf-only field below leaks into the village-side schema.
+    # When the dedicated VOTE phase prompt replaces vote_candidates, move this
+    # into a separate VoteOutput schema scoped to wolves.
+    strategy: Literal["village_side", "wolf_side"] | None = None
 
 
 class AgentOutput(BaseModel):
