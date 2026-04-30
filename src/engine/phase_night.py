@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 class AttackDeclaration:
     actor: Actor
     target: str
+    reasoning: str = ""
 
 
 @dataclass
@@ -104,7 +105,9 @@ def _run_wolf_chat(engine: GameEngine) -> str | None:
     return None
 
 
-def _resolve_fallback_attack(engine: GameEngine, alive_names: list[str]) -> str | None:
+def _resolve_fallback_attack(
+    engine: GameEngine, alive_names: list[str]
+) -> tuple[str, str] | None:
     night_context = f"Day {engine.day} night. Alive: {', '.join(alive_names)}"
     for actor in engine._alive_agents():
         if not isinstance(actor.role, Werewolf):
@@ -112,7 +115,7 @@ def _resolve_fallback_attack(engine: GameEngine, alive_names: list[str]) -> str 
         result = engine._llm_client.call_night_action(actor, night_context, alive_names)
         attack = Attack(target=result.target)
         if engine._validate_action(attack, actor, alive_names):
-            return resolve_attack(attack, engine.agents)
+            return resolve_attack(attack, engine.agents), result.reasoning
     return None
 
 
@@ -120,14 +123,17 @@ def _declare_night_actions(
     engine: GameEngine, alive_names: list[str], night_context: str
 ) -> NightDeclarations:
     attack_target = _run_wolf_chat(engine)
+    fallback_reasoning = ""
 
     if attack_target is None:
-        attack_target = _resolve_fallback_attack(engine, alive_names)
+        fallback = _resolve_fallback_attack(engine, alive_names)
+        if fallback is not None:
+            attack_target, fallback_reasoning = fallback
 
     wolves = [a for a in engine._alive_agents() if isinstance(a.role, Werewolf)]
     attack: AttackDeclaration | None = None
     if attack_target and wolves:
-        attack = AttackDeclaration(actor=wolves[0], target=attack_target)
+        attack = AttackDeclaration(actor=wolves[0], target=attack_target, reasoning=fallback_reasoning)
 
     guard: GuardDeclaration | None = None
     inspect: InspectDeclaration | None = None
@@ -235,6 +241,7 @@ def _publish_night_results(engine: GameEngine, resolution: NightResolution) -> N
             target=resolution.attack.target,
             content=f"Werewolves attack {resolution.attack.target}",
             is_public=False,
+            reasoning=resolution.attack.reasoning,
         ))
 
     if (
