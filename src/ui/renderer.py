@@ -56,6 +56,8 @@ class Renderer:
 
         elif event.event_type == EventType.VOTE:
             text.append(f"[VOTE] {event.agent} → {event.target}", style="white")
+            if self.spectator_mode and event.decision:
+                text.append(f" [strategy: {event.decision}]", style="dim red")
             if self.spectator_mode and event.reasoning:
                 text.append(f" — {event.reasoning}", style="dim")
 

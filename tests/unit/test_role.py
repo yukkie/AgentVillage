@@ -67,6 +67,32 @@ class TestRolePrompt:
         result = get_role("Werewolf").role_prompt(wolf_partners=["Alice"])
         assert "Alice" in result
 
+    def test_werewolf_includes_vote_strategy(self):
+        """
+        SUT: Werewolf.role_prompt
+        Mock: なし
+        Level: unit
+        Objective: 狼の役職プロンプトに village_side / wolf_side の戦略指示が含まれること（#212）。
+        """
+        result = get_role("Werewolf").role_prompt(wolf_partners=["Alice"])
+        assert "VOTE STRATEGY" in result
+        assert "village_side" in result
+        assert "wolf_side" in result
+        assert "line-cutting" in result  # village_side で仲間投票も許容する旨
+        assert "suspicion" in result  # wolf_side のリスク説明
+
+    def test_villager_does_not_include_vote_strategy(self):
+        """
+        SUT: Villager.role_prompt
+        Mock: なし
+        Level: unit
+        Objective: 村人の役職プロンプトに狼用の vote strategy 指示が含まれないこと（AC: 村人プロンプト不変）。
+        """
+        result = get_role("Villager").role_prompt()
+        assert "VOTE STRATEGY" not in result
+        assert "village_side" not in result
+        assert "wolf_side" not in result
+
     def test_werewolf_last_surviving(self):
         result = get_role("Werewolf").role_prompt(wolf_partners=[])
         assert "last surviving Werewolf" in result
@@ -157,6 +183,29 @@ class TestOutputFormatPrompt:
     def test_lang_is_injected(self):
         result = get_role("Villager").output_format_prompt(lang="Japanese")
         assert "Japanese" in result
+
+    def test_werewolf_output_format_includes_strategy_field(self):
+        """
+        SUT: Werewolf.output_format_prompt
+        Mock: なし
+        Level: unit
+        Objective: 狼の output_format に intent.strategy フィールドの案内が含まれること（#212）。
+        """
+        result = get_role("Werewolf").output_format_prompt()
+        assert "strategy" in result
+        assert "village_side" in result
+        assert "wolf_side" in result
+
+    def test_villager_output_format_excludes_strategy_field(self):
+        """
+        SUT: Villager.output_format_prompt
+        Mock: なし
+        Level: unit
+        Objective: 村人の output_format には狼用 strategy フィールドが含まれないこと（AC: 村人プロンプト不変）。
+        """
+        result = get_role("Villager").output_format_prompt()
+        assert "strategy" not in result
+        assert "village_side" not in result
 
     def test_returns_json_schema_instruction(self):
         result = get_role("Seer").output_format_prompt()
