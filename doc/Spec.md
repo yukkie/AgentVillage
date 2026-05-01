@@ -76,7 +76,10 @@ LLMエージェント同士が自律的に人狼ゲームをプレイする社�
           co の場合、発言生成プロンプトに役職公言の指示が追加され、発言後に
           claimed_role が更新される
   3. 投票（VOTE）
-       各エージェントが投票先を宣言
+       各エージェントに投票専用の LLM 呼び出し（call_vote）を行う
+       投票プロンプトには議論ログ全体・past_votes・past_deaths・発言フェーズ
+       で蓄積された最終 vote_candidates・狼の場合は仲間情報＋VOTE STRATEGY を含む
+       LLM が返す VoteOutput.target を投票先として採用
        システムが多数決を集計 → 最多得票者を追放
   4. 霊媒結果の解決
        霊媒師が生存している場合、処刑直後に処刑者の真の役職を霊媒師へ通知する
@@ -150,13 +153,24 @@ LLMの出力は必ずJSONで受け取る。フェーズによって2種類のフ
 
 | フィールド | 型 | 内容 |
 |---|---|---|
-| `intent.vote_candidates` | `list` | 投票候補（target と score のリスト）。`_run_vote` が最高スコアの生存者を投票先に選ぶ |
+| `intent.vote_candidates` | `list` | 投票意向のヒント（target と score のリスト）。VOTE フェーズの専用 LLM 呼び出しへの入力として渡される |
 | `intent.co` | `str \| null` | 公言する役職（CO 時のみ） |
-| `intent.strategy` | `"village_side" \| "wolf_side" \| null` | **狼のみ**設定。`village_side` は村人として自然な投票（仲間への投票も許容、ライン切り戦略を含む）／ `wolf_side` は狼として有利な投票先（村側キーマンを狙う等）。村人陣営は常に `null` |
 
-> **Note**: `strategy` は #212 で発話プロンプト経由の暫定実装として導入された。
-> #216 で投票専用 LLM 呼び出し `call_vote` を実装する際、`vote_candidates` の廃止と
-> 併せて新スキーマ `VoteOutput` に移行する予定。
+#### (D) 投票フォーマット（VOTE フェーズ専用）
+
+```json
+{
+  "target": "SQ",
+  "reasoning": "DISCUSSION での占い結果と票の不自然さから SQ が最も人狼濃厚と判断した。",
+  "strategy": "wolf_side"
+}
+```
+
+| フィールド | 型 | 内容 |
+|---|---|---|
+| `target` | `str` | 投票先（生存者、自分自身を除く） |
+| `reasoning` | `str` | 投票理由（観戦者向け）。VOTE LogEvent の `reasoning` に格納 |
+| `strategy` | `"village_side" \| "wolf_side" \| null` | **狼のみ**設定。`village_side` は村人として自然な投票（仲間への投票も許容、ライン切り戦略を含む）／ `wolf_side` は狼として有利な投票先。村人陣営は常に `null` |
 
 #### (C) 前夜判断フォーマット（前夜フェーズ専用・村人以外）
 

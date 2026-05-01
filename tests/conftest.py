@@ -6,7 +6,7 @@ import pytest
 
 from src.domain.actor import Actor, ActorProfile, ActorState, Persona, make_actor
 from src.domain.event import LogEvent
-from src.domain.schema import AgentOutput, Intent, JudgmentOutput, PreNightOutput
+from src.domain.schema import AgentOutput, Intent, JudgmentOutput, PreNightOutput, VoteOutput
 from src.engine.game import GameEngine
 from src.llm.client import LLMClient
 from src.logger.writer import LogWriter
@@ -59,6 +59,7 @@ def make_test_engine():
         log_writer = MagicMock(spec=LogWriter)
         log_writer.write.side_effect = lambda e: events.append(e)
         llm_client = MagicMock(spec=LLMClient)
+        llm_client.call_vote_parallel.side_effect = make_vote_parallel_side_effect()
         engine = GameEngine(
             agents=agents,
             log_writer=log_writer,
@@ -114,6 +115,40 @@ def make_silent_discussion_side_effect():
     """Side effect for call_discussion_parallel: all actors respond with silent judgment."""
     def _side_effect(actors, *_, **__):
         return iter([(a, JudgmentOutput(decision="silent"), None, None) for a in actors])
+    return _side_effect
+
+
+def make_vote_parallel_side_effect(
+    targets: dict[str, str] | None = None,
+    reasonings: dict[str, str] | None = None,
+    strategies: dict[str, str] | None = None,
+):
+    """Side effect for ``LLMClient.call_vote_parallel``.
+
+    Defaults: each actor votes for the first other alive player; empty
+    reasoning; no strategy. Overrides per-agent via the optional dicts.
+    """
+    targets = targets or {}
+    reasonings = reasonings or {}
+    strategies = strategies or {}
+
+    def _side_effect(calls, today_log, alive_players, day, last_vote_candidates_by_agent, *args, **kwargs):
+        results = []
+        for actor, _wolf_partners in calls:
+            target = targets.get(actor.name)
+            if target is None:
+                others = [n for n in alive_players if n != actor.name]
+                target = others[0] if others else ""
+            results.append((
+                actor,
+                VoteOutput(
+                    target=target,
+                    reasoning=reasonings.get(actor.name, ""),
+                    strategy=strategies.get(actor.name),
+                ),
+            ))
+        return iter(results)
+
     return _side_effect
 
 
@@ -221,4 +256,16 @@ WOLF_CHAT_OUTPUT_JSON = json.dumps({
 NIGHT_ACTION_OUTPUT_JSON = json.dumps({
     "target": "Alice",
     "reasoning": "She is the most suspicious.",
+})
+
+VOTE_OUTPUT_JSON = json.dumps({
+    "target": "Alice",
+    "reasoning": "Her speech contradicts the seer claim.",
+    "strategy": None,
+})
+
+VOTE_OUTPUT_WOLF_JSON = json.dumps({
+    "target": "Seer1",
+    "reasoning": "Eliminate the seer to swing the village.",
+    "strategy": "wolf_side",
 })

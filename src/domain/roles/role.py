@@ -48,6 +48,14 @@ class Role(ABC):
     @abstractmethod
     def co_strategy_hint(self) -> str: ...
 
+    def vote_strategy_prompt(self) -> str:
+        """Role-specific guidance appended to the VOTE-phase prompt.
+
+        Default: empty (village-side roles need no extra strategy hint).
+        Override on Werewolf to inject the village_side / wolf_side choice.
+        """
+        return ""
+
     def output_format_prompt(self, lang: str = "English") -> str:
         """Instruct LLM to output structured JSON for the speech phase.
 

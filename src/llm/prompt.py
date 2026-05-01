@@ -309,6 +309,84 @@ Decide your next action. Respond with ONLY valid JSON. No extra fields, no expla
     return "\n".join(lines)
 
 
+def build_vote_prompt(
+    actor: Actor,
+    today_log: list[SpeechEntry],
+    alive_players: list[str],
+    day: int,
+    last_vote_candidates: list[tuple[str, float]],
+    past_votes: list[PastVote] | None = None,
+    past_deaths: list[PastDeath] | None = None,
+    wolf_partners: list[str] | None = None,
+    lang: str = "English",
+) -> str:
+    """Build the dedicated VOTE-phase prompt.
+
+    Independent from build_system_prompt: the vote decision needs the full
+    day discussion + history + the speaker's own vote_candidates hint, not
+    the full speech-context (persona color, CO direction, etc.).
+    """
+    candidates = [p for p in alive_players if p != actor.name]
+    lines = [
+        f"You are {actor.name} ({actor.role.name}) in a Werewolf game. Day {day}.",
+        f"Alive players: {', '.join(alive_players)}",
+        f"You must vote for one of: {', '.join(candidates)} (cannot vote for yourself).",
+    ]
+
+    if wolf_partners is not None:
+        partners_str = ", ".join(wolf_partners) if wolf_partners else "none (you are the last wolf)"
+        lines.append(f"Your wolf partner(s): {partners_str}.")
+
+    if actor.state.memory_summary:
+        lines.append(f"\nYour memory: {'; '.join(actor.state.memory_summary)}")
+
+    if past_deaths:
+        lines.append("\nPast deaths:")
+        for d in past_deaths:
+            cause = "executed" if d["cause"] == "execution" else "killed by werewolves"
+            lines.append(f"  Day {d['day']}: {d['name']} was {cause}")
+
+    if past_votes:
+        lines.append("\nPast votes:")
+        for v in past_votes:
+            vote_str = ", ".join(f"{voter}→{target}" for voter, target in v["votes"].items())
+            lines.append(f"  Day {v['day']}: {vote_str}")
+
+    if today_log:
+        lines.append("\nToday's full discussion:")
+        for entry in today_log:
+            lines.append(f"  [{entry.speech_id}] {entry.agent}: {entry.text}")
+    else:
+        lines.append("\nNo discussion yet today.")
+
+    if last_vote_candidates:
+        cand_str = ", ".join(f"{t}({s:.2f})" for t, s in last_vote_candidates)
+        lines.append(
+            f"\nYour latest vote_candidates from the speech phase (hint, not binding): {cand_str}"
+        )
+
+    strategy_block = actor.role.vote_strategy_prompt()
+    if strategy_block:
+        lines.append(strategy_block)
+
+    has_strategy = bool(strategy_block)
+    strategy_field = '\n  "strategy": "village_side" | "wolf_side"' if has_strategy else '\n  "strategy": null'
+    lines.append(f"""
+--- OUTPUT FORMAT ---
+Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
+{{
+  "target": "<one player name from the candidates above>",
+  "reasoning": "<one short paragraph: why this target>",{strategy_field}
+}}
+- "reasoning" must be written in {lang}
+- "target" must be exactly one of: {', '.join(candidates)}""")
+    if has_strategy:
+        lines.append('- "strategy" must be exactly "village_side" or "wolf_side" (always English, see VOTE STRATEGY above)')
+    else:
+        lines.append('- "strategy" must be null (only Werewolves use this field)')
+    return "\n".join(lines)
+
+
 def build_wolf_chat_prompt(
     actor: Actor,
     wolf_partners: list[str],

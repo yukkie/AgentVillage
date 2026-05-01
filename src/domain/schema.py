@@ -72,9 +72,23 @@ class VoteCandidate(BaseModel):
 class Intent(BaseModel):
     vote_candidates: list[VoteCandidate] = []
     co: RoleField = None
-    # TODO(#216): Werewolf-only field below leaks into the village-side schema.
-    # When the dedicated VOTE phase prompt replaces vote_candidates, move this
-    # into a separate VoteOutput schema scoped to wolves.
+
+
+class VoteOutput(BaseModel):
+    """LLM response schema for the dedicated VOTE phase prompt.
+
+    The ``strategy`` field is only populated by Werewolf actors; village-side
+    actors leave it ``None``. Kept on the shared schema for simplicity — if
+    the field is mis-emitted by the wrong faction it surfaces in the spectator
+    VOTE log and is easy to spot.
+
+    Mock-Policy: Forbidden
+        LLM I/O contract. See ``PreNightOutput`` and
+        ``tests/TestStrategy.md`` §5.
+    """
+
+    target: str
+    reasoning: str = ""
     strategy: Literal["village_side", "wolf_side"] | None = None
 
 

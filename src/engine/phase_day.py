@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from src.agent import memory as memory_mod
 from src.config import DISCUSSION_ROUNDS
+from src.domain.actor import Actor
 from src.domain.event import EventType, LogEvent
 from src.domain.roles import Medium, Werewolf
 from src.engine.phase import Phase
@@ -77,45 +78,61 @@ def _run_vote(engine: GameEngine) -> str | None:
     engine.phase = Phase.DAY_VOTE
     engine._phase_start(Phase.DAY_VOTE)
 
-    votes: dict[str, str] = {}
+    alive = engine._alive_agents()
     alive_names = engine._alive_names()
 
-    for actor in engine._alive_agents():
+    last_vote_candidates_by_agent: dict[str, list[tuple[str, float]]] = {}
+    for actor in alive:
         output = engine._day_outputs.get(actor.name)
-        target = None
-
         if output and output.intent.vote_candidates:
-            sorted_candidates = sorted(
-                output.intent.vote_candidates,
-                key=lambda vc: vc.score,
-                reverse=True,
-            )
-            for vc in sorted_candidates:
-                if vc.target in alive_names and vc.target != actor.name:
-                    target = vc.target
-                    break
+            last_vote_candidates_by_agent[actor.name] = [
+                (vc.target, vc.score) for vc in output.intent.vote_candidates
+            ]
 
-        if target is None:
+    calls: list[tuple[Actor, list[str] | None]] = []
+    for actor in alive:
+        wolf_partners: list[str] | None = None
+        if isinstance(actor.role, Werewolf):
+            wolf_partners = [
+                a.name for a in alive if isinstance(a.role, Werewolf) and a.name != actor.name
+            ]
+        calls.append((actor, wolf_partners))
+
+    votes: dict[str, str] = {}
+    for actor, vote_output in engine._llm_client.call_vote_parallel(
+        calls,
+        list(engine.today_log),
+        alive_names,
+        engine.day,
+        last_vote_candidates_by_agent,
+        engine._past_votes,
+        engine._past_deaths,
+        engine.lang,
+    ):
+        target: str | None = None
+        if vote_output.target in alive_names and vote_output.target != actor.name:
+            target = vote_output.target
+        else:
             others = [n for n in alive_names if n != actor.name]
             target = others[0] if others else None
 
-        if target:
-            vote_action = engine._make_vote(target)
-            if engine._validate_action(vote_action, actor, alive_names):
-                votes[actor.name] = target
-                vote_reasoning = output.reasoning if output else ""
-                strategy = output.intent.strategy if output and output.intent.strategy else ""
-                engine._emit(LogEvent.make(
-                    day=engine.day,
-                    phase=Phase.DAY_VOTE.value,
-                    event_type=EventType.VOTE,
-                    agent=actor.name,
-                    target=target,
-                    content=f"{actor.name} votes for {target}",
-                    is_public=True,
-                    reasoning=vote_reasoning,
-                    decision=strategy,
-                ))
+        if not target:
+            continue
+        vote_action = engine._make_vote(target)
+        if not engine._validate_action(vote_action, actor, alive_names):
+            continue
+        votes[actor.name] = target
+        engine._emit(LogEvent.make(
+            day=engine.day,
+            phase=Phase.DAY_VOTE.value,
+            event_type=EventType.VOTE,
+            agent=actor.name,
+            target=target,
+            content=f"{actor.name} votes for {target}",
+            is_public=True,
+            reasoning=vote_output.reasoning,
+            decision=vote_output.strategy or "",
+        ))
 
     if not votes:
         return None
