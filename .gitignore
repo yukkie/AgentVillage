@@ -14,3 +14,4 @@ issues/
 .tracecov/
 .coverage
 htmlcov/
+coverage.json
