@@ -228,7 +228,7 @@ class VoteOutput(BaseModel):
 | `call()` | 昼フェーズの発言生成（OPENING / DISCUSSION） | 2048 | thought が日本語で長くなりやすい |
 | `call_judgment()` | 昼フェーズの並列判断（challenge / speak / silent / co） | 1024 | `decision`, `reply_to`, `claim_role` の軽量JSON。`co_eligible=True` のときのみ `"co"` を選択肢に含める |
 | `call_vote()` | 昼フェーズの投票判断（VOTE） | 512 | `target` + `reasoning` + `strategy`（狼のみ）。reasoning が日本語で多少長くなることを見込む |
-| `call_wolf_chat()` | 夜フェーズの狼チーム会話 | 2048 | thought + speech + vote_candidates。日本語で長くなりやすい |
+| `call_wolf_chat()` | 夜フェーズの狼チーム会話 | 2048 | thought + speech + vote_candidates + self_co_decision。日本語で長くなりやすい |
 | `call_pre_night_action()` | 前夜フェーズの CO 判断（村人以外） | 1024 | thought + decision + claim_role + reasoning の4フィールド |
 | `call_night_action()` | 夜フェーズの個別行動（襲撃・占い・護衛） | 256 | `NightActionOutput` (target + reasoning) |
 
@@ -263,6 +263,28 @@ class VoteOutput(BaseModel):
 - 想定外系: `can_co=False` の役職に `claim_role` が来た場合は警告ログを出し、`None` を返す
 
 前夜フェーズと議論フェーズの両方で、この関数を通して `ActorState.intended_co` を設定する。
+
+### WolfChatOutput スキーマ
+
+```python
+class WolfSelfCoDecision(BaseModel):
+    claim_role: RoleField = None
+    timing: Literal["next_day", "wait"] = "wait"
+
+
+class WolfChatOutput(BaseModel):
+    thought: str
+    speech: str
+    vote_candidates: list[VoteCandidate] = []
+    self_co_decision: WolfSelfCoDecision = WolfSelfCoDecision()
+```
+
+- 偽COに関する相談内容は構造化フィールドではなく `speech` で仲間に伝える
+- `self_co_decision` は「議論を踏まえたうえで、その狼自身が最終的にどう動くか」の決断を表す
+- 夜チャット全体の最後に、各狼自身の最新 `self_co_decision` を `ActorState.intended_co` へ反映する
+- `timing="next_day"` かつ `claim_role` がある場合だけ `intended_co` を設定する
+- `timing="wait"` の場合は `intended_co=None` として扱う
+- 2体の狼が両方COする、片方だけCOする、同じ役職を名乗る、のいずれもエンジン側では禁止しない
 
 ---
 

@@ -69,6 +69,13 @@ class VoteCandidate(BaseModel):
     score: float
 
 
+class WolfSelfCoDecision(BaseModel):
+    """LLM response schema for a werewolf's personal final next-day CO decision."""
+
+    claim_role: RoleField = None
+    timing: Literal["next_day", "wait"] = "wait"
+
+
 class Intent(BaseModel):
     vote_candidates: list[VoteCandidate] = []
     co: RoleField = None
@@ -118,3 +125,4 @@ class WolfChatOutput(BaseModel):
     thought: str
     speech: str
     vote_candidates: list[VoteCandidate] = []
+    self_co_decision: WolfSelfCoDecision = WolfSelfCoDecision()

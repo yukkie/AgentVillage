@@ -113,6 +113,110 @@ class TestRunWolfChat:
 
         assert result == "Alice"
 
+    def test_wolf_chat_sets_intended_co_from_self_decision(self, make_test_actor, make_test_engine):
+        """
+        SUT: _run_wolf_chat
+        Mock: engine._llm_client.call_wolf_chat — self_co_decision 付き WolfChatOutput を返す
+        Level: unit
+        Objective: 夜チャット後に各狼自身の self_co_decision が intended_co に反映されること。
+        """
+        wolf1 = make_test_actor("Wolf1", "Werewolf")
+        wolf2 = make_test_actor("Wolf2", "Werewolf")
+        villager = make_test_actor("Alice")
+        engine, _ = make_test_engine([wolf1, wolf2, villager])
+        engine._wolf_chat_rounds = 1
+
+        def wolf_chat_with_self_decision(actor, partners, alive, log, lang):
+            return WolfChatOutput.model_validate(
+                {
+                    "thought": "thinking",
+                    "speech": "...",
+                    "vote_candidates": [{"target": "Alice", "score": 0.7}],
+                    "self_co_decision": {
+                        "claim_role": "Seer" if actor.name == "Wolf1" else "Medium",
+                        "timing": "next_day",
+                    },
+                }
+            )
+
+        with patch("src.engine.phase_night.store.save"):
+            engine._llm_client.call_wolf_chat.side_effect = wolf_chat_with_self_decision
+            _run_wolf_chat(engine)
+
+        assert wolf1.state.intended_co is not None
+        assert wolf1.state.intended_co.name == "Seer"
+        assert wolf2.state.intended_co is not None
+        assert wolf2.state.intended_co.name == "Medium"
+
+    def test_wolf_chat_wait_plan_clears_intended_co(self, make_test_actor, make_test_engine):
+        """
+        SUT: _run_wolf_chat
+        Mock: engine._llm_client.call_wolf_chat — wait の self_co_decision を返す
+        Level: unit
+        Objective: wait の self_co_decision を返した狼は intended_co が None になること。
+        """
+        wolf1 = make_test_actor("Wolf1", "Werewolf")
+        wolf2 = make_test_actor("Wolf2", "Werewolf")
+        villager = make_test_actor("Alice")
+        wolf1.state.intended_co = wolf1.role.default_claim_role
+        engine, _ = make_test_engine([wolf1, wolf2, villager])
+        engine._wolf_chat_rounds = 1
+
+        engine._llm_client.call_wolf_chat.return_value = WolfChatOutput.model_validate(
+            {
+                "thought": "thinking",
+                "speech": "...",
+                "vote_candidates": [{"target": "Alice", "score": 0.7}],
+                "self_co_decision": {"claim_role": None, "timing": "wait"},
+            }
+        )
+
+        with patch("src.engine.phase_night.store.save"):
+            _run_wolf_chat(engine)
+
+        assert wolf1.state.intended_co is None
+        assert wolf2.state.intended_co is None
+
+    def test_wolf_chat_allows_different_personal_decisions(self, make_test_actor, make_test_engine):
+        """
+        SUT: _run_wolf_chat
+        Mock: engine._llm_client.call_wolf_chat — 狼ごとに異なる self_co_decision を返す
+        Level: unit
+        Objective: 狼同士で意見が割れても各狼自身の self_co_decision がそれぞれ intended_co に反映されること。
+        """
+        wolf1 = make_test_actor("Wolf1", "Werewolf")
+        wolf2 = make_test_actor("Wolf2", "Werewolf")
+        villager = make_test_actor("Alice")
+        engine, _ = make_test_engine([wolf1, wolf2, villager])
+        engine._wolf_chat_rounds = 1
+
+        def wolf_chat_team_plan(actor, partners, alive, log, lang):
+            if actor.name == "Wolf1":
+                return WolfChatOutput.model_validate(
+                    {
+                        "thought": "thinking",
+                        "speech": "You fake-CO Medium, I will fake-CO Seer.",
+                        "vote_candidates": [{"target": "Alice", "score": 0.7}],
+                        "self_co_decision": {"claim_role": "Seer", "timing": "next_day"},
+                    }
+                )
+            return WolfChatOutput.model_validate(
+                {
+                    "thought": "thinking",
+                    "speech": "I disagree, I will wait.",
+                    "vote_candidates": [{"target": "Alice", "score": 0.7}],
+                    "self_co_decision": {"claim_role": None, "timing": "wait"},
+                }
+            )
+
+        with patch("src.engine.phase_night.store.save"):
+            engine._llm_client.call_wolf_chat.side_effect = wolf_chat_team_plan
+            _run_wolf_chat(engine)
+
+        assert wolf1.state.intended_co is not None
+        assert wolf1.state.intended_co.name == "Seer"
+        assert wolf2.state.intended_co is None
+
 
 class TestResolveNightOutcomes:
     def test_guard_blocks_attack_sets_succeeded(self, make_test_actor, make_test_engine):
