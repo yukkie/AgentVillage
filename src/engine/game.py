@@ -210,6 +210,19 @@ class GameEngine:
             speech_id=speech_id,
         ))
 
+        if output.intent.vote_candidates:
+            candidates_str = ", ".join(
+                f"{vc.target}({vc.score:.2f})" for vc in output.intent.vote_candidates
+            )
+            self._emit(LogEvent.make(
+                day=self.day,
+                phase=phase.value,
+                event_type=EventType.VOTE_CANDIDATES,
+                agent=actor.name,
+                content=f"{actor.name}: {candidates_str}",
+                is_public=False,
+            ))
+
         if output.memory_update:
             memory_mod.update_memory(actor, output.memory_update)
 

@@ -20,6 +20,7 @@ class EventType(Enum):
     GUARD_BLOCK = "guard_block"
     MEDIUM_RESULT = "medium_result"
     CO_ANNOUNCEMENT = "co_announcement"
+    VOTE_CANDIDATES = "vote_candidates"
     GAME_OVER = "game_over"
     PHASE_START = "phase_start"
 

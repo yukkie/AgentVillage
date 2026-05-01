@@ -276,6 +276,7 @@ LLMの提案をゲームエンジンに渡す橋渡し役。
 | `WOLF_CHAT` | False | 狼チャット（観戦者のみ） |
 | `PRE_NIGHT_DECISION` | False | 前夜CO判断（観戦者のみ） |
 | `CO_ANNOUNCEMENT` | True | 役職公言。`claimed_role` フィールドに公言した役職名を格納 |
+| `VOTE_CANDIDATES` | False | 発言フェーズ（OPENING / DISCUSSION）での vote_candidates スナップショット（観戦者のみ）。`intent.vote_candidates` が非空のとき各発言後に emit される |
 | `PHASE_START` | True / False | フェーズ開始通知 |
 | `GAME_OVER` | True | ゲーム終了 |
 
