@@ -419,7 +419,7 @@ Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
 {{
   "thought": "<your private reasoning>",
   "speech": "<what you say to your wolf partner(s)>",
-  "vote_candidates": [
+  "attack_candidates": [
     {{"target": "<player_name>", "score": <0.0-1.0>}},
     ...
   ],
@@ -429,13 +429,14 @@ Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
   }}
 }}
 - "thought" and "speech" must be written in {lang}
-- "vote_candidates" lists your preferred attack targets (highest score = most preferred)
+- "attack_candidates" lists your preferred attack targets tonight (highest score = most preferred)
 - Use "speech" to discuss and negotiate fake-CO ideas with your wolf partner(s)
 - "self_co_decision" is your own final personal decision after this discussion, even if the wolves do not fully agree
 - If you decide to fake-CO on the next day, set "timing" to "next_day" and set "claim_role" to the role name you will claim
 - If you decide to wait, set "timing" to "wait" and "claim_role" to null
 - The engine will use only "self_co_decision" to decide your next-day intended fake-CO
-- The JSON must contain exactly these four fields and nothing else.""")
+- The JSON must contain exactly these four fields and nothing else.
+- Note: "attack_candidates" is the night-attack target field; the daytime speech schema uses a separate "vote_candidates" field.""")
     return "\n".join(lines)
 
 

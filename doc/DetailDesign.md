@@ -228,7 +228,7 @@ class VoteOutput(BaseModel):
 | `call()` | 昼フェーズの発言生成（OPENING / DISCUSSION） | 2048 | thought が日本語で長くなりやすい |
 | `call_judgment()` | 昼フェーズの並列判断（challenge / speak / silent / co） | 1024 | `decision`, `reply_to`, `claim_role` の軽量JSON。`co_eligible=True` のときのみ `"co"` を選択肢に含める |
 | `call_vote()` | 昼フェーズの投票判断（VOTE） | 512 | `target` + `reasoning` + `strategy`（狼のみ）。reasoning が日本語で多少長くなることを見込む |
-| `call_wolf_chat()` | 夜フェーズの狼チーム会話 | 2048 | thought + speech + vote_candidates + self_co_decision。日本語で長くなりやすい |
+| `call_wolf_chat()` | 夜フェーズの狼チーム会話 | 2048 | thought + speech + attack_candidates + self_co_decision。日本語で長くなりやすい |
 | `call_pre_night_action()` | 前夜フェーズの CO 判断（村人以外） | 1024 | thought + decision + claim_role + reasoning の4フィールド |
 | `call_night_action()` | 夜フェーズの個別行動（襲撃・占い・護衛） | 256 | `NightActionOutput` (target + reasoning) |
 
@@ -275,7 +275,7 @@ class WolfSelfCoDecision(BaseModel):
 class WolfChatOutput(BaseModel):
     thought: str
     speech: str
-    vote_candidates: list[VoteCandidate] = []
+    attack_candidates: list[VoteCandidate] = []
     self_co_decision: WolfSelfCoDecision = WolfSelfCoDecision()
 ```
 

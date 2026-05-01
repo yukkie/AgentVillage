@@ -124,5 +124,5 @@ class WolfChatOutput(BaseModel):
 
     thought: str
     speech: str
-    vote_candidates: list[VoteCandidate] = []
+    attack_candidates: list[VoteCandidate] = []
     self_co_decision: WolfSelfCoDecision = WolfSelfCoDecision()

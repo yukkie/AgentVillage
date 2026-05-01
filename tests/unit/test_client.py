@@ -95,7 +95,7 @@ class TestCallWolfChat:
         SUT: LLMClient.call_wolf_chat
         Mock: anthropic SDK
         Level: unit
-        Objective: 狼チャット応答の speech / vote_candidates / self_co_decision が WolfChatOutput としてパースされること。
+        Objective: 狼チャット応答の speech / attack_candidates / self_co_decision が WolfChatOutput としてパースされること。
         """
         actor = make_test_actor("Wolf", "Werewolf")
         llm = make_llm_client_with_response(WOLF_CHAT_OUTPUT_JSON)
@@ -111,7 +111,7 @@ class TestCallWolfChat:
         SUT: LLMClient.call_wolf_chat
         Mock: anthropic SDK raises RuntimeError
         Level: unit
-        Objective: API失敗時に空の vote_candidates と wait の self_co_decision を持つフォールバックが返ること。
+        Objective: API失敗時に空の attack_candidates と wait の self_co_decision を持つフォールバックが返ること。
         """
         actor = make_test_actor("Wolf", "Werewolf")
         llm = make_failing_llm_client()
