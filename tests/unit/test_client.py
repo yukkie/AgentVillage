@@ -91,17 +91,34 @@ class TestCallPreNightAction:
 
 class TestCallWolfChat:
     def test_returns_wolf_chat_output(self, make_test_actor):
+        """
+        SUT: LLMClient.call_wolf_chat
+        Mock: anthropic SDK
+        Level: unit
+        Objective: 狼チャット応答の speech / vote_candidates / self_co_decision が WolfChatOutput としてパースされること。
+        """
         actor = make_test_actor("Wolf", "Werewolf")
         llm = make_llm_client_with_response(WOLF_CHAT_OUTPUT_JSON)
         result = llm.call_wolf_chat(actor, ["OtherWolf"], ["Alice", "Wolf", "OtherWolf"], [])
         assert isinstance(result, WolfChatOutput)
         assert result.speech == "Let's attack Alice."
+        assert result.self_co_decision.claim_role is not None
+        assert result.self_co_decision.claim_role.name == "Seer"
+        assert result.self_co_decision.timing == "next_day"
 
     def test_returns_empty_fallback_on_exception(self, make_test_actor):
+        """
+        SUT: LLMClient.call_wolf_chat
+        Mock: anthropic SDK raises RuntimeError
+        Level: unit
+        Objective: API失敗時に空の vote_candidates と wait の self_co_decision を持つフォールバックが返ること。
+        """
         actor = make_test_actor("Wolf", "Werewolf")
         llm = make_failing_llm_client()
         result = llm.call_wolf_chat(actor, ["OtherWolf"], ["Alice", "Wolf", "OtherWolf"], [])
         assert result.speech == "..."
+        assert result.self_co_decision.timing == "wait"
+        assert result.self_co_decision.claim_role is None
 
 
 class TestCallVote:

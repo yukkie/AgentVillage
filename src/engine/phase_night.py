@@ -59,6 +59,31 @@ class NightResolution:
     inspection: InspectionResult | None
 
 
+def _apply_wolf_self_decisions(
+    engine: GameEngine,
+    wolves: list[Actor],
+    last_wolf_outputs: dict[str, WolfChatOutput | None],
+) -> None:
+    for wolf in wolves:
+        output = last_wolf_outputs.get(wolf.name)
+        self_decision = output.self_co_decision if output is not None else None
+
+        if wolf.state.claimed_role is not None:
+            wolf.state.intended_co = None
+            store.save(wolf)
+            continue
+
+        if (
+            self_decision is not None
+            and self_decision.timing == "next_day"
+            and self_decision.claim_role is not None
+        ):
+            wolf.state.intended_co = self_decision.claim_role
+        else:
+            wolf.state.intended_co = None
+        store.save(wolf)
+
+
 def _run_wolf_chat(engine: GameEngine) -> str | None:
     wolves = [a for a in engine._alive_agents() if isinstance(a.role, Werewolf)]
     if len(wolves) < 2:
@@ -91,6 +116,8 @@ def _run_wolf_chat(engine: GameEngine) -> str | None:
                 content=f"{wolf.name}: {output.speech}",
                 is_public=False,
             ))
+
+    _apply_wolf_self_decisions(engine, wolves, last_wolf_outputs)
 
     alive_names = engine._alive_names()
     score_totals: dict[str, float] = {}

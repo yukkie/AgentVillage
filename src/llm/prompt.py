@@ -395,13 +395,19 @@ def build_wolf_chat_prompt(
     lang: str = "English",
 ) -> str:
     """Build prompt for werewolf team night chat (secret coordination before attack)."""
+    target_candidates = ", ".join(
+        p for p in alive_players if p != actor.name and p not in wolf_partners
+    )
     lines = [
         f"You are {actor.name}, a Werewolf in a social deduction game.",
         f"Your wolf partners tonight: {', '.join(wolf_partners)}.",
-        f"Alive players (potential targets): {', '.join(p for p in alive_players if p != actor.name and p not in wolf_partners)}.",
+        f"Alive players (potential targets): {target_candidates}.",
         "",
         "It is night. You are meeting secretly with your wolf partner(s) to coordinate.",
-        "Discuss who to attack tonight. You may propose a target and explain your reasoning.",
+        "Your goal is not just to make an individual decision, but to reach a shared plan with your wolf partner(s).",
+        "Discuss who to attack tonight, react to what your partner says, and try to move the conversation toward agreement.",
+        "Also coordinate your deception plan for the next day: who should fake-CO, which role each wolf should claim, and whether anyone should wait instead.",
+        "You are allowed to decide that both wolves fake-CO, only one does, both wait, or even claim the same role if that fits your strategy.",
     ]
     if wolf_chat_log:
         lines.append("\nWolf team conversation so far:")
@@ -416,11 +422,20 @@ Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
   "vote_candidates": [
     {{"target": "<player_name>", "score": <0.0-1.0>}},
     ...
-  ]
+  ],
+  "self_co_decision": {{
+    "claim_role": "<role_name or null>",
+    "timing": "next_day" | "wait"
+  }}
 }}
 - "thought" and "speech" must be written in {lang}
 - "vote_candidates" lists your preferred attack targets (highest score = most preferred)
-- The JSON must contain exactly these three fields and nothing else.""")
+- Use "speech" to discuss and negotiate fake-CO ideas with your wolf partner(s)
+- "self_co_decision" is your own final personal decision after this discussion, even if the wolves do not fully agree
+- If you decide to fake-CO on the next day, set "timing" to "next_day" and set "claim_role" to the role name you will claim
+- If you decide to wait, set "timing" to "wait" and "claim_role" to null
+- The engine will use only "self_co_decision" to decide your next-day intended fake-CO
+- The JSON must contain exactly these four fields and nothing else.""")
     return "\n".join(lines)
 
 

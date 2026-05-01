@@ -251,6 +251,7 @@ WOLF_CHAT_OUTPUT_JSON = json.dumps({
     "thought": "thinking",
     "speech": "Let's attack Alice.",
     "vote_candidates": [{"target": "Alice", "score": 0.9}],
+    "self_co_decision": {"claim_role": "Seer", "timing": "next_day"},
 })
 
 NIGHT_ACTION_OUTPUT_JSON = json.dumps({
