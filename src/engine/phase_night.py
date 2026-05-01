@@ -123,8 +123,8 @@ def _run_wolf_chat(engine: GameEngine) -> str | None:
     score_totals: dict[str, float] = {}
     for wolf in wolves:
         out = last_wolf_outputs[wolf.name]
-        if out and out.vote_candidates:
-            for vc in out.vote_candidates:
+        if out and out.attack_candidates:
+            for vc in out.attack_candidates:
                 if vc.target in alive_names and vc.target not in wolf_names:
                     score_totals[vc.target] = score_totals.get(vc.target, 0.0) + vc.score
     if score_totals:

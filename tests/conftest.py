@@ -208,7 +208,7 @@ def make_wolf_chat_side_effect(score: float = 0.8) -> callable:
         return WolfChatOutput(
             thought="thinking",
             speech=f"{actor.name} votes to attack {target}" if target else "no valid target",
-            vote_candidates=[VoteCandidate(target=target, score=score)] if target else [],
+            attack_candidates=[VoteCandidate(target=target, score=score)] if target else [],
         )
 
     return _side_effect
@@ -250,7 +250,7 @@ PRE_NIGHT_CO_OUTPUT_JSON = json.dumps({
 WOLF_CHAT_OUTPUT_JSON = json.dumps({
     "thought": "thinking",
     "speech": "Let's attack Alice.",
-    "vote_candidates": [{"target": "Alice", "score": 0.9}],
+    "attack_candidates": [{"target": "Alice", "score": 0.9}],
     "self_co_decision": {"claim_role": "Seer", "timing": "next_day"},
 })
 

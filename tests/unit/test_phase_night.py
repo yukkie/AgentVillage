@@ -45,7 +45,7 @@ class TestRunWolfChat:
         SUT: _run_wolf_chat
         Mock: engine._llm_client.call_wolf_chat — WolfChatOutputを返す
         Level: unit
-        Objective: 2体の狼が vote_candidates のスコアを合算し、最高スコアの攻撃対象名を返すこと。
+        Objective: 2体の狼が attack_candidates のスコアを合算し、最高スコアの攻撃対象名を返すこと。
         """
         wolf1 = make_test_actor("Wolf1", "Werewolf")
         wolf2 = make_test_actor("Wolf2", "Werewolf")
@@ -64,9 +64,9 @@ class TestRunWolfChat:
     def test_multi_wolf_chat_empty_candidates_returns_none(self, make_test_actor, make_test_engine):
         """
         SUT: _run_wolf_chat
-        Mock: engine._llm_client.call_wolf_chat — 空の vote_candidates を返す
+        Mock: engine._llm_client.call_wolf_chat — 空の attack_candidates を返す
         Level: unit
-        Objective: 全ての狼が vote_candidates を返さないとき None を返すこと。
+        Objective: 全ての狼が attack_candidates を返さないとき None を返すこと。
         """
         wolf1 = make_test_actor("Wolf1", "Werewolf")
         wolf2 = make_test_actor("Wolf2", "Werewolf")
@@ -77,7 +77,7 @@ class TestRunWolfChat:
         engine._llm_client.call_wolf_chat.return_value = WolfChatOutput(
             thought="thinking",
             speech="...",
-            vote_candidates=[],
+            attack_candidates=[],
         )
 
         result = _run_wolf_chat(engine)
@@ -87,9 +87,9 @@ class TestRunWolfChat:
     def test_multi_wolf_chat_wolf_target_excluded(self, make_test_actor, make_test_engine):
         """
         SUT: _run_wolf_chat
-        Mock: engine._llm_client.call_wolf_chat — 仲間の狼を vote 対象にする
+        Mock: engine._llm_client.call_wolf_chat — 仲間の狼を attack 対象にする
         Level: unit
-        Objective: 狼仲間への vote はスコア集計から除外され、他の有効な候補が選ばれること。
+        Objective: 狼仲間への attack_candidates はスコア集計から除外され、他の有効な候補が選ばれること。
         """
         wolf1 = make_test_actor("Wolf1", "Werewolf")
         wolf2 = make_test_actor("Wolf2", "Werewolf")
@@ -101,7 +101,7 @@ class TestRunWolfChat:
             return WolfChatOutput(
                 thought="thinking",
                 speech="...",
-                vote_candidates=[
+                attack_candidates=[
                     VoteCandidate(target="Wolf2", score=0.9),  # own pack — must be excluded
                     VoteCandidate(target="Alice", score=0.5),
                 ],
@@ -131,7 +131,7 @@ class TestRunWolfChat:
                 {
                     "thought": "thinking",
                     "speech": "...",
-                    "vote_candidates": [{"target": "Alice", "score": 0.7}],
+                    "attack_candidates": [{"target": "Alice", "score": 0.7}],
                     "self_co_decision": {
                         "claim_role": "Seer" if actor.name == "Wolf1" else "Medium",
                         "timing": "next_day",
@@ -196,7 +196,7 @@ class TestRunWolfChat:
                     {
                         "thought": "thinking",
                         "speech": "You fake-CO Medium, I will fake-CO Seer.",
-                        "vote_candidates": [{"target": "Alice", "score": 0.7}],
+                        "attack_candidates": [{"target": "Alice", "score": 0.7}],
                         "self_co_decision": {"claim_role": "Seer", "timing": "next_day"},
                     }
                 )
@@ -204,7 +204,7 @@ class TestRunWolfChat:
                 {
                     "thought": "thinking",
                     "speech": "I disagree, I will wait.",
-                    "vote_candidates": [{"target": "Alice", "score": 0.7}],
+                    "attack_candidates": [{"target": "Alice", "score": 0.7}],
                     "self_co_decision": {"claim_role": None, "timing": "wait"},
                 }
             )
