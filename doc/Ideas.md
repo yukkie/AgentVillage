@@ -14,6 +14,8 @@
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#207 | tech-debt | ❌ | 2 | Add 'Why' rationale to project-discipline.md for key development process decisions | 主要プロセス決定の Why を project-discipline.md に記載し SKILL.md から参照する |
+| yukkie/AgentVillage#228 | tech-debt | 未設定 | 未設定 | Clarify wolf chat attack target field naming | 人狼夜会話の `vote_candidates` 命名を見直し、prompt/schema/engine/tests の用語を統一する |
+| yukkie/AgentVillage#230 | bug | 未設定 | 未設定 | Fix escaped Unicode in archived actor state JSON and add rescue script | actor state JSON の Unicode エスケープ回帰を修正し、既存 `state_archive` を救済する移行スクリプトを追加する |
 | yukkie/AgentVillage#21 | enhancement | 🔴 | 5 | Day 2+ pre-night judgment phase | 昼開始前の判断フェーズを Day 2+ にも拡張 |
 | yukkie/AgentVillage#23 | enhancement | 🟡 | 3 | Auto-summarize memory_summary | 記憶が長くなったら LLM で自動要約 |
 | yukkie/AgentVillage#36 | enhancement | 🟡 | 5 | Belief updates from agent reasoning | suspicion/trust を推理結果から更新 |
@@ -22,6 +24,7 @@
 | yukkie/AgentVillage#79 | enhancement | 🟢 | 5 | Log analysis agent skill for post-game review | ゲームログをAgentに委譲して解析・サマリーを返すスキル |
 | yukkie/AgentVillage#45 | enhancement | 🟢 | 5 | LLM output testing with promptfoo | speech/thought/intent の品質を CI で自動検証 |
 | yukkie/AgentVillage#138 | enhancement | 🟢 | 2 | 複数LLM対応の設計検討 | 将来の複数LLMプロバイダー対応に向けた設計・ADRの検討 |
+| yukkie/AgentVillage#227 | enhancement | 未設定 | 未設定 | Add early exit for wolf night chat consensus | 全狼の最新攻撃候補が一致したら夜会話を早期終了し、未合意時は既存ラウンド継続を維持する |
 | yukkie/AgentVillage#25 | enhancement | 🟢 | 8 | Skill memory (cross-game learning) | ゲームをまたいで引き継がれる戦略記憶 |
 | yukkie/AgentVillage#28 | enhancement | 🟢 | 8 | Human player participation mode | 人間がエージェントとして参加 |
 | yukkie/AgentVillage#29 | enhancement | 🟢 | 8 | Persona community sharing | キャラテンプレートの共有 |
