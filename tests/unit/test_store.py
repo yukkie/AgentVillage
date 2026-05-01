@@ -80,3 +80,25 @@ def test_save_writes_split_json(tmp_path: Path, monkeypatch) -> None:
     assert "profile" in written
     assert "state" in written
     assert written["role"] == "Villager"
+
+
+def test_save_preserves_non_ascii_text(tmp_path: Path, monkeypatch) -> None:
+    """
+    SUT: store.save()
+    Mock: monkeypatch で STATE_DIR を tmp_path に差し替え
+    Level: unit
+    Objective: memory_summary に日本語を含む ActorState を save したとき、
+               書き込まれたファイルに \\uXXXX 形式のエスケープが含まれないこと。
+    """
+    monkeypatch.setattr(store, "STATE_DIR", tmp_path)
+    japanese_memory = "初日：setsu を怪しいと感じた"
+    actor = Actor(
+        profile=ActorProfile(name="Alice", persona=Persona(style="calm")),
+        state=ActorState(beliefs={}, memory_summary=[japanese_memory], is_alive=True),
+        role=get_role("Villager"),
+    )
+    store.save(actor)
+
+    raw = (tmp_path / "alice.json").read_text(encoding="utf-8")
+    assert japanese_memory in raw, "Japanese text must appear as-is in the saved file"
+    assert r"\u" not in raw, "Escaped Unicode sequences must not appear in the saved file"
