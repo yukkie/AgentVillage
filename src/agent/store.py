@@ -13,7 +13,7 @@ def save(actor: Actor) -> None:
     _ensure_dir()
     path = STATE_DIR / f"{actor.name.lower()}.json"
     data = actor_to_dict(actor)
-    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def load(name: str) -> Actor:
