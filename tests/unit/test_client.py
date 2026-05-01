@@ -5,7 +5,7 @@ import anthropic
 import pydantic
 import pytest
 
-from src.domain.schema import AgentOutput, JudgmentOutput, NightActionOutput, PreNightOutput, WolfChatOutput
+from src.domain.schema import AgentOutput, JudgmentOutput, NightActionOutput, PreNightOutput, VoteOutput, WolfChatOutput
 from src.domain.roles import get_role
 from src.llm.client import _classify_error, resolve_claim_role
 from tests.conftest import (
@@ -15,6 +15,8 @@ from tests.conftest import (
     NIGHT_ACTION_OUTPUT_JSON,
     PRE_NIGHT_CO_OUTPUT_JSON,
     PRE_NIGHT_OUTPUT_JSON,
+    VOTE_OUTPUT_JSON,
+    VOTE_OUTPUT_WOLF_JSON,
     WOLF_CHAT_OUTPUT_JSON,
     make_failing_llm_client,
     make_llm_client_with_response,
@@ -100,6 +102,68 @@ class TestCallWolfChat:
         llm = make_failing_llm_client()
         result = llm.call_wolf_chat(actor, ["OtherWolf"], ["Alice", "Wolf", "OtherWolf"], [])
         assert result.speech == "..."
+
+
+class TestCallVote:
+    def test_returns_vote_output(self, make_test_actor):
+        """
+        SUT: LLMClient.call_vote
+        Mock: anthropic SDK
+        Level: unit
+        Objective: VOTE プロンプトの応答が VoteOutput としてパースされること。
+        """
+        actor = make_test_actor("Alice", "Villager")
+        llm = make_llm_client_with_response(VOTE_OUTPUT_JSON)
+        result = llm.call_vote(
+            actor,
+            today_log=[],
+            alive_players=["Alice", "Bob"],
+            day=1,
+            last_vote_candidates=[],
+        )
+        assert isinstance(result, VoteOutput)
+        assert result.target == "Alice"
+        assert result.reasoning == "Her speech contradicts the seer claim."
+        assert result.strategy is None
+
+    def test_returns_wolf_strategy_field(self, make_test_actor):
+        """
+        SUT: LLMClient.call_vote
+        Mock: anthropic SDK
+        Level: unit
+        Objective: 狼が strategy フィールド付きで返したとき VoteOutput.strategy として保持されること。
+        """
+        actor = make_test_actor("Wolf", "Werewolf")
+        llm = make_llm_client_with_response(VOTE_OUTPUT_WOLF_JSON)
+        result = llm.call_vote(
+            actor,
+            today_log=[],
+            alive_players=["Wolf", "Seer1"],
+            day=1,
+            last_vote_candidates=[],
+            wolf_partners=[],
+        )
+        assert result.strategy == "wolf_side"
+        assert result.target == "Seer1"
+
+    def test_returns_empty_fallback_on_exception(self, make_test_actor):
+        """
+        SUT: LLMClient.call_vote
+        Mock: anthropic SDK raises RuntimeError
+        Level: unit
+        Objective: API 失敗時に target="" の VoteOutput が返ること（_run_vote 側でフォールバック処理）。
+        """
+        actor = make_test_actor("Alice", "Villager")
+        llm = make_failing_llm_client()
+        result = llm.call_vote(
+            actor,
+            today_log=[],
+            alive_players=["Alice", "Bob"],
+            day=1,
+            last_vote_candidates=[],
+        )
+        assert result.target == ""
+        assert result.strategy is None
 
 
 class TestCallNightAction:

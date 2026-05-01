@@ -209,6 +209,12 @@ class JudgmentOutput(BaseModel):
 class NightActionOutput(BaseModel):
     target: str           # validated alive player name
     reasoning: str = ""   # why this target was chosen (spectator-only)
+
+
+class VoteOutput(BaseModel):
+    target: str           # vote target (alive player, not self)
+    reasoning: str = ""   # why this target was chosen (spectator-only)
+    strategy: Literal["village_side", "wolf_side"] | None = None  # Werewolf-only
 ```
 
 - `claim_role` は `decision="co"` のときに名乗る予定の役職
@@ -221,9 +227,32 @@ class NightActionOutput(BaseModel):
 |---|---|---|---|
 | `call()` | 昼フェーズの発言生成（OPENING / DISCUSSION） | 2048 | thought が日本語で長くなりやすい |
 | `call_judgment()` | 昼フェーズの並列判断（challenge / speak / silent / co） | 1024 | `decision`, `reply_to`, `claim_role` の軽量JSON。`co_eligible=True` のときのみ `"co"` を選択肢に含める |
+| `call_vote()` | 昼フェーズの投票判断（VOTE） | 512 | `target` + `reasoning` + `strategy`（狼のみ）。reasoning が日本語で多少長くなることを見込む |
 | `call_wolf_chat()` | 夜フェーズの狼チーム会話 | 2048 | thought + speech + vote_candidates。日本語で長くなりやすい |
 | `call_pre_night_action()` | 前夜フェーズの CO 判断（村人以外） | 1024 | thought + decision + claim_role + reasoning の4フィールド |
 | `call_night_action()` | 夜フェーズの個別行動（襲撃・占い・護衛） | 256 | `NightActionOutput` (target + reasoning) |
+
+### build_vote_prompt — VOTE フェーズ専用プロンプト
+
+`call_vote` は OPENING/DISCUSSION の `call()` とは独立した軽量プロンプトを使う。
+最終投票判断に必要な情報だけを集約し、発話用の役職・性格・カラーリング指示は含めない。
+
+含める要素:
+- 役職名 + 自分の名前（一人称）
+- 当日の議論ログ全体（`today_log`）
+- `past_votes`（過去日の投票結果）
+- `past_deaths`（過去日の死亡情報）
+- 自分が発話フェーズで蓄積した最終 `vote_candidates`（投票意向のヒント）
+- 投票候補（自分以外の生存者一覧）
+- 狼の場合のみ: 仲間情報 + VOTE STRATEGY 指示（`village_side` / `wolf_side`）
+
+`vote_strategy_prompt()` を `Role` 基底に追加し、`Werewolf` のみオーバーライドする。
+村人陣営は空文字を返すため、プロンプト本文に追加で何も挿入されない。
+
+出力フォーマット:
+```json
+{ "target": "<player>", "reasoning": "<one short paragraph>", "strategy": "village_side" | "wolf_side" | null }
+```
 
 ### claim_role 解決フロー
 

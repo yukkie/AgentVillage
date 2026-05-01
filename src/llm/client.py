@@ -9,8 +9,8 @@ import pydantic
 from src.config import MAX_TOKENS
 from src.domain.actor import Actor
 from src.domain.roles import Role
-from src.domain.schema import AgentOutput, Intent, JudgmentOutput, NightActionOutput, PreNightOutput, SpeechEntry, WolfChatOutput
-from src.llm.prompt import PublicContext, RoleSpecificContext, SpeechDirection, build_judgment_prompt, build_night_action_prompt, build_pre_night_prompt, build_system_prompt, build_wolf_chat_prompt
+from src.domain.schema import AgentOutput, Intent, JudgmentOutput, NightActionOutput, PreNightOutput, SpeechEntry, VoteOutput, WolfChatOutput
+from src.llm.prompt import PastDeath, PastVote, PublicContext, RoleSpecificContext, SpeechDirection, build_judgment_prompt, build_night_action_prompt, build_pre_night_prompt, build_system_prompt, build_vote_prompt, build_wolf_chat_prompt
 
 
 def resolve_claim_role(actor: Actor, claim_role: Role | None) -> Role | None:
@@ -262,6 +262,79 @@ class LLMClient:
             futures = {executor.submit(_chain, actor): actor for actor in actors}
             for future in as_completed(futures):
                 yield future.result()
+
+    def call_vote(
+        self,
+        actor: Actor,
+        today_log: list[SpeechEntry],
+        alive_players: list[str],
+        day: int,
+        last_vote_candidates: list[tuple[str, float]],
+        past_votes: list[PastVote] | None = None,
+        past_deaths: list[PastDeath] | None = None,
+        wolf_partners: list[str] | None = None,
+        lang: str = "English",
+    ) -> VoteOutput:
+        """Call LLM for the dedicated VOTE-phase decision."""
+        prompt = build_vote_prompt(
+            actor,
+            today_log,
+            alive_players,
+            day,
+            last_vote_candidates,
+            past_votes,
+            past_deaths,
+            wolf_partners,
+            lang,
+        )
+        raw = ""
+        try:
+            message = self._client.messages.create(
+                model=actor.model,
+                max_tokens=MAX_TOKENS["call_vote"],
+                messages=[{"role": "user", "content": prompt}],
+            )
+            raw = message.content[0].text
+            return VoteOutput.model_validate_json(_extract_json(raw))
+        except Exception as e:
+            _classify_and_log_error("call_vote", actor.name, e, raw)
+            return VoteOutput(target="", reasoning="", strategy=None)
+
+    def call_vote_parallel(
+        self,
+        calls: list[tuple[Actor, list[str] | None]],
+        today_log: list[SpeechEntry],
+        alive_players: list[str],
+        day: int,
+        last_vote_candidates_by_agent: dict[str, list[tuple[str, float]]],
+        past_votes: list[PastVote] | None = None,
+        past_deaths: list[PastDeath] | None = None,
+        lang: str = "English",
+    ) -> Iterator[tuple[Actor, VoteOutput]]:
+        """Run VOTE-phase calls for all actors in parallel; yield in completion order.
+
+        ``calls`` is a list of (actor, wolf_partners_or_None). Wolf partners
+        are pre-resolved by the engine so the client stays oblivious to game
+        state.
+        """
+        with ThreadPoolExecutor() as executor:
+            future_to_actor = {
+                executor.submit(
+                    self.call_vote,
+                    actor,
+                    today_log,
+                    alive_players,
+                    day,
+                    last_vote_candidates_by_agent.get(actor.name, []),
+                    past_votes,
+                    past_deaths,
+                    wolf_partners,
+                    lang,
+                ): actor
+                for actor, wolf_partners in calls
+            }
+            for future in as_completed(future_to_actor):
+                yield future_to_actor[future], future.result()
 
     def call_wolf_chat(
         self,

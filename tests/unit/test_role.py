@@ -67,19 +67,18 @@ class TestRolePrompt:
         result = get_role("Werewolf").role_prompt(wolf_partners=["Alice"])
         assert "Alice" in result
 
-    def test_werewolf_includes_vote_strategy(self):
+    def test_werewolf_speech_prompt_excludes_vote_strategy(self):
         """
         SUT: Werewolf.role_prompt
         Mock: なし
         Level: unit
-        Objective: 狼の役職プロンプトに village_side / wolf_side の戦略指示が含まれること（#212）。
+        Objective: 狼の発話プロンプト（speech 用）には VOTE STRATEGY 指示が含まれないこと
+                   （#216 で投票専用プロンプトに移動）。
         """
         result = get_role("Werewolf").role_prompt(wolf_partners=["Alice"])
-        assert "VOTE STRATEGY" in result
-        assert "village_side" in result
-        assert "wolf_side" in result
-        assert "line-cutting" in result  # village_side で仲間投票も許容する旨
-        assert "suspicion" in result  # wolf_side のリスク説明
+        assert "VOTE STRATEGY" not in result
+        assert "village_side" not in result
+        assert "wolf_side" not in result
 
     def test_villager_does_not_include_vote_strategy(self):
         """
@@ -184,17 +183,18 @@ class TestOutputFormatPrompt:
         result = get_role("Villager").output_format_prompt(lang="Japanese")
         assert "Japanese" in result
 
-    def test_werewolf_output_format_includes_strategy_field(self):
+    def test_werewolf_output_format_excludes_strategy_field(self):
         """
         SUT: Werewolf.output_format_prompt
         Mock: なし
         Level: unit
-        Objective: 狼の output_format に intent.strategy フィールドの案内が含まれること（#212）。
+        Objective: 狼の発話用 output_format には strategy フィールドが含まれないこと
+                   （#216 で投票専用プロンプトに移動）。
         """
         result = get_role("Werewolf").output_format_prompt()
-        assert "strategy" in result
-        assert "village_side" in result
-        assert "wolf_side" in result
+        assert "strategy" not in result
+        assert "village_side" not in result
+        assert "wolf_side" not in result
 
     def test_villager_output_format_excludes_strategy_field(self):
         """
@@ -211,6 +211,41 @@ class TestOutputFormatPrompt:
         result = get_role("Seer").output_format_prompt()
         assert "OUTPUT FORMAT" in result
         assert "memory_update" in result
+
+
+class TestVoteStrategyPrompt:
+    def test_villager_empty(self):
+        """
+        SUT: Villager.vote_strategy_prompt
+        Mock: なし
+        Level: unit
+        Objective: 村人の VOTE 戦略プロンプトは空であること（投票専用プロンプトでも村人には追加指示なし）。
+        """
+        assert get_role("Villager").vote_strategy_prompt() == ""
+
+    def test_werewolf_includes_village_and_wolf_sides(self):
+        """
+        SUT: Werewolf.vote_strategy_prompt
+        Mock: なし
+        Level: unit
+        Objective: 狼の VOTE 戦略プロンプトに village_side / wolf_side / line-cutting / suspicion ヒントが含まれること（#216）。
+        """
+        result = get_role("Werewolf").vote_strategy_prompt()
+        assert "VOTE STRATEGY" in result
+        assert "village_side" in result
+        assert "wolf_side" in result
+        assert "line-cutting" in result
+        assert "suspicion" in result
+
+    @pytest.mark.parametrize("role_name", ["Seer", "Knight", "Medium", "Madman"])
+    def test_other_village_side_roles_empty(self, role_name):
+        """
+        SUT: Role.vote_strategy_prompt (default)
+        Mock: なし
+        Level: unit
+        Objective: 狼以外の役職は VOTE 戦略プロンプトを持たないこと。
+        """
+        assert get_role(role_name).vote_strategy_prompt() == ""
 
 
 class TestCoStrategyHint:
