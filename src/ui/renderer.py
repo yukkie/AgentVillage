@@ -89,6 +89,9 @@ class Renderer:
         elif event.event_type == EventType.INSPECTION:
             self._render_inspection(event, text)
 
+        elif event.event_type == EventType.VOTE_CANDIDATES:
+            text.append(f"[CANDIDATES] {event.content}", style="dim cyan")
+
         elif event.event_type == EventType.PRE_NIGHT_DECISION:
             # Spectator only — color by the speaker's true role.
             actor = self._get_agent(event.agent)
