@@ -256,56 +256,42 @@ def build_pre_night_prompt(
     return "\n".join(lines)
 
 
-def build_judgment_prompt(
+def build_discussion_system_prompt(
     actor: Actor,
-    today_log: list[SpeechEntry],
-    alive_players: list[str],
-    day: int,
-    lang: str = "English",
+    ctx: PublicContext,
     co_eligible: bool = False,
+    lang: str = "English",
+    role_ctx: RoleSpecificContext | None = None,
 ) -> str:
-    """Build lightweight judgment prompt for the parallel decision phase.
+    """Build system prompt for the DISCUSSION tool use call.
 
-    When co_eligible is True, a 4th option "co" is added with a role-specific
-    strategic hint. Eligibility is decided by the engine (claimed_role is None
-    and role != "Villager").
+    The caller (client.py) passes the tool definitions separately via the
+    Anthropic tools parameter. This prompt provides persona, game state,
+    and instructions for choosing among the available tools.
     """
-    recent = today_log[-6:] if len(today_log) > 6 else today_log
-    lines = [
-        f"You are {actor.name} ({actor.role.name}) in a Werewolf game. Day {day}.",
-        f"Alive players: {', '.join(alive_players)}",
+    wolf_partners = role_ctx.wolf_partners if isinstance(role_ctx, WolfSpecificContext) else None
+    parts = [
+        build_persona_prompt(actor),
+        "\n",
+        build_role_prompt(actor.role, wolf_partners),
+        build_public_info_prompt(ctx),
+        build_personal_info_prompt(actor),
     ]
-    if actor.state.memory_summary:
-        lines.append(f"Your memory: {'; '.join(actor.state.memory_summary)}")
-    if recent:
-        lines.append("\nRecent speeches:")
-        for e in recent:
-            lines.append(f"  [{e.speech_id}] {e.agent}: {e.text}")
 
-    decision_options = '"challenge" | "speak" | "silent" | "co"' if co_eligible else '"challenge" | "speak" | "silent"'
-    lines.append(f"""
-Decide your next action. Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
-{{
-  "decision": {decision_options},
-  "reply_to": <speech_id to challenge, or null>,
-  "claim_role": <role_name to claim, or null>,
-  "reasoning": "<one sentence: why you chose this action>"
-}}
-- "challenge": directly counter a specific speech (set reply_to to its speech_id)
-- "speak": add a new statement unprompted
-- "silent": nothing to add right now""")
+    tool_instructions = [
+        "\n--- YOUR TURN ---",
+        "Choose exactly one of the following tools to take your action this turn:",
+        '- speak: make a new statement (use when you have something to say)',
+        '- challenge: directly counter a specific previous speech (use when you disagree with someone)',
+        '- silent: pass this turn (use when you have nothing to add)',
+    ]
     if co_eligible:
         co_hint = actor.role.co_strategy_hint()
-        lines.append(
-            '- "co": publicly declare a role (Coming-Out) in your next speech and set "claim_role" to that role\n'
-            f"{co_hint}"
-        )
-    else:
-        lines.append('- Set "claim_role" to null')
-    lines.append(f"""- The JSON must contain exactly these four fields and nothing else.
-- "reasoning" must be written in {lang}
-- Keep the JSON minimal — "reasoning" should be one short sentence.""")
-    return "\n".join(lines)
+        tool_instructions.append(f'- co: publicly declare a role (Coming-Out)\n  {co_hint}')
+    tool_instructions.append(f'\nAll "thought" and "speech" fields must be written in {lang}.')
+    parts.append("\n".join(tool_instructions))
+
+    return "\n".join(parts)
 
 
 def build_vote_prompt(

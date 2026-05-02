@@ -6,7 +6,7 @@ import pytest
 
 from src.domain.actor import Actor, ActorProfile, ActorState, Persona, make_actor
 from src.domain.event import LogEvent
-from src.domain.schema import AgentOutput, Intent, JudgmentOutput, PreNightOutput, VoteOutput
+from src.domain.schema import AgentOutput, Intent, PreNightOutput, SilentResult, VoteOutput
 from src.engine.game import GameEngine
 from src.llm.client import LLMClient
 from src.logger.writer import LogWriter
@@ -112,9 +112,9 @@ def make_speech_parallel_side_effect():
 
 
 def make_silent_discussion_side_effect():
-    """Side effect for call_discussion_parallel: all actors respond with silent judgment."""
+    """Side effect for call_discussion_parallel: all actors respond with SilentResult."""
     def _side_effect(actors, *_, **__):
-        return iter([(a, JudgmentOutput(decision="silent"), None, None) for a in actors])
+        return iter([(a, SilentResult(reasoning="nothing to add")) for a in actors])
     return _side_effect
 
 
@@ -225,13 +225,6 @@ AGENT_OUTPUT_JSON = json.dumps({
     "memory_update": [],
 })
 
-JUDGMENT_OUTPUT_JSON = json.dumps({"decision": "speak"})
-
-JUDGMENT_CO_OUTPUT_JSON = json.dumps({
-    "decision": "co",
-    "reply_to": None,
-    "claim_role": "Knight",
-})
 
 PRE_NIGHT_OUTPUT_JSON = json.dumps({
     "thought": "thinking",

@@ -5,13 +5,13 @@ import anthropic
 import pydantic
 import pytest
 
-from src.domain.schema import AgentOutput, JudgmentOutput, NightActionOutput, PreNightOutput, VoteOutput, WolfChatOutput
+from unittest.mock import MagicMock
+
+from src.domain.schema import AgentOutput, ChallengeResult, CoResult, NightActionOutput, PreNightOutput, SilentResult, SpeakResult, VoteOutput, WolfChatOutput
 from src.domain.roles import get_role
-from src.llm.client import _classify_error, resolve_claim_role
+from src.llm.client import LLMClient, _classify_error, resolve_claim_role
 from tests.conftest import (
     AGENT_OUTPUT_JSON,
-    JUDGMENT_CO_OUTPUT_JSON,
-    JUDGMENT_OUTPUT_JSON,
     NIGHT_ACTION_OUTPUT_JSON,
     PRE_NIGHT_CO_OUTPUT_JSON,
     PRE_NIGHT_OUTPUT_JSON,
@@ -45,26 +45,101 @@ class TestCall:
         assert result.speech == "I need to think more carefully."
 
 
-class TestCallJudgment:
-    def test_returns_judgment_output(self, make_test_actor):
-        actor = make_test_actor("Alice")
-        llm = make_llm_client_with_response(JUDGMENT_OUTPUT_JSON)
-        result = llm.call_judgment(actor, [], ["Alice", "Bob"], day=1)
-        assert isinstance(result, JudgmentOutput)
-        assert result.decision == "speak"
+def _make_tool_use_message(tool_name: str, tool_input: dict):
+    """Build a MagicMock simulating anthropic.types.Message with a tool_use block."""
+    block = MagicMock()
+    block.type = "tool_use"
+    block.name = tool_name
+    block.input = tool_input
+    msg = MagicMock()
+    msg.content = [block]
+    return msg
 
-    def test_returns_silent_on_exception(self, make_test_actor):
+
+def _make_discussion_llm_client(tool_name: str, tool_input: dict) -> LLMClient:
+    """Build LLMClient whose messages.create returns a tool use response."""
+    import anthropic
+    anthropic_client = MagicMock(spec=anthropic.Anthropic)
+    anthropic_client.messages.create.return_value = _make_tool_use_message(tool_name, tool_input)
+    return LLMClient(anthropic_client)
+
+
+class TestCallDiscussion:
+    def test_returns_speak_result(self, make_test_actor):
+        """
+        SUT: LLMClient.call_discussion
+        Mock: anthropic SDK — returns tool_use block for "speak"
+        Level: unit
+        Objective: speak ツール選択時に SpeakResult が返ること。
+        """
+        actor = make_test_actor("Alice")
+        llm = _make_discussion_llm_client("speak", {"thought": "thinking", "speech": "Hello!"})
+        from src.llm.prompt import PublicContext
+        ctx = PublicContext(alive_players=["Alice", "Bob"], dead_players=[], day=1, today_log=[])
+        result = llm.call_discussion(actor, ctx)
+        assert isinstance(result, SpeakResult)
+        assert result.speech == "Hello!"
+        assert result.thought == "thinking"
+
+    def test_returns_challenge_result(self, make_test_actor):
+        """
+        SUT: LLMClient.call_discussion
+        Mock: anthropic SDK — returns tool_use block for "challenge"
+        Level: unit
+        Objective: challenge ツール選択時に ChallengeResult が返り reply_to が保持されること。
+        """
+        actor = make_test_actor("Alice")
+        llm = _make_discussion_llm_client("challenge", {"thought": "t", "speech": "I disagree!", "reply_to": 3})
+        from src.llm.prompt import PublicContext
+        ctx = PublicContext(alive_players=["Alice", "Bob"], dead_players=[], day=1, today_log=[])
+        result = llm.call_discussion(actor, ctx)
+        assert isinstance(result, ChallengeResult)
+        assert result.reply_to == 3
+        assert result.speech == "I disagree!"
+
+    def test_returns_co_result(self, make_test_actor):
+        """
+        SUT: LLMClient.call_discussion
+        Mock: anthropic SDK — returns tool_use block for "co"
+        Level: unit
+        Objective: co ツール選択時に CoResult が返り claim_role が Role インスタンスに変換されること。
+        """
+        actor = make_test_actor("Alice", "Seer")
+        llm = _make_discussion_llm_client("co", {"thought": "t", "speech": "I am Seer!", "claim_role": "Seer"})
+        from src.llm.prompt import PublicContext
+        ctx = PublicContext(alive_players=["Alice", "Bob"], dead_players=[], day=1, today_log=[])
+        result = llm.call_discussion(actor, ctx)
+        assert isinstance(result, CoResult)
+        assert result.claim_role.name == "Seer"
+
+    def test_returns_silent_result(self, make_test_actor):
+        """
+        SUT: LLMClient.call_discussion
+        Mock: anthropic SDK — returns tool_use block for "silent"
+        Level: unit
+        Objective: silent ツール選択時に SilentResult が返ること。
+        """
+        actor = make_test_actor("Alice")
+        llm = _make_discussion_llm_client("silent", {"reasoning": "nothing to add"})
+        from src.llm.prompt import PublicContext
+        ctx = PublicContext(alive_players=["Alice", "Bob"], dead_players=[], day=1, today_log=[])
+        result = llm.call_discussion(actor, ctx)
+        assert isinstance(result, SilentResult)
+        assert result.reasoning == "nothing to add"
+
+    def test_returns_silent_fallback_on_exception(self, make_test_actor):
+        """
+        SUT: LLMClient.call_discussion
+        Mock: anthropic SDK raises RuntimeError
+        Level: unit
+        Objective: API 失敗時に SilentResult フォールバックが返ること。
+        """
         actor = make_test_actor("Alice")
         llm = make_failing_llm_client()
-        result = llm.call_judgment(actor, [], ["Alice", "Bob"], day=1)
-        assert result.decision == "silent"
-
-    def test_parses_claim_role_when_present(self, make_test_actor):
-        actor = make_test_actor("Alice", "Werewolf")
-        llm = make_llm_client_with_response(JUDGMENT_CO_OUTPUT_JSON)
-        result = llm.call_judgment(actor, [], ["Alice", "Bob"], day=1)
-        assert result.decision == "co"
-        assert result.claim_role.name == "Knight"
+        from src.llm.prompt import PublicContext
+        ctx = PublicContext(alive_players=["Alice", "Bob"], dead_players=[], day=1, today_log=[])
+        result = llm.call_discussion(actor, ctx)
+        assert isinstance(result, SilentResult)
 
 
 class TestCallPreNightAction:

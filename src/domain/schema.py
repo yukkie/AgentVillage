@@ -1,3 +1,4 @@
+from dataclasses import dataclass, field
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, BeforeValidator, PlainSerializer
@@ -38,18 +39,67 @@ class SpeechEntry(BaseModel):
     text: str
 
 
-class JudgmentOutput(BaseModel):
-    """LLM response schema for the discussion-phase judgment call.
+@dataclass
+class SpeakResult:
+    """Result of the 'speak' tool use in a DISCUSSION turn.
 
     Mock-Policy: Forbidden
-        LLM I/O contract. See ``PreNightOutput`` and
-        ``tests/TestStrategy.md`` §5.
+        DISCUSSION tool use result contract. Tests must not synthesize
+        free-form replacements. See ``tests/TestStrategy.md`` §5.
     """
 
-    decision: Literal["challenge", "speak", "silent", "co"]
-    reply_to: int | None = None
-    claim_role: RoleField = None
-    reasoning: str = ""
+    thought: str
+    speech: str
+    co: Role | None = None
+    memory_update: list[str] = field(default_factory=list)
+    suspicion_scores: dict[str, float] | None = None
+    threat_scores: dict[str, float] | None = None
+
+
+@dataclass
+class ChallengeResult:
+    """Result of the 'challenge' tool use in a DISCUSSION turn.
+
+    Mock-Policy: Forbidden
+        DISCUSSION tool use result contract. See ``tests/TestStrategy.md`` §5.
+    """
+
+    thought: str
+    speech: str
+    reply_to: int
+    memory_update: list[str] = field(default_factory=list)
+    suspicion_scores: dict[str, float] | None = None
+    threat_scores: dict[str, float] | None = None
+
+
+@dataclass
+class CoResult:
+    """Result of the 'co' tool use in a DISCUSSION turn.
+
+    Mock-Policy: Forbidden
+        DISCUSSION tool use result contract. See ``tests/TestStrategy.md`` §5.
+    """
+
+    thought: str
+    speech: str
+    claim_role: Role
+    memory_update: list[str] = field(default_factory=list)
+    suspicion_scores: dict[str, float] | None = None
+    threat_scores: dict[str, float] | None = None
+
+
+@dataclass
+class SilentResult:
+    """Result of the 'silent' tool use in a DISCUSSION turn.
+
+    Mock-Policy: Forbidden
+        DISCUSSION tool use result contract. See ``tests/TestStrategy.md`` §5.
+    """
+
+    reasoning: str
+
+
+DiscussionResult = SpeakResult | ChallengeResult | CoResult | SilentResult
 
 
 class NightActionOutput(BaseModel):

@@ -1,7 +1,15 @@
 import pytest
 from pydantic import ValidationError
 
-from src.domain.schema import JudgmentOutput, SpeechEntry
+from src.domain.schema import (
+    ChallengeResult,
+    CoResult,
+    DiscussionResult,
+    SilentResult,
+    SpeakResult,
+    SpeechEntry,
+)
+from src.domain.roles import get_role
 
 
 class TestSpeechEntry:
@@ -15,67 +23,125 @@ class TestSpeechEntry:
             SpeechEntry(speech_id=1, agent="Setsu")
 
 
-class TestJudgmentOutput:
-    def test_challenge_with_reply_to(self):
-        j = JudgmentOutput(decision="challenge", reply_to=3)
-        assert j.decision == "challenge"
-        assert j.reply_to == 3
-
-    def test_speak_no_reply_to(self):
-        j = JudgmentOutput(decision="speak")
-        assert j.decision == "speak"
-        assert j.reply_to is None
-
-    def test_silent(self):
-        j = JudgmentOutput(decision="silent")
-        assert j.decision == "silent"
-
-    def test_co_decision(self):
-        j = JudgmentOutput(decision="co", claim_role="Medium")
-        assert j.decision == "co"
-        assert j.reply_to is None
-        assert j.claim_role.name == "Medium"
-
-    def test_invalid_decision_raises(self):
-        with pytest.raises(ValidationError):
-            JudgmentOutput(decision="attack")
-
-    def test_parse_from_dict(self):
-        j = JudgmentOutput.model_validate({"decision": "challenge", "reply_to": 2, "claim_role": None})
-        assert j.decision == "challenge"
-        assert j.reply_to == 2
-
-    def test_claim_role_defaults_to_none(self):
-        j = JudgmentOutput(decision="speak")
-        assert j.claim_role is None
-
-    def test_reasoning_defaults_to_empty_string(self):
+class TestSpeakResult:
+    def test_minimal_fields(self):
         """
-        SUT: JudgmentOutput
+        SUT: SpeakResult
         Mock: なし
         Level: unit
-        Objective: reasoning フィールドが省略されたとき空文字列になること（過去ログ互換）
+        Objective: thought と speech だけで生成でき、オプション項目はデフォルト値になること。
         """
-        j = JudgmentOutput(decision="speak")
-        assert j.reasoning == ""
+        r = SpeakResult(thought="t", speech="Hello!")
+        assert r.thought == "t"
+        assert r.speech == "Hello!"
+        assert r.co is None
+        assert r.memory_update == []
+        assert r.suspicion_scores is None
+        assert r.threat_scores is None
 
-    def test_reasoning_is_preserved(self):
+    def test_with_scores(self):
         """
-        SUT: JudgmentOutput
+        SUT: SpeakResult
         Mock: なし
         Level: unit
-        Objective: reasoning フィールドが指定されたとき保持されること
+        Objective: suspicion_scores / threat_scores が正しく保持されること。
         """
-        j = JudgmentOutput(decision="challenge", reply_to=1, reasoning="Alice looks suspicious.")
-        assert j.reasoning == "Alice looks suspicious."
+        r = SpeakResult(
+            thought="t",
+            speech="s",
+            suspicion_scores={"Bob": 0.7},
+            threat_scores={"Bob": 0.5},
+        )
+        assert r.suspicion_scores == {"Bob": 0.7}
+        assert r.threat_scores == {"Bob": 0.5}
 
-    def test_parse_from_json_without_reasoning(self):
+
+class TestChallengeResult:
+    def test_reply_to_required(self):
         """
-        SUT: JudgmentOutput
+        SUT: ChallengeResult
         Mock: なし
         Level: unit
-        Objective: reasoning を含まない旧フォーマットのJSONでもバリデーションが通ること（後方互換）
+        Objective: reply_to が必須フィールドとして保持されること。
         """
-        j = JudgmentOutput.model_validate_json('{"decision": "silent"}')
-        assert j.decision == "silent"
-        assert j.reasoning == ""
+        r = ChallengeResult(thought="t", speech="I disagree!", reply_to=3)
+        assert r.reply_to == 3
+        assert r.speech == "I disagree!"
+
+    def test_defaults(self):
+        """
+        SUT: ChallengeResult
+        Mock: なし
+        Level: unit
+        Objective: memory_update / suspicion_scores / threat_scores のデフォルトが正しいこと。
+        """
+        r = ChallengeResult(thought="t", speech="s", reply_to=1)
+        assert r.memory_update == []
+        assert r.suspicion_scores is None
+        assert r.threat_scores is None
+
+
+class TestCoResult:
+    def test_claim_role_preserved(self):
+        """
+        SUT: CoResult
+        Mock: なし
+        Level: unit
+        Objective: claim_role に Role インスタンスを渡して保持できること。
+        """
+        seer = get_role("Seer")
+        r = CoResult(thought="t", speech="I am Seer!", claim_role=seer)
+        assert r.claim_role.name == "Seer"
+
+    def test_defaults(self):
+        """
+        SUT: CoResult
+        Mock: なし
+        Level: unit
+        Objective: memory_update / suspicion_scores / threat_scores のデフォルトが正しいこと。
+        """
+        r = CoResult(thought="t", speech="s", claim_role=get_role("Seer"))
+        assert r.memory_update == []
+        assert r.suspicion_scores is None
+
+
+class TestSilentResult:
+    def test_reasoning_preserved(self):
+        """
+        SUT: SilentResult
+        Mock: なし
+        Level: unit
+        Objective: reasoning フィールドが保持されること。
+        """
+        r = SilentResult(reasoning="nothing to add")
+        assert r.reasoning == "nothing to add"
+
+
+class TestDiscussionResultUnion:
+    def test_speak_is_discussion_result(self):
+        """
+        SUT: DiscussionResult type alias
+        Mock: なし
+        Level: unit
+        Objective: SpeakResult が DiscussionResult の isinstance チェックを通ること。
+        """
+        r: DiscussionResult = SpeakResult(thought="t", speech="s")
+        assert isinstance(r, SpeakResult)
+        assert not isinstance(r, SilentResult)
+
+    def test_silent_guard_pattern(self):
+        """
+        SUT: DiscussionResult type alias
+        Mock: なし
+        Level: unit
+        Objective: isinstance(result, SilentResult) で SilentResult だけ選別できること。
+        """
+        results: list[DiscussionResult] = [
+            SpeakResult(thought="t", speech="s"),
+            SilentResult(reasoning="quiet"),
+            ChallengeResult(thought="t", speech="s", reply_to=1),
+        ]
+        silent = [r for r in results if isinstance(r, SilentResult)]
+        speaking = [r for r in results if not isinstance(r, SilentResult)]
+        assert len(silent) == 1
+        assert len(speaking) == 2

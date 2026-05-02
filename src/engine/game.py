@@ -9,8 +9,8 @@ from src.engine.phase_night import run_night_phase
 from src.engine.phase_pre_night import run_pre_night_phase
 from src.llm import factory as llm_factory
 from src.llm.client import LLMClient
-from src.llm.prompt import PastDeath, PastVote, PublicContext, SpeechDirection, WolfSpecificContext
-from src.domain.schema import AgentOutput, SpeechEntry
+from src.llm.prompt import PastDeath, PastVote, PublicContext, RoleSpecificContext, SpeechDirection, WolfSpecificContext
+from src.domain.schema import AgentOutput, ChallengeResult, CoResult, DiscussionResult, SilentResult, SpeechEntry
 from src.action.types import ActionType, Vote
 from src.action.validator import validate
 from src.domain.event import LogEvent, EventType
@@ -240,6 +240,137 @@ class GameEngine:
 
         if output.memory_update:
             memory_mod.update_memory(actor, output.memory_update)
+
+        return entry
+
+    def _build_discussion_ctx_map(
+        self,
+        today_log_snapshot: list[SpeechEntry],
+    ) -> dict[str, tuple[PublicContext, RoleSpecificContext | None]]:
+        """Build ctx_map for call_discussion_parallel from the current game state."""
+        ctx = PublicContext(
+            today_log=list(today_log_snapshot),
+            alive_players=self._alive_names(),
+            dead_players=self._dead_names(),
+            day=self.day,
+            all_agents=self.agents,
+            past_votes=self._past_votes,
+            past_deaths=self._past_deaths,
+        )
+        result: dict[str, tuple[PublicContext, RoleSpecificContext | None]] = {}
+        for actor in self._alive_agents():
+            role_ctx: RoleSpecificContext | None = (
+                WolfSpecificContext(
+                    wolf_partners=[
+                        a.name for a in self._alive_agents()
+                        if isinstance(a.role, Werewolf) and a.name != actor.name
+                    ]
+                )
+                if isinstance(actor.role, Werewolf)
+                else None
+            )
+            result[actor.name] = (ctx, role_ctx)
+        return result
+
+    def _apply_discussion_result(
+        self,
+        actor: Actor,
+        result: DiscussionResult,
+        phase: Phase,
+    ) -> SpeechEntry | None:
+        """Post-process a DiscussionResult: emit events, update state, append to today_log.
+
+        Returns the SpeechEntry if the actor spoke, or None if silent.
+        """
+        if isinstance(result, SilentResult):
+            self._emit(LogEvent.make(
+                day=self.day,
+                phase=phase.value,
+                event_type=EventType.SPEECH,
+                agent=actor.name,
+                content=f"{actor.name} is watching the village silently...",
+                is_public=True,
+            ))
+            return None
+
+        # All speaking variants share thought, speech, memory_update, suspicion_scores, threat_scores
+        reply_to_entry: SpeechEntry | None = None
+        if isinstance(result, ChallengeResult):
+            reply_to_entry = next(
+                (e for e in self.today_log if e.speech_id == result.reply_to),
+                None,
+            )
+
+        if isinstance(result, CoResult):
+            claim_role = result.claim_role
+            if actor.state.claimed_role != claim_role:
+                actor.state.claimed_role = claim_role
+                actor.state.intended_co = None
+                store.save(actor)
+                self._emit(LogEvent.make(
+                    day=self.day,
+                    phase=phase.value,
+                    event_type=EventType.CO_ANNOUNCEMENT,
+                    agent=actor.name,
+                    content=f"{actor.name} claims to be {claim_role.name}",
+                    is_public=True,
+                    claimed_role=claim_role,
+                ))
+
+        speech_id = self._next_speech_id()
+        entry = SpeechEntry(speech_id=speech_id, agent=actor.name, text=result.speech)
+        self.today_log.append(entry)
+
+        self._emit(LogEvent.make(
+            day=self.day,
+            phase=phase.value,
+            event_type=EventType.SPEECH,
+            agent=actor.name,
+            content=result.speech,
+            is_public=True,
+            speech_id=speech_id,
+            reply_to=reply_to_entry.speech_id if reply_to_entry else None,
+        ))
+        self._emit(LogEvent.make(
+            day=self.day,
+            phase=phase.value,
+            event_type=EventType.SPEECH,
+            agent=actor.name,
+            content=f"[THINK] {result.thought}",
+            is_public=False,
+            speech_id=speech_id,
+        ))
+
+        if result.suspicion_scores:
+            memory_mod.update_beliefs(actor, result.suspicion_scores)
+            scores_str = ", ".join(
+                f"{name}={score:.2f}" for name, score in result.suspicion_scores.items()
+            )
+            self._emit(LogEvent.make(
+                day=self.day,
+                phase=phase.value,
+                event_type=EventType.SUSPICION_UPDATE,
+                agent=actor.name,
+                content=f"{actor.name} suspicion update: {scores_str}",
+                is_public=False,
+            ))
+
+        if result.threat_scores:
+            memory_mod.update_threat_scores(actor, result.threat_scores)
+            scores_str = ", ".join(
+                f"{name}={score:.2f}" for name, score in result.threat_scores.items()
+            )
+            self._emit(LogEvent.make(
+                day=self.day,
+                phase=phase.value,
+                event_type=EventType.THREAT_UPDATE,
+                agent=actor.name,
+                content=f"{actor.name} threat update: {scores_str}",
+                is_public=False,
+            ))
+
+        if result.memory_update:
+            memory_mod.update_memory(actor, result.memory_update)
 
         return entry
 

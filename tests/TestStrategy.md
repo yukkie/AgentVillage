@@ -106,7 +106,8 @@ Mock は SUT を依存から隔離する手段だが、**自分のコード同�
 |---|---|---|
 | `LogEvent` | `src/domain/event.py` | Engine ↔ Renderer / Replay / LogWriter |
 | `Actor`, `ActorState` | `src/domain/actor.py` | Engine ↔ store(JSON 永続化) |
-| `AgentOutput`, `JudgmentOutput`, `PreNightOutput`, `WolfChatOutput` | `src/domain/schema.py` | LLM 応答 JSON 契約 |
+| `AgentOutput`, `PreNightOutput`, `WolfChatOutput` | `src/domain/schema.py` | LLM 応答 JSON 契約 |
+| `SpeakResult`, `ChallengeResult`, `CoResult`, `SilentResult` | `src/domain/schema.py` | DISCUSSION tool use 結果契約 |
 
 ### Conditional(その他)
 
