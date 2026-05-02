@@ -1,91 +1,120 @@
-from src.domain.actor import Belief
-from src.llm.prompt import build_judgment_prompt
+from src.llm.prompt import PublicContext, build_discussion_system_prompt
 from src.domain.schema import SpeechEntry
 
 
-def _make_log(*texts: str) -> list[SpeechEntry]:
-    return [SpeechEntry(speech_id=i + 1, agent=f"Agent{i}", text=t) for i, t in enumerate(texts)]
+def _make_ctx(*texts: str, day: int = 1) -> PublicContext:
+    log = [SpeechEntry(speech_id=i + 1, agent=f"Agent{i}", text=t) for i, t in enumerate(texts)]
+    return PublicContext(
+        today_log=log,
+        alive_players=["Setsu", "SQ"],
+        dead_players=[],
+        day=day,
+    )
 
 
-class TestBuildJudgmentPrompt:
+class TestBuildDiscussionSystemPrompt:
     def test_contains_agent_name_and_role(self, make_test_actor):
+        """
+        SUT: build_discussion_system_prompt()
+        Mock: なし
+        Level: unit
+        Objective: プロンプトにエージェント名とロール名が含まれること。
+        """
         actor = make_test_actor("Setsu")
-        actor.state.beliefs = {"SQ": Belief()}
-        prompt = build_judgment_prompt(actor, [], ["Setsu", "SQ"], day=1)
+        ctx = _make_ctx()
+        prompt = build_discussion_system_prompt(actor, ctx)
         assert "Setsu" in prompt
         assert "Villager" in prompt
 
-    def test_contains_recent_speeches_with_ids(self, make_test_actor):
+    def test_contains_today_log_speeches(self, make_test_actor):
+        """
+        SUT: build_discussion_system_prompt()
+        Mock: なし
+        Level: unit
+        Objective: 今日の発言ログが speech_id 付きでプロンプトに含まれること。
+        """
         actor = make_test_actor("Setsu")
-        actor.state.beliefs = {"SQ": Belief()}
-        log = _make_log("Hello everyone.", "I suspect SQ.")
-        prompt = build_judgment_prompt(actor, log, ["Setsu", "SQ"], day=1)
+        ctx = _make_ctx("Hello everyone.", "I suspect SQ.")
+        prompt = build_discussion_system_prompt(actor, ctx)
         assert "[1]" in prompt
         assert "[2]" in prompt
         assert "Hello everyone." in prompt
 
-    def test_only_last_6_speeches_included(self, make_test_actor):
+    def test_tool_instructions_present(self, make_test_actor):
+        """
+        SUT: build_discussion_system_prompt()
+        Mock: なし
+        Level: unit
+        Objective: speak / challenge / silent ツール案内がプロンプトに含まれること。
+        """
         actor = make_test_actor("Setsu")
-        actor.state.beliefs = {"SQ": Belief()}
-        log = _make_log(*[f"speech {i}" for i in range(10)])
-        prompt = build_judgment_prompt(actor, log, ["Setsu"], day=2)
-        # speech 0-3 should be excluded (only last 6: 4-9)
-        assert "speech 0" not in prompt
-        assert "speech 9" in prompt
-
-    def test_memory_included(self, make_test_actor):
-        actor = make_test_actor("Setsu")
-        actor.state.beliefs = {"SQ": Belief()}
-        actor.state.memory_summary = ["SQ changed vote on Day1"]
-        prompt = build_judgment_prompt(actor, [], ["Setsu", "SQ"], day=2)
-        assert "SQ changed vote on Day1" in prompt
-
-    def test_json_format_instruction_present(self, make_test_actor):
-        actor = make_test_actor("Setsu")
-        actor.state.beliefs = {"SQ": Belief()}
-        prompt = build_judgment_prompt(actor, [], ["Setsu"], day=1)
+        ctx = _make_ctx()
+        prompt = build_discussion_system_prompt(actor, ctx)
+        assert "speak" in prompt
         assert "challenge" in prompt
         assert "silent" in prompt
-        assert "reply_to" in prompt
-        assert "claim_role" in prompt
 
-    def test_co_option_absent_for_villager(self, make_test_actor):
+    def test_co_tool_absent_for_villager(self, make_test_actor):
+        """
+        SUT: build_discussion_system_prompt()
+        Mock: なし
+        Level: unit
+        Objective: co_eligible=False のとき「- co:」説明がプロンプトに含まれないこと。
+        """
         actor = make_test_actor("Setsu", "Villager")
-        actor.state.beliefs = {"SQ": Belief()}
-        prompt = build_judgment_prompt(actor, [], ["Setsu"], day=1, co_eligible=False)
-        assert '"co"' not in prompt
+        ctx = _make_ctx()
+        prompt = build_discussion_system_prompt(actor, ctx, co_eligible=False)
+        assert "- co:" not in prompt
 
-    def test_co_option_present_when_co_eligible(self, make_test_actor):
+    def test_co_tool_present_when_co_eligible(self, make_test_actor):
+        """
+        SUT: build_discussion_system_prompt()
+        Mock: なし
+        Level: unit
+        Objective: co_eligible=True のとき「- co:」説明がプロンプトに含まれること。
+        """
         actor = make_test_actor("Setsu", "Seer")
-        actor.state.beliefs = {"SQ": Belief()}
-        prompt = build_judgment_prompt(actor, [], ["Setsu"], day=1, co_eligible=True)
-        assert '"co"' in prompt
-        assert "claim_role" in prompt
+        ctx = _make_ctx()
+        prompt = build_discussion_system_prompt(actor, ctx, co_eligible=True)
+        assert "- co:" in prompt
 
     def test_co_strategy_hint_seer(self, make_test_actor):
+        """
+        SUT: build_discussion_system_prompt()
+        Mock: なし
+        Level: unit
+        Objective: co_eligible=True で Seer のとき、Seer 固有の戦略ヒントが含まれること。
+        """
         actor = make_test_actor("Setsu", "Seer")
-        actor.state.beliefs = {"SQ": Belief()}
-        prompt = build_judgment_prompt(actor, [], ["Setsu"], day=1, co_eligible=True)
+        ctx = _make_ctx()
+        prompt = build_discussion_system_prompt(actor, ctx, co_eligible=True)
         assert "Seer" in prompt
         assert "trust" in prompt.lower()
 
     def test_co_strategy_hint_werewolf(self, make_test_actor):
+        """
+        SUT: build_discussion_system_prompt()
+        Mock: なし
+        Level: unit
+        Objective: co_eligible=True で Werewolf のとき、偽 CO 向け戦略ヒントが含まれること。
+        """
+        from src.llm.prompt import WolfSpecificContext
         actor = make_test_actor("Setsu", "Werewolf")
-        actor.state.beliefs = {"SQ": Belief()}
-        prompt = build_judgment_prompt(actor, [], ["Setsu"], day=1, co_eligible=True)
-        assert "fake" in prompt.lower() or "claim_role" in prompt.lower()
+        ctx = _make_ctx()
+        role_ctx = WolfSpecificContext(wolf_partners=[])
+        prompt = build_discussion_system_prompt(actor, ctx, co_eligible=True, role_ctx=role_ctx)
+        assert "fake" in prompt.lower() or "claim" in prompt.lower()
         assert "Seer" in prompt or "Medium" in prompt
 
-    def test_co_strategy_hint_madman(self, make_test_actor):
-        actor = make_test_actor("Setsu", "Madman")
-        actor.state.beliefs = {"SQ": Belief()}
-        prompt = build_judgment_prompt(actor, [], ["Setsu"], day=1, co_eligible=True)
-        assert "Madman" in prompt
-        assert "Seer" in prompt or "Medium" in prompt
-
-    def test_co_not_in_format_when_not_eligible(self, make_test_actor):
-        """Ensure the 4th choice is absent when co_eligible=False (default)."""
-        actor = make_test_actor("Setsu", "Seer")
-        actor.state.beliefs = {"SQ": Belief()}
-        prompt = build_judgment_prompt(actor, [], ["Setsu"], day=1)  # default co_eligible=False
-        assert '"co"' not in prompt
+    def test_memory_included(self, make_test_actor):
+        """
+        SUT: build_discussion_system_prompt()
+        Mock: なし
+        Level: unit
+        Objective: actor.state.memory_summary の内容がプロンプトに含まれること。
+        """
+        actor = make_test_actor("Setsu")
+        actor.state.memory_summary = ["SQ changed vote on Day1"]
+        ctx = _make_ctx()
+        prompt = build_discussion_system_prompt(actor, ctx)
+        assert "SQ changed vote on Day1" in prompt

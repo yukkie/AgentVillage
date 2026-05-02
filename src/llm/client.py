@@ -1,6 +1,6 @@
 import json
 import sys
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import anthropic
@@ -9,8 +9,31 @@ import pydantic
 from src.config import MAX_TOKENS
 from src.domain.actor import Actor
 from src.domain.roles import Role
-from src.domain.schema import AgentOutput, Intent, JudgmentOutput, NightActionOutput, PreNightOutput, SpeechEntry, VoteOutput, WolfChatOutput
-from src.llm.prompt import PastDeath, PastVote, PublicContext, RoleSpecificContext, SpeechDirection, build_judgment_prompt, build_night_action_prompt, build_pre_night_prompt, build_system_prompt, build_vote_prompt, build_wolf_chat_prompt
+from src.domain.schema import (
+    AgentOutput,
+    DiscussionResult,
+    Intent,
+    NightActionOutput,
+    PreNightOutput,
+    SilentResult,
+    SpeechEntry,
+    VoteOutput,
+    WolfChatOutput,
+)
+from src.llm.discussion_tools import build_discussion_tools, parse_discussion_tool_result
+from src.llm.prompt import (
+    PastDeath,
+    PastVote,
+    PublicContext,
+    RoleSpecificContext,
+    SpeechDirection,
+    build_discussion_system_prompt,
+    build_night_action_prompt,
+    build_pre_night_prompt,
+    build_system_prompt,
+    build_vote_prompt,
+    build_wolf_chat_prompt,
+)
 
 
 def resolve_claim_role(actor: Actor, claim_role: Role | None) -> Role | None:
@@ -148,29 +171,35 @@ class LLMClient:
             _classify_and_log_error("call", actor.name, e, raw)
             return _default_output(actor)
 
-    def call_judgment(
+    def call_discussion(
         self,
         actor: Actor,
-        today_log: list[SpeechEntry],
-        alive_players: list[str],
-        day: int = 1,
+        ctx: PublicContext,
         lang: str = "English",
-    ) -> JudgmentOutput:
-        """Call LLM for the lightweight parallel judgment decision."""
+        role_ctx: RoleSpecificContext | None = None,
+    ) -> DiscussionResult:
+        """Call LLM for a DISCUSSION turn using tool use; return one DiscussionResult."""
         co_eligible = actor.state.claimed_role is None and actor.role.can_co
-        prompt = build_judgment_prompt(actor, today_log, alive_players, day, lang, co_eligible)
-        raw = ""
+        system_prompt = build_discussion_system_prompt(actor, ctx, co_eligible, lang, role_ctx)
+        tools = build_discussion_tools(co_eligible)
         try:
             message = self._client.messages.create(
                 model=actor.model,
-                max_tokens=MAX_TOKENS["call_judgment"],
-                messages=[{"role": "user", "content": prompt}],
+                max_tokens=MAX_TOKENS["call_discussion"],
+                system=system_prompt,
+                tools=tools,
+                tool_choice={"type": "any"},
+                messages=[
+                    {
+                        "role": "user",
+                        "content": "It's your turn. Use one of the available tools to take your action.",
+                    }
+                ],
             )
-            raw = message.content[0].text
-            return JudgmentOutput.model_validate_json(_extract_json(raw))
+            return parse_discussion_tool_result(message, actor.name)
         except Exception as e:
-            _classify_and_log_error("call_judgment", actor.name, e, raw)
-            return JudgmentOutput(decision="silent", reasoning="")
+            _classify_and_log_error("call_discussion", actor.name, e, "")
+            return SilentResult(reasoning="error fallback")
 
     def call_speech_parallel(
         self,
@@ -227,39 +256,22 @@ class LLMClient:
     def call_discussion_parallel(
         self,
         actors: list[Actor],
-        today_log_snapshot: list[SpeechEntry],
-        alive_names: list[str],
-        day: int,
+        ctx_map: dict[str, tuple[PublicContext, RoleSpecificContext | None]],
         lang: str,
-        build_speech_args: Callable[
-            [Actor, SpeechEntry | None, list[SpeechEntry]],
-            tuple[PublicContext, SpeechDirection, RoleSpecificContext | None],
-        ],
-    ) -> Iterator[tuple[Actor, JudgmentOutput, AgentOutput | None, SpeechEntry | None]]:
-        """Run judgment→speech chain for all actors in parallel; yield results in completion order."""
+    ) -> Iterator[tuple[Actor, DiscussionResult]]:
+        """Run DISCUSSION tool use calls for all actors in parallel; yield in completion order.
 
-        def _chain(actor: Actor) -> tuple[Actor, JudgmentOutput, AgentOutput | None, SpeechEntry | None]:
-            judgment = self.call_judgment(actor, today_log_snapshot, alive_names, day, lang)
-            if judgment.decision == "silent":
-                return actor, judgment, None, None
-            is_co_eligible = actor.state.claimed_role is None and actor.role.can_co
-            actor.state.intended_co = (
-                resolve_claim_role(actor, judgment.claim_role)
-                if judgment.decision == "co" and is_co_eligible
-                else None
-            )
-            reply_to_entry: SpeechEntry | None = None
-            if judgment.decision == "challenge" and judgment.reply_to is not None:
-                reply_to_entry = next(
-                    (e for e in today_log_snapshot if e.speech_id == judgment.reply_to),
-                    None,
-                )
-            ctx, direction, role_ctx = build_speech_args(actor, reply_to_entry, today_log_snapshot)
-            output = self.call(actor, ctx, direction, role_ctx)
-            return actor, judgment, output, reply_to_entry
+        ``ctx_map`` maps actor name → (PublicContext, RoleSpecificContext | None),
+        pre-built by the engine so the client stays oblivious to game state.
+        """
+
+        def _call(actor: Actor) -> tuple[Actor, DiscussionResult]:
+            ctx, role_ctx = ctx_map[actor.name]
+            result = self.call_discussion(actor, ctx, lang, role_ctx)
+            return actor, result
 
         with ThreadPoolExecutor() as executor:
-            futures = {executor.submit(_chain, actor): actor for actor in actors}
+            futures = {executor.submit(_call, actor): actor for actor in actors}
             for future in as_completed(futures):
                 yield future.result()
 

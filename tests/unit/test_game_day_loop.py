@@ -10,13 +10,12 @@ from src.engine.phase_day import run_day_phase
 from src.engine.phase_night import run_night_phase
 from src.engine.phase_pre_night import run_pre_night_phase
 from src.engine.phase import Phase
-from src.domain.schema import AgentOutput, Intent, JudgmentOutput
+from src.domain.schema import AgentOutput, ChallengeResult, CoResult, Intent, SilentResult, SpeakResult
 from src.domain.event import EventType
 from src.domain.roles import Seer
 from src.llm.client import LLMClient
 from src.logger.writer import LogWriter
 from tests.conftest import (
-    make_agent_output,
     make_night_action_side_effect,
     make_silent_discussion_side_effect,
     make_speech_parallel_side_effect,
@@ -86,14 +85,10 @@ class TestRunDayPhaseOrder:
         engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
 
         # B challenges speech_id=1 (A's opening speech)
-        challenge = JudgmentOutput(decision="challenge", reply_to=1)
-
-        def discussion_with_challenge(actors, today_log, *_, **__):
-            # find speech_id=1 entry from today_log
-            reply_to_entry = next((e for e in today_log if e.speech_id == 1), None)
+        def discussion_with_challenge(actors, *_, **__):
             return iter([
-                (make_test_actor("A"), JudgmentOutput(decision="silent"), None, None),
-                (make_test_actor("B"), challenge, make_agent_output("B"), reply_to_entry),
+                (make_test_actor("A"), SilentResult(reasoning="quiet")),
+                (make_test_actor("B"), ChallengeResult(thought="t", speech="I disagree!", reply_to=1)),
             ])
 
         engine._llm_client.call_discussion_parallel.side_effect = discussion_with_challenge
@@ -121,24 +116,22 @@ class TestRunDayPhaseOrder:
 
 
 class TestDiscussionCoDecision:
-    """Tests for the "co" judgment option in discussion phase."""
+    """Tests for the "co" tool use in discussion phase."""
 
-    def test_eligible_agent_co_sets_claimed_role(self, make_test_actor, make_test_engine):
-        """Seer (unclaimed) chooses co → claimed_role is set after speaking."""
+    def test_co_result_sets_claimed_role(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._apply_discussion_result with CoResult
+        Mock: call_discussion_parallel returns CoResult(claim_role=Seer)
+        Level: unit
+        Objective: CoResult が返ったとき actor.state.claimed_role に正しいロールがセットされること。
+        """
         seer = make_test_actor("Seer1", "Seer")
         assert seer.state.claimed_role is None
         engine, _ = make_test_engine([seer])
 
-        co_output = AgentOutput(
-            thought="I'll CO now.",
-            speech="I am the Seer!",
-            reasoning="r",
-            intent=Intent(co="Seer"),
-            memory_update=[],
-        )
         engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
-            (seer, JudgmentOutput(decision="co"), co_output, None),
+            (seer, CoResult(thought="CO now", speech="I am the Seer!", claim_role=seer.role)),
         ])
 
         with patch("src.agent.store.save"):
@@ -146,69 +139,66 @@ class TestDiscussionCoDecision:
 
         assert isinstance(seer.state.claimed_role, Seer)
 
-    def test_ineligible_agent_co_treated_as_speak(self, make_test_actor, make_test_engine):
-        """Agent that already claimed a role cannot CO again — falls back to speak."""
+    def test_speak_result_does_not_set_claimed_role(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._apply_discussion_result with SpeakResult
+        Mock: call_discussion_parallel returns SpeakResult (no co)
+        Level: unit
+        Objective: SpeakResult では claimed_role が変わらないこと。
+        """
         seer = make_test_actor("Seer1", "Seer")
-        seer.state.claimed_role = "Seer"  # already claimed
         engine, _ = make_test_engine([seer])
 
-        normal_output = make_agent_output("Seer1", "Just speaking.")
         engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
-            (seer, JudgmentOutput(decision="co"), normal_output, None),
+            (seer, SpeakResult(thought="t", speech="Just speaking.")),
         ])
 
         with patch("src.agent.store.save"):
             engine._run_day()
 
-        # co intent is None in normal_output → claimed_role unchanged
-        assert seer.state.claimed_role is not None  # still the old value, not set again
+        assert seer.state.claimed_role is None
 
-    def test_villager_co_treated_as_speak(self, make_test_actor, make_test_engine):
-        """Villager cannot CO — co judgment falls back to speak."""
+    def test_silent_result_emits_silent_speech_event(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._apply_discussion_result with SilentResult
+        Mock: call_discussion_parallel returns SilentResult
+        Level: unit
+        Objective: SilentResult のとき is_public な SPEECH イベントが「silently watching」内容で emit されること。
+        """
         villager = make_test_actor("V1", "Villager")
-        engine, _ = make_test_engine([villager])
+        engine, events = make_test_engine([villager])
 
-        normal_output = make_agent_output("V1", "Just talking.")
         engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
-            (villager, JudgmentOutput(decision="co"), normal_output, None),
+            (villager, SilentResult(reasoning="nothing")),
         ])
 
         with patch("src.agent.store.save"):
             engine._run_day()
 
-        # Villager co intent is None → claimed_role stays None
-        assert villager.state.claimed_role is None
+        silent_events = [
+            e for e in events
+            if e.event_type == EventType.SPEECH and e.is_public and "silently" in e.content
+        ]
+        assert len(silent_events) >= 1
 
-    def test_failed_discussion_co_clears_intended_co(self, make_test_actor, make_test_engine):
-        seer = make_test_actor("Seer1", "Seer")
-        engine, _ = make_test_engine([seer])
-        normal_output = make_agent_output("Seer1", "I have something to say.")
-
-        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
-        engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
-            (seer, JudgmentOutput(decision="co"), normal_output, None),
-        ])
-
-        with patch("src.agent.store.save"):
-            engine._run_day()
-
-        assert seer.state.intended_co is None
-
-    def test_discussion_fake_co_uses_selected_claim_role(self, make_test_actor, make_test_engine):
+    def test_fake_co_wolf_sets_claimed_role(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._apply_discussion_result with CoResult (wolf fake CO)
+        Mock: call_discussion_parallel returns CoResult(claim_role=Medium) for wolf
+        Level: unit
+        Objective: 狼が CoResult で Medium を詐称したとき claimed_role に Medium がセットされること。
+        """
         wolf = make_test_actor("Wolf1", "Werewolf")
         engine, _ = make_test_engine([wolf])
-        co_output = AgentOutput(
-            thought="I'll fake medium.",
-            speech="I am the Medium.",
-            reasoning="r",
-            intent=Intent(co="Medium"),
-            memory_update=[],
-        )
+
+        from src.domain.roles import get_role
+        medium_role = get_role("Medium")
+
         engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
-            (wolf, JudgmentOutput(decision="co", claim_role="Medium"), co_output, None),
+            (wolf, CoResult(thought="fake", speech="I am the Medium.", claim_role=medium_role)),
         ])
 
         with patch("src.agent.store.save"):
@@ -497,3 +487,82 @@ class TestRunNightPhaseOrder:
             e.event_type == EventType.INSPECTION and e.agent == "Seer1" and e.target == "Wolf1"
             for e in events
         )
+
+
+class TestApplyDiscussionResult:
+    """Tests for GameEngine._apply_discussion_result."""
+
+    def test_suspicion_scores_update_state_and_emit_event(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._apply_discussion_result with SpeakResult
+        Mock: patch で store.save を no-op に差し替え
+        Level: unit
+        Objective: SpeakResult.suspicion_scores が非 None のとき beliefs が更新され
+                   SUSPICION_UPDATE イベントが emit されること。
+        """
+        actor = make_test_actor("Alice")
+        target = make_test_actor("Bob")
+        engine, events = make_test_engine([actor, target])
+
+        result = SpeakResult(
+            thought="thinking",
+            speech="I suspect Bob.",
+            suspicion_scores={"Bob": 0.8},
+        )
+
+        with patch("src.agent.store.save"):
+            engine._apply_discussion_result(actor, result, Phase.DAY_DISCUSSION)
+
+        assert actor.state.beliefs["Bob"].suspicion == pytest.approx(0.8)
+        suspicion_events = [e for e in events if e.event_type == EventType.SUSPICION_UPDATE]
+        assert len(suspicion_events) == 1
+        assert "Bob=0.80" in suspicion_events[0].content
+        assert suspicion_events[0].is_public is False
+
+    def test_threat_scores_update_state_and_emit_event(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._apply_discussion_result with SpeakResult
+        Mock: patch で store.save を no-op に差し替え
+        Level: unit
+        Objective: SpeakResult.threat_scores が非 None のとき threat_scores が更新され
+                   THREAT_UPDATE イベントが emit されること。
+        """
+        wolf = make_test_actor("Wolf", "Werewolf")
+        villager = make_test_actor("Alice")
+        engine, events = make_test_engine([wolf, villager])
+
+        result = SpeakResult(
+            thought="thinking",
+            speech="Hello.",
+            threat_scores={"Alice": 0.9},
+        )
+
+        with patch("src.agent.store.save"):
+            engine._apply_discussion_result(wolf, result, Phase.DAY_DISCUSSION)
+
+        assert wolf.state.threat_scores["Alice"] == pytest.approx(0.9)
+        threat_events = [e for e in events if e.event_type == EventType.THREAT_UPDATE]
+        assert len(threat_events) == 1
+        assert "Alice=0.90" in threat_events[0].content
+        assert threat_events[0].is_public is False
+
+    def test_memory_update_is_applied(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._apply_discussion_result with SpeakResult
+        Mock: patch で store.save を no-op に差し替え
+        Level: unit
+        Objective: SpeakResult.memory_update が非空のとき actor.state.memory_summary に追記されること。
+        """
+        actor = make_test_actor("Alice")
+        engine, _ = make_test_engine([actor])
+
+        result = SpeakResult(
+            thought="t",
+            speech="s",
+            memory_update=["Bob acted suspiciously on Day1"],
+        )
+
+        with patch("src.agent.store.save"):
+            engine._apply_discussion_result(actor, result, Phase.DAY_DISCUSSION)
+
+        assert any("Bob acted suspiciously" in m for m in actor.state.memory_summary)

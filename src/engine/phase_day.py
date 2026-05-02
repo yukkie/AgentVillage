@@ -34,41 +34,17 @@ def _run_discussion(engine: GameEngine) -> None:
         engine._phase_start(Phase.DAY_DISCUSSION)
         alive = engine._alive_agents()
         snapshot = list(engine.today_log)
+        ctx_map = engine._build_discussion_ctx_map(snapshot)
 
         spoke_anyone = False
-        for actor, judgment, output, reply_to_entry in engine._llm_client.call_discussion_parallel(
+        for actor, result in engine._llm_client.call_discussion_parallel(
             alive,
-            snapshot,
-            engine._alive_names(),
-            engine.day,
+            ctx_map,
             engine.lang,
-            engine._build_speech_args,
         ):
-            if judgment.reasoning:
-                engine._emit(LogEvent.make(
-                    day=engine.day,
-                    phase=Phase.DAY_DISCUSSION.value,
-                    event_type=EventType.JUDGMENT,
-                    agent=actor.name,
-                    content=f"{actor.name} [{judgment.decision}]: {judgment.reasoning}",
-                    is_public=False,
-                    decision=judgment.decision,
-                    reasoning=judgment.reasoning,
-                ))
-            if output is None:
-                engine._emit(LogEvent.make(
-                    day=engine.day,
-                    phase=Phase.DAY_DISCUSSION.value,
-                    event_type=EventType.SPEECH,
-                    agent=actor.name,
-                    content=f"{actor.name} is watching the village silently...",
-                    is_public=True,
-                ))
-            else:
+            entry = engine._apply_discussion_result(actor, result, Phase.DAY_DISCUSSION)
+            if entry is not None:
                 spoke_anyone = True
-                engine._apply_speech_output(
-                    actor, output, Phase.DAY_DISCUSSION, reply_to_entry
-                )
 
         if not spoke_anyone:
             break

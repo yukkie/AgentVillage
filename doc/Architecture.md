@@ -158,13 +158,13 @@ CO には2種類のフォールバックがある。
 
 | 関数 | 用途 | プロンプト | 出力モデル |
 |---|---|---|---|
-| `call()` | 発言生成（OPENING / DISCUSSION） | フル（役職・性格・記憶・当日ログ・他者のCO情報・狼仲間（狼のみ）） | `AgentOutput` |
-| `call_judgment()` | 判断（DISCUSSION 並列） | 軽量（役職・性格・memory_summary・直近発言のみ） | `JudgmentOutput` (`claim_role` を含む) |
+| `call()` | 発言生成（OPENING） | フル（役職・性格・記憶・当日ログ・他者のCO情報・狼仲間（狼のみ）） | `AgentOutput` |
+| `call_discussion()` | 発言生成（DISCUSSION 単体） | フル + tool use（`speak` / `challenge` / `co` / `silent` の4 tool） | `DiscussionResult`（`SpeakResult \| ChallengeResult \| CoResult \| SilentResult`） |
 | `call_vote()` | 投票（VOTE フェーズ専用） | 役職・性格・当日議論ログ・past_votes・past_deaths・最終 vote_candidates・狼仲間／VOTE STRATEGY（狼のみ） | `VoteOutput` (`target` + `reasoning` + `strategy`) |
 | `call_night_action()` | 夜行動 | 夜フェーズ専用 | `NightActionOutput` (`target` + `reasoning`) |
 | `call_pre_night_action()` | 前夜判断・単体呼び出し | 役職・性格・参加者情報 | `PreNightOutput` (`claim_role` を含む) |
 | `call_pre_night_parallel()` | 前夜判断・並列呼び出し（`call_speech_parallel` と同パターン） | 同上 | `Iterator[tuple[Actor, PreNightOutput]]` |
-| `call_discussion_parallel()` | 昼DISCUSSION 判断→発言チェーンの並列実行 | — | `Iterator[tuple[Actor, JudgmentOutput, AgentOutput \| None, SpeechEntry \| None]]` |
+| `call_discussion_parallel()` | 昼DISCUSSION 発言の並列実行 | — | `Iterator[tuple[Actor, DiscussionResult, SpeechEntry \| None]]` |
 | `call_vote_parallel()` | 昼VOTE 投票判断の並列実行 | — | `Iterator[tuple[Actor, VoteOutput]]` |
 
 #### 並列実行
@@ -175,7 +175,7 @@ CO には2種類のフォールバックがある。
 |---|---|
 | `call_speech_parallel()` | DAY_OPENING — 全員発言を並列実行 |
 | `call_pre_night_parallel()` | PRE_NIGHT — CO判断を並列実行 |
-| `call_discussion_parallel()` | DAY_DISCUSSION — 判断→発言チェーンを並列実行 |
+| `call_discussion_parallel()` | DAY_DISCUSSION — 発言（tool use 1ステップ）を並列実行 |
 | `call_vote_parallel()` | DAY_VOTE — 全員の投票判断を並列実行 |
 
 #### Extended thinking
@@ -304,19 +304,21 @@ SQLite、PostgreSQL。
 全エージェントが毎ターン発言するだけでは会話がモノローグの羅列になり、AIが自発的に反応する動的な議論が生まれない。
 
 **決定**
-昼フェーズに「判断ターン」を導入する。全エージェントに「challenge / speak / silent」の3択を並列で判断させ、発言意思があるエージェントだけ発言を生成する。発言順はAPIレスポンスが返ってきた順とする。
+昼フェーズに「判断ターン」を導入する。全エージェントに「challenge / speak / silent / co」の4択を並列で判断させ、発言意思があるエージェントだけ発言を生成する。発言順はAPIレスポンスが返ってきた順とする。
 
 **実装方法**
-- 各アクターに「`call_judgment()` → non-silent なら `build_speech_args()` → `call()`」をチェーンした callable を構成
-- `decision="co"` の場合は `JudgmentOutput.claim_role` を `resolve_claim_role()` で `intended_co` に正規化してから発言生成へ渡す
+- Claude の tool use を使い、`speak` / `challenge` / `co` / `silent` の4 tool を定義した1回の API コールで判断と発言を同時に生成する（`call_discussion()`）
+- decision ごとに専用 result dataclass（`SpeakResult` / `ChallengeResult` / `CoResult` / `SilentResult`）で受け取る
 - `call_discussion_parallel()` が `ThreadPoolExecutor` で全アクター分を並列実行（client.py 内）
-- game.py はチェーン用の `build_speech_args` コールバックを渡し、並列実行自体は client.py に委譲する
 - `as_completed()` でレスポンス順に post-processing（`today_log` 更新・イベント発行）を逐次実行
 - 発言コンテキストはラウンド開始時のスナップショットを共有（同ラウンド内の他者発言は見えない）
 - challenge 時は `reply_to`（speech_id）をスナップショット内で解決しプロンプトに含める
+- `phase_day.py` は `isinstance(result, SilentResult)` でガードし、残りは `speech` を持つとして処理する
 
 **理由**
-- 判断プロンプトは軽量（memory_summary + 直近発言のみ）なので並列実行しても低コスト
+- tool use により判断と発言が1回の API コールに統合され、レイテンシが削減される
+- decision ごとに tool schema が分かれるため、LLM の混乱が少なく構造化出力の精度が上がる
+- `build_speech_args` コールバックが不要になり、client.py のエンジン依存が解消される
 - レスポンス順発言により「先に返ってきた反応が場の流れを作る」自然な会話ダイナミクスが生まれる
 - challenge 時の speech_id 参照で、どの発言への反応かがログ上で追跡できる
 

@@ -190,7 +190,48 @@ class AgentOutput(BaseModel):
     memory_update: list[str]
 ```
 
-### JudgmentOutput / PreNightOutput スキーマ
+### DiscussionResult — tool use 結果 dataclass 群
+
+`call_discussion()` は Claude の tool use で4 tool を定義し、LLM が選んだ tool 名に応じて以下の dataclass を返す。
+
+```python
+@dataclass
+class SpeakResult:
+    thought: str
+    speech: str
+    co: Role | None = None          # speech 中に CO した場合
+    memory_update: list[str] = field(default_factory=list)
+    suspicion_scores: dict[str, float] | None = None
+    threat_scores: dict[str, float] | None = None
+
+@dataclass
+class ChallengeResult:
+    thought: str
+    speech: str
+    reply_to: int                   # 反論対象の speech_id
+    memory_update: list[str] = field(default_factory=list)
+    suspicion_scores: dict[str, float] | None = None
+    threat_scores: dict[str, float] | None = None
+
+@dataclass
+class CoResult:
+    thought: str
+    speech: str
+    claim_role: Role                # 公言する役職（必須）
+    memory_update: list[str] = field(default_factory=list)
+    suspicion_scores: dict[str, float] | None = None
+    threat_scores: dict[str, float] | None = None
+
+@dataclass
+class SilentResult:
+    reasoning: str                  # 観戦者向け理由
+
+DiscussionResult = SpeakResult | ChallengeResult | CoResult | SilentResult
+```
+
+エンジン側は `isinstance(result, SilentResult)` でガードし、残りは `speech` を持つとして処理する。
+
+### PreNightOutput スキーマ
 
 ```python
 class PreNightOutput(BaseModel):
@@ -198,14 +239,11 @@ class PreNightOutput(BaseModel):
     decision: Literal["co", "wait"]
     claim_role: Role | None = None
     reasoning: str
+```
 
-class JudgmentOutput(BaseModel):
-    decision: Literal["challenge", "speak", "silent", "co"]
-    reply_to: int | None = None
-    claim_role: Role | None = None
-    reasoning: str = ""   # why this action was chosen (spectator-only)
+### NightActionOutput / VoteOutput スキーマ
 
-
+```python
 class NightActionOutput(BaseModel):
     target: str           # validated alive player name
     reasoning: str = ""   # why this target was chosen (spectator-only)
@@ -217,16 +255,12 @@ class VoteOutput(BaseModel):
     strategy: Literal["village_side", "wolf_side"] | None = None  # Werewolf-only
 ```
 
-- `claim_role` は `decision="co"` のときに名乗る予定の役職
-- 未指定時は `resolve_claim_role()` が `default_claim_role` を使って補完する
-- `can_co=False` の役職に `claim_role` が入った場合は想定外経路として警告ログを出し、無視する
-
 ### LLM呼び出し関数と max_tokens 設定
 
 | 関数 | 用途 | max_tokens | 理由 |
 |---|---|---|---|
-| `call()` | 昼フェーズの発言生成（OPENING / DISCUSSION） | 2048 | thought が日本語で長くなりやすい |
-| `call_judgment()` | 昼フェーズの並列判断（challenge / speak / silent / co） | 1024 | `decision`, `reply_to`, `claim_role` の軽量JSON。`co_eligible=True` のときのみ `"co"` を選択肢に含める |
+| `call()` | 昼フェーズの発言生成（OPENING） | 2048 | thought が日本語で長くなりやすい |
+| `call_discussion()` | 昼フェーズの発言生成（DISCUSSION、tool use） | 2048 | thought + speech を tool use で1回に統合。日本語で長くなりやすい |
 | `call_vote()` | 昼フェーズの投票判断（VOTE） | 512 | `target` + `reasoning` + `strategy`（狼のみ）。reasoning が日本語で多少長くなることを見込む |
 | `call_wolf_chat()` | 夜フェーズの狼チーム会話 | 2048 | thought + speech + attack_candidates + self_co_decision。日本語で長くなりやすい |
 | `call_pre_night_action()` | 前夜フェーズの CO 判断（村人以外） | 1024 | thought + decision + claim_role + reasoning の4フィールド |
