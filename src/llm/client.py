@@ -353,7 +353,7 @@ class LLMClient:
             return WolfChatOutput.model_validate_json(_extract_json(raw))
         except Exception as e:
             _classify_and_log_error("call_wolf_chat", actor.name, e, raw)
-            return WolfChatOutput(thought="...", speech="...", attack_candidates=[])
+            return WolfChatOutput(thought="...", speech="...", attack_candidates={})
 
     def call_night_action(
         self,

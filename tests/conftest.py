@@ -195,7 +195,7 @@ def make_wolf_chat_side_effect(score: float = 0.8) -> callable:
         callable that accepts (actor: Actor, wolf_partners: list[str], alive: list[str], log, lang)
         and returns WolfChatOutput with a non-wolf target.
     """
-    from src.domain.schema import VoteCandidate, WolfChatOutput
+    from src.domain.schema import WolfChatOutput
 
     def _side_effect(actor, wolf_partners, alive, log, lang):
         # actor: Actor instance
@@ -208,7 +208,7 @@ def make_wolf_chat_side_effect(score: float = 0.8) -> callable:
         return WolfChatOutput(
             thought="thinking",
             speech=f"{actor.name} votes to attack {target}" if target else "no valid target",
-            attack_candidates=[VoteCandidate(target=target, score=score)] if target else [],
+            attack_candidates={target: score} if target else {},
         )
 
     return _side_effect
@@ -250,7 +250,7 @@ PRE_NIGHT_CO_OUTPUT_JSON = json.dumps({
 WOLF_CHAT_OUTPUT_JSON = json.dumps({
     "thought": "thinking",
     "speech": "Let's attack Alice.",
-    "attack_candidates": [{"target": "Alice", "score": 0.9}],
+    "attack_candidates": {"Alice": 0.9},
     "self_co_decision": {"claim_role": "Seer", "timing": "next_day"},
 })
 

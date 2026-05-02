@@ -13,7 +13,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#235 | tech-debt | ❌ | 1 | Remove VoteCandidate class; use plain dict for attack_candidates | VoteCandidate を削除し attack_candidates を dict に統一 |
 | yukkie/AgentVillage#207 | tech-debt | ❌ | 2 | Add 'Why' rationale to project-discipline.md for key development process decisions | 主要プロセス決定の Why を project-discipline.md に記載し SKILL.md から参照する |
 | yukkie/AgentVillage#237 | enhancement | ❌ | 3 | Add threat_scores for Werewolf to guide night attack decisions | 狼専用の脅威スコアを発言出力に追加し夜会話のヒントとして渡す |
 | yukkie/AgentVillage#21 | enhancement | 🔴 | 5 | Day 2+ pre-night judgment phase | 昼開始前の判断フェーズを Day 2+ にも拡張 |
