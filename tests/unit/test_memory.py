@@ -1,7 +1,7 @@
 """src/agent/memory.py のテスト。"""
 import pytest
 
-from src.agent.memory import update_beliefs, update_memory
+from src.agent.memory import update_beliefs, update_memory, update_threat_scores
 
 def test_update_memory_appends_new_items(monkeypatch, make_test_actor) -> None:
     """
@@ -112,3 +112,65 @@ def test_update_beliefs_raises_on_io_error(monkeypatch, make_test_actor) -> None
     actor = make_test_actor("Alice")
     with pytest.raises(OSError, match="Failed to persist beliefs for Alice"):
         update_beliefs(actor, {"Bob": 0.7})
+
+
+def test_update_threat_scores_sets_value(monkeypatch, make_test_actor) -> None:
+    """
+    SUT: update_threat_scores()
+    Mock: monkeypatch で store.save を no-op に差し替え
+    Level: unit
+    Objective: threat_scores に指定プレイヤーのスコアがセットされること。
+    """
+    from src.agent import memory as mem_mod
+    monkeypatch.setattr(mem_mod.store, "save", lambda _: None)
+    actor = make_test_actor("Wolf")
+    result = update_threat_scores(actor, {"Seer": 0.9})
+    assert result.state.threat_scores["Seer"] == pytest.approx(0.9)
+
+
+def test_update_threat_scores_updates_existing(monkeypatch, make_test_actor) -> None:
+    """
+    SUT: update_threat_scores()
+    Mock: monkeypatch で store.save を no-op に差し替え
+    Level: unit
+    Objective: 既存エントリがあるとき上書き更新されること。
+    """
+    from src.agent import memory as mem_mod
+    monkeypatch.setattr(mem_mod.store, "save", lambda _: None)
+    actor = make_test_actor("Wolf")
+    actor.state.threat_scores["Knight"] = 0.3
+    update_threat_scores(actor, {"Knight": 0.8})
+    assert actor.state.threat_scores["Knight"] == pytest.approx(0.8)
+
+
+def test_update_threat_scores_clamps_to_range(monkeypatch, make_test_actor) -> None:
+    """
+    SUT: update_threat_scores()
+    Mock: monkeypatch で store.save を no-op に差し替え
+    Level: unit
+    Objective: 範囲外の値（<0.0 または >1.0）が [0.0, 1.0] にクランプされること。
+    """
+    from src.agent import memory as mem_mod
+    monkeypatch.setattr(mem_mod.store, "save", lambda _: None)
+    actor = make_test_actor("Wolf")
+    update_threat_scores(actor, {"Seer": 1.5, "Knight": -0.3})
+    assert actor.state.threat_scores["Seer"] == pytest.approx(1.0)
+    assert actor.state.threat_scores["Knight"] == pytest.approx(0.0)
+
+
+def test_update_threat_scores_raises_on_io_error(monkeypatch, make_test_actor) -> None:
+    """
+    SUT: update_threat_scores()
+    Mock: monkeypatch で store.save が OSError を送出するよう差し替え
+    Level: unit
+    Objective: store.save() が OSError を送出したとき、コンテキスト付きで OSError が re-raise されること。
+    """
+    from src.agent import memory as mem_mod
+
+    def failing_save(_):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(mem_mod.store, "save", failing_save)
+    actor = make_test_actor("Wolf")
+    with pytest.raises(OSError, match="Failed to persist threat scores for Wolf"):
+        update_threat_scores(actor, {"Seer": 0.7})

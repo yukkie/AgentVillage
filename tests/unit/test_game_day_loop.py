@@ -2,6 +2,7 @@
 _run_day() のフェーズ順・speech_id採番・フォールバックを検証する。
 LLM呼び出し (LLMClient メソッド) はモック。
 """
+import pytest
 from unittest.mock import MagicMock, patch
 
 from src.engine.game import GameEngine
@@ -417,6 +418,64 @@ class TestRunNightPhaseOrder:
         assert seer.is_alive is False
         assert seer.state.beliefs == {}
         assert not any(e.event_type == EventType.INSPECTION for e in events)
+
+    def test_apply_speech_output_threat_scores_updates_state_and_emits_event(
+        self, make_test_actor, make_test_engine
+    ):
+        """
+        SUT: GameEngine._apply_speech_output()
+        Mock: monkeypatch で store.save を no-op に差し替え（make_test_engine 経由）
+        Level: unit
+        Objective: AgentOutput.threat_scores が非 None のとき actor.state.threat_scores が
+                   更新され THREAT_UPDATE イベントが emit されること。
+        """
+        wolf = make_test_actor("Wolf", "Werewolf")
+        villager = make_test_actor("Alice")
+        engine, events = make_test_engine([wolf, villager])
+
+        output = AgentOutput(
+            thought="thinking",
+            speech="Hello.",
+            reasoning="reasoning",
+            intent=Intent(),
+            threat_scores={"Alice": 0.85},
+        )
+
+        with patch("src.agent.store.save"):
+            engine._apply_speech_output(wolf, output, Phase.DAY_OPENING)
+
+        assert wolf.state.threat_scores["Alice"] == pytest.approx(0.85)
+        threat_events = [e for e in events if e.event_type == EventType.THREAT_UPDATE]
+        assert len(threat_events) == 1
+        assert "Alice=0.85" in threat_events[0].content
+        assert threat_events[0].is_public is False
+
+    def test_apply_speech_output_no_threat_scores_emits_no_threat_event(
+        self, make_test_actor, make_test_engine
+    ):
+        """
+        SUT: GameEngine._apply_speech_output()
+        Mock: patch で store.save を no-op に差し替え
+        Level: unit
+        Objective: AgentOutput.threat_scores が None のとき THREAT_UPDATE イベントが
+                   emit されないこと。
+        """
+        wolf = make_test_actor("Wolf", "Werewolf")
+        villager = make_test_actor("Alice")
+        engine, events = make_test_engine([wolf, villager])
+
+        output = AgentOutput(
+            thought="thinking",
+            speech="Hello.",
+            reasoning="reasoning",
+            intent=Intent(),
+            threat_scores=None,
+        )
+
+        with patch("src.agent.store.save"):
+            engine._apply_speech_output(wolf, output, Phase.DAY_OPENING)
+
+        assert not any(e.event_type == EventType.THREAT_UPDATE for e in events)
 
     def test_inspection_is_published_if_seer_survives(self, make_test_actor, make_test_engine):
         seer = make_test_actor("Seer1", "Seer")

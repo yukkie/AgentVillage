@@ -328,6 +328,8 @@ LLMの提案をゲームエンジンに渡す橋渡し役。
 | `PRE_NIGHT_DECISION` | False | 前夜CO判断（観戦者のみ） |
 | `CO_ANNOUNCEMENT` | True | 役職公言。`claimed_role` フィールドに公言した役職名を格納 |
 | `VOTE_CANDIDATES` | False | 発言フェーズ（OPENING / DISCUSSION）での vote_candidates スナップショット（観戦者のみ）。`intent.vote_candidates` が非空のとき各発言後に emit される |
+| `SUSPICION_UPDATE` | False | 発言フェーズで村人視点の疑惑スコアが更新されたとき（観戦者のみ・dim cyan） |
+| `THREAT_UPDATE` | False | 発言フェーズで人狼視点の脅威スコアが更新されたとき（観戦者のみ・dim red） |
 | `PHASE_START` | True / False | フェーズ開始通知 |
 | `GAME_OVER` | True | ゲーム終了 |
 

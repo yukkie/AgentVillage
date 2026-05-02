@@ -412,6 +412,11 @@ def build_wolf_chat_prompt(
         "Also coordinate your deception plan for the next day: who should fake-CO, which role each wolf should claim, and whether anyone should wait instead.",
         "You are allowed to decide that both wolves fake-CO, only one does, both wait, or even claim the same role if that fits your strategy.",
     ]
+    if actor.state.threat_scores:
+        lines.append("\nYour current threat assessments (0.0=safe to ignore, 1.0=must eliminate soon):")
+        lines.append("Use these to prioritize tonight's attack target.")
+        for name, score in actor.state.threat_scores.items():
+            lines.append(f"  {name}: threat={score:.2f}")
     if wolf_chat_log:
         lines.append("\nWolf team conversation so far:")
         for entry in wolf_chat_log:

@@ -78,6 +78,35 @@ class Werewolf(Role):
             "default, but adapt your claimed role to the current role distribution and existing claims."
         )
 
+    def output_format_prompt(self, lang: str = "English") -> str:
+        return f"""
+--- OUTPUT FORMAT ---
+You MUST respond with ONLY valid JSON matching this exact schema. No other text.
+
+{{
+  "thought": "<your internal reasoning, hidden from others>",
+  "speech": "<what you say aloud to the group>",
+  "reasoning": "<your public deduction: who you suspect and why>",
+  "intent": {{
+    "co": "<role_name or null>"
+  }},
+  "memory_update": ["<key thing to remember for future turns>", ...],
+  "suspicion_scores": {{"<player_name>": <0.0-1.0>, ...}},
+  "threat_scores": {{"<player_name>": <0.0-1.0>, ...}}
+}}
+
+Rules:
+- "thought", "speech", "reasoning", "memory_update" must be written in {lang}
+- "thought" is your private inner monologue
+- "speech" is your actual spoken words (1-3 sentences)
+- "reasoning" is your public deduction statement (1-2 sentences)
+- "intent.co" is your role claim if you choose to reveal it, otherwise null
+- "memory_update" lists 0-3 key observations to remember
+- "suspicion_scores" maps each player you have updated village-side suspicion about (0.0=trusted, 1.0=certain werewolf from the village perspective); omit players whose suspicion has not changed
+- "threat_scores" maps each player by how threatening they are to your werewolf team (0.0=safe, 1.0=must eliminate — prioritize Seer, Knight, or anyone close to exposing you); omit players whose threat level has not changed
+- Do NOT include your real role in speech unless you are doing a CO
+"""
+
     def vote_strategy_prompt(self) -> str:
         return (
             "\n--- VOTE STRATEGY ---\n"

@@ -29,3 +29,17 @@ def update_beliefs(actor: Actor, suspicion_scores: dict[str, float]) -> Actor:
     except OSError as e:
         raise OSError(f"Failed to persist beliefs for {actor.name}: {e}") from e
     return actor
+
+
+def update_threat_scores(actor: Actor, threat_scores: dict[str, float]) -> Actor:
+    """Apply threat score updates to actor state and persist.
+
+    Values are clamped to [0.0, 1.0]. Intended for Werewolf actors only.
+    """
+    for name, score in threat_scores.items():
+        actor.state.threat_scores[name] = max(0.0, min(1.0, score))
+    try:
+        store.save(actor)
+    except OSError as e:
+        raise OSError(f"Failed to persist threat scores for {actor.name}: {e}") from e
+    return actor
