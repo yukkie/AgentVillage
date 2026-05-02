@@ -225,11 +225,9 @@ def _publish_inspection(engine: GameEngine, inspection: InspectionResult) -> Non
         seer.state.beliefs[name] = Belief()
     if isinstance(result, Werewolf):
         seer.state.beliefs[name].suspicion = 1.0
-        seer.state.beliefs[name].trust = 0.0
         seer.state.beliefs[name].reason.append(f"Day {engine.day}: inspected as Werewolf")
     else:
         seer.state.beliefs[name].suspicion = 0.0
-        seer.state.beliefs[name].trust = 1.0
         seer.state.beliefs[name].reason.append(f"Day {engine.day}: inspected as Not Werewolf")
     store.save(seer)
     role_name = result.name if result is not None else "Villager"

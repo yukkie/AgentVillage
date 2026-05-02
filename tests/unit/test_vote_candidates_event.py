@@ -1,23 +1,22 @@
 """
-VOTE_CANDIDATES イベントの emit と Renderer 描画テスト（Issue #219）。
+SUSPICION_UPDATE イベントの emit と Renderer 描画テスト（Issue #36）。
 """
 from unittest.mock import patch
 
 from src.domain.event import EventType, LogEvent
-from src.domain.schema import AgentOutput, Intent, VoteCandidate
+from src.domain.schema import AgentOutput, Intent
 from src.engine.phase import Phase
 from src.ui.renderer import Renderer
 
 
-def _make_output(candidates: list[tuple[str, float]]) -> AgentOutput:
+def _make_output(suspicion_scores: dict[str, float] | None) -> AgentOutput:
     return AgentOutput(
         thought="thinking",
         speech="Hello.",
         reasoning="reason",
-        intent=Intent(
-            vote_candidates=[VoteCandidate(target=t, score=s) for t, s in candidates]
-        ),
+        intent=Intent(),
         memory_update=[],
+        suspicion_scores=suspicion_scores,
     )
 
 
@@ -28,137 +27,117 @@ def _make_event(event_type: EventType, **kwargs) -> LogEvent:
 # ── emit tests ────────────────────────────────────────────────────────────────
 
 
-class TestVoteCandidatesEmit:
-    def test_event_emitted_when_candidates_non_empty(self, make_test_actor, make_test_engine):
+class TestSuspicionUpdateEmit:
+    def test_event_emitted_when_scores_non_empty(self, make_test_actor, make_test_engine):
         """
         SUT: GameEngine._apply_speech_output
         Mock: LogWriter.write (via make_test_engine), store.save
         Level: unit
-        Objective: vote_candidates が非空のとき VOTE_CANDIDATES イベントが emit されること。
+        Objective: suspicion_scores が非空のとき SUSPICION_UPDATE イベントが emit されること。
         """
         actor = make_test_actor("Alice", "Villager")
         engine, events = make_test_engine([actor])
-        output = _make_output([("Bob", 0.7), ("Carol", 0.3)])
+        output = _make_output({"Bob": 0.7, "Carol": 0.3})
 
         with patch("src.agent.store.save"):
             engine._apply_speech_output(actor, output, Phase.DAY_OPENING)
 
-        vc_events = [e for e in events if e.event_type == EventType.VOTE_CANDIDATES]
-        assert len(vc_events) == 1
+        su_events = [e for e in events if e.event_type == EventType.SUSPICION_UPDATE]
+        assert len(su_events) == 1
 
-    def test_event_not_emitted_when_candidates_empty(self, make_test_actor, make_test_engine):
+    def test_event_not_emitted_when_scores_none(self, make_test_actor, make_test_engine):
         """
         SUT: GameEngine._apply_speech_output
         Mock: LogWriter.write (via make_test_engine), store.save
         Level: unit
-        Objective: vote_candidates が空のとき VOTE_CANDIDATES イベントが emit されないこと。
+        Objective: suspicion_scores が None のとき SUSPICION_UPDATE イベントが emit されないこと。
         """
         actor = make_test_actor("Alice", "Villager")
         engine, events = make_test_engine([actor])
-        output = _make_output([])
+        output = _make_output(None)
 
         with patch("src.agent.store.save"):
             engine._apply_speech_output(actor, output, Phase.DAY_OPENING)
 
-        vc_events = [e for e in events if e.event_type == EventType.VOTE_CANDIDATES]
-        assert len(vc_events) == 0
+        su_events = [e for e in events if e.event_type == EventType.SUSPICION_UPDATE]
+        assert len(su_events) == 0
 
-    def test_event_contains_agent_name_and_candidates(self, make_test_actor, make_test_engine):
+    def test_event_contains_agent_name_and_scores(self, make_test_actor, make_test_engine):
         """
         SUT: GameEngine._apply_speech_output
         Mock: LogWriter.write (via make_test_engine), store.save
         Level: unit
-        Objective: VOTE_CANDIDATES イベントに agent 名と candidates の文字列が含まれること。
+        Objective: SUSPICION_UPDATE イベントに agent 名とスコア文字列が含まれること。
         """
         actor = make_test_actor("Alice", "Villager")
         engine, events = make_test_engine([actor])
-        output = _make_output([("Bob", 0.74), ("Carol", 0.42)])
+        output = _make_output({"Bob": 0.74, "Carol": 0.42})
 
         with patch("src.agent.store.save"):
             engine._apply_speech_output(actor, output, Phase.DAY_OPENING)
 
-        vc_event = next(e for e in events if e.event_type == EventType.VOTE_CANDIDATES)
-        assert vc_event.agent == "Alice"
-        assert "Bob(0.74)" in vc_event.content
-        assert "Carol(0.42)" in vc_event.content
+        su_event = next(e for e in events if e.event_type == EventType.SUSPICION_UPDATE)
+        assert su_event.agent == "Alice"
+        assert "Bob=0.74" in su_event.content
+        assert "Carol=0.42" in su_event.content
 
     def test_event_is_not_public(self, make_test_actor, make_test_engine):
         """
         SUT: GameEngine._apply_speech_output
         Mock: LogWriter.write (via make_test_engine), store.save
         Level: unit
-        Objective: VOTE_CANDIDATES イベントが is_public=False であること（観戦者専用）。
+        Objective: SUSPICION_UPDATE イベントが is_public=False であること（観戦者専用）。
         """
         actor = make_test_actor("Alice", "Villager")
         engine, events = make_test_engine([actor])
-        output = _make_output([("Bob", 0.9)])
+        output = _make_output({"Bob": 0.9})
 
         with patch("src.agent.store.save"):
             engine._apply_speech_output(actor, output, Phase.DAY_OPENING)
 
-        vc_event = next(e for e in events if e.event_type == EventType.VOTE_CANDIDATES)
-        assert vc_event.is_public is False
+        su_event = next(e for e in events if e.event_type == EventType.SUSPICION_UPDATE)
+        assert su_event.is_public is False
 
 
 # ── Renderer tests ────────────────────────────────────────────────────────────
 
 
-class TestVoteCandidatesRenderer:
+class TestSuspicionUpdateRenderer:
     def test_rendered_in_spectator_mode(self):
         """
-        SUT: Renderer.on_event (VOTE_CANDIDATES)
+        SUT: Renderer.on_event (SUSPICION_UPDATE)
         Mock: なし
         Level: unit
-        Objective: spectator モードで VOTE_CANDIDATES イベントが [CANDIDATES] プレフィックス付きで表示されること。
+        Objective: spectator モードで SUSPICION_UPDATE イベントが表示されること。
         """
         renderer = Renderer([], spectator_mode=True)
         event = _make_event(
-            EventType.VOTE_CANDIDATES,
+            EventType.SUSPICION_UPDATE,
             agent="Alice",
-            content="Alice: Bob(0.70), Carol(0.30)",
+            content="Alice suspicion update: Bob=0.70, Carol=0.30",
             is_public=False,
         )
 
         result = renderer.on_event(event)
 
         assert result is not None
-        assert "[CANDIDATES] Alice: Bob(0.70), Carol(0.30)" in result.plain
+        assert "Alice suspicion update" in result.plain
 
     def test_hidden_in_public_mode(self):
         """
-        SUT: Renderer.on_event (VOTE_CANDIDATES)
+        SUT: Renderer.on_event (SUSPICION_UPDATE)
         Mock: なし
         Level: unit
-        Objective: public モードで VOTE_CANDIDATES イベントが表示されないこと（is_public=False フィルタ）。
+        Objective: public モードで SUSPICION_UPDATE イベントが表示されないこと（is_public=False フィルタ）。
         """
         renderer = Renderer([], spectator_mode=False)
         event = _make_event(
-            EventType.VOTE_CANDIDATES,
+            EventType.SUSPICION_UPDATE,
             agent="Alice",
-            content="Alice: Bob(0.70), Carol(0.30)",
+            content="Alice suspicion update: Bob=0.70, Carol=0.30",
             is_public=False,
         )
 
         result = renderer.on_event(event)
 
         assert result is None
-
-    def test_style_is_dim_cyan(self):
-        """
-        SUT: Renderer.on_event (VOTE_CANDIDATES)
-        Mock: なし
-        Level: unit
-        Objective: VOTE_CANDIDATES イベントのスタイルが dim cyan であること。
-        """
-        renderer = Renderer([], spectator_mode=True)
-        event = _make_event(
-            EventType.VOTE_CANDIDATES,
-            agent="Alice",
-            content="Alice: Bob(0.90)",
-            is_public=False,
-        )
-
-        result = renderer.on_event(event)
-
-        assert result is not None
-        assert any("dim cyan" in str(s.style) for s in result.spans)

@@ -1,4 +1,5 @@
 """build_vote_prompt のプロンプト組立テスト（Issue #216）。"""
+from src.domain.actor import Belief
 from src.domain.schema import SpeechEntry
 from src.llm.prompt import build_vote_prompt
 
@@ -21,7 +22,6 @@ class TestBuildVotePrompt:
             today_log=[],
             alive_players=["Alice", "Bob", "Carol"],
             day=1,
-            last_vote_candidates=[],
         )
         assert "must vote for one of: Bob, Carol" in prompt
 
@@ -38,30 +38,49 @@ class TestBuildVotePrompt:
             today_log=_log("hello", "I suspect Bob"),
             alive_players=["Alice", "Bob"],
             day=1,
-            last_vote_candidates=[],
         )
         assert "Today's full discussion" in prompt
         assert "[1] A0: hello" in prompt
         assert "[2] A1: I suspect Bob" in prompt
 
-    def test_includes_last_vote_candidates_hint(self, make_test_actor):
+    def test_includes_suspicion_scores_hint(self, make_test_actor):
         """
         SUT: build_vote_prompt
         Mock: なし
         Level: unit
-        Objective: 発言フェーズで蓄積された最終 vote_candidates が VOTE プロンプトに「ヒント」として含まれること（AC）。
+        Objective: actor.state.beliefs に suspicion スコアが入っているとき VOTE プロンプトにヒントとして含まれること。
         """
         actor = make_test_actor("Alice", "Villager")
+        actor.state.beliefs = {
+            "Bob": Belief(suspicion=0.74),
+            "Carol": Belief(suspicion=0.42),
+        }
         prompt = build_vote_prompt(
             actor,
             today_log=[],
             alive_players=["Alice", "Bob", "Carol"],
             day=1,
-            last_vote_candidates=[("Bob", 0.74), ("Carol", 0.42)],
         )
-        assert "vote_candidates" in prompt
-        assert "Bob(0.74)" in prompt
-        assert "Carol(0.42)" in prompt
+        assert "suspicion" in prompt
+        assert "Bob=0.74" in prompt
+        assert "Carol=0.42" in prompt
+
+    def test_no_suspicion_hint_when_beliefs_empty(self, make_test_actor):
+        """
+        SUT: build_vote_prompt
+        Mock: なし
+        Level: unit
+        Objective: actor.state.beliefs が空のとき suspicion ヒントが含まれないこと。
+        """
+        actor = make_test_actor("Alice", "Villager")
+        actor.state.beliefs = {}
+        prompt = build_vote_prompt(
+            actor,
+            today_log=[],
+            alive_players=["Alice", "Bob"],
+            day=1,
+        )
+        assert "suspicion scores" not in prompt
 
     def test_includes_past_votes_and_deaths(self, make_test_actor):
         """
@@ -76,7 +95,6 @@ class TestBuildVotePrompt:
             today_log=[],
             alive_players=["Alice", "Bob"],
             day=2,
-            last_vote_candidates=[],
             past_votes=[{"day": 1, "votes": {"Alice": "Bob", "Bob": "Carol"}}],
             past_deaths=[{"day": 1, "name": "Carol", "cause": "execution"}],
         )
@@ -98,7 +116,6 @@ class TestBuildVotePrompt:
             today_log=[],
             alive_players=["Alice", "Bob"],
             day=1,
-            last_vote_candidates=[],
         )
         assert "VOTE STRATEGY" not in prompt
         assert "must be null" in prompt
@@ -116,7 +133,6 @@ class TestBuildVotePrompt:
             today_log=[],
             alive_players=["Wolf1", "Wolf2", "Seer1"],
             day=1,
-            last_vote_candidates=[],
             wolf_partners=["Wolf2"],
         )
         assert "VOTE STRATEGY" in prompt
@@ -138,7 +154,6 @@ class TestBuildVotePrompt:
             today_log=[],
             alive_players=["Alice", "Bob", "Carol"],
             day=2,
-            last_vote_candidates=[],
         )
         assert "Bob changed vote on Day1" in prompt
         assert "Carol stayed silent" in prompt
@@ -156,7 +171,6 @@ class TestBuildVotePrompt:
             today_log=[],
             alive_players=["Wolf1", "Seer1"],
             day=2,
-            last_vote_candidates=[],
             wolf_partners=[],
         )
         assert "last wolf" in prompt

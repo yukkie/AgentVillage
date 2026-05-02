@@ -70,13 +70,10 @@ You MUST respond with ONLY valid JSON matching this exact schema. No other text.
   "speech": "<what you say aloud to the group>",
   "reasoning": "<your public deduction: who you suspect and why>",
   "intent": {{
-    "vote_candidates": [
-      {{"target": "<player_name>", "score": <0.0-1.0>}},
-      ...
-    ],
     "co": "<role_name or null>"
   }},
-  "memory_update": ["<key thing to remember for future turns>", ...]
+  "memory_update": ["<key thing to remember for future turns>", ...],
+  "suspicion_scores": {{"<player_name>": <0.0-1.0>, ...}}
 }}
 
 Rules:
@@ -84,9 +81,9 @@ Rules:
 - "thought" is your private inner monologue
 - "speech" is your actual spoken words (1-3 sentences)
 - "reasoning" is your public deduction statement (1-2 sentences)
-- "intent.vote_candidates" lists who you'd vote to eliminate (highest score = most suspect)
 - "intent.co" is your role claim if you choose to reveal it, otherwise null
 - "memory_update" lists 0-3 key observations to remember
+- "suspicion_scores" maps each player you have an updated belief about to a suspicion level (0.0 = fully trusted, 1.0 = certain werewolf); omit players whose suspicion has not changed
 - Do NOT include your real role in speech unless you are doing a CO
 """
 

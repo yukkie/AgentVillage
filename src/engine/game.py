@@ -210,16 +210,17 @@ class GameEngine:
             speech_id=speech_id,
         ))
 
-        if output.intent.vote_candidates:
-            candidates_str = ", ".join(
-                f"{vc.target}({vc.score:.2f})" for vc in output.intent.vote_candidates
+        if output.suspicion_scores:
+            memory_mod.update_beliefs(actor, output.suspicion_scores)
+            scores_str = ", ".join(
+                f"{name}={score:.2f}" for name, score in output.suspicion_scores.items()
             )
             self._emit(LogEvent.make(
                 day=self.day,
                 phase=phase.value,
-                event_type=EventType.VOTE_CANDIDATES,
+                event_type=EventType.SUSPICION_UPDATE,
                 agent=actor.name,
-                content=f"{actor.name}: {candidates_str}",
+                content=f"{actor.name} suspicion update: {scores_str}",
                 is_public=False,
             ))
 

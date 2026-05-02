@@ -81,14 +81,6 @@ def _run_vote(engine: GameEngine) -> str | None:
     alive = engine._alive_agents()
     alive_names = engine._alive_names()
 
-    last_vote_candidates_by_agent: dict[str, list[tuple[str, float]]] = {}
-    for actor in alive:
-        output = engine._day_outputs.get(actor.name)
-        if output and output.intent.vote_candidates:
-            last_vote_candidates_by_agent[actor.name] = [
-                (vc.target, vc.score) for vc in output.intent.vote_candidates
-            ]
-
     calls: list[tuple[Actor, list[str] | None]] = []
     for actor in alive:
         wolf_partners: list[str] | None = None
@@ -104,7 +96,6 @@ def _run_vote(engine: GameEngine) -> str | None:
         list(engine.today_log),
         alive_names,
         engine.day,
-        last_vote_candidates_by_agent,
         engine._past_votes,
         engine._past_deaths,
         engine.lang,

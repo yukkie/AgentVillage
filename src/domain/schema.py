@@ -77,7 +77,6 @@ class WolfSelfCoDecision(BaseModel):
 
 
 class Intent(BaseModel):
-    vote_candidates: list[VoteCandidate] = []
     co: RoleField = None
 
 
@@ -112,6 +111,7 @@ class AgentOutput(BaseModel):
     reasoning: str
     intent: Intent
     memory_update: list[str] = []
+    suspicion_scores: dict[str, float] | None = None
 
 
 class WolfChatOutput(BaseModel):
