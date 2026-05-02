@@ -13,6 +13,7 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| yukkie/AgentVillage#250 | tech-debt | 🔴 | - | Move contract-level tests from tests/unit/ to tests/contract/ | unit/ に混在する contract レベルのテスト17件を contract/ へ移動し、再発防止を強化する |
 | yukkie/AgentVillage#247 | bug | 🔴 | - | Fix: wolf intended_co not passed to discussion phase prompt (PR#242 regression) | DISCUSSIONフェーズのプロンプトに intended_co が渡されず、狼が翌日に偽CO作戦を実行できないデグレ |
 | yukkie/AgentVillage#248 | enhancement | 🔴 | - | Feat: pass wolf CO reasoning to discussion phase prompt | 夜の偽CO決定時の reasoning を翌日 DISCUSSION フェーズのプロンプトに含め、狼の発言一貫性を高める |
 | yukkie/AgentVillage#244 | bug | 🔴 | 1 | Fix silent result displays empty speech instead of watching message | SilentResult 選択時に watching メッセージではなく空発言行が表示されるバグを修正 |
