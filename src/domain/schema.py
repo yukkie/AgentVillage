@@ -64,11 +64,6 @@ class NightActionOutput(BaseModel):
     reasoning: str = ""
 
 
-class VoteCandidate(BaseModel):
-    target: str
-    score: float
-
-
 class WolfSelfCoDecision(BaseModel):
     """LLM response schema for a werewolf's personal final next-day CO decision."""
 
@@ -124,5 +119,5 @@ class WolfChatOutput(BaseModel):
 
     thought: str
     speech: str
-    attack_candidates: list[VoteCandidate] = []
+    attack_candidates: dict[str, float] = {}
     self_co_decision: WolfSelfCoDecision = WolfSelfCoDecision()

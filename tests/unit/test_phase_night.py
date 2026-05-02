@@ -6,7 +6,7 @@ SUT: src/engine/phase_night — _run_wolf_chat, _resolve_night_outcomes, _publis
 from unittest.mock import patch
 
 from src.domain.event import EventType
-from src.domain.schema import VoteCandidate, WolfChatOutput
+from src.domain.schema import WolfChatOutput
 from src.engine.phase_night import (
     AttackDeclaration,
     GuardDeclaration,
@@ -77,7 +77,7 @@ class TestRunWolfChat:
         engine._llm_client.call_wolf_chat.return_value = WolfChatOutput(
             thought="thinking",
             speech="...",
-            attack_candidates=[],
+            attack_candidates={},
         )
 
         result = _run_wolf_chat(engine)
@@ -101,10 +101,7 @@ class TestRunWolfChat:
             return WolfChatOutput(
                 thought="thinking",
                 speech="...",
-                attack_candidates=[
-                    VoteCandidate(target="Wolf2", score=0.9),  # own pack — must be excluded
-                    VoteCandidate(target="Alice", score=0.5),
-                ],
+                attack_candidates={"Wolf2": 0.9, "Alice": 0.5},
             )
 
         engine._llm_client.call_wolf_chat.side_effect = wolf_chat_with_wolf_target
@@ -131,7 +128,7 @@ class TestRunWolfChat:
                 {
                     "thought": "thinking",
                     "speech": "...",
-                    "attack_candidates": [{"target": "Alice", "score": 0.7}],
+                    "attack_candidates": {"Alice": 0.7},
                     "self_co_decision": {
                         "claim_role": "Seer" if actor.name == "Wolf1" else "Medium",
                         "timing": "next_day",
@@ -166,7 +163,7 @@ class TestRunWolfChat:
             {
                 "thought": "thinking",
                 "speech": "...",
-                "attack_candidates": [{"target": "Alice", "score": 0.7}],
+                "attack_candidates": {"Alice": 0.7},
                 "self_co_decision": {"claim_role": None, "timing": "wait"},
             }
         )
@@ -196,7 +193,7 @@ class TestRunWolfChat:
                     {
                         "thought": "thinking",
                         "speech": "You fake-CO Medium, I will fake-CO Seer.",
-                        "attack_candidates": [{"target": "Alice", "score": 0.7}],
+                        "attack_candidates": {"Alice": 0.7},
                         "self_co_decision": {"claim_role": "Seer", "timing": "next_day"},
                     }
                 )
@@ -204,7 +201,7 @@ class TestRunWolfChat:
                 {
                     "thought": "thinking",
                     "speech": "I disagree, I will wait.",
-                    "attack_candidates": [{"target": "Alice", "score": 0.7}],
+                    "attack_candidates": {"Alice": 0.7},
                     "self_co_decision": {"claim_role": None, "timing": "wait"},
                 }
             )

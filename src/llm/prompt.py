@@ -422,10 +422,7 @@ Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
 {{
   "thought": "<your private reasoning>",
   "speech": "<what you say to your wolf partner(s)>",
-  "attack_candidates": [
-    {{"target": "<player_name>", "score": <0.0-1.0>}},
-    ...
-  ],
+  "attack_candidates": {{"<player_name>": <0.0-1.0>, ...}},
   "self_co_decision": {{
     "claim_role": "<role_name or null>",
     "timing": "next_day" | "wait"
