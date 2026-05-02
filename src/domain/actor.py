@@ -43,6 +43,7 @@ class ActorState(BaseModel):
     is_alive: bool = True
     claimed_role: RoleField = None  # publicly claimed role via CO; None until CO
     intended_co: RoleField = None  # role to claim in the next speech; None when not planning a CO
+    threat_scores: dict[str, float] = {}  # Werewolf-side: how threatening each player is (0.0=safe, 1.0=must eliminate)
 
 
 @dataclass

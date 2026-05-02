@@ -21,6 +21,7 @@ class EventType(Enum):
     MEDIUM_RESULT = "medium_result"
     CO_ANNOUNCEMENT = "co_announcement"
     SUSPICION_UPDATE = "suspicion_update"
+    THREAT_UPDATE = "threat_update"
     GAME_OVER = "game_over"
     PHASE_START = "phase_start"
 

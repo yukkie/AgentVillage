@@ -224,6 +224,20 @@ class GameEngine:
                 is_public=False,
             ))
 
+        if output.threat_scores:
+            memory_mod.update_threat_scores(actor, output.threat_scores)
+            scores_str = ", ".join(
+                f"{name}={score:.2f}" for name, score in output.threat_scores.items()
+            )
+            self._emit(LogEvent.make(
+                day=self.day,
+                phase=phase.value,
+                event_type=EventType.THREAT_UPDATE,
+                agent=actor.name,
+                content=f"{actor.name} threat update: {scores_str}",
+                is_public=False,
+            ))
+
         if output.memory_update:
             memory_mod.update_memory(actor, output.memory_update)
 

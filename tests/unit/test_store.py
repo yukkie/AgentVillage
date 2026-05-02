@@ -82,6 +82,36 @@ def test_save_writes_split_json(tmp_path: Path, monkeypatch) -> None:
     assert written["role"] == "Villager"
 
 
+def test_actor_state_loads_without_threat_scores_field(tmp_path: Path, monkeypatch) -> None:
+    """
+    SUT: actor_from_dict() / ActorState
+    Mock: なし
+    Level: unit
+    Objective: threat_scores フィールドを持たない旧フォーマット JSON を読み込んだとき
+               エラーなく Actor が生成され、threat_scores が空辞書になること。
+    """
+    from src.domain.actor import actor_from_dict
+
+    old_json = {
+        "profile": {
+            "name": "Alice",
+            "model": "claude-haiku-4-5-20251001",
+            "persona": {"style": "calm", "lie_tendency": 0.2, "aggression": 0.3},
+        },
+        "state": {
+            "beliefs": {},
+            "memory_summary": [],
+            "is_alive": True,
+            "claimed_role": None,
+            "intended_co": None,
+            # threat_scores フィールドは意図的に省略
+        },
+        "role": "Villager",
+    }
+    actor = actor_from_dict(old_json)
+    assert actor.state.threat_scores == {}
+
+
 def test_save_preserves_non_ascii_text(tmp_path: Path, monkeypatch) -> None:
     """
     SUT: store.save()

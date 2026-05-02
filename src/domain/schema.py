@@ -107,6 +107,7 @@ class AgentOutput(BaseModel):
     intent: Intent
     memory_update: list[str] = []
     suspicion_scores: dict[str, float] | None = None
+    threat_scores: dict[str, float] | None = None
 
 
 class WolfChatOutput(BaseModel):

@@ -364,3 +364,47 @@ def test_judgment_reasoning_is_dimmed() -> None:
     assert result is not None
     dim_spans = [s for s in result.spans if "dim" in str(s.style)]
     assert len(dim_spans) >= 1
+
+
+def test_threat_update_renders_with_dim_red_style() -> None:
+    """
+    SUT: Renderer.on_event (THREAT_UPDATE)
+    Mock: なし
+    Level: unit
+    Objective: THREAT_UPDATE イベントが [THREAT] プレフィックスで dim red スタイルとして描画されること。
+    """
+    renderer = Renderer([], spectator_mode=True)
+    event = _make_event(
+        EventType.THREAT_UPDATE,
+        agent="Wolf",
+        content="Wolf threat update: Seer=0.90, Knight=0.60",
+        is_public=False,
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert "[THREAT]" in result.plain
+    assert "Seer=0.90" in result.plain
+    red_spans = [s for s in result.spans if "red" in str(s.style)]
+    assert len(red_spans) >= 1
+
+
+def test_threat_update_hidden_in_public_mode() -> None:
+    """
+    SUT: Renderer.on_event (THREAT_UPDATE)
+    Mock: なし
+    Level: unit
+    Objective: THREAT_UPDATE は is_public=False のため public モードでは None を返すこと。
+    """
+    renderer = Renderer([], spectator_mode=False)
+    event = _make_event(
+        EventType.THREAT_UPDATE,
+        agent="Wolf",
+        content="Wolf threat update: Seer=0.90",
+        is_public=False,
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is None

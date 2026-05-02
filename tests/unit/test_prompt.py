@@ -1,7 +1,7 @@
 import pytest
 
 from src.domain.actor import Belief
-from src.llm.prompt import build_personal_info_prompt, build_role_prompt
+from src.llm.prompt import build_personal_info_prompt, build_role_prompt, build_wolf_chat_prompt
 from src.domain.roles import get_role
 
 
@@ -73,3 +73,33 @@ def test_personal_info_prompt_omits_suspicion_section_when_no_beliefs(make_test_
     actor.state.beliefs = {}
     prompt = build_personal_info_prompt(actor)
     assert "suspicion levels" not in prompt
+
+
+def test_wolf_chat_prompt_shows_threat_scores_when_present(make_test_actor):
+    """
+    SUT: build_wolf_chat_prompt()
+    Mock: なし
+    Level: unit
+    Objective: actor.state.threat_scores が非空のとき脅威スコアとガイダンスがプロンプトに含まれること。
+    """
+    actor = make_test_actor("Wolf", "Werewolf")
+    actor.state.threat_scores = {"Seer": 0.9, "Knight": 0.6}
+    prompt = build_wolf_chat_prompt(actor, [], ["Seer", "Knight", "Villager"], [])
+    assert "threat" in prompt.lower()
+    assert "Seer" in prompt
+    assert "0.90" in prompt
+    assert "Knight" in prompt
+    assert "0.60" in prompt
+
+
+def test_wolf_chat_prompt_omits_threat_section_when_empty(make_test_actor):
+    """
+    SUT: build_wolf_chat_prompt()
+    Mock: なし
+    Level: unit
+    Objective: actor.state.threat_scores が空のとき脅威スコアセクションが含まれないこと。
+    """
+    actor = make_test_actor("Wolf", "Werewolf")
+    actor.state.threat_scores = {}
+    prompt = build_wolf_chat_prompt(actor, [], ["Alice", "Bob"], [])
+    assert "threat assessments" not in prompt
