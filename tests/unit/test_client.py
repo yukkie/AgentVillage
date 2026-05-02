@@ -136,7 +136,6 @@ class TestCallVote:
             today_log=[],
             alive_players=["Alice", "Bob"],
             day=1,
-            last_vote_candidates=[],
         )
         assert isinstance(result, VoteOutput)
         assert result.target == "Alice"
@@ -157,7 +156,6 @@ class TestCallVote:
             today_log=[],
             alive_players=["Wolf", "Seer1"],
             day=1,
-            last_vote_candidates=[],
             wolf_partners=[],
         )
         assert result.strategy == "wolf_side"
@@ -177,7 +175,6 @@ class TestCallVote:
             today_log=[],
             alive_players=["Alice", "Bob"],
             day=1,
-            last_vote_candidates=[],
         )
         assert result.target == ""
         assert result.strategy is None

@@ -228,7 +228,7 @@ class TestMemoryUpdateContract:
             thought="thinking",
             speech="Bob looks suspicious.",
             reasoning="r",
-            intent=Intent(vote_candidates=[]),
+            intent=Intent(),
             memory_update=["Bob seems suspicious."],
         )
 

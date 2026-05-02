@@ -132,7 +132,7 @@ class TestDiscussionCoDecision:
             thought="I'll CO now.",
             speech="I am the Seer!",
             reasoning="r",
-            intent=Intent(vote_candidates=[], co="Seer"),
+            intent=Intent(co="Seer"),
             memory_update=[],
         )
         engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
@@ -202,7 +202,7 @@ class TestDiscussionCoDecision:
             thought="I'll fake medium.",
             speech="I am the Medium.",
             reasoning="r",
-            intent=Intent(vote_candidates=[], co="Medium"),
+            intent=Intent(co="Medium"),
             memory_update=[],
         )
         engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
@@ -314,7 +314,7 @@ class TestVoteOutputFlow:
             thought="t",
             speech="s",
             reasoning="speech-side reasoning that must NOT leak into the vote event",
-            intent=Intent(vote_candidates=[{"target": "B", "score": 0.9}]),
+            intent=Intent(),
             memory_update=[],
         )
 

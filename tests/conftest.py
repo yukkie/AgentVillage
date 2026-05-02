@@ -99,7 +99,7 @@ def make_agent_output(name: str, speech: str = "Hello.") -> AgentOutput:
         thought="thinking",
         speech=speech,
         reasoning="reasoning",
-        intent=Intent(vote_candidates=[]),
+        intent=Intent(),
         memory_update=[],
     )
 
@@ -132,7 +132,7 @@ def make_vote_parallel_side_effect(
     reasonings = reasonings or {}
     strategies = strategies or {}
 
-    def _side_effect(calls, today_log, alive_players, day, last_vote_candidates_by_agent, *args, **kwargs):
+    def _side_effect(calls, today_log, alive_players, day, *args, **kwargs):
         results = []
         for actor, _wolf_partners in calls:
             target = targets.get(actor.name)
@@ -221,7 +221,7 @@ AGENT_OUTPUT_JSON = json.dumps({
     "thought": "thinking",
     "speech": "Hello village.",
     "reasoning": "just a test",
-    "intent": {"vote_candidates": []},
+    "intent": {},
     "memory_update": [],
 })
 

@@ -19,7 +19,6 @@ class Persona(BaseModel):
 
 class Belief(BaseModel):
     suspicion: float = 0.5
-    trust: float = 0.5
     reason: list[str] = []
 
 

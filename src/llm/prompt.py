@@ -167,11 +167,10 @@ def build_personal_info_prompt(actor: Actor) -> str:
             lines.append(f"  - {mem}")
 
     if actor.state.beliefs:
-        lines.append("\nYour current beliefs about other players:")
+        lines.append("\nYour current suspicion levels for other players (0.0=trusted, 1.0=certain werewolf):")
+        lines.append("Use these scores to guide your vote — prioritize high-suspicion players.")
         for name, belief in actor.state.beliefs.items():
-            lines.append(
-                f"  {name}: suspicion={belief.suspicion:.2f}, trust={belief.trust:.2f}"
-            )
+            lines.append(f"  {name}: suspicion={belief.suspicion:.2f}")
             if belief.reason:
                 lines.append(f"    Reasons: {'; '.join(belief.reason)}")
 
@@ -314,7 +313,6 @@ def build_vote_prompt(
     today_log: list[SpeechEntry],
     alive_players: list[str],
     day: int,
-    last_vote_candidates: list[tuple[str, float]],
     past_votes: list[PastVote] | None = None,
     past_deaths: list[PastDeath] | None = None,
     wolf_partners: list[str] | None = None,
@@ -359,11 +357,16 @@ def build_vote_prompt(
     else:
         lines.append("\nNo discussion yet today.")
 
-    if last_vote_candidates:
-        cand_str = ", ".join(f"{t}({s:.2f})" for t, s in last_vote_candidates)
-        lines.append(
-            f"\nYour latest vote_candidates from the speech phase (hint, not binding): {cand_str}"
+    if actor.state.beliefs:
+        suspicion_str = ", ".join(
+            f"{name}={b.suspicion:.2f}"
+            for name, b in actor.state.beliefs.items()
+            if name in alive_players
         )
+        if suspicion_str:
+            lines.append(
+                f"\nYour suspicion scores (0.0=trusted, 1.0=certain werewolf): {suspicion_str}"
+            )
 
     strategy_block = actor.role.vote_strategy_prompt()
     if strategy_block:

@@ -166,7 +166,7 @@ class TestRunWolfChat:
             {
                 "thought": "thinking",
                 "speech": "...",
-                "vote_candidates": [{"target": "Alice", "score": 0.7}],
+                "attack_candidates": [{"target": "Alice", "score": 0.7}],
                 "self_co_decision": {"claim_role": None, "timing": "wait"},
             }
         )
@@ -423,18 +423,17 @@ class TestPublishInspection:
             _publish_inspection(engine, inspection)
 
         assert seer.state.beliefs["Wolf1"].suspicion == 1.0
-        assert seer.state.beliefs["Wolf1"].trust == 0.0
         inspection_events = [e for e in events if e.event_type == EventType.INSPECTION]
         assert len(inspection_events) == 1
         assert inspection_events[0].agent == "Seer1"
         assert inspection_events[0].target == "Wolf1"
 
-    def test_inspect_villager_sets_trust_max(self, make_test_actor, make_test_engine):
+    def test_inspect_villager_sets_suspicion_min(self, make_test_actor, make_test_engine):
         """
         SUT: _publish_inspection
         Mock: store.save — ファイルI/Oを回避
         Level: unit
-        Objective: Seer が村人を占ったとき suspicion=0.0, trust=1.0 がセットされ INSPECTION イベントが emit されること。
+        Objective: Seer が村人を占ったとき suspicion=0.0 がセットされ INSPECTION イベントが emit されること。
         """
         seer = make_test_actor("Seer1", "Seer")
         villager = make_test_actor("Alice")
@@ -447,7 +446,6 @@ class TestPublishInspection:
             _publish_inspection(engine, inspection)
 
         assert seer.state.beliefs["Alice"].suspicion == 0.0
-        assert seer.state.beliefs["Alice"].trust == 1.0
         inspection_events = [e for e in events if e.event_type == EventType.INSPECTION]
         assert len(inspection_events) == 1
         assert inspection_events[0].agent == "Seer1"
@@ -580,7 +578,7 @@ class TestPublishInspection:
         villager = make_test_actor("Alice")
         engine, events = make_test_engine([seer, villager])
 
-        seer.state.beliefs["Alice"] = Belief(suspicion=0.5, trust=0.5)
+        seer.state.beliefs["Alice"] = Belief(suspicion=0.5)
 
         declaration = InspectDeclaration(actor=seer, target="Alice")
         inspection = InspectionResult(declaration=declaration, result=None)
@@ -588,7 +586,7 @@ class TestPublishInspection:
         with patch("src.engine.phase_night.store.save"):
             _publish_inspection(engine, inspection)
 
-        assert seer.state.beliefs["Alice"].trust == 1.0
+        assert seer.state.beliefs["Alice"].suspicion == 0.0
         assert len([e for e in events if e.event_type == EventType.INSPECTION]) == 1
 
 

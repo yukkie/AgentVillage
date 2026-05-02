@@ -16,7 +16,6 @@
 | yukkie/AgentVillage#207 | tech-debt | ❌ | 2 | Add 'Why' rationale to project-discipline.md for key development process decisions | 主要プロセス決定の Why を project-discipline.md に記載し SKILL.md から参照する |
 | yukkie/AgentVillage#21 | enhancement | 🔴 | 5 | Day 2+ pre-night judgment phase | 昼開始前の判断フェーズを Day 2+ にも拡張 |
 | yukkie/AgentVillage#23 | enhancement | 🟡 | 3 | Auto-summarize memory_summary | 記憶が長くなったら LLM で自動要約 |
-| yukkie/AgentVillage#36 | enhancement | 🟡 | 5 | Belief updates from agent reasoning | suspicion/trust を推理結果から更新 |
 | yukkie/AgentVillage#26 | enhancement | 🟢 | 2 | Thought log display mode switching | 思考ログの表示モード切り替え |
 | yukkie/AgentVillage#88 | enhancement | 🟢 | 5 | Merge judgment and speech into single LLM call using tool use | tool useで発言+アクション構造化を1ステップ化。OPENING/DISCUSSION設計を統一 |
 | yukkie/AgentVillage#79 | enhancement | 🟢 | 5 | Log analysis agent skill for post-game review | ゲームログをAgentに委譲して解析・サマリーを返すスキル |
