@@ -17,6 +17,7 @@
 | yukkie/AgentVillage#248 | enhancement | 🔴 | - | Feat: pass wolf CO reasoning to discussion phase prompt | 夜の偽CO決定時の reasoning を翌日 DISCUSSION フェーズのプロンプトに含め、狼の発言一貫性を高める |
 | yukkie/AgentVillage#244 | bug | 🔴 | 1 | Fix silent result displays empty speech instead of watching message | SilentResult 選択時に watching メッセージではなく空発言行が表示されるバグを修正 |
 | yukkie/AgentVillage#243 | enhancement | 🔴 | 3 | Add prompt cache control to reduce API cost and latency | 固定文字列比率を調査のうえ cache_control を付与しコスト・遅延を削減 |
+| yukkie/AgentVillage#264 | tech-debt | 🟡 | 1 | Add "delete before justifying uncovered code" rule to TestStrategy | カバー不可の承認前に「コード削除で解消できないか」を問うルールを TestStrategy.md に追加 |
 | yukkie/AgentVillage#261 | tech-debt | 🟡 | 1 | Move ANTHROPIC_API_KEY check inside main() to fix worktree test failures | モジュールレベルの APIキーチェックが worktree 環境（.env なし）で test_main.py を SystemExit で落とす。main() 内に移動して解消 |
 | yukkie/AgentVillage#207 | tech-debt | 🔴 | 1 | Add 'Why' rationale to project-discipline.md for key development process decisions | 主要プロセス決定の Why を project-discipline.md に記載し SKILL.md から参照する |
 | yukkie/AgentVillage#23 | enhancement | 🟡 | 3 | Auto-summarize memory_summary | 記憶が長くなったら LLM で自動要約 |
