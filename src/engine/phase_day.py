@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import random
 from typing import TYPE_CHECKING
 
 from src.agent import memory as memory_mod
@@ -14,18 +13,6 @@ from src.engine.vote import tally_votes
 
 if TYPE_CHECKING:
     from src.engine.game import GameEngine
-
-
-def _run_opening(engine: GameEngine) -> None:
-    engine.phase = Phase.DAY_OPENING
-    engine._phase_start(Phase.DAY_OPENING)
-
-    opening_order = engine._alive_agents()
-    random.shuffle(opening_order)
-
-    opening_calls = [(actor, *engine._build_speech_args(actor)) for actor in opening_order]
-    for actor, output in engine._llm_client.call_speech_parallel(opening_calls):
-        engine._apply_speech_output(actor, output, Phase.DAY_OPENING)
 
 
 def _run_discussion(engine: GameEngine) -> None:
@@ -136,9 +123,6 @@ def _resolve_post_vote(engine: GameEngine, eliminated: str) -> None:
 
 
 def run_day_phase(engine: GameEngine) -> str | None:
-    engine._day_outputs = {}
-
-    _run_opening(engine)
     _run_discussion(engine)
     eliminated = _run_vote(engine)
     if eliminated:

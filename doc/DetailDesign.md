@@ -12,7 +12,7 @@
 |---|---|
 | `game.py` | ゲーム全体の状態マシン。フェーズモジュールを呼び出すオーケストレーター |
 | `phase_pre_night.py` | 前夜フェーズ。CO 判断を実行し、観戦者向けログを残す |
-| `phase_day.py` | 昼フェーズ。OPENING / DISCUSSION / VOTE を進行する |
+| `phase_day.py` | 昼フェーズ。DISCUSSION / VOTE を進行する |
 | `phase_night.py` | 夜フェーズ。狼会話の後、夜行動を「宣言」「解決」「公表」に分けて進行する |
 | `setup.py` | ゲーム初期化（エージェント生成・役職割り当て・永続化） |
 | `phase.py` | フェーズ定義（昼/夜/開始/終了）と遷移ロジック |
@@ -142,8 +142,8 @@ def get_role(role: str) -> Role:
 
 | モジュール | 責務 |
 |---|---|
-| `client.py` | anthropic SDKのラッパー。APIコールと `AgentOutput` へのパース |
-| `prompt.py` | 性格プロンプト・役職プロンプトを組み合わせてシステムプロンプトを生成。`build_system_prompt(agent, ctx, direction, role_ctx)` の4引数シグネチャ。公開情報は `PublicContext`、発言制御は `SpeechDirection`、役職固有情報は `RoleSpecificContext` サブクラス（現在は `WolfSpecificContext` のみ）で渡す。役職固有のプロンプト生成は `src/domain/role.py` の `Role` クラスに委譲する |
+| `client.py` | anthropic SDKのラッパー。APIコールと構造化出力へのパース |
+| `prompt.py` | 性格プロンプト・役職プロンプトを組み合わせてシステムプロンプトを生成。公開情報は `PublicContext`、役職固有情報は `RoleSpecificContext` サブクラス（現在は `WolfSpecificContext` のみ）で渡す。役職固有のプロンプト生成は `src/domain/role.py` の `Role` クラスに委譲する |
 
 Pydanticモデル（`AgentOutput`, `SpeechEntry` 等）は `src/domain/schema.py` に移動。
 
@@ -161,12 +161,6 @@ class PublicContext:
     past_deaths: list[PastDeath] | None = None  # TypedDict: {day, name, cause}
 
 @dataclass
-class SpeechDirection:
-    lang: str = "English"
-    reply_to_entry: SpeechEntry | None = None   # challenge 対象
-    intended_co: Role | None = None
-
-@dataclass
 class RoleSpecificContext:
     """役職固有コンテキストの基底クラス"""
     pass
@@ -179,16 +173,6 @@ class WolfSpecificContext(RoleSpecificContext):
 - `PublicContext` は1フェーズ内で全エージェント共通のため1回構築して使い回せる
 - `SpeechDirection` はエージェントごとに異なる（reply_to, co フラグ）
 - `RoleSpecificContext` サブクラスは役職固有のランタイム情報を型安全に渡す手段。Seer/Knight/Medium 向けサブクラスは Issue #36 実装時に追加予定
-
-### AgentOutput スキーマ
-
-```python
-class AgentOutput(BaseModel):
-    thought: str
-    speech: str
-    intent: Intent
-    memory_update: list[str]
-```
 
 ### DiscussionResult — tool use 結果 dataclass 群
 
@@ -259,7 +243,6 @@ class VoteOutput(BaseModel):
 
 | 関数 | 用途 | max_tokens | 理由 |
 |---|---|---|---|
-| `call()` | 昼フェーズの発言生成（OPENING） | 2048 | thought が日本語で長くなりやすい |
 | `call_discussion()` | 昼フェーズの発言生成（DISCUSSION、tool use） | 2048 | thought + speech を tool use で1回に統合。日本語で長くなりやすい |
 | `call_vote()` | 昼フェーズの投票判断（VOTE） | 512 | `target` + `reasoning` + `strategy`（狼のみ）。reasoning が日本語で多少長くなることを見込む |
 | `call_wolf_chat()` | 夜フェーズの狼チーム会話 | 2048 | thought + speech + attack_candidates + self_co_decision。日本語で長くなりやすい |
@@ -361,7 +344,7 @@ LLMの提案をゲームエンジンに渡す橋渡し役。
 | `WOLF_CHAT` | False | 狼チャット（観戦者のみ） |
 | `PRE_NIGHT_DECISION` | False | 前夜CO判断（観戦者のみ） |
 | `CO_ANNOUNCEMENT` | True | 役職公言。`claimed_role` フィールドに公言した役職名を格納 |
-| `VOTE_CANDIDATES` | False | 発言フェーズ（OPENING / DISCUSSION）での vote_candidates スナップショット（観戦者のみ）。`intent.vote_candidates` が非空のとき各発言後に emit される |
+| `VOTE_CANDIDATES` | False | 発言フェーズ（DISCUSSION）での vote_candidates スナップショット（観戦者のみ）。発言後に emit される |
 | `SUSPICION_UPDATE` | False | 発言フェーズで村人視点の疑惑スコアが更新されたとき（観戦者のみ・dim cyan） |
 | `THREAT_UPDATE` | False | 発言フェーズで人狼視点の脅威スコアが更新されたとき（観戦者のみ・dim red） |
 | `PHASE_START` | True / False | フェーズ開始通知 |

@@ -6,7 +6,7 @@ import pytest
 
 from src.domain.actor import Actor, ActorProfile, ActorState, Persona, make_actor
 from src.domain.event import LogEvent
-from src.domain.schema import AgentOutput, Intent, PreNightOutput, SilentResult, VoteOutput
+from src.domain.schema import PreNightOutput, SilentResult, VoteOutput
 from src.engine.game import GameEngine
 from src.llm.client import LLMClient
 from src.logger.writer import LogWriter
@@ -91,24 +91,6 @@ def make_failing_llm_client() -> LLMClient:
 
 
 # ── Shared Mock Builders for GameEngine ──────────────────────────────────
-
-
-def make_agent_output(name: str, speech: str = "Hello.") -> AgentOutput:
-    """Build AgentOutput with standard defaults for test side_effect."""
-    return AgentOutput(
-        thought="thinking",
-        speech=speech,
-        reasoning="reasoning",
-        intent=Intent(),
-        memory_update=[],
-    )
-
-
-def make_speech_parallel_side_effect():
-    """Side effect for call_speech_parallel: each actor returns standard AgentOutput."""
-    def _side_effect(calls):
-        return iter([(a, make_agent_output(a.name)) for a, *_ in calls])
-    return _side_effect
 
 
 def make_silent_discussion_side_effect():
@@ -215,15 +197,6 @@ def make_wolf_chat_side_effect(score: float = 0.8) -> callable:
 
 
 # ── Shared JSON Constants for Client Tests ──────────────────────────────
-
-
-AGENT_OUTPUT_JSON = json.dumps({
-    "thought": "thinking",
-    "speech": "Hello village.",
-    "reasoning": "just a test",
-    "intent": {},
-    "memory_update": [],
-})
 
 
 PRE_NIGHT_OUTPUT_JSON = json.dumps({

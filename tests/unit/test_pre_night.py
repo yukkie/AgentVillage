@@ -1,14 +1,12 @@
 """
 前夜フェーズ（PRE_NIGHT）のテスト。
 - build_pre_night_prompt の内容
-- build_system_prompt の intended_co 反映
 - _run_pre_night のフロー（LLM・store.save をモック）
 """
 from unittest.mock import patch
 
 from src.engine.phase import Phase
-from src.domain.roles import get_role
-from src.llm.prompt import PublicContext, SpeechDirection, WolfSpecificContext, build_pre_night_prompt, build_system_prompt
+from src.llm.prompt import build_pre_night_prompt
 from src.domain.event import EventType
 from tests.conftest import make_pre_night_parallel_side_effect
 
@@ -42,38 +40,6 @@ class TestBuildPreNightPrompt:
         prompt = build_pre_night_prompt(agent, players)
         for p in players:
             assert p in prompt
-
-
-# ── build_system_prompt (intended_co) ─────────────────────────────────────
-
-
-class TestBuildSystemPromptIntendedCo:
-    def test_no_intended_co_section_by_default(self, make_test_actor):
-        agent = make_test_actor("Gina", "Seer")
-        ctx = PublicContext(today_log=[], alive_players=["Gina", "SQ"], dead_players=[], day=1)
-        prompt = build_system_prompt(agent, ctx, SpeechDirection())
-        assert "CO DECISION" not in prompt
-
-    def test_seer_intended_co_adds_true_co_instruction(self, make_test_actor):
-        agent = make_test_actor("Gina", "Seer")
-        ctx = PublicContext(today_log=[], alive_players=["Gina", "SQ"], dead_players=[], day=1)
-        prompt = build_system_prompt(agent, ctx, SpeechDirection(intended_co=agent.role))
-        assert "CO DECISION" in prompt
-        assert "Seer" in prompt
-        assert "intent.co" in prompt
-        # Must NOT instruct Seer to fake
-        assert "fake" not in prompt.lower()
-
-    def test_werewolf_intended_co_adds_fake_co_instruction(self, make_test_actor):
-        agent = make_test_actor("SQ", "Werewolf")
-        ctx = PublicContext(today_log=[], alive_players=["Gina", "SQ"], dead_players=[], day=1)
-        role_ctx = WolfSpecificContext(wolf_partners=[])
-        prompt = build_system_prompt(agent, ctx, SpeechDirection(intended_co=get_role("Medium")), role_ctx)
-        assert "CO DECISION" in prompt
-        assert "Medium" in prompt
-        assert "intent.co" in prompt
-        # Must NOT tell werewolf to reveal true role
-        assert "Werewolf" not in prompt.split("--- YOUR CO DECISION ---")[1]
 
 
 # ── _run_pre_night ──────────────────────────────────────────────────────────

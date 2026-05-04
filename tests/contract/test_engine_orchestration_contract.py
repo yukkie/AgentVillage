@@ -17,10 +17,8 @@ from unittest.mock import patch
 import pytest
 
 from src.domain.event import EventType
-from src.domain.roles import Seer
-from src.domain.schema import AgentOutput, Intent
+from src.domain.schema import SpeakResult
 from src.engine.phase import Phase
-from tests.conftest import make_agent_output
 
 
 # ── run() loop contract ───────────────────────────────────────────────────────
@@ -139,74 +137,12 @@ class TestGetAgentMissContract:
         assert attack_events == []
 
 
-# ── intended-CO miss contract ─────────────────────────────────────────────────
-
-
-@pytest.mark.unit
-class TestIntendedCoMissContract:
-    """SUT: GameEngine._apply_speech_output()
-    Mock: store.save をパッチ（ファイルI/O回避）
-    Level: unit
-    Objective: DAY_OPENING で intended_co を持つエージェントが CO しなかった際の
-               PRE_NIGHT_DECISION emit と intended_co クリアの契約を検証する。
-    """
-
-    def test_opening_co_miss_emits_pre_night_decision_and_clears_flag(
-        self, make_test_actor, make_test_engine
-    ):
-        """
-        SUT: GameEngine._apply_speech_output()
-        Mock: store.save をパッチ
-        Level: unit
-        Objective: DAY_OPENING で intent.co=None のとき PRE_NIGHT_DECISION が emit され
-                   intended_co が None にクリアされること。
-        """
-        seer = make_test_actor("Seer1", "Seer")
-        seer.state.intended_co = Seer()
-        engine, events = make_test_engine([seer])
-
-        output = make_agent_output("Seer1", "I will stay quiet.")  # intent.co is None
-
-        with patch("src.agent.store.save"):
-            engine._apply_speech_output(seer, output, Phase.DAY_OPENING)
-
-        assert seer.state.intended_co is None
-
-        co_miss_events = [e for e in events if e.event_type == EventType.PRE_NIGHT_DECISION]
-        assert len(co_miss_events) == 1
-        assert seer.name in co_miss_events[0].content
-        assert co_miss_events[0].is_public is False
-
-    def test_non_opening_co_miss_does_not_emit_pre_night_decision(
-        self, make_test_actor, make_test_engine
-    ):
-        """
-        SUT: GameEngine._apply_speech_output()
-        Mock: store.save をパッチ
-        Level: unit
-        Objective: DAY_OPENING 以外のフェーズでは intended_co miss が PRE_NIGHT_DECISION を emit しないこと。
-        """
-        seer = make_test_actor("Seer1", "Seer")
-        seer.state.intended_co = Seer()
-        engine, events = make_test_engine([seer])
-
-        output = make_agent_output("Seer1", "Just talking.")
-
-        with patch("src.agent.store.save"):
-            engine._apply_speech_output(seer, output, Phase.DAY_DISCUSSION)
-
-        assert seer.state.intended_co is None
-
-        co_miss_events = [e for e in events if e.event_type == EventType.PRE_NIGHT_DECISION]
-        assert co_miss_events == []
-
-
 # ── post-speech memory update contract ───────────────────────────────────────
 
 
 @pytest.mark.unit
 class TestMemoryUpdateContract:
-    """SUT: GameEngine._apply_speech_output() -> memory_mod.update_memory()
+    """SUT: GameEngine._apply_discussion_result() -> memory_mod.update_memory()
     Mock: memory_mod.update_memory をパッチ、store.save をパッチ
     Level: unit
     Objective: memory_update フィールドが非空のときのみ update_memory が呼ばれる契約を検証する。
@@ -216,19 +152,17 @@ class TestMemoryUpdateContract:
         self, make_test_actor, make_test_engine
     ):
         """
-        SUT: GameEngine._apply_speech_output()
+        SUT: GameEngine._apply_discussion_result()
         Mock: memory_mod.update_memory をパッチ、store.save をパッチ
         Level: unit
-        Objective: output.memory_update が非空のとき memory_mod.update_memory(actor, updates) が呼ばれること。
+        Objective: SpeakResult.memory_update が非空のとき memory_mod.update_memory(actor, updates) が呼ばれること。
         """
         actor = make_test_actor("Alice")
         engine, _ = make_test_engine([actor])
 
-        output = AgentOutput(
+        result = SpeakResult(
             thought="thinking",
             speech="Bob looks suspicious.",
-            reasoning="r",
-            intent=Intent(),
             memory_update=["Bob seems suspicious."],
         )
 
@@ -236,7 +170,7 @@ class TestMemoryUpdateContract:
             patch("src.engine.game.memory_mod.update_memory") as mock_update,
             patch("src.agent.store.save"),
         ):
-            engine._apply_speech_output(actor, output, Phase.DAY_DISCUSSION)
+            engine._apply_discussion_result(actor, result, Phase.DAY_DISCUSSION)
 
         mock_update.assert_called_once_with(actor, ["Bob seems suspicious."])
 
@@ -244,20 +178,20 @@ class TestMemoryUpdateContract:
         self, make_test_actor, make_test_engine
     ):
         """
-        SUT: GameEngine._apply_speech_output()
+        SUT: GameEngine._apply_discussion_result()
         Mock: memory_mod.update_memory をパッチ、store.save をパッチ
         Level: unit
-        Objective: output.memory_update が空リストのとき memory_mod.update_memory が呼ばれないこと。
+        Objective: SpeakResult.memory_update が空リストのとき memory_mod.update_memory が呼ばれないこと。
         """
         actor = make_test_actor("Alice")
         engine, _ = make_test_engine([actor])
 
-        output = make_agent_output("Alice")  # memory_update=[]
+        result = SpeakResult(thought="thinking", speech="Hello.")  # memory_update=[]
 
         with (
             patch("src.engine.game.memory_mod.update_memory") as mock_update,
             patch("src.agent.store.save"),
         ):
-            engine._apply_speech_output(actor, output, Phase.DAY_DISCUSSION)
+            engine._apply_discussion_result(actor, result, Phase.DAY_DISCUSSION)
 
         mock_update.assert_not_called()
