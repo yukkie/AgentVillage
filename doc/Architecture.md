@@ -117,6 +117,7 @@ LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検
 - `intent.co` がLLM出力に含まれたタイミングでGame Engineが `claimed_role` に保存
 - `claimed_role` は **Public情報** として全エージェントのプロンプトに渡す
 - UIのカラー表示も `claimed_role` を参照（真の役職で色付けしない）
+Contract test: `tests/contract/test_day_phase_contract.py`, `tests/contract/test_night_phase_contract.py`
 
 CO が成立する経路:
 
@@ -159,6 +160,8 @@ CO には2種類のフォールバックがある。
 | `call_night_action()` | 夜行動 | 夜フェーズ専用 | `NightActionOutput` (`target` + `reasoning`) |
 | `call_discussion_parallel()` | 昼DISCUSSION 発言の並列実行 | — | `Iterator[tuple[Actor, DiscussionResult, SpeechEntry \| None]]` |
 | `call_vote_parallel()` | 昼VOTE 投票判断の並列実行 | — | `Iterator[tuple[Actor, VoteOutput]]` |
+
+Contract test: `tests/contract/test_day_phase_contract.py`, `tests/contract/test_night_phase_contract.py`
 
 #### 並列実行
 
@@ -300,6 +303,7 @@ SQLite、PostgreSQL。
 - 発言コンテキストはラウンド開始時のスナップショットを共有（同ラウンド内の他者発言は見えない）
 - challenge 時は `reply_to`（speech_id）をスナップショット内で解決しプロンプトに含める
 - `phase_day.py` は `isinstance(result, SilentResult)` でガードし、残りは `speech` を持つとして処理する
+Contract test: `tests/contract/test_day_phase_contract.py`
 
 **理由**
 - tool use により判断と発言が1回の API コールに統合され、レイテンシが削減される
@@ -307,6 +311,7 @@ SQLite、PostgreSQL。
 - `build_speech_args` コールバックが不要になり、client.py のエンジン依存が解消される
 - レスポンス順発言により「先に返ってきた反応が場の流れを作る」自然な会話ダイナミクスが生まれる
 - challenge 時の speech_id 参照で、どの発言への反応かがログ上で追跡できる
+Contract test: `tests/contract/test_day_phase_contract.py`
 
 **結果・トレードオフ**
 発言順が実行ごとに変わる（非決定論的だが意図的）。全員silentのケースに備えてフォールバックが必要。
