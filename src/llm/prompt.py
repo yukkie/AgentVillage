@@ -169,55 +169,6 @@ def build_personal_info_prompt(actor: Actor) -> str:
     return "\n".join(lines)
 
 
-def build_pre_night_prompt(
-    actor: Actor,
-    alive_players: list[str],
-    lang: str = "English",
-    all_agents: list[Actor] | None = None,
-) -> str:
-    """Build prompt for pre-night decision phase (non-Villager roles only).
-
-    Seer decides whether to reveal their role on Day 1.
-    Werewolf decides whether to fake-CO a village-side role.
-    Madman decides whether to fake-CO a village-side role.
-    All choices are encoded as "co" | "wait", with an optional claim_role.
-    """
-    decision_desc = actor.role.pre_night_prompt()
-
-    lines = [
-        f"You are {actor.name}, a player in a social deduction game (Werewolf/Mafia).",
-        f"Your personality style: {actor.persona.style}.",
-        "",
-        f"Your secret role is: {actor.role.name}",
-        f"Players in this game: {', '.join(alive_players)}",
-    ]
-
-    if all_agents:
-        role_counts = Counter(a.role.name for a in all_agents)
-        role_summary = ", ".join(f"{count} {role}" for role, count in sorted(role_counts.items()))
-        lines.append(f"Role distribution in this game: {role_summary}")
-
-    lines += [
-        "",
-        "Before Day 1 begins, you must secretly decide your opening strategy.",
-        decision_desc,
-        "",
-        "--- OUTPUT FORMAT ---",
-        'Respond with ONLY valid JSON, no other text:',
-        "{",
-        '  "thought": "<your internal reasoning>",',
-        '  "decision": "co" | "wait",',
-        '  "claim_role": "<role_name or null>",',
-        '  "reasoning": "<brief explanation of your choice>"',
-        "}",
-        f'- "thought" and "reasoning" must be written in {lang}',
-        '- "decision" must be exactly "co" or "wait" (always English, no other value)',
-        '- If "decision" is "co", set "claim_role" to the role you plan to publicly claim; otherwise use null',
-        f'- Use the actual role names from this game setup (for example: {", ".join(sorted(role_counts))})' if all_agents else '- Use an exact role name from the role distribution when setting "claim_role"',
-    ]
-    return "\n".join(lines)
-
-
 def build_discussion_system_prompt(
     actor: Actor,
     ctx: PublicContext,

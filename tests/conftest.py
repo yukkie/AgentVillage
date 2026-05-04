@@ -6,7 +6,7 @@ import pytest
 
 from src.domain.actor import Actor, ActorProfile, ActorState, Persona, make_actor
 from src.domain.event import LogEvent
-from src.domain.schema import PreNightOutput, SilentResult, VoteOutput
+from src.domain.schema import SilentResult, VoteOutput
 from src.engine.game import GameEngine
 from src.llm.client import LLMClient
 from src.logger.writer import LogWriter
@@ -133,21 +133,6 @@ def make_vote_parallel_side_effect(
 
     return _side_effect
 
-
-def make_pre_night_parallel_side_effect(decision: str, claim_role: str | None = None):
-    """Side effect for call_pre_night_parallel: each actor returns PreNightOutput."""
-    def _side_effect(targets, *_, **__):
-        return iter([
-            (actor, PreNightOutput(
-                thought="thinking",
-                decision=decision,
-                claim_role=claim_role,
-                reasoning="reason",
-            )) for actor in targets
-        ])
-    return _side_effect
-
-
 def make_night_action_side_effect(targets: dict[str, str]) -> callable:
     """Side effect for call_night_action: map actor role/name to night action target.
 
@@ -197,21 +182,6 @@ def make_wolf_chat_side_effect(score: float = 0.8) -> callable:
 
 
 # ── Shared JSON Constants for Client Tests ──────────────────────────────
-
-
-PRE_NIGHT_OUTPUT_JSON = json.dumps({
-    "thought": "thinking",
-    "decision": "wait",
-    "claim_role": None,
-    "reasoning": "not ready",
-})
-
-PRE_NIGHT_CO_OUTPUT_JSON = json.dumps({
-    "thought": "thinking",
-    "decision": "co",
-    "claim_role": "Medium",
-    "reasoning": "fake medium",
-})
 
 WOLF_CHAT_OUTPUT_JSON = json.dumps({
     "thought": "thinking",

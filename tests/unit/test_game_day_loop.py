@@ -8,7 +8,6 @@ from unittest.mock import MagicMock, patch
 from src.engine.game import GameEngine
 from src.engine.phase_day import run_day_phase
 from src.engine.phase_night import run_night_phase
-from src.engine.phase_pre_night import run_pre_night_phase
 from src.engine.phase import Phase
 from src.domain.schema import ChallengeResult, CoResult, SilentResult, SpeakResult
 from src.domain.event import EventType
@@ -38,7 +37,6 @@ class TestGameEngineLlmInjection:
         assert engine._llm_client is injected_llm
 
     def test_phase_modules_import_independently(self):
-        assert callable(run_pre_night_phase)
         assert callable(run_day_phase)
         assert callable(run_night_phase)
 

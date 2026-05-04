@@ -18,21 +18,6 @@ RoleField = Annotated[
 ]
 
 
-class PreNightOutput(BaseModel):
-    """LLM response schema for the pre-night decision phase.
-
-    Mock-Policy: Forbidden
-        LLM I/O contract. ``LLMClient`` mocks must produce JSON that
-        validates as this schema; tests must not synthesize free-form
-        replacements. See ``tests/TestStrategy.md`` §5.
-    """
-
-    thought: str
-    decision: Literal["co", "wait"]
-    claim_role: RoleField = None
-    reasoning: str
-
-
 class SpeechEntry(BaseModel):
     speech_id: int
     agent: str
@@ -106,8 +91,7 @@ class NightActionOutput(BaseModel):
     """LLM response schema for night actions (guard / inspect / attack-fallback).
 
     Mock-Policy: Forbidden
-        LLM I/O contract. See ``PreNightOutput`` and
-        ``tests/TestStrategy.md`` §5.
+        LLM I/O contract. See ``tests/TestStrategy.md`` §5.
     """
 
     target: str
@@ -130,8 +114,7 @@ class VoteOutput(BaseModel):
     VOTE log and is easy to spot.
 
     Mock-Policy: Forbidden
-        LLM I/O contract. See ``PreNightOutput`` and
-        ``tests/TestStrategy.md`` §5.
+        LLM I/O contract. See ``tests/TestStrategy.md`` §5.
     """
 
     target: str
@@ -143,8 +126,7 @@ class WolfChatOutput(BaseModel):
     """LLM response schema for the werewolves' private night chat.
 
     Mock-Policy: Forbidden
-        LLM I/O contract. See ``PreNightOutput`` and
-        ``tests/TestStrategy.md`` §5.
+        LLM I/O contract. See ``tests/TestStrategy.md`` §5.
     """
 
     thought: str

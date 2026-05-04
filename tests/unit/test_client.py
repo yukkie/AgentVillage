@@ -7,13 +7,11 @@ import pytest
 
 from unittest.mock import MagicMock
 
-from src.domain.schema import ChallengeResult, CoResult, NightActionOutput, PreNightOutput, SilentResult, SpeakResult, VoteOutput, WolfChatOutput
+from src.domain.schema import ChallengeResult, CoResult, NightActionOutput, SilentResult, SpeakResult, VoteOutput, WolfChatOutput
 from src.domain.roles import get_role
 from src.llm.client import LLMClient, _classify_error, resolve_claim_role
 from tests.conftest import (
     NIGHT_ACTION_OUTPUT_JSON,
-    PRE_NIGHT_CO_OUTPUT_JSON,
-    PRE_NIGHT_OUTPUT_JSON,
     VOTE_OUTPUT_JSON,
     VOTE_OUTPUT_WOLF_JSON,
     WOLF_CHAT_OUTPUT_JSON,
@@ -117,28 +115,6 @@ class TestCallDiscussion:
         ctx = PublicContext(alive_players=["Alice", "Bob"], dead_players=[], day=1, today_log=[])
         result = llm.call_discussion(actor, ctx)
         assert isinstance(result, SilentResult)
-
-
-class TestCallPreNightAction:
-    def test_returns_pre_night_output(self, make_test_actor):
-        actor = make_test_actor("Gina", "Seer")
-        llm = make_llm_client_with_response(PRE_NIGHT_OUTPUT_JSON)
-        result = llm.call_pre_night_action(actor, ["Gina", "Bob"])
-        assert isinstance(result, PreNightOutput)
-        assert result.decision == "wait"
-
-    def test_returns_wait_fallback_on_exception(self, make_test_actor):
-        actor = make_test_actor("Gina", "Seer")
-        llm = make_failing_llm_client()
-        result = llm.call_pre_night_action(actor, ["Gina", "Bob"])
-        assert result.decision == "wait"
-
-    def test_parses_claim_role_when_present(self, make_test_actor):
-        actor = make_test_actor("Wolf", "Werewolf")
-        llm = make_llm_client_with_response(PRE_NIGHT_CO_OUTPUT_JSON)
-        result = llm.call_pre_night_action(actor, ["Wolf", "Bob"])
-        assert result.decision == "co"
-        assert result.claim_role.name == "Medium"
 
 
 class TestCallWolfChat:

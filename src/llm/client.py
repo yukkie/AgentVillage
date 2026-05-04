@@ -12,7 +12,6 @@ from src.domain.roles import Role
 from src.domain.schema import (
     DiscussionResult,
     NightActionOutput,
-    PreNightOutput,
     SilentResult,
     SpeechEntry,
     VoteOutput,
@@ -26,7 +25,6 @@ from src.llm.prompt import (
     RoleSpecificContext,
     build_discussion_system_prompt,
     build_night_action_prompt,
-    build_pre_night_prompt,
     build_vote_prompt,
     build_wolf_chat_prompt,
 )
@@ -157,45 +155,6 @@ class LLMClient:
         except Exception as e:
             _classify_and_log_error("call_discussion", actor.name, e, "")
             return SilentResult(reasoning="error fallback")
-
-    def call_pre_night_action(
-        self,
-        actor: Actor,
-        alive_players: list[str],
-        lang: str = "English",
-        all_agents: list[Actor] | None = None,
-    ) -> PreNightOutput:
-        """Call LLM for pre-night CO decision and return structured PreNightOutput."""
-        prompt = build_pre_night_prompt(actor, alive_players, lang, all_agents)
-        raw = ""
-        try:
-            message = self._client.messages.create(
-                model=actor.model,
-                max_tokens=MAX_TOKENS["call_pre_night_action"],
-                messages=[{"role": "user", "content": prompt}],
-            )
-            raw = message.content[0].text
-            return PreNightOutput.model_validate_json(_extract_json(raw))
-        except Exception as e:
-            _classify_and_log_error("call_pre_night_action", actor.name, e, raw)
-            return PreNightOutput(thought="...", decision="wait", claim_role=None, reasoning="Defaulting to wait.")
-
-    def call_pre_night_parallel(
-        self,
-        agents: list[Actor],
-        alive_players: list[str],
-        lang: str = "English",
-        all_agents: list[Actor] | None = None,
-    ) -> Iterator[tuple[Actor, PreNightOutput]]:
-        """Call pre-night CO decision for all agents in parallel; yield results in completion order."""
-        with ThreadPoolExecutor() as executor:
-            future_to_agent = {
-                executor.submit(self.call_pre_night_action, actor, alive_players, lang, all_agents): actor
-                for actor in agents
-            }
-            for future in as_completed(future_to_agent):
-                actor = future_to_agent[future]
-                yield actor, future.result()
 
     def call_discussion_parallel(
         self,

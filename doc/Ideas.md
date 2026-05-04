@@ -18,7 +18,6 @@
 | yukkie/AgentVillage#244 | bug | 🔴 | 1 | Fix silent result displays empty speech instead of watching message | SilentResult 選択時に watching メッセージではなく空発言行が表示されるバグを修正 |
 | yukkie/AgentVillage#243 | enhancement | 🔴 | 3 | Add prompt cache control to reduce API cost and latency | 固定文字列比率を調査のうえ cache_control を付与しコスト・遅延を削減 |
 | yukkie/AgentVillage#256 | tech-debt | 🟡 | 3 | Review and eliminate semantic clone code across phase modules | #245リファクタで発覚したOPENING/DISCUSSIONクローンをきっかけに、フェーズ間の意味的重複（プロンプトビルダー・後処理・並列呼び出しboilerplate）を棚卸しして整理 |
-| yukkie/AgentVillage#254 | tech-debt | 🟡 | 2 | Remove PRE_NIGHT phase (pre-game CO planning) | DAY_OPENING削除(#245)後に不要となったPRE_NIGHTフェーズと関連コードを削除。intended_coフィールドは夜フェーズ(#247/#248)で引き続き使用するため残す |
 | yukkie/AgentVillage#252 | tech-debt | 🟡 | 1 | Add unit tests for uncovered paths in phase_day and game modules | #245リファクタ時のカバレッジ確認で判明した未テストパス（_game_over / vote target=None / _resolve_post_vote）を補完 |
 | yukkie/AgentVillage#207 | tech-debt | 🔴 | 1 | Add 'Why' rationale to project-discipline.md for key development process decisions | 主要プロセス決定の Why を project-discipline.md に記載し SKILL.md から参照する |
 | yukkie/AgentVillage#23 | enhancement | 🟡 | 3 | Auto-summarize memory_summary | 記憶が長くなったら LLM で自動要約 |

@@ -6,7 +6,6 @@ from src.agent import store, memory as memory_mod
 from src.engine.phase import Phase
 from src.engine.phase_day import run_day_phase
 from src.engine.phase_night import run_night_phase
-from src.engine.phase_pre_night import run_pre_night_phase
 from src.llm import factory as llm_factory
 from src.llm.client import LLMClient
 from src.llm.prompt import PastDeath, PastVote, PublicContext, RoleSpecificContext, WolfSpecificContext
@@ -91,17 +90,14 @@ class GameEngine:
             label = f"DAY {self.day}  VOTE"
         elif phase == Phase.NIGHT:
             label = f"NIGHT {self.day}"
-        elif phase == Phase.PRE_NIGHT:
-            label = "PRE-NIGHT (BEFORE DAY 1)"
         else:
             label = phase.value.upper()
-        is_public = phase != Phase.PRE_NIGHT
         event = LogEvent.make(
             day=self.day,
             phase=phase.value,
             event_type=EventType.PHASE_START,
             content=f"=== {label} ===",
-            is_public=is_public,
+            is_public=True,
         )
         self._emit(event)
 
@@ -120,8 +116,6 @@ class GameEngine:
             content="=== GAME START ===",
             is_public=True,
         ))
-
-        self._run_pre_night()
 
         while True:
             winner = self._run_day()
@@ -273,9 +267,6 @@ class GameEngine:
             memory_mod.update_memory(actor, result.memory_update)
 
         return entry
-
-    def _run_pre_night(self) -> None:
-        run_pre_night_phase(self)
 
     def _run_day(self) -> str | None:
         return run_day_phase(self)

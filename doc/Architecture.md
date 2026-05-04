@@ -75,7 +75,7 @@ LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検
 - ゲームの進行・昼夜サイクルを管理する状態マシン
 - 投票集計・勝敗判定・役職処理を決定論的に実装
 - エージェントやLLMを直接呼ばない（依存逆転）
-- `GameEngine` はオーケストレーターとして共通状態とユーティリティを保持し、前夜・昼・夜の具体的な進行は `phase_pre_night.py` / `phase_day.py` / `phase_night.py` に分離する
+- `GameEngine` はオーケストレーターとして共通状態とユーティリティを保持し、昼・夜の具体的な進行は `phase_day.py` / `phase_night.py` に分離する
 - 夜フェーズは「宣言」「優先度順の解決」「公表」を分離し、占いの副作用は解決時に即時反映しつつ、公表は生存判定後に行う
 
 ### 3.2 Agent State（`src/agent/`）
@@ -157,8 +157,6 @@ CO には2種類のフォールバックがある。
 | `call_discussion()` | 発言生成（DISCUSSION 単体） | フル + tool use（`speak` / `challenge` / `co` / `silent` の4 tool） | `DiscussionResult`（`SpeakResult \| ChallengeResult \| CoResult \| SilentResult`） |
 | `call_vote()` | 投票（VOTE フェーズ専用） | 役職・性格・当日議論ログ・past_votes・past_deaths・最終 vote_candidates・狼仲間／VOTE STRATEGY（狼のみ） | `VoteOutput` (`target` + `reasoning` + `strategy`) |
 | `call_night_action()` | 夜行動 | 夜フェーズ専用 | `NightActionOutput` (`target` + `reasoning`) |
-| `call_pre_night_action()` | 前夜判断・単体呼び出し | 役職・性格・参加者情報 | `PreNightOutput` (`claim_role` を含む) |
-| `call_pre_night_parallel()` | 前夜判断・並列呼び出し（`call_speech_parallel` と同パターン） | 同上 | `Iterator[tuple[Actor, PreNightOutput]]` |
 | `call_discussion_parallel()` | 昼DISCUSSION 発言の並列実行 | — | `Iterator[tuple[Actor, DiscussionResult, SpeechEntry \| None]]` |
 | `call_vote_parallel()` | 昼VOTE 投票判断の並列実行 | — | `Iterator[tuple[Actor, VoteOutput]]` |
 
@@ -168,7 +166,6 @@ CO には2種類のフォールバックがある。
 
 | 並列関数 | 用途 |
 |---|---|
-| `call_pre_night_parallel()` | PRE_NIGHT — CO判断を並列実行 |
 | `call_discussion_parallel()` | DAY_DISCUSSION — 発言（tool use 1ステップ）を並列実行 |
 | `call_vote_parallel()` | DAY_VOTE — 全員の投票判断を並列実行 |
 
