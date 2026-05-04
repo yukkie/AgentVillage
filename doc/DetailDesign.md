@@ -11,11 +11,10 @@
 | モジュール | 責務 |
 |---|---|
 | `game.py` | ゲーム全体の状態マシン。フェーズモジュールを呼び出すオーケストレーター |
-| `phase_pre_night.py` | 前夜フェーズ。CO 判断を実行し、観戦者向けログを残す |
 | `phase_day.py` | 昼フェーズ。DISCUSSION / VOTE を進行する |
 | `phase_night.py` | 夜フェーズ。狼会話の後、夜行動を「宣言」「解決」「公表」に分けて進行する |
 | `setup.py` | ゲーム初期化（エージェント生成・役職割り当て・永続化） |
-| `phase.py` | フェーズ定義（昼/夜/開始/終了）と遷移ロジック |
+| `phase.py` | フェーズ定義（昼/夜/終了）と遷移ロジック |
 | `vote.py` | 投票集計・同数処理・追放決定 |
 | `victory.py` | 勝利条件の判定 |
 
@@ -215,16 +214,6 @@ DiscussionResult = SpeakResult | ChallengeResult | CoResult | SilentResult
 
 エンジン側は `isinstance(result, SilentResult)` でガードし、残りは `speech` を持つとして処理する。
 
-### PreNightOutput スキーマ
-
-```python
-class PreNightOutput(BaseModel):
-    thought: str
-    decision: Literal["co", "wait"]
-    claim_role: Role | None = None
-    reasoning: str
-```
-
 ### NightActionOutput / VoteOutput スキーマ
 
 ```python
@@ -246,7 +235,6 @@ class VoteOutput(BaseModel):
 | `call_discussion()` | 昼フェーズの発言生成（DISCUSSION、tool use） | 2048 | thought + speech を tool use で1回に統合。日本語で長くなりやすい |
 | `call_vote()` | 昼フェーズの投票判断（VOTE） | 512 | `target` + `reasoning` + `strategy`（狼のみ）。reasoning が日本語で多少長くなることを見込む |
 | `call_wolf_chat()` | 夜フェーズの狼チーム会話 | 2048 | thought + speech + attack_candidates + self_co_decision。日本語で長くなりやすい |
-| `call_pre_night_action()` | 前夜フェーズの CO 判断（村人以外） | 1024 | thought + decision + claim_role + reasoning の4フィールド |
 | `call_night_action()` | 夜フェーズの個別行動（襲撃・占い・護衛） | 256 | `NightActionOutput` (target + reasoning) |
 
 ### build_vote_prompt — VOTE フェーズ専用プロンプト
@@ -342,7 +330,7 @@ LLMの提案をゲームエンジンに渡す橋渡し役。
 | `GUARD` | False | 騎士の護衛行動（観戦者のみ）。`reasoning` フィールドに護衛対象を選んだ理由 |
 | `GUARD_BLOCK` | False / True | 護衛成功の詳細（観戦者）/ 全体通知（村人全員） |
 | `WOLF_CHAT` | False | 狼チャット（観戦者のみ） |
-| `PRE_NIGHT_DECISION` | False | 前夜CO判断（観戦者のみ） |
+| `PRE_NIGHT_DECISION` | False | 旧アーカイブ replay 互換のためだけに残る前夜CO判断イベント |
 | `CO_ANNOUNCEMENT` | True | 役職公言。`claimed_role` フィールドに公言した役職名を格納 |
 | `VOTE_CANDIDATES` | False | 発言フェーズ（DISCUSSION）での vote_candidates スナップショット（観戦者のみ）。発言後に emit される |
 | `SUSPICION_UPDATE` | False | 発言フェーズで村人視点の疑惑スコアが更新されたとき（観戦者のみ・dim cyan） |

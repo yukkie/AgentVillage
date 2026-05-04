@@ -95,8 +95,9 @@ class Renderer:
         elif event.event_type == EventType.THREAT_UPDATE:
             text.append(f"[THREAT] {event.content}", style="dim red")
 
+        # Search marker: Legacy-Adapter
+        # Legacy-Adapter: render archived PRE_NIGHT replay events only.
         elif event.event_type == EventType.PRE_NIGHT_DECISION:
-            # Spectator only — color by the speaker's true role.
             actor = self._get_agent(event.agent)
             style = actor.role.color if actor else "cyan"
             text.append(f"[PRE-NIGHT] {event.content}", style=style)

@@ -4,7 +4,6 @@ Covers the orchestration edge cases identified in Issue #184:
 
 - run() loop: GAME START event + winner propagation + day counter
 - _get_agent() miss: returns None for unknown names; _eliminate() is a no-op
-- intended-CO miss: PRE_NIGHT_DECISION event emitted, intended_co cleared
 - post-speech memory update: memory_mod.update_memory called iff non-empty
 
 These tests use a real GameEngine and drive it with minimal setup so that the
@@ -27,7 +26,7 @@ from src.engine.phase import Phase
 @pytest.mark.unit
 class TestRunLoopContract:
     """SUT: GameEngine.run()
-    Mock: _run_pre_night, _run_day, _run_night をパッチしてループを制御
+    Mock: _run_day, _run_night をパッチしてループを制御
     Level: unit
     Objective: run() のループ制御・GAME START emit・winner 返却の契約を検証する。
     """
@@ -35,7 +34,7 @@ class TestRunLoopContract:
     def test_run_emits_game_start_event(self, make_test_actor, make_test_engine):
         """
         SUT: GameEngine.run()
-        Mock: _run_pre_night, _run_day, _run_night をパッチ
+        Mock: _run_day, _run_night をパッチ
         Level: unit
         Objective: run() 開始時に PHASE_START / "GAME START" イベントが emit されること。
         """
@@ -43,7 +42,6 @@ class TestRunLoopContract:
         engine, events = make_test_engine(agents)
 
         with (
-            patch.object(engine, "_run_pre_night"),
             patch.object(engine, "_run_day", return_value="Villagers"),
             patch.object(engine, "_game_over"),
         ):
@@ -59,7 +57,7 @@ class TestRunLoopContract:
     def test_run_returns_winner_and_calls_game_over(self, make_test_actor, make_test_engine):
         """
         SUT: GameEngine.run()
-        Mock: _run_pre_night, _run_day, _run_night をパッチ
+        Mock: _run_day, _run_night をパッチ
         Level: unit
         Objective: _run_night が winner を返したとき run() がその値を返し _game_over を呼ぶこと。
         """
@@ -67,7 +65,6 @@ class TestRunLoopContract:
         engine, _ = make_test_engine(agents)
 
         with (
-            patch.object(engine, "_run_pre_night"),
             patch.object(engine, "_run_day", return_value=None),
             patch.object(engine, "_run_night", return_value="Werewolves"),
             patch.object(engine, "_game_over") as mock_game_over,
@@ -80,7 +77,7 @@ class TestRunLoopContract:
     def test_run_increments_day_on_loop_continuation(self, make_test_actor, make_test_engine):
         """
         SUT: GameEngine.run()
-        Mock: _run_pre_night, _run_day, _run_night をパッチ。2ループ目で終了
+        Mock: _run_day, _run_night をパッチ。2ループ目で終了
         Level: unit
         Objective: day / night ともに winner なしのとき day が +1 されてループが継続すること。
         """
@@ -88,7 +85,6 @@ class TestRunLoopContract:
         engine, _ = make_test_engine(agents)
 
         with (
-            patch.object(engine, "_run_pre_night"),
             patch.object(engine, "_run_day", side_effect=[None, "Villagers"]),
             patch.object(engine, "_run_night", return_value=None),
             patch.object(engine, "_game_over"),
