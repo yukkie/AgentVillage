@@ -5,6 +5,7 @@ from unittest.mock import patch
 from src.engine.phase import Phase
 from src.domain.schema import SilentResult, SpeakResult
 from src.domain.event import EventType
+from src.engine.phase_day import _resolve_post_vote
 
 
 class TestDiscussionCoDecision:
@@ -18,10 +19,12 @@ class TestDiscussionCoDecision:
         Objective: SpeakResult では claimed_role が変わらないこと。
         """
         seer = make_test_actor("Seer1", "Seer")
-        engine, _ = make_test_engine([seer])
+        other = make_test_actor("V1")
+        engine, _ = make_test_engine([seer, other])
 
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
             (seer, SpeakResult(thought="t", speech="Just speaking.")),
+            (other, SilentResult(reasoning="nothing")),
         ])
 
         with patch("src.agent.store.save"):
@@ -37,10 +40,12 @@ class TestDiscussionCoDecision:
         Objective: SilentResult のとき is_public な SPEECH イベントが「silently watching」内容で emit されること。
         """
         villager = make_test_actor("V1", "Villager")
-        engine, events = make_test_engine([villager])
+        other = make_test_actor("V2")
+        engine, events = make_test_engine([villager, other])
 
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
             (villager, SilentResult(reasoning="nothing")),
+            (other, SilentResult(reasoning="nothing")),
         ])
 
         with patch("src.agent.store.save"):
@@ -51,6 +56,26 @@ class TestDiscussionCoDecision:
             if e.event_type == EventType.SPEECH and e.is_public and "silently" in e.content
         ]
         assert len(silent_events) >= 1
+
+    def test_vote_crashes_when_no_other_alive_player(self, make_test_actor, make_test_engine):
+        """
+        SUT: _run_vote in phase_day.py (others empty branch)
+        Mock: call_discussion_parallel (SilentResult); call_vote_parallel はデフォルト mock
+              (target="" を返す → alive_names にマッチせず else 分岐 → others が空 → IndexError)
+        Level: unit
+        Objective: 他に生存者がいない不正ゲーム状態で投票を実行すると IndexError が発生すること。
+                   正常フローでは勝敗判定が先に通るためこの状態には到達しない。
+                   ガードを置かず即クラッシュさせる設計を確認する death test。
+        """
+        loner = make_test_actor("Alice")
+        engine, _ = make_test_engine([loner])
+
+        engine._llm_client.call_discussion_parallel.side_effect = (
+            lambda actors, *_, **__: iter([(loner, SilentResult(reasoning="nothing"))])
+        )
+
+        with patch("src.agent.store.save"), pytest.raises(IndexError):
+            engine._run_day()
 
 
 class TestApplyThreatScores:
@@ -186,3 +211,53 @@ class TestApplyDiscussionResult:
             engine._apply_discussion_result(actor, result, Phase.DAY_DISCUSSION)
 
         assert any("Bob acted suspiciously" in m for m in actor.state.memory_summary)
+
+
+class TestGameOver:
+    def test_emits_game_over_event_with_winner(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._game_over()
+        Mock: なし（make_test_engine の LLMClient mock）
+        Level: unit
+        Objective: _game_over() を直接呼び出したとき GAME_OVER イベントが winner 文字列を含む
+                   content で is_public=True として emit されること。
+        """
+        villager = make_test_actor("Alice")
+        engine, events = make_test_engine([villager])
+
+        engine._game_over("Werewolves")
+
+        game_over_events = [e for e in events if e.event_type == EventType.GAME_OVER]
+        assert len(game_over_events) == 1
+        assert "Werewolves" in game_over_events[0].content
+        assert game_over_events[0].is_public is True
+
+
+class TestResolvePostVote:
+    def test_medium_receives_memory_update_and_medium_result_event(
+        self, make_test_actor, make_test_engine
+    ):
+        """
+        SUT: _resolve_post_vote (phase_day.py)
+        Mock: src.agent.memory.update_memory をパッチ; src.agent.store.save をパッチ
+        Level: unit
+        Objective: Medium 生存時に _resolve_post_vote を呼ぶと update_memory が呼ばれ、
+                   MEDIUM_RESULT イベントが非公開で emit されること。
+        """
+        medium = make_test_actor("Medium1", "Medium")
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        engine, events = make_test_engine([medium, wolf])
+
+        with patch("src.agent.memory.update_memory") as mock_update_memory, \
+                patch("src.agent.store.save"):
+            _resolve_post_vote(engine, wolf.name)
+
+        mock_update_memory.assert_called_once_with(
+            medium,
+            ["Day 1: Wolf1 was executed, they were Werewolf"],
+        )
+        medium_events = [e for e in events if e.event_type == EventType.MEDIUM_RESULT]
+        assert len(medium_events) == 1
+        assert medium_events[0].agent == medium.name
+        assert medium_events[0].target == wolf.name
+        assert medium_events[0].is_public is False

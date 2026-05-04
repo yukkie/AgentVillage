@@ -118,11 +118,13 @@ class TestDiscussionCoDecisionContract:
         Objective: CoResult が返ったとき claimed_role ライフサイクルが public state に反映されることを検証する。
         """
         seer = make_test_actor("Seer1", "Seer")
+        other = make_test_actor("V1")
         assert seer.state.claimed_role is None
-        engine, _ = make_test_engine([seer])
+        engine, _ = make_test_engine([seer, other])
 
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
             (seer, CoResult(thought="CO now", speech="I am the Seer!", claim_role=seer.role)),
+            (other, SilentResult(reasoning="nothing")),
         ])
 
         with patch("src.agent.store.save"):
@@ -139,11 +141,13 @@ class TestDiscussionCoDecisionContract:
         Objective: 狼の fake CO が claimed_role に反映されるライフサイクル契約を検証する。
         """
         wolf = make_test_actor("Wolf1", "Werewolf")
-        engine, _ = make_test_engine([wolf])
+        other = make_test_actor("V1")
+        engine, _ = make_test_engine([wolf, other])
         medium_role = get_role("Medium")
 
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
             (wolf, CoResult(thought="fake", speech="I am the Medium.", claim_role=medium_role)),
+            (other, SilentResult(reasoning="nothing")),
         ])
 
         with patch("src.agent.store.save"):
