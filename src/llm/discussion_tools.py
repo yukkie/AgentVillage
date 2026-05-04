@@ -1,5 +1,6 @@
 """Tool definitions and response parsing for DISCUSSION phase tool use calls."""
 
+import re
 import sys
 
 import anthropic
@@ -13,6 +14,8 @@ from src.domain.schema import (
 )
 from src.legacy.role_normalizer import normalize_role_field
 
+_XML_TAG_RE = re.compile(r"<(\w[\w:-]*)[^>]*>.*?</\1>", re.DOTALL)
+
 
 def build_discussion_tools(co_eligible: bool) -> list[dict]:
     """Build the tool definitions list for a DISCUSSION call."""
@@ -24,8 +27,8 @@ def build_discussion_tools(co_eligible: bool) -> list[dict]:
             "input_schema": {
                 "type": "object",
                 "properties": {
-                    "thought": {"type": "string", "description": "Your private reasoning (not shown to others)."},
-                    "speech": {"type": "string", "description": "What you say aloud to the group."},
+                    "speech": {"type": "string", "description": "What you say aloud to the group. Do not use XML tags."},
+                    "thought": {"type": "string", "description": "Your private reasoning (not shown to others). Do not use XML tags."},
                     "memory_update": {
                         "type": "array",
                         "items": {"type": "string"},
@@ -42,7 +45,7 @@ def build_discussion_tools(co_eligible: bool) -> list[dict]:
                         "additionalProperties": {"type": "number"},
                     },
                 },
-                "required": ["thought", "speech"],
+                "required": ["speech", "thought"],
             },
         },
         {
@@ -51,8 +54,8 @@ def build_discussion_tools(co_eligible: bool) -> list[dict]:
             "input_schema": {
                 "type": "object",
                 "properties": {
-                    "thought": {"type": "string", "description": "Your private reasoning."},
-                    "speech": {"type": "string", "description": "What you say aloud in response."},
+                    "speech": {"type": "string", "description": "What you say aloud in response. Do not use XML tags."},
+                    "thought": {"type": "string", "description": "Your private reasoning. Do not use XML tags."},
                     "reply_to": {"type": "integer", "description": "The speech_id of the entry you are challenging."},
                     "memory_update": {
                         "type": "array",
@@ -70,7 +73,7 @@ def build_discussion_tools(co_eligible: bool) -> list[dict]:
                         "additionalProperties": {"type": "number"},
                     },
                 },
-                "required": ["thought", "speech", "reply_to"],
+                "required": ["speech", "thought", "reply_to"],
             },
         },
         {
@@ -92,9 +95,9 @@ def build_discussion_tools(co_eligible: bool) -> list[dict]:
             "input_schema": {
                 "type": "object",
                 "properties": {
-                    "thought": {"type": "string", "description": "Your private reasoning."},
-                    "speech": {"type": "string", "description": "What you say aloud when declaring your role."},
+                    "speech": {"type": "string", "description": "What you say aloud when declaring your role. Do not use XML tags."},
                     "claim_role": {"type": "string", "description": f"The role name you are claiming ({role_names_hint})."},
+                    "thought": {"type": "string", "description": "Your private reasoning. Do not use XML tags."},
                     "memory_update": {
                         "type": "array",
                         "items": {"type": "string"},
@@ -111,7 +114,7 @@ def build_discussion_tools(co_eligible: bool) -> list[dict]:
                         "additionalProperties": {"type": "number"},
                     },
                 },
-                "required": ["thought", "speech", "claim_role"],
+                "required": ["speech", "claim_role", "thought"],
             },
         })
     return tools
@@ -125,37 +128,58 @@ def parse_discussion_tool_result(message: anthropic.types.Message, agent_name: s
         inp = block.input
         name = block.name
         if name == "speak":
+            speech = inp.get("speech", "")
+            thought = inp.get("thought", "")
+            _warn_xml_tags(agent_name, name, speech, thought)
+            if not speech:
+                _log_warning(agent_name, "speak tool returned empty speech; falling back to silent")
+                return SilentResult(reasoning="empty speech fallback")
             return SpeakResult(
-                thought=inp.get("thought", ""),
-                speech=inp.get("speech", ""),
+                thought=thought,
+                speech=speech,
                 memory_update=inp.get("memory_update", []),
                 suspicion_scores=inp.get("suspicion_scores"),
                 threat_scores=inp.get("threat_scores"),
             )
         if name == "challenge":
+            speech = inp.get("speech", "")
+            thought = inp.get("thought", "")
+            _warn_xml_tags(agent_name, name, speech, thought)
+            if not speech:
+                _log_warning(agent_name, "challenge tool returned empty speech; falling back to silent")
+                return SilentResult(reasoning="empty speech fallback")
             return ChallengeResult(
-                thought=inp.get("thought", ""),
-                speech=inp.get("speech", ""),
+                thought=thought,
+                speech=speech,
                 reply_to=int(inp.get("reply_to", 0)),
                 memory_update=inp.get("memory_update", []),
                 suspicion_scores=inp.get("suspicion_scores"),
                 threat_scores=inp.get("threat_scores"),
             )
         if name == "co":
+            speech = inp.get("speech", "")
+            thought = inp.get("thought", "")
+            _warn_xml_tags(agent_name, name, speech, thought)
             raw_role = inp.get("claim_role")
             claim_role = normalize_role_field(raw_role)
             if claim_role is None:
                 _log_warning(agent_name, f"co tool missing valid claim_role: {raw_role!r}; falling back to speak")
+                if not speech:
+                    _log_warning(agent_name, "co fallback-to-speak also has empty speech; falling back to silent")
+                    return SilentResult(reasoning="empty speech fallback")
                 return SpeakResult(
-                    thought=inp.get("thought", ""),
-                    speech=inp.get("speech", ""),
+                    thought=thought,
+                    speech=speech,
                     memory_update=inp.get("memory_update", []),
                     suspicion_scores=inp.get("suspicion_scores"),
                     threat_scores=inp.get("threat_scores"),
                 )
+            if not speech:
+                _log_warning(agent_name, "co tool returned empty speech; falling back to silent")
+                return SilentResult(reasoning="empty speech fallback")
             return CoResult(
-                thought=inp.get("thought", ""),
-                speech=inp.get("speech", ""),
+                thought=thought,
+                speech=speech,
                 claim_role=claim_role,
                 memory_update=inp.get("memory_update", []),
                 suspicion_scores=inp.get("suspicion_scores"),
@@ -167,6 +191,12 @@ def parse_discussion_tool_result(message: anthropic.types.Message, agent_name: s
     # No tool_use block found — fall back to silent
     _log_warning(agent_name, "no tool_use block in response; falling back to silent")
     return SilentResult(reasoning="no tool use block")
+
+
+def _warn_xml_tags(agent_name: str, tool_name: str, speech: str, thought: str) -> None:
+    for field_name, value in (("speech", speech), ("thought", thought)):
+        for match in _XML_TAG_RE.finditer(value):
+            _log_warning(agent_name, f"{tool_name}.{field_name} contains XML tag: {match.group()!r}")
 
 
 def _log_warning(agent_name: str, message: str) -> None:
