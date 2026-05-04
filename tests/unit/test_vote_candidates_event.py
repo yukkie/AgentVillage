@@ -4,24 +4,21 @@ SUSPICION_UPDATE イベントの emit と Renderer 描画テスト（Issue #36�
 from unittest.mock import patch
 
 from src.domain.event import EventType, LogEvent
-from src.domain.schema import AgentOutput, Intent
+from src.domain.schema import SpeakResult
 from src.engine.phase import Phase
 from src.ui.renderer import Renderer
 
 
-def _make_output(suspicion_scores: dict[str, float] | None) -> AgentOutput:
-    return AgentOutput(
+def _make_speak_result(suspicion_scores: dict[str, float] | None) -> SpeakResult:
+    return SpeakResult(
         thought="thinking",
         speech="Hello.",
-        reasoning="reason",
-        intent=Intent(),
-        memory_update=[],
         suspicion_scores=suspicion_scores,
     )
 
 
 def _make_event(event_type: EventType, **kwargs) -> LogEvent:
-    return LogEvent.make(day=1, phase="day_opening", event_type=event_type, **kwargs)
+    return LogEvent.make(day=1, phase="day_discussion", event_type=event_type, **kwargs)
 
 
 # ── emit tests ────────────────────────────────────────────────────────────────
@@ -30,51 +27,51 @@ def _make_event(event_type: EventType, **kwargs) -> LogEvent:
 class TestSuspicionUpdateEmit:
     def test_event_emitted_when_scores_non_empty(self, make_test_actor, make_test_engine):
         """
-        SUT: GameEngine._apply_speech_output
+        SUT: GameEngine._apply_discussion_result
         Mock: LogWriter.write (via make_test_engine), store.save
         Level: unit
         Objective: suspicion_scores が非空のとき SUSPICION_UPDATE イベントが emit されること。
         """
         actor = make_test_actor("Alice", "Villager")
         engine, events = make_test_engine([actor])
-        output = _make_output({"Bob": 0.7, "Carol": 0.3})
+        result = _make_speak_result({"Bob": 0.7, "Carol": 0.3})
 
         with patch("src.agent.store.save"):
-            engine._apply_speech_output(actor, output, Phase.DAY_OPENING)
+            engine._apply_discussion_result(actor, result, Phase.DAY_DISCUSSION)
 
         su_events = [e for e in events if e.event_type == EventType.SUSPICION_UPDATE]
         assert len(su_events) == 1
 
     def test_event_not_emitted_when_scores_none(self, make_test_actor, make_test_engine):
         """
-        SUT: GameEngine._apply_speech_output
+        SUT: GameEngine._apply_discussion_result
         Mock: LogWriter.write (via make_test_engine), store.save
         Level: unit
         Objective: suspicion_scores が None のとき SUSPICION_UPDATE イベントが emit されないこと。
         """
         actor = make_test_actor("Alice", "Villager")
         engine, events = make_test_engine([actor])
-        output = _make_output(None)
+        result = _make_speak_result(None)
 
         with patch("src.agent.store.save"):
-            engine._apply_speech_output(actor, output, Phase.DAY_OPENING)
+            engine._apply_discussion_result(actor, result, Phase.DAY_DISCUSSION)
 
         su_events = [e for e in events if e.event_type == EventType.SUSPICION_UPDATE]
         assert len(su_events) == 0
 
     def test_event_contains_agent_name_and_scores(self, make_test_actor, make_test_engine):
         """
-        SUT: GameEngine._apply_speech_output
+        SUT: GameEngine._apply_discussion_result
         Mock: LogWriter.write (via make_test_engine), store.save
         Level: unit
         Objective: SUSPICION_UPDATE イベントに agent 名とスコア文字列が含まれること。
         """
         actor = make_test_actor("Alice", "Villager")
         engine, events = make_test_engine([actor])
-        output = _make_output({"Bob": 0.74, "Carol": 0.42})
+        result = _make_speak_result({"Bob": 0.74, "Carol": 0.42})
 
         with patch("src.agent.store.save"):
-            engine._apply_speech_output(actor, output, Phase.DAY_OPENING)
+            engine._apply_discussion_result(actor, result, Phase.DAY_DISCUSSION)
 
         su_event = next(e for e in events if e.event_type == EventType.SUSPICION_UPDATE)
         assert su_event.agent == "Alice"
@@ -83,17 +80,17 @@ class TestSuspicionUpdateEmit:
 
     def test_event_is_not_public(self, make_test_actor, make_test_engine):
         """
-        SUT: GameEngine._apply_speech_output
+        SUT: GameEngine._apply_discussion_result
         Mock: LogWriter.write (via make_test_engine), store.save
         Level: unit
         Objective: SUSPICION_UPDATE イベントが is_public=False であること（観戦者専用）。
         """
         actor = make_test_actor("Alice", "Villager")
         engine, events = make_test_engine([actor])
-        output = _make_output({"Bob": 0.9})
+        result = _make_speak_result({"Bob": 0.9})
 
         with patch("src.agent.store.save"):
-            engine._apply_speech_output(actor, output, Phase.DAY_OPENING)
+            engine._apply_discussion_result(actor, result, Phase.DAY_DISCUSSION)
 
         su_event = next(e for e in events if e.event_type == EventType.SUSPICION_UPDATE)
         assert su_event.is_public is False

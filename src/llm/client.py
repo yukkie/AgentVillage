@@ -10,9 +10,7 @@ from src.config import MAX_TOKENS
 from src.domain.actor import Actor
 from src.domain.roles import Role
 from src.domain.schema import (
-    AgentOutput,
     DiscussionResult,
-    Intent,
     NightActionOutput,
     PreNightOutput,
     SilentResult,
@@ -26,11 +24,9 @@ from src.llm.prompt import (
     PastVote,
     PublicContext,
     RoleSpecificContext,
-    SpeechDirection,
     build_discussion_system_prompt,
     build_night_action_prompt,
     build_pre_night_prompt,
-    build_system_prompt,
     build_vote_prompt,
     build_wolf_chat_prompt,
 )
@@ -60,17 +56,6 @@ def resolve_claim_role(actor: Actor, claim_role: Role | None) -> Role | None:
         return None
 
     return None
-
-
-def _default_output(actor: Actor) -> AgentOutput:
-    """Fallback AgentOutput when LLM call or parse fails."""
-    return AgentOutput(
-        thought="...",
-        speech="I need to think more carefully.",
-        reasoning="I'm not sure who to suspect yet.",
-        intent=Intent(co=None),
-        memory_update=[],
-    )
 
 
 def _classify_error(e: Exception) -> str:
@@ -143,34 +128,6 @@ class LLMClient:
     def __init__(self, client: anthropic.Anthropic) -> None:
         self._client = client
 
-    def call(
-        self,
-        actor: Actor,
-        ctx: PublicContext,
-        direction: SpeechDirection,
-        role_ctx: RoleSpecificContext | None = None,
-    ) -> AgentOutput:
-        """Call LLM for day-phase speech and return structured AgentOutput."""
-        system_prompt = build_system_prompt(actor, ctx, direction, role_ctx)
-        raw = ""
-        try:
-            message = self._client.messages.create(
-                model=actor.model,
-                max_tokens=MAX_TOKENS["call_speech"],
-                system=system_prompt,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": "It's your turn. Provide your response in the required JSON format.",
-                    }
-                ],
-            )
-            raw = message.content[0].text
-            return AgentOutput.model_validate_json(_extract_json(raw))
-        except Exception as e:
-            _classify_and_log_error("call", actor.name, e, raw)
-            return _default_output(actor)
-
     def call_discussion(
         self,
         actor: Actor,
@@ -200,19 +157,6 @@ class LLMClient:
         except Exception as e:
             _classify_and_log_error("call_discussion", actor.name, e, "")
             return SilentResult(reasoning="error fallback")
-
-    def call_speech_parallel(
-        self,
-        calls: list[tuple[Actor, PublicContext, SpeechDirection, RoleSpecificContext | None]],
-    ) -> Iterator[tuple[Actor, AgentOutput]]:
-        """Fire all speech calls in parallel; yield results in completion order."""
-        with ThreadPoolExecutor() as executor:
-            future_to_actor = {
-                executor.submit(self.call, actor, ctx, direction, role_ctx): actor
-                for actor, ctx, direction, role_ctx in calls
-            }
-            for future in as_completed(future_to_actor):
-                yield future_to_actor[future], future.result()
 
     def call_pre_night_action(
         self,

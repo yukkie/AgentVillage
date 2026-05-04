@@ -56,14 +56,9 @@ LLMエージェント同士が自律的に人狼ゲームをプレイする社�
   村人以外の役職（占い師・人狼等）が「初日からCOするか / 様子を見るか」を非公開で判断する
   - 結果は非公開（観戦者のみ閲覧可能）
   - COすると決めた場合、構造化出力の `claim_role` で公言予定役職を指定できる
-  - 指定された役職は `intended_co` に保持され、Day 1 OPENINGプロンプトに CO前提の指示を追加する
-  - `claim_role` が未指定の場合は役職ごとの安全なデフォルトにフォールバックする
 
 [昼フェーズ]
-  1. 最初の一巡（OPENING）
-       全エージェントがランダム順で所感・自己紹介的な発言を行う
-       各発言に通し番号（speech_id）を付与する
-  2. 判断→発言ターン × 最大2回（DISCUSSION × 2）
+  1. 判断→発言ターン × 最大2回（DISCUSSION × 2）
        a. 全エージェントが並列で「判断」する（最大4択）
             - "challenge": 特定の発言（speech_id指定）に突っ込む
             - "speak":     追加で発言する
@@ -75,16 +70,16 @@ LLMエージェント同士が自律的に人狼ゲームをプレイする社�
           challenge の場合、どの speech_id への反応かを発言に含める
           co の場合、発言生成プロンプトに役職公言の指示が追加され、発言後に
           claimed_role が更新される
-  3. 投票（VOTE）
+  2. 投票（VOTE）
        各エージェントに投票専用の LLM 呼び出し（call_vote）を行う
        投票プロンプトには議論ログ全体・past_votes・past_deaths・発言フェーズ
        で蓄積された最終 vote_candidates・狼の場合は仲間情報＋VOTE STRATEGY を含む
        LLM が返す VoteOutput.target を投票先として採用
        システムが多数決を集計 → 最多得票者を追放
-  4. 霊媒結果の解決
+  3. 霊媒結果の解決
        霊媒師が生存している場合、処刑直後に処刑者の真の役職を霊媒師へ通知する
        この情報は非公開で、観戦者ログにのみ記録される
-  5. 勝利判定
+  4. 勝利判定
 
 [夜フェーズ]
   1. 宣言フェーズ
@@ -133,33 +128,48 @@ LLMエージェント同士が自律的に人狼ゲームをプレイする社�
 
 ### 3.3 LLM出力フォーマット
 
-LLMの出力は必ずJSONで受け取る。フェーズによって2種類のフォーマットを使い分ける。
+LLMの出力は必ずJSONで受け取る。フェーズによって複数のフォーマットを使い分ける。
 
-#### (A) 発言フォーマット（OPENING・DISCUSSIONの発言生成）
+#### (A) 発言フォーマット（DISCUSSIONの発言生成・tool use）
+
+DISCUSSION では Claude の tool use を使い、判断と発言を1回の API コールで生成する。
+LLM は `speak` / `challenge` / `co` / `silent` の4 tool から1つを選び、そのパラメータに発言内容を格納する。
+
+**speak / challenge tool（発言・反論）**
 
 ```json
 {
   "thought": "SQは昨日の票替えが不自然。おそらく人狼。",
   "speech": "今日はSQを疑っています。昨日の票替えが不自然でした。",
-  "reasoning": "SQの票替えとタイミングから人狼濃厚と判断。",
-  "intent": {
-    "vote_candidates": [
-      {"target": "SQ", "score": 0.74},
-      {"target": "Raqio", "score": 0.42}
-    ],
-    "co": null,
-    "strategy": "wolf_side"
-  },
-  "memory_update": ["SQの票替えを黒要素として維持"]
+  "memory_update": ["SQの票替えを黒要素として維持"],
+  "suspicion_scores": {"SQ": 0.74, "Raqio": 0.42},
+  "threat_scores": null
 }
 ```
 
-| フィールド | 型 | 内容 |
-|---|---|---|
-| `intent.vote_candidates` | `list` | 投票意向のヒント（target と score のリスト）。VOTE フェーズの専用 LLM 呼び出しへの入力として渡される |
-| `intent.co` | `str \| null` | 公言する役職（CO 時のみ） |
+challenge の場合は追加で `reply_to: int`（反論対象の speech_id）を含む。
 
-#### (D) 投票フォーマット（VOTE フェーズ専用）
+**co tool（役職公言）**
+
+```json
+{
+  "thought": "今日CO宣言すべきタイミング。",
+  "speech": "私は占い師です。昨夜SQを占い、人狼と出ました。",
+  "claim_role": "Seer",
+  "memory_update": [],
+  "suspicion_scores": {"SQ": 0.9}
+}
+```
+
+**silent tool（沈黙）**
+
+```json
+{
+  "reasoning": "まだ情報が少ないので様子を見る。"
+}
+```
+
+#### (B) 投票フォーマット（VOTE フェーズ専用）
 
 ```json
 {
@@ -195,7 +205,7 @@ LLMの出力は必ずJSONで受け取る。フェーズによって2種類のフ
 
 人狼・狂人は `claim_role` で偽CO先を明示できる。よくある候補は占い師・霊媒師だが、役職配分や盤面に応じて他の役職名を選んでもよい。
 
-#### (B) 判断フォーマット（DISCUSSIONの判断フェーズ・軽量）
+#### (D) 判断フォーマット（DISCUSSIONの判断フェーズ・軽量）
 
 ```json
 {

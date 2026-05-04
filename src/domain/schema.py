@@ -121,10 +121,6 @@ class WolfSelfCoDecision(BaseModel):
     timing: Literal["next_day", "wait"] = "wait"
 
 
-class Intent(BaseModel):
-    co: RoleField = None
-
-
 class VoteOutput(BaseModel):
     """LLM response schema for the dedicated VOTE phase prompt.
 
@@ -141,23 +137,6 @@ class VoteOutput(BaseModel):
     target: str
     reasoning: str = ""
     strategy: Literal["village_side", "wolf_side"] | None = None
-
-
-class AgentOutput(BaseModel):
-    """LLM response schema for a regular speech turn.
-
-    Mock-Policy: Forbidden
-        LLM I/O contract. See ``PreNightOutput`` and
-        ``tests/TestStrategy.md`` §5.
-    """
-
-    thought: str
-    speech: str
-    reasoning: str
-    intent: Intent
-    memory_update: list[str] = []
-    suspicion_scores: dict[str, float] | None = None
-    threat_scores: dict[str, float] | None = None
 
 
 class WolfChatOutput(BaseModel):

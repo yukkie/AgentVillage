@@ -7,11 +7,10 @@ import pytest
 
 from unittest.mock import MagicMock
 
-from src.domain.schema import AgentOutput, ChallengeResult, CoResult, NightActionOutput, PreNightOutput, SilentResult, SpeakResult, VoteOutput, WolfChatOutput
+from src.domain.schema import ChallengeResult, CoResult, NightActionOutput, PreNightOutput, SilentResult, SpeakResult, VoteOutput, WolfChatOutput
 from src.domain.roles import get_role
 from src.llm.client import LLMClient, _classify_error, resolve_claim_role
 from tests.conftest import (
-    AGENT_OUTPUT_JSON,
     NIGHT_ACTION_OUTPUT_JSON,
     PRE_NIGHT_CO_OUTPUT_JSON,
     PRE_NIGHT_OUTPUT_JSON,
@@ -21,28 +20,6 @@ from tests.conftest import (
     make_failing_llm_client,
     make_llm_client_with_response,
 )
-
-
-class TestCall:
-    def test_returns_agent_output(self, make_test_actor):
-        actor = make_test_actor("Alice")
-        llm = make_llm_client_with_response(AGENT_OUTPUT_JSON)
-        from src.llm.prompt import PublicContext, SpeechDirection
-        ctx = PublicContext(alive_players=["Alice"], dead_players=[], day=1, today_log=[])
-        direction = SpeechDirection()
-        result = llm.call(actor, ctx, direction)
-        assert isinstance(result, AgentOutput)
-        assert result.speech == "Hello village."
-
-    def test_returns_fallback_on_exception(self, make_test_actor):
-        actor = make_test_actor("Alice")
-        llm = make_failing_llm_client()
-        from src.llm.prompt import PublicContext, SpeechDirection
-        ctx = PublicContext(alive_players=["Alice"], dead_players=[], day=1, today_log=[])
-        direction = SpeechDirection()
-        result = llm.call(actor, ctx, direction)
-        assert isinstance(result, AgentOutput)
-        assert result.speech == "I need to think more carefully."
 
 
 def _make_tool_use_message(tool_name: str, tool_input: dict):

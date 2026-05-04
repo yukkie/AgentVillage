@@ -110,7 +110,7 @@ LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検
 | `memory_summary` | 今回のゲームで蓄積された中期記憶 |
 | `is_alive` | 生存フラグ |
 | `claimed_role` | エージェントが公言した役職（CO済みなら設定。未COはNull） |
-| `intended_co` | 次の発言でCOする予定の役職。未予定なら `None`。前夜CO・議論中COともに、構造化出力の `claim_role` をここへ正規化して保持する |
+| `intended_co` | 次の発言でCOする予定の役職。未予定なら `None`。DISCUSSION判断で `decision="co"` が選ばれた際に `claim_role` をここへ正規化して保持し、発言生成後にクリアされる |
 
 静的な `name`, `model`, `persona` は `ActorProfile` に分離される。真の役職は保存JSON上では `role` 文字列、ランタイムでは `Actor.role`（`Role` instance）として扱う。
 
@@ -118,16 +118,12 @@ LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検
 - `claimed_role` は **Public情報** として全エージェントのプロンプトに渡す
 - UIのカラー表示も `claimed_role` を参照（真の役職で色付けしない）
 
-CO が成立する経路は現状2つある:
+CO が成立する経路:
 
-1. **前夜CO（Day 1 OPENING）**: `intended_co` に役職が設定されたエージェントが Day 1 OPENING で公言（§16.1）
-2. **議論中CO（DISCUSSION・全Day）**: 判断フェーズで `decision="co"` を選んだ適格エージェントがその場で公言（§16.2）
+- **議論中CO（DISCUSSION・全Day）**: 判断フェーズで `decision="co"` を選んだ適格エージェントがその場で公言
    - 適格条件: `claimed_role is None` かつ `role != "Villager"`
    - `claim_role` が指定されていればその役職を採用し、未指定なら `default_claim_role` にフォールバックする
-   - 発言生成プロンプトは前夜CO経路と同じ「CO指示ブロック」を再利用する（`build_system_prompt` の `intended_co is not None` 分岐）
-   - エンジンは判断結果を `AgentState.intended_co` に直接書き込み、発言後に clear する
-
-なお Day 2+ OPENING には現状構造化された CO 判断ステップがなく、LLM が通常発言中に自発的に `intent.co` を返したケースのみ受動的に成立する。Day 2+ にも前夜判断相当のフェーズを設ける拡張案は Ideas.md §16.2a を参照。
+   - エンジンは判断結果を `ActorState.intended_co` に直接書き込み、発言生成後にクリアする
 
 #### COフォールバックと狂人の扱い
 
@@ -158,7 +154,6 @@ CO には2種類のフォールバックがある。
 
 | 関数 | 用途 | プロンプト | 出力モデル |
 |---|---|---|---|
-| `call()` | 発言生成（OPENING） | フル（役職・性格・記憶・当日ログ・他者のCO情報・狼仲間（狼のみ）） | `AgentOutput` |
 | `call_discussion()` | 発言生成（DISCUSSION 単体） | フル + tool use（`speak` / `challenge` / `co` / `silent` の4 tool） | `DiscussionResult`（`SpeakResult \| ChallengeResult \| CoResult \| SilentResult`） |
 | `call_vote()` | 投票（VOTE フェーズ専用） | 役職・性格・当日議論ログ・past_votes・past_deaths・最終 vote_candidates・狼仲間／VOTE STRATEGY（狼のみ） | `VoteOutput` (`target` + `reasoning` + `strategy`) |
 | `call_night_action()` | 夜行動 | 夜フェーズ専用 | `NightActionOutput` (`target` + `reasoning`) |
@@ -173,15 +168,9 @@ CO には2種類のフォールバックがある。
 
 | 並列関数 | 用途 |
 |---|---|
-| `call_speech_parallel()` | DAY_OPENING — 全員発言を並列実行 |
 | `call_pre_night_parallel()` | PRE_NIGHT — CO判断を並列実行 |
 | `call_discussion_parallel()` | DAY_DISCUSSION — 発言（tool use 1ステップ）を並列実行 |
 | `call_vote_parallel()` | DAY_VOTE — 全員の投票判断を並列実行 |
-
-#### Extended thinking
-
-占い師COへの反応・投票前詰め等、重要局面では `call()` に `extended_thinking=True` を渡せるようにする。
-（MVP では任意フラグ。デフォルトはoff）
 
 ### 3.4 Legacy Adapter（`src/legacy/`）
 

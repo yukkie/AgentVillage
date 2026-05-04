@@ -4,7 +4,6 @@ from typing import Literal, TypedDict
 
 from src.domain.actor import Actor
 from src.domain.roles import Role, Werewolf
-from src.domain.schema import RoleField
 from src.domain.schema import SpeechEntry
 
 
@@ -28,13 +27,6 @@ class PublicContext:
     all_agents: list[Actor] | None = None
     past_votes: list[PastVote] | None = None
     past_deaths: list[PastDeath] | None = None
-
-
-@dataclass
-class SpeechDirection:
-    lang: str = "English"
-    reply_to_entry: SpeechEntry | None = None
-    intended_co: RoleField = None
 
 
 @dataclass
@@ -175,36 +167,6 @@ def build_personal_info_prompt(actor: Actor) -> str:
                 lines.append(f"    Reasons: {'; '.join(belief.reason)}")
 
     return "\n".join(lines)
-
-
-def build_system_prompt(
-    actor: Actor,
-    ctx: PublicContext,
-    direction: SpeechDirection,
-    role_ctx: RoleSpecificContext | None = None,
-) -> str:
-    """Assemble full system prompt for an actor."""
-    wolf_partners = role_ctx.wolf_partners if isinstance(role_ctx, WolfSpecificContext) else None
-    parts = [
-        build_persona_prompt(actor),
-        "\n",
-        build_role_prompt(actor.role, wolf_partners),
-        build_public_info_prompt(ctx),
-        build_personal_info_prompt(actor),
-    ]
-    if direction.reply_to_entry is not None:
-        parts.append(
-            f"\n--- YOUR TURN (CHALLENGE) ---\n"
-            f"You decided to challenge speech [{direction.reply_to_entry.speech_id}] by {direction.reply_to_entry.agent}:\n"
-            f'  "{direction.reply_to_entry.text}"\n'
-            f"Respond directly to this statement in your speech."
-        )
-    if direction.intended_co:
-        co_text = direction.intended_co.co_prompt()
-        if co_text:
-            parts.append(co_text)
-    parts.append(actor.role.output_format_prompt(direction.lang))
-    return "\n".join(parts)
 
 
 def build_pre_night_prompt(

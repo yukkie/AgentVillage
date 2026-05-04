@@ -10,7 +10,7 @@ from src.engine.phase_day import run_day_phase
 from src.engine.phase_night import run_night_phase
 from src.engine.phase_pre_night import run_pre_night_phase
 from src.engine.phase import Phase
-from src.domain.schema import AgentOutput, ChallengeResult, CoResult, Intent, SilentResult, SpeakResult
+from src.domain.schema import ChallengeResult, CoResult, SilentResult, SpeakResult
 from src.domain.event import EventType
 from src.domain.roles import Seer
 from src.llm.client import LLMClient
@@ -18,7 +18,6 @@ from src.logger.writer import LogWriter
 from tests.conftest import (
     make_night_action_side_effect,
     make_silent_discussion_side_effect,
-    make_speech_parallel_side_effect,
     make_vote_parallel_side_effect,
 )
 
@@ -45,10 +44,9 @@ class TestGameEngineLlmInjection:
 
 
 class TestRunDayPhaseOrder:
-    def test_opening_then_discussion_then_vote(self, make_test_actor, make_test_engine):
+    def test_discussion_then_vote(self, make_test_actor, make_test_engine):
         agents = [make_test_actor("A"), make_test_actor("B"), make_test_actor("C", "Werewolf")]
         engine, events = make_test_engine(agents)
-        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = make_silent_discussion_side_effect()
 
         with patch("src.agent.store.save"):
@@ -56,16 +54,13 @@ class TestRunDayPhaseOrder:
 
         phase_starts = [e for e in events if e.event_type == EventType.PHASE_START]
         phases = [e.phase for e in phase_starts]
-        assert Phase.DAY_OPENING.value in phases
         assert Phase.DAY_DISCUSSION.value in phases
         assert Phase.DAY_VOTE.value in phases
-        assert phases.index(Phase.DAY_OPENING.value) < phases.index(Phase.DAY_DISCUSSION.value)
         assert phases.index(Phase.DAY_DISCUSSION.value) < phases.index(Phase.DAY_VOTE.value)
 
     def test_speech_ids_are_sequential(self, make_test_actor, make_test_engine):
         agents = [make_test_actor("A"), make_test_actor("B")]
         engine, events = make_test_engine(agents)
-        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = make_silent_discussion_side_effect()
 
         with patch("src.agent.store.save"):
@@ -80,21 +75,28 @@ class TestRunDayPhaseOrder:
         assert ids == list(range(1, len(ids) + 1))
 
     def test_challenge_reply_to_recorded(self, make_test_actor, make_test_engine):
-        agents = [make_test_actor("A"), make_test_actor("B")]
-        engine, events = make_test_engine(agents)
-        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
+        actors_list = [make_test_actor("A"), make_test_actor("B")]
+        engine, events = make_test_engine(actors_list)
 
-        # B challenges speech_id=1 (A's opening speech)
+        # B challenges speech_id=1 (A's first discussion speech)
+        call_count = [0]
+
         def discussion_with_challenge(actors, *_, **__):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                return iter([
+                    (actors_list[0], SpeakResult(thought="t", speech="Hello")),
+                    (actors_list[1], SilentResult(reasoning="quiet")),
+                ])
             return iter([
-                (make_test_actor("A"), SilentResult(reasoning="quiet")),
-                (make_test_actor("B"), ChallengeResult(thought="t", speech="I disagree!", reply_to=1)),
+                (actors_list[0], SilentResult(reasoning="quiet")),
+                (actors_list[1], ChallengeResult(thought="t", speech="I disagree!", reply_to=1)),
             ])
 
         engine._llm_client.call_discussion_parallel.side_effect = discussion_with_challenge
 
         with (
-            patch("src.engine.phase_day.DISCUSSION_ROUNDS", 1),
+            patch("src.engine.phase_day.DISCUSSION_ROUNDS", 2),
             patch("src.agent.store.save"),
         ):
             engine._run_day()
@@ -106,7 +108,6 @@ class TestRunDayPhaseOrder:
     def test_all_silent_does_not_raise(self, make_test_actor, make_test_engine):
         agents = [make_test_actor("A"), make_test_actor("B", "Werewolf")]
         engine, _ = make_test_engine(agents)
-        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = make_silent_discussion_side_effect()
 
         with patch("src.agent.store.save"):
@@ -129,7 +130,6 @@ class TestDiscussionCoDecision:
         assert seer.state.claimed_role is None
         engine, _ = make_test_engine([seer])
 
-        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
             (seer, CoResult(thought="CO now", speech="I am the Seer!", claim_role=seer.role)),
         ])
@@ -149,7 +149,6 @@ class TestDiscussionCoDecision:
         seer = make_test_actor("Seer1", "Seer")
         engine, _ = make_test_engine([seer])
 
-        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
             (seer, SpeakResult(thought="t", speech="Just speaking.")),
         ])
@@ -169,7 +168,6 @@ class TestDiscussionCoDecision:
         villager = make_test_actor("V1", "Villager")
         engine, events = make_test_engine([villager])
 
-        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
             (villager, SilentResult(reasoning="nothing")),
         ])
@@ -196,7 +194,6 @@ class TestDiscussionCoDecision:
         from src.domain.roles import get_role
         medium_role = get_role("Medium")
 
-        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
             (wolf, CoResult(thought="fake", speech="I am the Medium.", claim_role=medium_role)),
         ])
@@ -221,7 +218,6 @@ class TestVoteOutputFlow:
         seer = make_test_actor("Seer1", "Seer")
         engine, events = make_test_engine([wolf, seer])
 
-        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = make_silent_discussion_side_effect()
         engine._llm_client.call_vote_parallel.side_effect = make_vote_parallel_side_effect(
             targets={"Wolf1": "Seer1", "Seer1": "Wolf1"},
@@ -249,7 +245,6 @@ class TestVoteOutputFlow:
         target = make_test_actor("V2", "Villager")
         engine, events = make_test_engine([villager, target])
 
-        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = make_silent_discussion_side_effect()
         engine._llm_client.call_vote_parallel.side_effect = make_vote_parallel_side_effect(
             targets={"V1": "V2", "V2": "V1"},
@@ -274,7 +269,6 @@ class TestVoteOutputFlow:
         wolf2 = make_test_actor("Wolf2", "Werewolf")
         engine, events = make_test_engine([wolf1, wolf2])
 
-        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = make_silent_discussion_side_effect()
         engine._llm_client.call_vote_parallel.side_effect = make_vote_parallel_side_effect(
             targets={"Wolf1": "Wolf2", "Wolf2": "Wolf1"},
@@ -290,29 +284,17 @@ class TestVoteOutputFlow:
         assert wolf1_votes[0].target == "Wolf2"
         assert wolf1_votes[0].decision == "village_side"
 
-    def test_vote_event_reasoning_comes_from_vote_output_not_speech(self, make_test_actor, make_test_engine):
+    def test_vote_event_reasoning_comes_from_vote_output(self, make_test_actor, make_test_engine):
         """
         SUT: _run_vote
-        Mock: call_speech_parallel emits AgentOutput with reasoning="speech-side"; call_vote_parallel emits VoteOutput with reasoning="vote-side"
+        Mock: call_discussion_parallel returns SpeakResult; call_vote_parallel returns VoteOutput with reasoning="vote-side"
         Level: unit
-        Objective: ⚠️unit test mandatory — VOTE LogEvent の reasoning が VoteOutput.reasoning から取られ、AgentOutput.reasoning（発言用）は流用されないこと（AC）。
+        Objective: ⚠️unit test mandatory — VOTE LogEvent の reasoning が VoteOutput.reasoning から取られること（AC）。
         """
         a = make_test_actor("A")
         b = make_test_actor("B")
         engine, events = make_test_engine([a, b])
 
-        speech_output = AgentOutput(
-            thought="t",
-            speech="s",
-            reasoning="speech-side reasoning that must NOT leak into the vote event",
-            intent=Intent(),
-            memory_update=[],
-        )
-
-        def speech_side_effect(calls):
-            return iter([(actor, speech_output) for actor, *_ in calls])
-
-        engine._llm_client.call_speech_parallel.side_effect = speech_side_effect
         engine._llm_client.call_discussion_parallel.side_effect = make_silent_discussion_side_effect()
         engine._llm_client.call_vote_parallel.side_effect = make_vote_parallel_side_effect(
             targets={"A": "B", "B": "A"},
@@ -325,7 +307,6 @@ class TestVoteOutputFlow:
         a_votes = [e for e in events if e.event_type == EventType.VOTE and e.agent == "A"]
         assert len(a_votes) == 1
         assert a_votes[0].reasoning == "vote-side reasoning"
-        assert "speech-side" not in a_votes[0].reasoning
 
     def test_invalid_target_falls_back_to_first_other(self, make_test_actor, make_test_engine):
         """
@@ -338,7 +319,6 @@ class TestVoteOutputFlow:
         b = make_test_actor("B")
         engine, events = make_test_engine([a, b])
 
-        engine._llm_client.call_speech_parallel.side_effect = make_speech_parallel_side_effect()
         engine._llm_client.call_discussion_parallel.side_effect = make_silent_discussion_side_effect()
         engine._llm_client.call_vote_parallel.side_effect = make_vote_parallel_side_effect(
             targets={"A": "Ghost", "B": "A"},
@@ -409,30 +389,28 @@ class TestRunNightPhaseOrder:
         assert seer.state.beliefs == {}
         assert not any(e.event_type == EventType.INSPECTION for e in events)
 
-    def test_apply_speech_output_threat_scores_updates_state_and_emits_event(
+    def test_apply_discussion_result_threat_scores_updates_state_and_emits_event(
         self, make_test_actor, make_test_engine
     ):
         """
-        SUT: GameEngine._apply_speech_output()
-        Mock: monkeypatch で store.save を no-op に差し替え（make_test_engine 経由）
+        SUT: GameEngine._apply_discussion_result()
+        Mock: store.save をパッチ
         Level: unit
-        Objective: AgentOutput.threat_scores が非 None のとき actor.state.threat_scores が
+        Objective: SpeakResult.threat_scores が非 None のとき actor.state.threat_scores が
                    更新され THREAT_UPDATE イベントが emit されること。
         """
         wolf = make_test_actor("Wolf", "Werewolf")
         villager = make_test_actor("Alice")
         engine, events = make_test_engine([wolf, villager])
 
-        output = AgentOutput(
+        result = SpeakResult(
             thought="thinking",
             speech="Hello.",
-            reasoning="reasoning",
-            intent=Intent(),
             threat_scores={"Alice": 0.85},
         )
 
         with patch("src.agent.store.save"):
-            engine._apply_speech_output(wolf, output, Phase.DAY_OPENING)
+            engine._apply_discussion_result(wolf, result, Phase.DAY_DISCUSSION)
 
         assert wolf.state.threat_scores["Alice"] == pytest.approx(0.85)
         threat_events = [e for e in events if e.event_type == EventType.THREAT_UPDATE]
@@ -440,30 +418,28 @@ class TestRunNightPhaseOrder:
         assert "Alice=0.85" in threat_events[0].content
         assert threat_events[0].is_public is False
 
-    def test_apply_speech_output_no_threat_scores_emits_no_threat_event(
+    def test_apply_discussion_result_no_threat_scores_emits_no_threat_event(
         self, make_test_actor, make_test_engine
     ):
         """
-        SUT: GameEngine._apply_speech_output()
-        Mock: patch で store.save を no-op に差し替え
+        SUT: GameEngine._apply_discussion_result()
+        Mock: store.save をパッチ
         Level: unit
-        Objective: AgentOutput.threat_scores が None のとき THREAT_UPDATE イベントが
+        Objective: SpeakResult.threat_scores が None のとき THREAT_UPDATE イベントが
                    emit されないこと。
         """
         wolf = make_test_actor("Wolf", "Werewolf")
         villager = make_test_actor("Alice")
         engine, events = make_test_engine([wolf, villager])
 
-        output = AgentOutput(
+        result = SpeakResult(
             thought="thinking",
             speech="Hello.",
-            reasoning="reasoning",
-            intent=Intent(),
             threat_scores=None,
         )
 
         with patch("src.agent.store.save"):
-            engine._apply_speech_output(wolf, output, Phase.DAY_OPENING)
+            engine._apply_discussion_result(wolf, result, Phase.DAY_DISCUSSION)
 
         assert not any(e.event_type == EventType.THREAT_UPDATE for e in events)
 

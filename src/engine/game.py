@@ -9,8 +9,8 @@ from src.engine.phase_night import run_night_phase
 from src.engine.phase_pre_night import run_pre_night_phase
 from src.llm import factory as llm_factory
 from src.llm.client import LLMClient
-from src.llm.prompt import PastDeath, PastVote, PublicContext, RoleSpecificContext, SpeechDirection, WolfSpecificContext
-from src.domain.schema import AgentOutput, ChallengeResult, CoResult, DiscussionResult, SilentResult, SpeechEntry
+from src.llm.prompt import PastDeath, PastVote, PublicContext, RoleSpecificContext, WolfSpecificContext
+from src.domain.schema import ChallengeResult, CoResult, DiscussionResult, SilentResult, SpeechEntry
 from src.action.types import ActionType, Vote
 from src.action.validator import validate
 from src.domain.event import LogEvent, EventType
@@ -33,11 +33,10 @@ class GameEngine:
         self.lang = lang
         self._llm_client = llm_client or llm_factory.create_client()
         self.day = 1
-        self.phase = Phase.DAY_OPENING
+        self.phase = Phase.DAY_DISCUSSION
         self.today_log: list[SpeechEntry] = []
         self._speech_id_counter: int = 0
         self._day_turn: int = 0
-        self._day_outputs: dict[str, AgentOutput] = {}
         # Public history passed to agent prompts
         self._past_votes: list[PastVote] = []
         self._past_deaths: list[PastDeath] = []
@@ -85,7 +84,7 @@ class GameEngine:
             self._emit(event)
 
     def _phase_start(self, phase: Phase) -> None:
-        if phase in (Phase.DAY_OPENING, Phase.DAY_DISCUSSION):
+        if phase == Phase.DAY_DISCUSSION:
             self._day_turn += 1
             label = f"DAY {self.day}  TURN {self._day_turn}"
         elif phase == Phase.DAY_VOTE:
@@ -139,109 +138,10 @@ class GameEngine:
             self.today_log = []
             self._speech_id_counter = 0
             self._day_turn = 0
-            self._day_outputs = {}
 
     def _next_speech_id(self) -> int:
         self._speech_id_counter += 1
         return self._speech_id_counter
-
-    def _apply_speech_output(
-        self,
-        actor: Actor,
-        output: AgentOutput,
-        phase: Phase,
-        reply_to_entry: SpeechEntry | None = None,
-    ) -> SpeechEntry:
-        """Post-process a speech output: emit events, update memory, append to today_log."""
-        self._day_outputs[actor.name] = output
-
-        # If the actor intended to CO but did not declare in speech, clear the flag.
-        if actor.state.intended_co is not None and not output.intent.co:
-            missed_co_role = actor.state.intended_co
-            actor.state.intended_co = None
-            store.save(actor)
-            if phase == Phase.DAY_OPENING:
-                self._emit(LogEvent.make(
-                    day=self.day,
-                    phase=phase.value,
-                    event_type=EventType.PRE_NIGHT_DECISION,
-                    agent=actor.name,
-                    content=f"{actor.name} decided to CO as {missed_co_role.name} but did not declare in speech",
-                    is_public=False,
-                ))
-
-        # Update claimed_role BEFORE emitting the speech so the CO speech itself
-        # is rendered with the correct role color.
-        if output.intent.co and actor.state.claimed_role != output.intent.co:
-            actor.state.claimed_role = output.intent.co
-            actor.state.intended_co = None  # clear once CO is made
-            store.save(actor)
-            self._emit(LogEvent.make(
-                day=self.day,
-                phase=phase.value,
-                event_type=EventType.CO_ANNOUNCEMENT,
-                agent=actor.name,
-                content=f"{actor.name} claims to be {actor.state.claimed_role.name}",
-                is_public=True,
-                claimed_role=actor.state.claimed_role,
-            ))
-
-        speech_id = self._next_speech_id()
-        entry = SpeechEntry(speech_id=speech_id, agent=actor.name, text=output.speech)
-        self.today_log.append(entry)
-
-        self._emit(LogEvent.make(
-            day=self.day,
-            phase=phase.value,
-            event_type=EventType.SPEECH,
-            agent=actor.name,
-            content=output.speech,
-            is_public=True,
-            speech_id=speech_id,
-            reply_to=reply_to_entry.speech_id if reply_to_entry else None,
-        ))
-        self._emit(LogEvent.make(
-            day=self.day,
-            phase=phase.value,
-            event_type=EventType.SPEECH,
-            agent=actor.name,
-            content=f"[THINK] {output.thought}",
-            is_public=False,
-            speech_id=speech_id,
-        ))
-
-        if output.suspicion_scores:
-            memory_mod.update_beliefs(actor, output.suspicion_scores)
-            scores_str = ", ".join(
-                f"{name}={score:.2f}" for name, score in output.suspicion_scores.items()
-            )
-            self._emit(LogEvent.make(
-                day=self.day,
-                phase=phase.value,
-                event_type=EventType.SUSPICION_UPDATE,
-                agent=actor.name,
-                content=f"{actor.name} suspicion update: {scores_str}",
-                is_public=False,
-            ))
-
-        if output.threat_scores:
-            memory_mod.update_threat_scores(actor, output.threat_scores)
-            scores_str = ", ".join(
-                f"{name}={score:.2f}" for name, score in output.threat_scores.items()
-            )
-            self._emit(LogEvent.make(
-                day=self.day,
-                phase=phase.value,
-                event_type=EventType.THREAT_UPDATE,
-                agent=actor.name,
-                content=f"{actor.name} threat update: {scores_str}",
-                is_public=False,
-            ))
-
-        if output.memory_update:
-            memory_mod.update_memory(actor, output.memory_update)
-
-        return entry
 
     def _build_discussion_ctx_map(
         self,
@@ -373,36 +273,6 @@ class GameEngine:
             memory_mod.update_memory(actor, result.memory_update)
 
         return entry
-
-    def _build_speech_args(
-        self,
-        actor: Actor,
-        reply_to_entry: SpeechEntry | None = None,
-        today_log_snapshot: list[SpeechEntry] | None = None,
-    ) -> tuple:
-        ctx = PublicContext(
-            today_log=list(today_log_snapshot) if today_log_snapshot is not None else list(self.today_log),
-            alive_players=self._alive_names(),
-            dead_players=self._dead_names(),
-            day=self.day,
-            all_agents=self.agents,
-            past_votes=self._past_votes,
-            past_deaths=self._past_deaths,
-        )
-        direction = SpeechDirection(
-            lang=self.lang,
-            reply_to_entry=reply_to_entry,
-            intended_co=actor.state.intended_co,
-        )
-        # TODO(#36): Add SeerSpecificContext / KnightSpecificContext / MediumSpecificContext
-        role_ctx = (
-            WolfSpecificContext(
-                wolf_partners=[a.name for a in self._alive_agents() if isinstance(a.role, Werewolf) and a.name != actor.name]
-            )
-            if isinstance(actor.role, Werewolf)
-            else None
-        )
-        return ctx, direction, role_ctx
 
     def _run_pre_night(self) -> None:
         run_pre_night_phase(self)
