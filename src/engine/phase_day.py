@@ -63,15 +63,11 @@ def _run_vote(engine: GameEngine) -> str | None:
         engine._past_deaths,
         engine.lang,
     ):
-        target: str | None = None
         if vote_output.target in alive_names and vote_output.target != actor.name:
             target = vote_output.target
         else:
             others = [n for n in alive_names if n != actor.name]
-            target = others[0] if others else None
-
-        if not target:
-            continue
+            target = others[0]
         vote_action = engine._make_vote(target)
         if not engine._validate_action(vote_action, actor, alive_names):
             continue
