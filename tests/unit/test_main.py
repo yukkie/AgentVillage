@@ -1,13 +1,40 @@
 """main.py の main() 関数のテスト。"""
+import os
+import pytest
 from unittest.mock import MagicMock, patch
 
 
 def _run_main(argv: list[str]) -> None:
     """sys.argv を差し替えて main() を呼び出すヘルパー。"""
     import sys
-    with patch.object(sys, "argv", ["main.py"] + argv):
+    with patch.object(sys, "argv", ["main.py"] + argv), \
+         patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}):
         import main
         main.main()
+
+
+@patch("main.archive_state", return_value="state_archive/game_20240101.json")
+@patch("main.LogWriter")
+@patch("main.CLI")
+@patch("main.GameEngine")
+@patch("main.initialize_agents")
+def test_main_prints_archive_path(mock_init, mock_engine_cls, mock_cli_cls, mock_writer_cls, mock_archive, capsys):
+    """
+    SUT: main.main
+    Mock: archive_state が実パスを返す
+    Level: unit
+    Objective: archive_state がパスを返したとき "Game archived to: ..." が出力されること
+    """
+    mock_init.return_value = [MagicMock()]
+    fake_engine = MagicMock()
+    fake_engine.run.return_value = "Villagers"
+    mock_engine_cls.return_value = fake_engine
+    mock_cli_cls.return_value = MagicMock()
+
+    _run_main([])
+
+    captured = capsys.readouterr()
+    assert "Game archived to: state_archive/game_20240101.json" in captured.out
 
 
 @patch("main.archive_state", return_value=None)
@@ -33,6 +60,23 @@ def test_main_normal_game(mock_init, mock_engine_cls, mock_cli_cls, mock_writer_
     mock_engine_cls.assert_called_once()
     fake_engine.run.assert_called_once()
     fake_cli.show_winner.assert_called_once_with("Villagers")
+
+
+def test_main_no_api_key_exits():
+    """
+    SUT: main.main
+    Mock: patch.dict(os.environ) で ANTHROPIC_API_KEY を除去
+    Level: unit
+    Objective: ANTHROPIC_API_KEY が未設定のとき sys.exit(1) が呼ばれること
+    """
+    import sys
+    import main
+    env_without_key = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
+    with patch.object(sys, "argv", ["main.py"]), \
+         patch.dict(os.environ, env_without_key, clear=True), \
+         pytest.raises(SystemExit) as exc_info:
+        main.main()
+    assert exc_info.value.code == 1
 
 
 @patch("main.archive_state", return_value=None)
