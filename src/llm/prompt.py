@@ -153,6 +153,12 @@ def build_personal_info_prompt(actor: Actor) -> str:
     """Build prompt section with actor's personal beliefs and memory."""
     lines = ["\n--- YOUR PERSONAL INFORMATION ---"]
 
+    if actor.state.intended_co is not None:
+        lines.append(
+            f"You planned to fake-CO as {actor.state.intended_co.name} today. "
+            "Execute this plan in your speech unless something unexpected has happened."
+        )
+
     if actor.state.memory_summary:
         lines.append("Your memory from previous days:")
         for mem in actor.state.memory_summary:

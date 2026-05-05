@@ -121,17 +121,16 @@ Contract test: `tests/contract/test_day_phase_contract.py`, `tests/contract/test
 
 CO が成立する経路:
 
-- **議論中CO（DISCUSSION・全Day）**: 判断フェーズで `decision="co"` を選んだ適格エージェントがその場で公言
-   - 適格条件: `claimed_role is None` かつ `role != "Villager"`
-   - `claim_role` が指定されていればその役職を採用し、未指定なら `default_claim_role` にフォールバックする
-   - エンジンは判断結果を `ActorState.intended_co` に直接書き込み、発言生成後にクリアする
+- **議論中CO（DISCUSSION・全Day）**: 夜会話で `timing == "next_day"` の `WolfSelfCoDecision` が返った場合、`ActorState.intended_co` に計画役職を保持する
+   - 翌日 DISCUSSION フェーズで `build_personal_info_prompt()` が `intended_co` を参照してプロンプトに偽CO指示を含める
+   - LLM が `co` ツールを使って CO を宣言したとき `_apply_discussion_result()` が `claimed_role` に反映し `intended_co` をクリアする
+   - 適格条件: `claimed_role is None` かつ `role.can_co == True`
 
 #### COフォールバックと狂人の扱い
 
-CO には2種類のフォールバックがある。
+CO には以下のフォールバックがある。
 
-1. **claim_role 解決時のフォールバック**: `decision="co"` なのに `claim_role` が未指定だった場合、`default_claim_role` を使って `intended_co` を補完する
-2. **発言生成後のフォールバック**: Day 1 OPENINGで `intended_co` が設定されているのにLLMがCOを出力しなかった場合、役職ごとのセーフティネットを適用する
+1. **claim_role 解決時のフォールバック**: `WolfSelfCoDecision` の `claim_role` が未指定だった場合、`default_claim_role` を使って `intended_co` を補完する
 
 `claim_role` 未指定時のデフォルトは以下：
 

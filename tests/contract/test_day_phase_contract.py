@@ -6,6 +6,7 @@ from src.domain.event import EventType
 from src.domain.roles import Seer, get_role
 from src.domain.schema import ChallengeResult, CoResult, SilentResult, SpeakResult
 from src.engine.phase import Phase
+from src.llm.prompt import PublicContext, WolfSpecificContext
 from tests.conftest import make_silent_discussion_side_effect, make_vote_parallel_side_effect
 
 
@@ -258,3 +259,81 @@ class TestVoteOutputFlowContract:
         a_votes = [e for e in events if e.event_type == EventType.VOTE and e.agent == "A"]
         assert len(a_votes) == 1
         assert a_votes[0].target == "B"
+
+
+class TestIntendedCoLifecycleContract:
+    def test_intended_co_included_in_discussion_prompt(self, make_test_actor):
+        """
+        SUT: build_discussion_system_prompt()
+        Mock: なし
+        Level: contract
+        Architecture ref: doc/Architecture.md §3.2
+        Objective: 夜にセットされた intended_co が翌日 DISCUSSION フェーズの LLM プロンプトに含まれる契約を検証する。
+        """
+        from src.llm.prompt import build_discussion_system_prompt
+
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        seer_role = get_role("Seer")
+        wolf.state.intended_co = seer_role
+
+        ctx = PublicContext(
+            today_log=[],
+            alive_players=["Wolf1", "Alice"],
+            dead_players=[],
+            day=2,
+        )
+        role_ctx = WolfSpecificContext(wolf_partners=[])
+        prompt = build_discussion_system_prompt(wolf, ctx, co_eligible=True, lang="English", role_ctx=role_ctx)
+
+        assert "planned to fake" in prompt.lower() or "fake-co as seer" in prompt.lower() or "planned to" in prompt.lower()
+        assert wolf.state.intended_co is not None  # intended_co はプロンプト生成では消えない
+
+    def test_intended_co_absent_from_prompt_when_none(self, make_test_actor):
+        """
+        SUT: build_discussion_system_prompt()
+        Mock: なし
+        Level: contract
+        Architecture ref: doc/Architecture.md §3.2
+        Objective: intended_co が None のとき偽CO指示がプロンプトに混入しない契約を検証する。
+        """
+        from src.llm.prompt import build_discussion_system_prompt
+
+        villager = make_test_actor("Alice", "Villager")
+        assert villager.state.intended_co is None
+
+        ctx = PublicContext(
+            today_log=[],
+            alive_players=["Alice", "Wolf1"],
+            dead_players=[],
+            day=2,
+        )
+        prompt = build_discussion_system_prompt(villager, ctx, co_eligible=False, lang="English")
+
+        assert "fake" not in prompt.lower()
+        assert "planned to" not in prompt.lower()
+
+    def test_intended_co_cleared_after_co_result(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._apply_discussion_result()
+        Mock: call_discussion_parallel returns CoResult for wolf
+        Level: contract
+        Architecture ref: doc/Architecture.md §3.2
+        Objective: CoResult が返ったあと intended_co がクリアされる（夜セット→昼DISCUSSION参照→クリア）ライフサイクル契約を検証する。
+        """
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        villager = make_test_actor("Alice")
+        seer_role = get_role("Seer")
+        wolf.state.intended_co = seer_role
+
+        engine, _ = make_test_engine([wolf, villager])
+        engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
+            (wolf, CoResult(thought="fake CO", speech="I am the Seer!", claim_role=seer_role)),
+            (villager, SilentResult(reasoning="nothing")),
+        ])
+
+        with patch("src.agent.store.save"):
+            engine._run_day()
+
+        assert wolf.state.intended_co is None
+        assert wolf.state.claimed_role is not None
+        assert wolf.state.claimed_role.name == "Seer"
