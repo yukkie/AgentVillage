@@ -65,15 +65,14 @@ def test_main_normal_game(mock_init, mock_engine_cls, mock_cli_cls, mock_writer_
 def test_main_no_api_key_exits():
     """
     SUT: main.main
-    Mock: patch.dict(os.environ) で ANTHROPIC_API_KEY を除去
+    Mock: os.environ.get("ANTHROPIC_API_KEY") が None を返すよう差し替え
     Level: unit
     Objective: ANTHROPIC_API_KEY が未設定のとき sys.exit(1) が呼ばれること
     """
     import sys
     import main
-    env_without_key = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
     with patch.object(sys, "argv", ["main.py"]), \
-         patch.dict(os.environ, env_without_key, clear=True), \
+         patch("main.os.environ.get", return_value=None), \
          pytest.raises(SystemExit) as exc_info:
         main.main()
     assert exc_info.value.code == 1
