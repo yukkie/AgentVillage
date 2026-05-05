@@ -6,7 +6,11 @@ Handles role name strings stored in JSON before RoleField was introduced (pre-is
 Only adaptation logic lives here. No game logic, no domain behavior.
 """
 
+import logging
+
 from src.domain.roles import Role, get_role
+
+logger = logging.getLogger(__name__)
 
 
 def normalize_role_field(v: object) -> Role | None:
@@ -18,4 +22,5 @@ def normalize_role_field(v: object) -> Role | None:
     try:
         return get_role(str(v))
     except ValueError:
+        logger.warning("normalize_role_field: unrecognized role string %r", v)
         return None
