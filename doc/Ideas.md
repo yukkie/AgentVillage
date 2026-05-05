@@ -13,7 +13,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#247 | bug | 🔴 | - | Fix: wolf intended_co not passed to discussion phase prompt (PR#242 regression) | DISCUSSIONフェーズのプロンプトに intended_co が渡されず、狼が翌日に偽CO作戦を実行できないデグレ |
 | yukkie/AgentVillage#248 | enhancement | 🔴 | - | Feat: pass wolf CO reasoning to discussion phase prompt | 夜の偽CO決定時の reasoning を翌日 DISCUSSION フェーズのプロンプトに含め、狼の発言一貫性を高める |
 | yukkie/AgentVillage#243 | enhancement | 🔴 | 3 | Add prompt cache control to reduce API cost and latency | 固定文字列比率を調査のうえ cache_control を付与しコスト・遅延を削減 |
 | yukkie/AgentVillage#266 | tech-debt | 🟡 | - | Replace intended_co flag with a typed scheduled-event model | intended_co をフラグから timing 付きスケジュール済みイベント型に置き換え、ライフサイクルを型で表現する |
