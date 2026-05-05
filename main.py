@@ -16,20 +16,19 @@ import sys
 
 from dotenv import load_dotenv
 
-load_dotenv()
-
-if not os.environ.get("ANTHROPIC_API_KEY"):
-    print("Error: ANTHROPIC_API_KEY is not set.")
-    print("Copy .env.example to .env and add your API key.")
-    sys.exit(1)
-
-from src.engine.setup import initialize_agents  # noqa: E402
-from src.engine.game import GameEngine  # noqa: E402
-from src.logger.writer import LogWriter, archive_state  # noqa: E402
-from src.ui.cli import CLI  # noqa: E402
+from src.engine.setup import initialize_agents
+from src.engine.game import GameEngine
+from src.logger.writer import LogWriter, archive_state
+from src.ui.cli import CLI
 
 
 def main() -> None:
+    load_dotenv()
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        print("Error: ANTHROPIC_API_KEY is not set.")
+        print("Copy .env.example to .env and add your API key.")
+        sys.exit(1)
+
     parser = argparse.ArgumentParser(description="AgentVillage — LLM Werewolf Game")
     parser.add_argument(
         "--spectator",
