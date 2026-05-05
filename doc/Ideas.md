@@ -13,7 +13,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#271 | bug | 🔴 | - | test_main_no_api_key_exits fails after PR #269 merge | PR #269マージ後にmasterでデグレ。APIキー未設定時のSystemExitが検知されなくなった |
 | yukkie/AgentVillage#270 | bug | 🔴 | - | Improve diagnostics for wolf chat claim_role failures | LLMが日本語ロール名を返したときの無音失敗3箇所を修正: normalize_role_field警告・phase_night異常状態警告・プロンプトへの英語制約追加 |
 | yukkie/AgentVillage#248 | enhancement | 🔴 | - | Feat: pass wolf CO reasoning to discussion phase prompt | 夜の偽CO決定時の reasoning を翌日 DISCUSSION フェーズのプロンプトに含め、狼の発言一貫性を高める |
 | yukkie/AgentVillage#243 | enhancement | 🔴 | 3 | Add prompt cache control to reduce API cost and latency | 固定文字列比率を調査のうえ cache_control を付与しコスト・遅延を削減 |
