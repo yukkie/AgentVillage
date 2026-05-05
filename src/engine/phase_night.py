@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
-from src.agent import memory as memory_mod, store
 from src.action.resolver import resolve_attack, resolve_inspect
 from src.action.types import Attack, Inspect
+from src.agent import memory as memory_mod, store
 from src.domain.actor import Actor, Belief
 from src.domain.event import EventType, LogEvent
 from src.domain.roles import Knight, Seer, Werewolf
@@ -15,6 +16,8 @@ from src.engine.victory import check_victory
 
 if TYPE_CHECKING:
     from src.engine.game import GameEngine
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -80,6 +83,15 @@ def _apply_wolf_self_decisions(
         ):
             wolf.state.intended_co = self_decision.claim_role
         else:
+            if (
+                self_decision is not None
+                and self_decision.timing == "next_day"
+                and self_decision.claim_role is None
+            ):
+                logger.warning(
+                    "%s: timing=next_day but claim_role is None — CO plan discarded",
+                    wolf.name,
+                )
             wolf.state.intended_co = None
         store.save(wolf)
 

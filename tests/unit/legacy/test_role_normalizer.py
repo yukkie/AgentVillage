@@ -52,3 +52,18 @@ def test_unknown_string_returns_none():
     Objective: 未知のロール名文字列は ValueError を握り潰して None を返すこと。
     """
     assert normalize_role_field("UnknownRole") is None
+
+
+def test_unknown_string_logs_warning(caplog):
+    """
+    SUT: normalize_role_field
+    Mock: なし（caplog で logging をキャプチャ）
+    Level: unit
+    Objective: 未知のロール名文字列を受け取ったとき、その文字列を含む warning ログが出ること。
+    """
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="src.legacy.role_normalizer"):
+        normalize_role_field("占い師")
+
+    assert any("占い師" in r.message for r in caplog.records)

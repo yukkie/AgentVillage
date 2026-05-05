@@ -6,7 +6,7 @@ SUT: src/engine/phase_night — _run_wolf_chat, _resolve_night_outcomes, _publis
 from unittest.mock import patch
 
 from src.domain.event import EventType
-from src.domain.schema import WolfChatOutput
+from src.domain.schema import WolfChatOutput, WolfSelfCoDecision
 from src.engine.phase_night import (
     AttackDeclaration,
     GuardDeclaration,
@@ -14,6 +14,7 @@ from src.engine.phase_night import (
     InspectionResult,
     NightDeclarations,
     NightResolution,
+    _apply_wolf_self_decisions,
     _publish_inspection,
     _publish_night_results,
     _resolve_declared_inspection,
@@ -481,6 +482,34 @@ class TestPublishInspection:
 
         assert seer.state.beliefs["Alice"].suspicion == 0.0
         assert len([e for e in events if e.event_type == EventType.INSPECTION]) == 1
+
+
+class TestApplyWolfSelfDecisions:
+    def test_next_day_claim_role_none_logs_warning(self, caplog, make_test_actor, make_test_engine):
+        """
+        SUT: _apply_wolf_self_decisions
+        Mock: store.save — ファイルI/Oを回避; caplog で logging をキャプチャ
+        Level: unit
+        Objective: timing=next_day かつ claim_role=None のとき、狼の名前を含む warning ログが出ること。
+        """
+        import logging
+        from unittest.mock import patch
+
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        engine, _ = make_test_engine([wolf])
+
+        output = WolfChatOutput(
+            thought="t",
+            speech="s",
+            attack_candidates={},
+            self_co_decision=WolfSelfCoDecision(claim_role=None, timing="next_day"),
+        )
+
+        with patch("src.engine.phase_night.store.save"), \
+             caplog.at_level(logging.WARNING, logger="src.engine.phase_night"):
+            _apply_wolf_self_decisions(engine, [wolf], {"Wolf1": output})
+
+        assert any("Wolf1" in r.message for r in caplog.records)
 
 
 class TestResolveDeclaredInspection:

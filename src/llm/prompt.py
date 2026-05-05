@@ -342,7 +342,7 @@ Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
 - "attack_candidates" lists your preferred attack targets tonight (highest score = most preferred)
 - Use "speech" to discuss and negotiate fake-CO ideas with your wolf partner(s)
 - "self_co_decision" is your own final personal decision after this discussion, even if the wolves do not fully agree
-- If you decide to fake-CO on the next day, set "timing" to "next_day" and set "claim_role" to the role name you will claim
+- If you decide to fake-CO on the next day, set "timing" to "next_day" and set "claim_role" to the role name you will claim (must be an English role name, e.g. "Seer", "Knight", "Villager", "Medium", "Madman" — never use a translated name)
 - If you decide to wait, set "timing" to "wait" and "claim_role" to null
 - The engine will use only "self_co_decision" to decide your next-day intended fake-CO
 - The JSON must contain exactly these four fields and nothing else.
