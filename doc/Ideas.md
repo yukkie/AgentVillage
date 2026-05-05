@@ -13,6 +13,7 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| yukkie/AgentVillage#276 | bug | 🔴 | - | Emit wolf chat thought as spectator-only log event | 夜の狼会話で thought を取得しているのに spectator ログとして emit していない |
 | yukkie/AgentVillage#248 | enhancement | 🔴 | - | Feat: pass wolf CO reasoning to discussion phase prompt | 夜の偽CO決定時の reasoning を翌日 DISCUSSION フェーズのプロンプトに含め、狼の発言一貫性を高める |
 | yukkie/AgentVillage#243 | enhancement | 🔴 | 3 | Add prompt cache control to reduce API cost and latency | 固定文字列比率を調査のうえ cache_control を付与しコスト・遅延を削減 |
 | yukkie/AgentVillage#274 | enhancement | 🟡 | - | Allow wolf to re-CO even after claimed_role is set | claimed_role 設定済みでも intended_co による再COを許可し、中盤での役職偽装切り替え戦略を可能にする |
