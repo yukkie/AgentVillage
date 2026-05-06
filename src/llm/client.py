@@ -19,14 +19,11 @@ from src.domain.schema import (
 )
 from src.llm.discussion_tools import build_discussion_tools, parse_discussion_tool_result
 from src.llm.prompt import (
-    PastDeath,
-    PastVote,
     PublicContext,
     RoleSpecificContext,
     build_discussion_system_prompt,
     build_night_action_prompt,
     build_vote_prompt,
-    build_wolf_chat_prompt,
 )
 
 
@@ -181,25 +178,12 @@ class LLMClient:
     def call_vote(
         self,
         actor: Actor,
-        today_log: list[SpeechEntry],
-        alive_players: list[str],
-        day: int,
-        past_votes: list[PastVote] | None = None,
-        past_deaths: list[PastDeath] | None = None,
+        ctx: PublicContext,
         wolf_partners: list[str] | None = None,
         lang: str = "English",
     ) -> VoteOutput:
         """Call LLM for the dedicated VOTE-phase decision."""
-        prompt = build_vote_prompt(
-            actor,
-            today_log,
-            alive_players,
-            day,
-            past_votes,
-            past_deaths,
-            wolf_partners,
-            lang,
-        )
+        prompt = build_vote_prompt(actor, ctx, wolf_partners, lang)
         raw = ""
         try:
             message = self._client.messages.create(
@@ -216,11 +200,7 @@ class LLMClient:
     def call_vote_parallel(
         self,
         calls: list[tuple[Actor, list[str] | None]],
-        today_log: list[SpeechEntry],
-        alive_players: list[str],
-        day: int,
-        past_votes: list[PastVote] | None = None,
-        past_deaths: list[PastDeath] | None = None,
+        ctx: PublicContext,
         lang: str = "English",
     ) -> Iterator[tuple[Actor, VoteOutput]]:
         """Run VOTE-phase calls for all actors in parallel; yield in completion order.
@@ -231,17 +211,7 @@ class LLMClient:
         """
         with ThreadPoolExecutor() as executor:
             future_to_actor = {
-                executor.submit(
-                    self.call_vote,
-                    actor,
-                    today_log,
-                    alive_players,
-                    day,
-                    past_votes,
-                    past_deaths,
-                    wolf_partners,
-                    lang,
-                ): actor
+                executor.submit(self.call_vote, actor, ctx, wolf_partners, lang): actor
                 for actor, wolf_partners in calls
             }
             for future in as_completed(future_to_actor):
@@ -256,7 +226,9 @@ class LLMClient:
         lang: str = "English",
     ) -> WolfChatOutput:
         """Call LLM for werewolf team night chat and return structured WolfChatOutput."""
-        prompt = build_wolf_chat_prompt(actor, wolf_partners, alive_players, wolf_chat_log, lang)
+        prompt = actor.role.night_chat_prompt(actor, wolf_partners, alive_players, wolf_chat_log, lang)
+        if prompt is None:
+            raise RuntimeError(f"call_wolf_chat called on non-wolf role: {actor.role.name!r}")
         raw = ""
         try:
             message = self._client.messages.create(

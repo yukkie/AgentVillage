@@ -13,8 +13,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#283 | tech-debt | ❌ | - | Refactor prompt.py: unify PublicContext usage and move night chat prompt to role | build_vote_prompt を PublicContext ベースに統一し past_deaths/past_votes の重複排除、build_wolf_chat_prompt を Role.night_chat_prompt() に移動 |
-| yukkie/AgentVillage#280 | enhancement | ❌ | - | Log raw LLM response on speak tool empty-speech fallback | speak ツールが空スピーチを返したときのフォールバック警告に raw レスポンスを含める |
 | yukkie/AgentVillage#248 | enhancement | 🔴 | - | Feat: pass wolf CO reasoning to discussion phase prompt | 夜の偽CO決定時の reasoning を翌日 DISCUSSION フェーズのプロンプトに含め、狼の発言一貫性を高める |
 | yukkie/AgentVillage#243 | enhancement | 🔴 | 3 | Add prompt cache control to reduce API cost and latency | 固定文字列比率を調査のうえ cache_control を付与しコスト・遅延を削減 |
 | yukkie/AgentVillage#274 | enhancement | 🟡 | - | Allow wolf to re-CO even after claimed_role is set | claimed_role 設定済みでも intended_co による再COを許可し、中盤での役職偽装切り替え戦略を可能にする |

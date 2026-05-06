@@ -1,4 +1,12 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from src.domain.roles.role import Role
+
+if TYPE_CHECKING:
+    from src.domain.actor import Actor
+    from src.domain.schema import SpeechEntry
 
 
 class Werewolf(Role):
@@ -106,6 +114,54 @@ Rules:
 - "threat_scores" maps each player by how threatening they are to your werewolf team (0.0=safe, 1.0=must eliminate — prioritize Seer, Knight, or anyone close to exposing you); omit players whose threat level has not changed
 - Do NOT include your real role in speech unless you are doing a CO
 """
+
+    def night_chat_prompt(self, actor: Actor, wolf_partners: list[str], alive_players: list[str], wolf_chat_log: list[SpeechEntry], lang: str = "English") -> str:
+        """Build prompt for werewolf team night chat (secret coordination before attack)."""
+        target_candidates = ", ".join(
+            p for p in alive_players if p != actor.name and p not in wolf_partners
+        )
+        lines = [
+            f"You are {actor.name}, a Werewolf in a social deduction game.",
+            f"Your wolf partners tonight: {', '.join(wolf_partners)}.",
+            f"Alive players (potential targets): {target_candidates}.",
+            "",
+            "It is night. You are meeting secretly with your wolf partner(s) to coordinate.",
+            "Your goal is not just to make an individual decision, but to reach a shared plan with your wolf partner(s).",
+            "Discuss who to attack tonight, react to what your partner says, and try to move the conversation toward agreement.",
+            "Also coordinate your deception plan for the next day: who should fake-CO, which role each wolf should claim, and whether anyone should wait instead.",
+            "You are allowed to decide that both wolves fake-CO, only one does, both wait, or even claim the same role if that fits your strategy.",
+        ]
+        if actor.state.threat_scores:
+            lines.append("\nYour current threat assessments (0.0=safe to ignore, 1.0=must eliminate soon):")
+            lines.append("Use these to prioritize tonight's attack target.")
+            for name, score in actor.state.threat_scores.items():
+                lines.append(f"  {name}: threat={score:.2f}")
+        if wolf_chat_log:
+            lines.append("\nWolf team conversation so far:")
+            for entry in wolf_chat_log:
+                lines.append(f"  {entry.agent}: {entry.text}")
+        lines.append(f"""
+--- OUTPUT FORMAT ---
+Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
+{{
+  "thought": "<your private reasoning>",
+  "speech": "<what you say to your wolf partner(s)>",
+  "attack_candidates": {{"<player_name>": <0.0-1.0>, ...}},
+  "self_co_decision": {{
+    "claim_role": "<role_name or null>",
+    "timing": "next_day" | "wait"
+  }}
+}}
+- "thought" and "speech" must be written in {lang}
+- "attack_candidates" lists your preferred attack targets tonight (highest score = most preferred)
+- Use "speech" to discuss and negotiate fake-CO ideas with your wolf partner(s)
+- "self_co_decision" is your own final personal decision after this discussion, even if the wolves do not fully agree
+- If you decide to fake-CO on the next day, set "timing" to "next_day" and set "claim_role" to the role name you will claim (must be an English role name, e.g. "Seer", "Knight", "Villager", "Medium", "Madman" — never use a translated name)
+- If you decide to wait, set "timing" to "wait" and "claim_role" to null
+- The engine will use only "self_co_decision" to decide your next-day intended fake-CO
+- The JSON must contain exactly these four fields and nothing else.
+- Note: "attack_candidates" is the night-attack target field; the daytime speech schema uses a separate "vote_candidates" field.""")
+        return "\n".join(lines)
 
     def vote_strategy_prompt(self) -> str:
         return (

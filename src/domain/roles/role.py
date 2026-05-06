@@ -1,7 +1,14 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
+
+if TYPE_CHECKING:
+    from src.domain.actor import Actor
+    from src.domain.schema import SpeechEntry
 
 
 class Role(ABC):
@@ -55,6 +62,13 @@ class Role(ABC):
         Override on Werewolf to inject the village_side / wolf_side choice.
         """
         return ""
+
+    def night_chat_prompt(self, _actor: Actor, _wolf_partners: list[str], _alive_players: list[str], _wolf_chat_log: list[SpeechEntry], _lang: str = "English") -> str | None:
+        """Build the night chat prompt for secret wolf coordination.
+
+        Default: None (only Werewolf participates in night chat).
+        """
+        return None
 
     def output_format_prompt(self, lang: str = "English") -> str:
         """Instruct LLM to output structured JSON for the speech phase.

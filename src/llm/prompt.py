@@ -105,7 +105,10 @@ def build_role_prompt(role: Role, wolf_partners: list[str] | None = None) -> str
     return role.role_prompt(wolf_partners)
 
 
-def build_public_info_prompt(ctx: PublicContext) -> str:
+def build_public_info_prompt(
+    ctx: PublicContext,
+    today_log_header: str = "Today's discussion so far:",
+) -> str:
     """Build prompt section with public game information."""
     lines = [f"\n--- PUBLIC INFORMATION (Day {ctx.day}) ---"]
 
@@ -141,7 +144,7 @@ def build_public_info_prompt(ctx: PublicContext) -> str:
             lines.append(f"Known role claims: {', '.join(claims)}")
 
     if ctx.today_log:
-        lines.append("\nToday's discussion so far:")
+        lines.append(f"\n{today_log_header}")
         for entry in ctx.today_log:
             lines.append(f"  [{entry.speech_id}] {entry.agent}: {entry.text}")
     else:
@@ -215,24 +218,19 @@ def build_discussion_system_prompt(
 
 def build_vote_prompt(
     actor: Actor,
-    today_log: list[SpeechEntry],
-    alive_players: list[str],
-    day: int,
-    past_votes: list[PastVote] | None = None,
-    past_deaths: list[PastDeath] | None = None,
+    ctx: PublicContext,
     wolf_partners: list[str] | None = None,
     lang: str = "English",
 ) -> str:
     """Build the dedicated VOTE-phase prompt.
 
-    Independent from build_system_prompt: the vote decision needs the full
-    day discussion + history + the speaker's own vote_candidates hint, not
-    the full speech-context (persona color, CO direction, etc.).
+    Independent from build_discussion_system_prompt: the vote decision needs
+    the full day discussion + history, not the speech-context (persona, CO direction, etc.).
+    Delegates past_deaths/past_votes rendering to build_public_info_prompt.
     """
-    candidates = [p for p in alive_players if p != actor.name]
+    candidates = [p for p in ctx.alive_players if p != actor.name]
     lines = [
-        f"You are {actor.name} ({actor.role.name}) in a Werewolf game. Day {day}.",
-        f"Alive players: {', '.join(alive_players)}",
+        f"You are {actor.name} ({actor.role.name}) in a Werewolf game. Day {ctx.day}.",
         f"You must vote for one of: {', '.join(candidates)} (cannot vote for yourself).",
     ]
 
@@ -243,30 +241,13 @@ def build_vote_prompt(
     if actor.state.memory_summary:
         lines.append(f"\nYour memory: {'; '.join(actor.state.memory_summary)}")
 
-    if past_deaths:
-        lines.append("\nPast deaths:")
-        for d in past_deaths:
-            cause = "executed" if d["cause"] == "execution" else "killed by werewolves"
-            lines.append(f"  Day {d['day']}: {d['name']} was {cause}")
-
-    if past_votes:
-        lines.append("\nPast votes:")
-        for v in past_votes:
-            vote_str = ", ".join(f"{voter}→{target}" for voter, target in v["votes"].items())
-            lines.append(f"  Day {v['day']}: {vote_str}")
-
-    if today_log:
-        lines.append("\nToday's full discussion:")
-        for entry in today_log:
-            lines.append(f"  [{entry.speech_id}] {entry.agent}: {entry.text}")
-    else:
-        lines.append("\nNo discussion yet today.")
+    lines.append(build_public_info_prompt(ctx, today_log_header="Today's full discussion:"))
 
     if actor.state.beliefs:
         suspicion_str = ", ".join(
             f"{name}={b.suspicion:.2f}"
             for name, b in actor.state.beliefs.items()
-            if name in alive_players
+            if name in ctx.alive_players
         )
         if suspicion_str:
             lines.append(
@@ -292,61 +273,6 @@ Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
         lines.append('- "strategy" must be exactly "village_side" or "wolf_side" (always English, see VOTE STRATEGY above)')
     else:
         lines.append('- "strategy" must be null (only Werewolves use this field)')
-    return "\n".join(lines)
-
-
-def build_wolf_chat_prompt(
-    actor: Actor,
-    wolf_partners: list[str],
-    alive_players: list[str],
-    wolf_chat_log: list[SpeechEntry],
-    lang: str = "English",
-) -> str:
-    """Build prompt for werewolf team night chat (secret coordination before attack)."""
-    target_candidates = ", ".join(
-        p for p in alive_players if p != actor.name and p not in wolf_partners
-    )
-    lines = [
-        f"You are {actor.name}, a Werewolf in a social deduction game.",
-        f"Your wolf partners tonight: {', '.join(wolf_partners)}.",
-        f"Alive players (potential targets): {target_candidates}.",
-        "",
-        "It is night. You are meeting secretly with your wolf partner(s) to coordinate.",
-        "Your goal is not just to make an individual decision, but to reach a shared plan with your wolf partner(s).",
-        "Discuss who to attack tonight, react to what your partner says, and try to move the conversation toward agreement.",
-        "Also coordinate your deception plan for the next day: who should fake-CO, which role each wolf should claim, and whether anyone should wait instead.",
-        "You are allowed to decide that both wolves fake-CO, only one does, both wait, or even claim the same role if that fits your strategy.",
-    ]
-    if actor.state.threat_scores:
-        lines.append("\nYour current threat assessments (0.0=safe to ignore, 1.0=must eliminate soon):")
-        lines.append("Use these to prioritize tonight's attack target.")
-        for name, score in actor.state.threat_scores.items():
-            lines.append(f"  {name}: threat={score:.2f}")
-    if wolf_chat_log:
-        lines.append("\nWolf team conversation so far:")
-        for entry in wolf_chat_log:
-            lines.append(f"  {entry.agent}: {entry.text}")
-    lines.append(f"""
---- OUTPUT FORMAT ---
-Respond with ONLY valid JSON. No extra fields, no explanation, no other text.
-{{
-  "thought": "<your private reasoning>",
-  "speech": "<what you say to your wolf partner(s)>",
-  "attack_candidates": {{"<player_name>": <0.0-1.0>, ...}},
-  "self_co_decision": {{
-    "claim_role": "<role_name or null>",
-    "timing": "next_day" | "wait"
-  }}
-}}
-- "thought" and "speech" must be written in {lang}
-- "attack_candidates" lists your preferred attack targets tonight (highest score = most preferred)
-- Use "speech" to discuss and negotiate fake-CO ideas with your wolf partner(s)
-- "self_co_decision" is your own final personal decision after this discussion, even if the wolves do not fully agree
-- If you decide to fake-CO on the next day, set "timing" to "next_day" and set "claim_role" to the role name you will claim (must be an English role name, e.g. "Seer", "Knight", "Villager", "Medium", "Madman" — never use a translated name)
-- If you decide to wait, set "timing" to "wait" and "claim_role" to null
-- The engine will use only "self_co_decision" to decide your next-day intended fake-CO
-- The JSON must contain exactly these four fields and nothing else.
-- Note: "attack_candidates" is the night-attack target field; the daytime speech schema uses a separate "vote_candidates" field.""")
     return "\n".join(lines)
 
 

@@ -114,12 +114,12 @@ def make_vote_parallel_side_effect(
     reasonings = reasonings or {}
     strategies = strategies or {}
 
-    def _side_effect(calls, today_log, alive_players, day, *args, **kwargs):
+    def _side_effect(calls, ctx, *args, **kwargs):
         results = []
         for actor, _wolf_partners in calls:
             target = targets.get(actor.name)
             if target is None:
-                others = [n for n in alive_players if n != actor.name]
+                others = [n for n in ctx.alive_players if n != actor.name]
                 target = others[0] if others else ""
             results.append((
                 actor,

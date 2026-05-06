@@ -148,6 +148,35 @@ class TestCallWolfChat:
         assert result.self_co_decision.timing == "wait"
         assert result.self_co_decision.claim_role is None
 
+    def test_raises_when_night_chat_prompt_is_none(self, make_test_actor):
+        """
+        SUT: LLMClient.call_wolf_chat
+        Mock: actor.role.night_chat_prompt を None 返却にモック
+        Level: unit
+        Objective: role.night_chat_prompt() が None を返したとき RuntimeError が送出されること（非狼役職への誤呼び出し検知）。
+        """
+        from unittest.mock import patch
+        import pytest
+        actor = make_test_actor("Alice", "Villager")
+        llm = make_failing_llm_client()
+        with patch.object(actor.role, "night_chat_prompt", return_value=None):
+            with pytest.raises(RuntimeError, match="non-wolf role"):
+                llm.call_wolf_chat(actor, [], ["Alice", "Bob"], [])
+
+    def test_delegates_to_role_night_chat_prompt(self, make_test_actor):
+        """
+        SUT: LLMClient.call_wolf_chat
+        Mock: anthropic SDK、actor.role.night_chat_prompt をスパイ
+        Level: unit
+        Objective: call_wolf_chat が actor.role.night_chat_prompt() に委譲してプロンプトを構築すること。
+        """
+        from unittest.mock import patch
+        actor = make_test_actor("Wolf", "Werewolf")
+        llm = make_llm_client_with_response(WOLF_CHAT_OUTPUT_JSON)
+        with patch.object(actor.role, "night_chat_prompt", wraps=actor.role.night_chat_prompt) as spy:
+            llm.call_wolf_chat(actor, ["OtherWolf"], ["Alice", "Wolf", "OtherWolf"], [])
+            spy.assert_called_once()
+
 
 class TestCallVote:
     def test_returns_vote_output(self, make_test_actor):
@@ -157,14 +186,11 @@ class TestCallVote:
         Level: unit
         Objective: VOTE プロンプトの応答が VoteOutput としてパースされること。
         """
+        from src.llm.prompt import PublicContext
         actor = make_test_actor("Alice", "Villager")
         llm = make_llm_client_with_response(VOTE_OUTPUT_JSON)
-        result = llm.call_vote(
-            actor,
-            today_log=[],
-            alive_players=["Alice", "Bob"],
-            day=1,
-        )
+        ctx = PublicContext(today_log=[], alive_players=["Alice", "Bob"], dead_players=[], day=1)
+        result = llm.call_vote(actor, ctx=ctx)
         assert isinstance(result, VoteOutput)
         assert result.target == "Alice"
         assert result.reasoning == "Her speech contradicts the seer claim."
@@ -177,15 +203,11 @@ class TestCallVote:
         Level: unit
         Objective: 狼が strategy フィールド付きで返したとき VoteOutput.strategy として保持されること。
         """
+        from src.llm.prompt import PublicContext
         actor = make_test_actor("Wolf", "Werewolf")
         llm = make_llm_client_with_response(VOTE_OUTPUT_WOLF_JSON)
-        result = llm.call_vote(
-            actor,
-            today_log=[],
-            alive_players=["Wolf", "Seer1"],
-            day=1,
-            wolf_partners=[],
-        )
+        ctx = PublicContext(today_log=[], alive_players=["Wolf", "Seer1"], dead_players=[], day=1)
+        result = llm.call_vote(actor, ctx=ctx, wolf_partners=[])
         assert result.strategy == "wolf_side"
         assert result.target == "Seer1"
 
@@ -196,14 +218,11 @@ class TestCallVote:
         Level: unit
         Objective: API 失敗時に target="" の VoteOutput が返ること（_run_vote 側でフォールバック処理）。
         """
+        from src.llm.prompt import PublicContext
         actor = make_test_actor("Alice", "Villager")
         llm = make_failing_llm_client()
-        result = llm.call_vote(
-            actor,
-            today_log=[],
-            alive_players=["Alice", "Bob"],
-            day=1,
-        )
+        ctx = PublicContext(today_log=[], alive_players=["Alice", "Bob"], dead_players=[], day=1)
+        result = llm.call_vote(actor, ctx=ctx)
         assert result.target == ""
         assert result.strategy is None
 
