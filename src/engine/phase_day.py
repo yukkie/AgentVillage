@@ -10,6 +10,7 @@ from src.domain.roles import Medium, Werewolf
 from src.engine.phase import Phase
 from src.engine.victory import check_victory
 from src.engine.vote import tally_votes
+from src.llm.prompt import PublicContext
 
 if TYPE_CHECKING:
     from src.engine.game import GameEngine
@@ -53,16 +54,17 @@ def _run_vote(engine: GameEngine) -> str | None:
             ]
         calls.append((actor, wolf_partners))
 
+    ctx = PublicContext(
+        today_log=list(engine.today_log),
+        alive_players=alive_names,
+        dead_players=engine._dead_names(),
+        day=engine.day,
+        all_agents=list(engine.agents),
+        past_votes=engine._past_votes,
+        past_deaths=engine._past_deaths,
+    )
     votes: dict[str, str] = {}
-    for actor, vote_output in engine._llm_client.call_vote_parallel(
-        calls,
-        list(engine.today_log),
-        alive_names,
-        engine.day,
-        engine._past_votes,
-        engine._past_deaths,
-        engine.lang,
-    ):
+    for actor, vote_output in engine._llm_client.call_vote_parallel(calls, ctx, engine.lang):
         if vote_output.target in alive_names and vote_output.target != actor.name:
             target = vote_output.target
         else:
