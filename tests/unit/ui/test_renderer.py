@@ -408,3 +408,49 @@ def test_threat_update_hidden_in_public_mode() -> None:
     result = renderer.on_event(event)
 
     assert result is None
+
+
+def test_wolf_chat_speech_renders_red(make_test_actor) -> None:
+    """
+    SUT: Renderer.on_event (WOLF_CHAT)
+    Mock: なし
+    Level: unit
+    Objective: WOLF_CHAT の speech イベントが red スタイルで描画されること。
+    """
+    renderer = Renderer([], spectator_mode=True)
+    event = _make_event(
+        EventType.WOLF_CHAT,
+        agent="Wolf1",
+        content="Wolf1: let's attack Alice",
+        is_public=False,
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert "let's attack Alice" in result.plain
+    spans = [s for s in result._spans if s.style == "red"]
+    assert len(spans) > 0
+
+
+def test_wolf_chat_thought_renders_dim_red(make_test_actor) -> None:
+    """
+    SUT: Renderer.on_event (WOLF_CHAT thought)
+    Mock: なし
+    Level: unit
+    Objective: WOLF_CHAT の thought ([THINK] プレフィックス) が dim red スタイルで描画されること。
+    """
+    renderer = Renderer([], spectator_mode=True)
+    event = _make_event(
+        EventType.WOLF_CHAT,
+        agent="Wolf1",
+        content="[THINK] secret plan",
+        is_public=False,
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert "secret plan" in result.plain
+    spans = [s for s in result._spans if s.style == "dim red"]
+    assert len(spans) > 0

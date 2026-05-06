@@ -24,7 +24,6 @@ class Renderer:
     # PRE_NIGHT_DECISION, INSPECTION, GUARD, GAME_OVER) are handled separately in ``on_event``.
     _SIMPLE_EVENT_STYLES: dict[EventType, tuple[str, str]] = {
         EventType.NIGHT_ATTACK: ("[NIGHT] ", "red"),
-        EventType.WOLF_CHAT: ("[WOLF] ", "red"),
         EventType.GUARD_BLOCK: ("[GUARD BLOCK] ", "bold bright_green"),
         EventType.CO_ANNOUNCEMENT: ("[CO] ", "bold white"),
         EventType.MEDIUM_RESULT: ("[MEDIUM] ", "cyan"),
@@ -68,6 +67,12 @@ class Renderer:
 
         elif event.event_type == EventType.ELIMINATION:
             text.append(f"\n{event.content}\n", style="bold red")
+
+        elif event.event_type == EventType.WOLF_CHAT:
+            if event.content.startswith("[THINK]"):
+                text.append(f"[WOLF] {event.content}", style="dim red")
+            else:
+                text.append(f"[WOLF] {event.content}", style="red")
 
         elif event.event_type == EventType.NIGHT_ATTACK:
             # Spectator only — render attacker/target explicitly when available.
