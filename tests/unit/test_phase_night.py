@@ -60,7 +60,7 @@ class TestRunWolfChat:
 
         assert result == "Alice"
         wolf_chat_events = [e for e in events if e.event_type == EventType.WOLF_CHAT]
-        assert len(wolf_chat_events) == 2  # one per wolf per round
+        assert len(wolf_chat_events) == 4  # speech + thought per wolf per round
 
     def test_multi_wolf_chat_empty_candidates_returns_none(self, make_test_actor, make_test_engine):
         """

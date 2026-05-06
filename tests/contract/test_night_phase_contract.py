@@ -222,3 +222,35 @@ class TestWolfChatContract:
         assert wolf1.state.intended_co is not None
         assert wolf1.state.intended_co.name == "Seer"
         assert wolf2.state.intended_co is None
+
+    def test_wolf_chat_emits_thought_as_non_public_event(self, make_test_actor, make_test_engine):
+        """
+        SUT: _run_wolf_chat()
+        Mock: call_wolf_chat returns WolfChatOutput with a specific thought string
+        Level: contract
+        Objective: wolf chat の thought が is_public=False の WOLF_CHAT イベントとして emit される契約を検証する。
+        """
+        from src.domain.schema import WolfChatOutput
+        from src.engine.phase_night import _run_wolf_chat
+
+        wolf1 = make_test_actor("Wolf1", "Werewolf")
+        wolf2 = make_test_actor("Wolf2", "Werewolf")
+        villager = make_test_actor("Alice")
+        engine, emitted = make_test_engine([wolf1, wolf2, villager])
+        engine._wolf_chat_rounds = 1
+
+        engine._llm_client.call_wolf_chat.return_value = WolfChatOutput(
+            thought="secret plan",
+            speech="let's attack Alice",
+            attack_candidates={"Alice": 0.9},
+        )
+
+        with patch("src.engine.phase_night.store.save"):
+            _run_wolf_chat(engine)
+
+        thought_events = [
+            e for e in emitted
+            if not e.is_public and "[THINK]" in e.content and e.event_type == EventType.WOLF_CHAT
+        ]
+        assert len(thought_events) == 2  # one per wolf
+        assert all("secret plan" in e.content for e in thought_events)

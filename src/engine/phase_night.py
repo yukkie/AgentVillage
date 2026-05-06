@@ -128,6 +128,14 @@ def _run_wolf_chat(engine: GameEngine) -> str | None:
                 content=f"{wolf.name}: {output.speech}",
                 is_public=False,
             ))
+            engine._emit(LogEvent.make(
+                day=engine.day,
+                phase=Phase.NIGHT_WOLF_CHAT.value,
+                event_type=EventType.WOLF_CHAT,
+                agent=wolf.name,
+                content=f"[THINK] {output.thought}",
+                is_public=False,
+            ))
 
     _apply_wolf_self_decisions(engine, wolves, last_wolf_outputs)
 
