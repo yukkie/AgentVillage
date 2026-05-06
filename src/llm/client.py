@@ -151,7 +151,7 @@ class LLMClient:
                     }
                 ],
             )
-            return parse_discussion_tool_result(message, actor.name)
+            return parse_discussion_tool_result(message, actor.name, message.model_dump_json())
         except Exception as e:
             _classify_and_log_error("call_discussion", actor.name, e, "")
             return SilentResult(reasoning="error fallback")

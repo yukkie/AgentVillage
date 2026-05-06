@@ -120,73 +120,63 @@ def build_discussion_tools(co_eligible: bool) -> list[dict]:
     return tools
 
 
-def parse_discussion_tool_result(message: anthropic.types.Message, agent_name: str) -> DiscussionResult:
+def parse_discussion_tool_result(message: anthropic.types.Message, agent_name: str, raw_response: str = "") -> DiscussionResult:
     """Extract the tool use block from an LLM message and return a DiscussionResult."""
     for block in message.content:
         if block.type != "tool_use":
             continue
-        inp = block.input
+        inp: dict[str, object] = block.input
         name = block.name
+        if name == "silent":
+            return SilentResult(reasoning=str(inp.get("reasoning", "")))
+
+        speech = str(inp.get("speech", ""))
+        thought = str(inp.get("thought", ""))
+        _warn_xml_tags(agent_name, name, speech, thought)
+
+        if not speech:
+            _log_warning(agent_name, f"{name} tool returned empty speech; falling back to silent")
+            if raw_response:
+                _log_warning(agent_name, f"raw LLM response: {raw_response!r}")
+            return SilentResult(reasoning="empty speech fallback")
+
         if name == "speak":
-            speech = inp.get("speech", "")
-            thought = inp.get("thought", "")
-            _warn_xml_tags(agent_name, name, speech, thought)
-            if not speech:
-                _log_warning(agent_name, "speak tool returned empty speech; falling back to silent")
-                return SilentResult(reasoning="empty speech fallback")
             return SpeakResult(
                 thought=thought,
                 speech=speech,
-                memory_update=inp.get("memory_update", []),
-                suspicion_scores=inp.get("suspicion_scores"),
-                threat_scores=inp.get("threat_scores"),
+                memory_update=inp.get("memory_update", []),  # type: ignore[arg-type]
+                suspicion_scores=inp.get("suspicion_scores"),  # type: ignore[arg-type]
+                threat_scores=inp.get("threat_scores"),  # type: ignore[arg-type]
             )
         if name == "challenge":
-            speech = inp.get("speech", "")
-            thought = inp.get("thought", "")
-            _warn_xml_tags(agent_name, name, speech, thought)
-            if not speech:
-                _log_warning(agent_name, "challenge tool returned empty speech; falling back to silent")
-                return SilentResult(reasoning="empty speech fallback")
             return ChallengeResult(
                 thought=thought,
                 speech=speech,
-                reply_to=int(inp.get("reply_to", 0)),
-                memory_update=inp.get("memory_update", []),
-                suspicion_scores=inp.get("suspicion_scores"),
-                threat_scores=inp.get("threat_scores"),
+                reply_to=int(inp.get("reply_to", 0)),  # type: ignore[arg-type]
+                memory_update=inp.get("memory_update", []),  # type: ignore[arg-type]
+                suspicion_scores=inp.get("suspicion_scores"),  # type: ignore[arg-type]
+                threat_scores=inp.get("threat_scores"),  # type: ignore[arg-type]
             )
         if name == "co":
-            speech = inp.get("speech", "")
-            thought = inp.get("thought", "")
-            _warn_xml_tags(agent_name, name, speech, thought)
             raw_role = inp.get("claim_role")
             claim_role = normalize_role_field(raw_role)
             if claim_role is None:
                 _log_warning(agent_name, f"co tool missing valid claim_role: {raw_role!r}; falling back to speak")
-                if not speech:
-                    _log_warning(agent_name, "co fallback-to-speak also has empty speech; falling back to silent")
-                    return SilentResult(reasoning="empty speech fallback")
                 return SpeakResult(
                     thought=thought,
                     speech=speech,
-                    memory_update=inp.get("memory_update", []),
-                    suspicion_scores=inp.get("suspicion_scores"),
-                    threat_scores=inp.get("threat_scores"),
+                    memory_update=inp.get("memory_update", []),  # type: ignore[arg-type]
+                    suspicion_scores=inp.get("suspicion_scores"),  # type: ignore[arg-type]
+                    threat_scores=inp.get("threat_scores"),  # type: ignore[arg-type]
                 )
-            if not speech:
-                _log_warning(agent_name, "co tool returned empty speech; falling back to silent")
-                return SilentResult(reasoning="empty speech fallback")
             return CoResult(
                 thought=thought,
                 speech=speech,
                 claim_role=claim_role,
-                memory_update=inp.get("memory_update", []),
-                suspicion_scores=inp.get("suspicion_scores"),
-                threat_scores=inp.get("threat_scores"),
+                memory_update=inp.get("memory_update", []),  # type: ignore[arg-type]
+                suspicion_scores=inp.get("suspicion_scores"),  # type: ignore[arg-type]
+                threat_scores=inp.get("threat_scores"),  # type: ignore[arg-type]
             )
-        if name == "silent":
-            return SilentResult(reasoning=inp.get("reasoning", ""))
 
     # No tool_use block found — fall back to silent
     _log_warning(agent_name, "no tool_use block in response; falling back to silent")

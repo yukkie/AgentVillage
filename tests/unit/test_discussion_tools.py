@@ -159,6 +159,68 @@ class TestParseCoTool:
         assert isinstance(result, SilentResult)
 
 
+class TestEmptySpeechRawResponseLogging:
+    def test_speak_empty_speech_logs_raw_response(self, capsys):
+        """
+        SUT: parse_discussion_tool_result
+        Mock: anthropic.types.Message (MagicMock) with speak tool and empty speech
+        Level: unit
+        Objective: speak ツールで empty-speech fallback 時、raw_response が stderr に出力されること。
+        """
+        msg = _make_message("speak", {"speech": "", "thought": "..."})
+        parse_discussion_tool_result(msg, "TestAgent", raw_response='{"raw": "llm_output"}')
+        captured = capsys.readouterr()
+        assert '{"raw": "llm_output"}' in captured.err
+
+    def test_challenge_empty_speech_logs_raw_response(self, capsys):
+        """
+        SUT: parse_discussion_tool_result
+        Mock: anthropic.types.Message (MagicMock) with challenge tool and empty speech
+        Level: unit
+        Objective: challenge ツールで empty-speech fallback 時、raw_response が stderr に出力されること。
+        """
+        msg = _make_message("challenge", {"speech": "", "thought": "...", "reply_to": 1})
+        parse_discussion_tool_result(msg, "TestAgent", raw_response="raw challenge response")
+        captured = capsys.readouterr()
+        assert "raw challenge response" in captured.err
+
+    def test_co_empty_speech_logs_raw_response(self, capsys):
+        """
+        SUT: parse_discussion_tool_result
+        Mock: anthropic.types.Message (MagicMock) with co tool, valid role, empty speech
+        Level: unit
+        Objective: co ツールで empty-speech fallback 時、raw_response が stderr に出力されること。
+        """
+        msg = _make_message("co", {"speech": "", "claim_role": "Seer", "thought": "..."})
+        parse_discussion_tool_result(msg, "TestAgent", raw_response="raw co response")
+        captured = capsys.readouterr()
+        assert "raw co response" in captured.err
+
+    def test_nonempty_speech_does_not_log_raw_response(self, capsys):
+        """
+        SUT: parse_discussion_tool_result
+        Mock: anthropic.types.Message (MagicMock) with speak tool and non-empty speech
+        Level: unit
+        Objective: speech が空でない場合、raw_response がログに出力されないこと。
+        """
+        msg = _make_message("speak", {"speech": "Hello!", "thought": "..."})
+        parse_discussion_tool_result(msg, "TestAgent", raw_response="should_not_appear")
+        captured = capsys.readouterr()
+        assert "should_not_appear" not in captured.err
+
+    def test_empty_raw_response_not_logged(self, capsys):
+        """
+        SUT: parse_discussion_tool_result
+        Mock: anthropic.types.Message (MagicMock) with speak tool and empty speech, no raw
+        Level: unit
+        Objective: raw_response が空文字のとき raw response ログ行が出力されないこと。
+        """
+        msg = _make_message("speak", {"speech": "", "thought": "..."})
+        parse_discussion_tool_result(msg, "TestAgent", raw_response="")
+        captured = capsys.readouterr()
+        assert "raw LLM response" not in captured.err
+
+
 class TestParseXmlTagWarning:
     def test_xml_tag_in_speech_logs_warning(self, capsys):
         """
