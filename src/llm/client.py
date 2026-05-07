@@ -131,7 +131,7 @@ class LLMClient:
         role_ctx: RoleSpecificContext | None = None,
     ) -> DiscussionResult:
         """Call LLM for a DISCUSSION turn using tool use; return one DiscussionResult."""
-        co_eligible = actor.state.claimed_role is None and actor.role.can_co
+        co_eligible = actor.role.can_co
         system_prompt = build_discussion_system_prompt(actor, ctx, co_eligible, lang, role_ctx)
         tools = build_discussion_tools(co_eligible)
         try:
