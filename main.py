@@ -9,8 +9,10 @@ Usage:
     uv run main.py --spectator --lang Japanese --players 7
     uv run main.py --replay                  # Replay mode (public)
     uv run main.py --replay --spectator      # Replay mode (spectator)
+    uv run main.py --verbose                 # Show LLM usage logs (DEBUG)
 """
 import argparse
+import logging
 import os
 import sys
 
@@ -51,7 +53,15 @@ def main() -> None:
         action="store_true",
         help="Replay a past game from state_archive/ (no LLM calls)",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable DEBUG logging (shows LLM usage stats per API call)",
+    )
     args = parser.parse_args()
+
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 
     spectator_mode: bool = args.spectator
 

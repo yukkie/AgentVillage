@@ -17,6 +17,7 @@ from tests.conftest import (
     WOLF_CHAT_OUTPUT_JSON,
     make_failing_llm_client,
     make_llm_client_with_response,
+    make_usage_mock,
 )
 
 
@@ -28,6 +29,7 @@ def _make_tool_use_message(tool_name: str, tool_input: dict):
     block.input = tool_input
     msg = MagicMock()
     msg.content = [block]
+    msg.usage = make_usage_mock()
     return msg
 
 
@@ -115,6 +117,23 @@ class TestCallDiscussion:
         ctx = PublicContext(alive_players=["Alice", "Bob"], dead_players=[], day=1, today_log=[])
         result = llm.call_discussion(actor, ctx)
         assert isinstance(result, SilentResult)
+
+    def test_logs_usage_with_cached_label(self, make_test_actor):
+        """
+        SUT: LLMClient.call_discussion
+        Mock: anthropic SDK — returns tool_use block for "speak"; _logger patched
+        Level: unit
+        Objective: API 呼び出し後に _logger.debug が "[LLM {name} cached]" で呼ばれること。
+        """
+        from unittest.mock import patch
+        actor = make_test_actor("Alice")
+        llm = _make_discussion_llm_client("speak", {"thought": "t", "speech": "Hi!"})
+        from src.llm.prompt import PublicContext
+        ctx = PublicContext(alive_players=["Alice", "Bob"], dead_players=[], day=1, today_log=[])
+        with patch.object(llm._logger, "debug") as mock_debug:
+            llm.call_discussion(actor, ctx)
+        mock_debug.assert_called_once()
+        assert "cached" in mock_debug.call_args.args[0]
 
 
 class TestCallWolfChat:
@@ -225,6 +244,23 @@ class TestCallVote:
         result = llm.call_vote(actor, ctx=ctx)
         assert result.target == ""
         assert result.strategy is None
+
+    def test_logs_usage_with_no_cache_label(self, make_test_actor):
+        """
+        SUT: LLMClient.call_vote
+        Mock: anthropic SDK — returns VOTE_OUTPUT_JSON; _logger patched
+        Level: unit
+        Objective: API 呼び出し後に _logger.debug が "[LLM {name} no-cache]" で呼ばれること。
+        """
+        from unittest.mock import patch
+        from src.llm.prompt import PublicContext
+        actor = make_test_actor("Alice", "Villager")
+        llm = make_llm_client_with_response(VOTE_OUTPUT_JSON)
+        ctx = PublicContext(today_log=[], alive_players=["Alice", "Bob"], dead_players=[], day=1)
+        with patch.object(llm._logger, "debug") as mock_debug:
+            llm.call_vote(actor, ctx=ctx)
+        mock_debug.assert_called_once()
+        assert "no-cache" in mock_debug.call_args.args[0]
 
 
 class TestCallNightAction:

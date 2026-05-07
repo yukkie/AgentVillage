@@ -74,10 +74,26 @@ def make_test_engine():
 # ── Shared Mock Builders for LLM Client ──────────────────────────────────
 
 
+def make_usage_mock(
+    input_tokens: int = 100,
+    cache_read_input_tokens: int = 0,
+    cache_creation_input_tokens: int = 0,
+    output_tokens: int = 50,
+) -> MagicMock:
+    """Build a MagicMock simulating anthropic.types.Usage."""
+    usage = MagicMock()
+    usage.input_tokens = input_tokens
+    usage.cache_read_input_tokens = cache_read_input_tokens
+    usage.cache_creation_input_tokens = cache_creation_input_tokens
+    usage.output_tokens = output_tokens
+    return usage
+
+
 def make_llm_client_with_response(response_text: str) -> LLMClient:
     """Build LLMClient mock that returns a specific response."""
     msg = MagicMock()
     msg.content = [MagicMock(text=response_text)]
+    msg.usage = make_usage_mock()
     anthropic_client = MagicMock(spec=anthropic.Anthropic)
     anthropic_client.messages.create.return_value = msg
     return LLMClient(anthropic_client)
