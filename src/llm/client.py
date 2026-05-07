@@ -151,7 +151,7 @@ class LLMClient:
                 ],
             )
             u = message.usage
-            self._logger.debug("[LLM %s cached] input=%d hit=%d create=%d output=%d",
+            self._logger.info("[LLM %s cached] input=%d hit=%d create=%d output=%d",
                 actor.name, u.input_tokens, u.cache_read_input_tokens or 0,
                 u.cache_creation_input_tokens or 0, u.output_tokens)
             return parse_discussion_tool_result(message, actor.name, message.model_dump_json())
@@ -199,7 +199,7 @@ class LLMClient:
             )
             raw = message.content[0].text
             u = message.usage
-            self._logger.debug("[LLM %s no-cache] input=%d hit=%d create=%d output=%d",
+            self._logger.info("[LLM %s no-cache] input=%d hit=%d create=%d output=%d",
                 actor.name, u.input_tokens, u.cache_read_input_tokens or 0,
                 u.cache_creation_input_tokens or 0, u.output_tokens)
             return VoteOutput.model_validate_json(_extract_json(raw))
@@ -248,7 +248,7 @@ class LLMClient:
             )
             raw = message.content[0].text
             u = message.usage
-            self._logger.debug("[LLM %s no-cache] input=%d hit=%d create=%d output=%d",
+            self._logger.info("[LLM %s no-cache] input=%d hit=%d create=%d output=%d",
                 actor.name, u.input_tokens, u.cache_read_input_tokens or 0,
                 u.cache_creation_input_tokens or 0, u.output_tokens)
             return WolfChatOutput.model_validate_json(_extract_json(raw))
@@ -282,7 +282,7 @@ class LLMClient:
             )
             raw = message.content[0].text.strip()
             u = message.usage
-            self._logger.debug("[LLM %s no-cache] input=%d hit=%d create=%d output=%d",
+            self._logger.info("[LLM %s no-cache] input=%d hit=%d create=%d output=%d",
                 actor.name, u.input_tokens, u.cache_read_input_tokens or 0,
                 u.cache_creation_input_tokens or 0, u.output_tokens)
             parsed = NightActionOutput.model_validate_json(_extract_json(raw))

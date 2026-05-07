@@ -130,10 +130,10 @@ class TestCallDiscussion:
         llm = _make_discussion_llm_client("speak", {"thought": "t", "speech": "Hi!"})
         from src.llm.prompt import PublicContext
         ctx = PublicContext(alive_players=["Alice", "Bob"], dead_players=[], day=1, today_log=[])
-        with patch.object(llm._logger, "debug") as mock_debug:
+        with patch.object(llm._logger, "info") as mock_info:
             llm.call_discussion(actor, ctx)
-        mock_debug.assert_called_once()
-        assert "cached" in mock_debug.call_args.args[0]
+        mock_info.assert_called_once()
+        assert "cached" in mock_info.call_args.args[0]
 
 
 class TestCallWolfChat:
@@ -257,10 +257,10 @@ class TestCallVote:
         actor = make_test_actor("Alice", "Villager")
         llm = make_llm_client_with_response(VOTE_OUTPUT_JSON)
         ctx = PublicContext(today_log=[], alive_players=["Alice", "Bob"], dead_players=[], day=1)
-        with patch.object(llm._logger, "debug") as mock_debug:
+        with patch.object(llm._logger, "info") as mock_info:
             llm.call_vote(actor, ctx=ctx)
-        mock_debug.assert_called_once()
-        assert "no-cache" in mock_debug.call_args.args[0]
+        mock_info.assert_called_once()
+        assert "no-cache" in mock_info.call_args.args[0]
 
 
 class TestCallNightAction:
