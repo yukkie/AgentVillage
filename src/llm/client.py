@@ -1,4 +1,6 @@
 import json
+import logging
+import re
 import sys
 from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -90,7 +92,6 @@ def _extract_json(text: str) -> str:
        false matches on set-notation like {SQ, Jonas, Lumi} in prose.
     2. Fall back to bracket counting when no fence is present.
     """
-    import re
     m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
     if m:
         return m.group(1)
@@ -122,6 +123,7 @@ class LLMClient:
 
     def __init__(self, client: anthropic.Anthropic) -> None:
         self._client = client
+        self._logger = logging.getLogger(__name__)
 
     def call_discussion(
         self,
@@ -138,7 +140,7 @@ class LLMClient:
             message = self._client.messages.create(
                 model=actor.model,
                 max_tokens=MAX_TOKENS["call_discussion"],
-                system=system_prompt,
+                system=[{"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}],
                 tools=tools,
                 tool_choice={"type": "any"},
                 messages=[
@@ -148,6 +150,10 @@ class LLMClient:
                     }
                 ],
             )
+            u = message.usage
+            self._logger.info("[LLM %s cached] input=%d hit=%d create=%d output=%d",
+                actor.name, u.input_tokens, u.cache_read_input_tokens or 0,
+                u.cache_creation_input_tokens or 0, u.output_tokens)
             return parse_discussion_tool_result(message, actor.name, message.model_dump_json())
         except Exception as e:
             _classify_and_log_error("call_discussion", actor.name, e, "")
@@ -192,6 +198,10 @@ class LLMClient:
                 messages=[{"role": "user", "content": prompt}],
             )
             raw = message.content[0].text
+            u = message.usage
+            self._logger.info("[LLM %s no-cache] input=%d hit=%d create=%d output=%d",
+                actor.name, u.input_tokens, u.cache_read_input_tokens or 0,
+                u.cache_creation_input_tokens or 0, u.output_tokens)
             return VoteOutput.model_validate_json(_extract_json(raw))
         except Exception as e:
             _classify_and_log_error("call_vote", actor.name, e, raw)
@@ -237,6 +247,10 @@ class LLMClient:
                 messages=[{"role": "user", "content": prompt}],
             )
             raw = message.content[0].text
+            u = message.usage
+            self._logger.info("[LLM %s no-cache] input=%d hit=%d create=%d output=%d",
+                actor.name, u.input_tokens, u.cache_read_input_tokens or 0,
+                u.cache_creation_input_tokens or 0, u.output_tokens)
             return WolfChatOutput.model_validate_json(_extract_json(raw))
         except Exception as e:
             _classify_and_log_error("call_wolf_chat", actor.name, e, raw)
@@ -267,6 +281,10 @@ class LLMClient:
                 ],
             )
             raw = message.content[0].text.strip()
+            u = message.usage
+            self._logger.info("[LLM %s no-cache] input=%d hit=%d create=%d output=%d",
+                actor.name, u.input_tokens, u.cache_read_input_tokens or 0,
+                u.cache_creation_input_tokens or 0, u.output_tokens)
             parsed = NightActionOutput.model_validate_json(_extract_json(raw))
         except Exception as e:
             _classify_and_log_error("call_night_action", actor.name, e, raw)
