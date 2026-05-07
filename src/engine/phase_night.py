@@ -71,11 +71,6 @@ def _apply_wolf_self_decisions(
         output = last_wolf_outputs.get(wolf.name)
         self_decision = output.self_co_decision if output is not None else None
 
-        if wolf.state.claimed_role is not None:
-            wolf.state.intended_co = None
-            store.save(wolf)
-            continue
-
         if (
             self_decision is not None
             and self_decision.timing == "next_day"

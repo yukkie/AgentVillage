@@ -511,6 +511,34 @@ class TestApplyWolfSelfDecisions:
 
         assert any("Wolf1" in r.message for r in caplog.records)
 
+    def test_reco_allowed_when_claimed_role_already_set(self, make_test_actor, make_test_engine):
+        """
+        SUT: _apply_wolf_self_decisions
+        Mock: store.save — ファイルI/Oを回避
+        Level: unit
+        Objective: claimed_role が既にセットされた狼が timing=next_day で claim_role を指定したとき
+                   intended_co に新しい役職がセットされること（re-CO が許可されること）。
+        """
+        from src.domain.roles import Seer
+        from unittest.mock import patch
+
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        wolf.state.claimed_role = Seer()
+        engine, _ = make_test_engine([wolf])
+
+        output = WolfChatOutput(
+            thought="t",
+            speech="s",
+            attack_candidates={},
+            self_co_decision=WolfSelfCoDecision(claim_role=Seer(), timing="next_day"),
+        )
+
+        with patch("src.engine.phase_night.store.save"):
+            _apply_wolf_self_decisions(engine, [wolf], {"Wolf1": output})
+
+        assert wolf.state.intended_co is not None
+        assert wolf.state.intended_co.name == "Seer"
+
 
 class TestResolveDeclaredInspection:
     def test_reasoning_is_preserved_after_target_resolution(self, make_test_actor, make_test_engine):
