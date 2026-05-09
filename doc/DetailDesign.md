@@ -409,3 +409,62 @@ spectatorモードは `agent.role`（変化しない真の役職）を使うた�
 
 **キー入力:**
 - Windows: `msvcrt.getch()` を使用（`\xe0` + 方向コードで矢印キーを判定）
+
+---
+
+## src/stats/ — ゲーム統計
+
+LLM を呼ばない。ゲーム終了時の記録と CLI 表示のみを担当。
+
+| モジュール | 責務 |
+|---|---|
+| `collector.py` | `record_game()` でゲーム結果を追記。`show_stats()` で集計結果を表示 |
+
+### データ形式（`state/stats/game_stats.json`）
+
+```json
+{
+  "games": [
+    {
+      "game_id": "2026-05-08T12:34:56",
+      "winner": "Villagers",
+      "players": [
+        {
+          "name": "Sora",
+          "role": "Seer",
+          "faction": "village_side",
+          "model": "claude-haiku-4-5-20251001",
+          "survived": true,
+          "days_survived": 3,
+          "won": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+- `game_id` は ISO 8601 形式（`datetime.now().isoformat(timespec="seconds")`）
+- `faction` は `actor.role.faction` をそのまま格納
+- `survived` は `actor.state.is_alive`、`won` は `actor.role.faction == winner_faction` で判定
+
+### collector.py — 関数
+
+```python
+STATS_PATH = Path("state/stats/game_stats.json")
+
+def record_game(agents: list[Actor], winner: str) -> None:
+    """Append one game record to STATS_PATH."""
+
+def show_stats() -> None:
+    """Display win-rate tables with Rich (4 views: character / role / faction / model)."""
+```
+
+`show_stats()` は以下の4テーブルを順番に出力する:
+
+| テーブル | グループキー | 表示列 |
+|---|---|---|
+| By Character | `name` | Games / Wins / Win Rate |
+| By Role | `role` | Games / Wins / Win Rate |
+| By Faction | `faction` | Games / Wins / Win Rate |
+| By Model | `model` | Games / Wins / Win Rate |
