@@ -1,6 +1,6 @@
 [
   {
-    "name": "Setsu",
+    "name": "Sora",
     "style": "logical, calm, empathic",
     "lie_tendency": 0.1,
     "aggression": 0.2,
@@ -9,8 +9,8 @@
     "speech_style": "polite"
   },
   {
-    "name": "SQ",
-    "style": "cheerful, intuitive, social",
+    "name": "Nana",
+    "style": "sarcastic, cynical, lovable",
     "lie_tendency": 0.2,
     "aggression": 0.3,
     "gender": "female",
@@ -18,7 +18,7 @@
     "speech_style": "tsundere"
   },
   {
-    "name": "Raqio",
+    "name": "Ren",
     "style": "cautious, quiet, observant",
     "lie_tendency": 0.15,
     "aggression": 0.15,
@@ -27,7 +27,7 @@
     "speech_style": "gentle"
   },
   {
-    "name": "Gina",
+    "name": "Mira",
     "style": "analytical, methodical, honest",
     "lie_tendency": 0.05,
     "aggression": 0.25,
@@ -36,7 +36,7 @@
     "speech_style": "casual"
   },
   {
-    "name": "Zephyr",
+    "name": "Vael",
     "style": "charming, manipulative, confident",
     "lie_tendency": 0.8,
     "aggression": 0.6,
@@ -45,22 +45,22 @@
     "speech_style": "polite"
   },
   {
-    "name": "Jonas",
+    "name": "Kai",
     "style": "calm, strategic, quietly perceptive",
-    "lie_tendency": 0.45,
+    "lie_tendency": 0.35,
     "aggression": 0.25,
     "gender": "male",
     "age": "adult",
-    "speech_style": "gentle"
+    "speech_style": "dry"
   },
   {
-    "name": "Methode",
+    "name": "Sera",
     "style": "elegant, calculating, merciless",
     "lie_tendency": 0.55,
     "aggression": 0.5,
     "gender": "female",
     "age": "adult",
-    "speech_style": "polite"
+    "speech_style": "cool"
   },
   {
     "name": "Kael",
@@ -79,5 +79,59 @@
     "gender": "female",
     "age": "teen",
     "speech_style": "gentle"
+  },
+  {
+    "name": "Shiki",
+    "style": "empathic, grounded, firm",
+    "lie_tendency": 0.1,
+    "aggression": 0.3,
+    "gender": "female",
+    "age": "adult",
+    "speech_style": "assertive"
+  },
+  {
+    "name": "Toma",
+    "style": "sociable, opportunistic, adaptable",
+    "lie_tendency": 0.4,
+    "aggression": 0.45,
+    "gender": "male",
+    "age": "adult",
+    "speech_style": "casual"
+  },
+  {
+    "name": "Rei",
+    "style": "reserved, sharp, calculating",
+    "lie_tendency": 0.65,
+    "aggression": 0.35,
+    "gender": "female",
+    "age": "adult",
+    "speech_style": "cool"
+  },
+  {
+    "name": "Haru",
+    "style": "easygoing, friendly, perceptive",
+    "lie_tendency": 0.3,
+    "aggression": 0.2,
+    "gender": "male",
+    "age": "teen",
+    "speech_style": "gentle"
+  },
+  {
+    "name": "Nox",
+    "style": "cynical, detached, intelligent",
+    "lie_tendency": 0.7,
+    "aggression": 0.55,
+    "gender": "male",
+    "age": "adult",
+    "speech_style": "dry"
+  },
+  {
+    "name": "Sable",
+    "style": "composed, diplomatic, ambiguous",
+    "lie_tendency": 0.5,
+    "aggression": 0.4,
+    "gender": "male",
+    "age": "adult",
+    "speech_style": "polite"
   }
 ]
