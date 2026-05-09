@@ -1,5 +1,8 @@
 {
   "5": ["Villager", "Villager", "Villager", "Seer", "Werewolf"],
   "7": ["Villager", "Villager", "Villager", "Seer", "Werewolf", "Werewolf", "Knight"],
-  "9": ["Villager", "Villager", "Villager", "Seer", "Medium", "Knight", "Werewolf", "Werewolf", "Madman"]
+  "9": ["Villager", "Villager", "Villager", "Seer", "Medium", "Knight", "Werewolf", "Werewolf", "Madman"],
+  "11": ["Villager", "Villager", "Villager", "Villager", "Seer", "Medium", "Knight", "Werewolf", "Werewolf", "Werewolf", "Madman"],
+  "13": ["Villager", "Villager", "Villager", "Villager", "Villager", "Villager", "Seer", "Medium", "Knight", "Werewolf", "Werewolf", "Werewolf", "Madman"],
+  "15": ["Villager", "Villager", "Villager", "Villager", "Villager", "Villager", "Villager", "Seer", "Medium", "Knight", "Werewolf", "Werewolf", "Werewolf", "Werewolf", "Madman"]
 }
