@@ -17,6 +17,13 @@ from src.legacy.role_normalizer import normalize_role_field
 _XML_TAG_RE = re.compile(r"<(\w[\w:-]*)[^>]*>.*?</\1>", re.DOTALL)
 
 
+def _parse_score_dict(value: object) -> dict[str, float] | None:
+    """Return value as dict[str, float] if valid, otherwise None."""
+    if not isinstance(value, dict):
+        return None
+    return {k: float(v) for k, v in value.items() if isinstance(k, str) and isinstance(v, (int, float))}
+
+
 def build_discussion_tools(co_eligible: bool) -> list[dict]:
     """Build the tool definitions list for a DISCUSSION call."""
     role_names_hint = "e.g. Seer, Villager, Knight, Werewolf"
@@ -145,8 +152,8 @@ def parse_discussion_tool_result(message: anthropic.types.Message, agent_name: s
                 thought=thought,
                 speech=speech,
                 memory_update=inp.get("memory_update", []),  # type: ignore[arg-type]
-                suspicion_scores=inp.get("suspicion_scores"),  # type: ignore[arg-type]
-                threat_scores=inp.get("threat_scores"),  # type: ignore[arg-type]
+                suspicion_scores=_parse_score_dict(inp.get("suspicion_scores")),
+                threat_scores=_parse_score_dict(inp.get("threat_scores")),
             )
         if name == "challenge":
             return ChallengeResult(
@@ -154,8 +161,8 @@ def parse_discussion_tool_result(message: anthropic.types.Message, agent_name: s
                 speech=speech,
                 reply_to=int(inp.get("reply_to", 0)),  # type: ignore[arg-type]
                 memory_update=inp.get("memory_update", []),  # type: ignore[arg-type]
-                suspicion_scores=inp.get("suspicion_scores"),  # type: ignore[arg-type]
-                threat_scores=inp.get("threat_scores"),  # type: ignore[arg-type]
+                suspicion_scores=_parse_score_dict(inp.get("suspicion_scores")),
+                threat_scores=_parse_score_dict(inp.get("threat_scores")),
             )
         if name == "co":
             raw_role = inp.get("claim_role")
@@ -166,16 +173,16 @@ def parse_discussion_tool_result(message: anthropic.types.Message, agent_name: s
                     thought=thought,
                     speech=speech,
                     memory_update=inp.get("memory_update", []),  # type: ignore[arg-type]
-                    suspicion_scores=inp.get("suspicion_scores"),  # type: ignore[arg-type]
-                    threat_scores=inp.get("threat_scores"),  # type: ignore[arg-type]
+                    suspicion_scores=_parse_score_dict(inp.get("suspicion_scores")),
+                    threat_scores=_parse_score_dict(inp.get("threat_scores")),
                 )
             return CoResult(
                 thought=thought,
                 speech=speech,
                 claim_role=claim_role,
                 memory_update=inp.get("memory_update", []),  # type: ignore[arg-type]
-                suspicion_scores=inp.get("suspicion_scores"),  # type: ignore[arg-type]
-                threat_scores=inp.get("threat_scores"),  # type: ignore[arg-type]
+                suspicion_scores=_parse_score_dict(inp.get("suspicion_scores")),
+                threat_scores=_parse_score_dict(inp.get("threat_scores")),
             )
 
     # No tool_use block found — fall back to silent
