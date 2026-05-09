@@ -3,7 +3,7 @@
 from unittest.mock import MagicMock
 
 from src.domain.schema import ChallengeResult, CoResult, SilentResult, SpeakResult
-from src.llm.discussion_tools import parse_discussion_tool_result
+from src.llm.discussion_tools import _parse_score_dict, parse_discussion_tool_result
 
 
 def _make_message(tool_name: str, tool_input: dict):
@@ -270,3 +270,103 @@ class TestParseXmlTagWarning:
         parse_discussion_tool_result(msg, "TestAgent")
         captured = capsys.readouterr()
         assert "XML tag" not in captured.err
+
+
+class TestParseScoreDict:
+    def test_valid_dict_returns_float_values(self):
+        """
+        SUT: _parse_score_dict
+        Mock: なし
+        Level: unit
+        Objective: 正常な dict[str, float] がそのまま返ること。
+        """
+        assert _parse_score_dict({"Alice": 0.8, "Bob": 0.3}) == {"Alice": 0.8, "Bob": 0.3}
+
+    def test_string_value_returns_none(self):
+        """
+        SUT: _parse_score_dict
+        Mock: なし
+        Level: unit
+        Objective: LLM が str を返した場合に None になること（AttributeError クラッシュを防ぐ）。
+        """
+        assert _parse_score_dict("Alice: 0.8") is None
+
+    def test_none_returns_none(self):
+        """
+        SUT: _parse_score_dict
+        Mock: なし
+        Level: unit
+        Objective: None 入力が None を返すこと。
+        """
+        assert _parse_score_dict(None) is None
+
+    def test_list_returns_none(self):
+        """
+        SUT: _parse_score_dict
+        Mock: なし
+        Level: unit
+        Objective: list 入力が None を返すこと。
+        """
+        assert _parse_score_dict(["Alice", 0.8]) is None
+
+    def test_non_string_keys_are_filtered(self):
+        """
+        SUT: _parse_score_dict
+        Mock: なし
+        Level: unit
+        Objective: キーが str でないエントリは除外されること。
+        """
+        assert _parse_score_dict({1: 0.5, "Bob": 0.3}) == {"Bob": 0.3}
+
+
+class TestSuspicionScoresDictValidation:
+    def test_speak_with_string_suspicion_scores_returns_speak_result_without_scores(self):
+        """
+        SUT: parse_discussion_tool_result
+        Mock: anthropic.types.Message (MagicMock) with speak tool; suspicion_scores is a string
+        Level: unit
+        Objective: LLM が suspicion_scores を str で返したとき AttributeError を起こさず
+                   suspicion_scores=None の SpeakResult を返すこと。
+        """
+        msg = _make_message("speak", {
+            "speech": "I suspect Alice.",
+            "thought": "...",
+            "suspicion_scores": "Alice: 0.8",
+        })
+        result = parse_discussion_tool_result(msg, "TestAgent")
+        assert isinstance(result, SpeakResult)
+        assert result.suspicion_scores is None
+
+    def test_challenge_with_string_suspicion_scores_returns_challenge_result_without_scores(self):
+        """
+        SUT: parse_discussion_tool_result
+        Mock: anthropic.types.Message (MagicMock) with challenge tool; suspicion_scores is a string
+        Level: unit
+        Objective: challenge ツールで suspicion_scores が str のとき suspicion_scores=None の
+                   ChallengeResult を返すこと。
+        """
+        msg = _make_message("challenge", {
+            "speech": "That doesn't add up.",
+            "thought": "...",
+            "reply_to": 2,
+            "suspicion_scores": "high",
+        })
+        result = parse_discussion_tool_result(msg, "TestAgent")
+        assert isinstance(result, ChallengeResult)
+        assert result.suspicion_scores is None
+
+    def test_speak_with_valid_dict_suspicion_scores_preserved(self):
+        """
+        SUT: parse_discussion_tool_result
+        Mock: anthropic.types.Message (MagicMock) with speak tool; suspicion_scores is a valid dict
+        Level: unit
+        Objective: suspicion_scores が正常な dict のときそのまま SpeakResult に保持されること。
+        """
+        msg = _make_message("speak", {
+            "speech": "I suspect Alice.",
+            "thought": "...",
+            "suspicion_scores": {"Alice": 0.8, "Bob": 0.2},
+        })
+        result = parse_discussion_tool_result(msg, "TestAgent")
+        assert isinstance(result, SpeakResult)
+        assert result.suspicion_scores == {"Alice": 0.8, "Bob": 0.2}
