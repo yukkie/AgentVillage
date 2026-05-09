@@ -61,14 +61,13 @@ def show_stats() -> None:
 
     _console.print(f"\n[bold]Game Statistics[/bold]  ({len(games)} games total)\n")
 
-    views = [
+    player_views = [
         ("By Character", "name"),
         ("By Role", "role"),
-        ("By Faction", "faction"),
         ("By Model", "model"),
     ]
 
-    for title, key in views:
+    for title, key in player_views:
         totals: dict[str, int] = defaultdict(int)
         wins: dict[str, int] = defaultdict(int)
 
@@ -93,3 +92,28 @@ def show_stats() -> None:
 
         _console.print(table)
         _console.print()
+
+    # By Faction: one record per game (village won / werewolf won)
+    faction_games: dict[str, int] = defaultdict(int)
+    faction_wins: dict[str, int] = defaultdict(int)
+    for game in games:
+        winner_faction = "village" if game["winner"] == "Villagers" else "werewolf"
+        for faction in ("village", "werewolf"):
+            faction_games[faction] += 1
+            if faction == winner_faction:
+                faction_wins[faction] += 1
+
+    faction_table = Table(title="By Faction", show_header=True, header_style="bold cyan")
+    faction_table.add_column("Faction", style="white")
+    faction_table.add_column("Games", justify="right")
+    faction_table.add_column("Wins", justify="right")
+    faction_table.add_column("Win Rate", justify="right")
+
+    for faction in sorted(faction_games):
+        g = faction_games[faction]
+        w = faction_wins[faction]
+        rate = f"{w / g * 100:.1f}%" if g > 0 else "—"
+        faction_table.add_row(faction, str(g), str(w), rate)
+
+    _console.print(faction_table)
+    _console.print()
