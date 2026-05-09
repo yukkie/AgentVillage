@@ -38,10 +38,10 @@ def initialize_agents(num_players: int) -> list[Actor]:
         sys.exit(1)
 
     roles = roles_config[key]
-    selected_configs = agent_configs[:num_players]
-    if len(selected_configs) < num_players:
+    if len(agent_configs) < num_players:
         print(f"Error: not enough agents in config/agents.json for {num_players} players (found {len(agent_configs)}).")
         sys.exit(1)
+    selected_configs = random.sample(agent_configs, num_players)
 
     shuffled_roles = roles[:]
     random.shuffle(shuffled_roles)
