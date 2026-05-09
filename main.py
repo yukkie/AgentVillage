@@ -5,7 +5,7 @@ Usage:
     uv run main.py                           # Public mode (English)
     uv run main.py --spectator               # Spectator mode
     uv run main.py --lang Japanese           # Japanese output
-    uv run main.py --players 7               # 7-player mode (default: 5)
+    uv run main.py --players 7               # 7-player mode (default: 5; also 9, 11, 13, 15)
     uv run main.py --spectator --lang Japanese --players 7
     uv run main.py --replay                  # Replay mode (public)
     uv run main.py --replay --spectator      # Replay mode (spectator)
@@ -47,7 +47,7 @@ def main() -> None:
         "--players",
         type=int,
         default=5,
-        help="Number of players (e.g. 5 or 7)",
+        help="Number of players (e.g. 5, 7, 9, 11, 13, or 15)",
     )
     parser.add_argument(
         "--replay",
