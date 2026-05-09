@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 # Game settings
-DISCUSSION_ROUNDS = 2
+DISCUSSION_ROUNDS = 3
 WOLF_CHAT_ROUNDS = 3
 
 # Environment
