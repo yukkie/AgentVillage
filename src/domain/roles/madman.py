@@ -7,6 +7,10 @@ class Madman(Role):
         return "Madman"
 
     @property
+    def plural(self) -> str:
+        return "Madmen"
+
+    @property
     def color(self) -> str:
         return "orange3"
 

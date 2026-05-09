@@ -15,6 +15,10 @@ class Werewolf(Role):
         return "Werewolf"
 
     @property
+    def plural(self) -> str:
+        return "Werewolves"
+
+    @property
     def color(self) -> str:
         return "red"
 
