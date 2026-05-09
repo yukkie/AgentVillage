@@ -21,6 +21,7 @@ from dotenv import load_dotenv
 from src.engine.setup import initialize_agents
 from src.engine.game import GameEngine
 from src.logger.writer import LogWriter, archive_state
+from src.stats.collector import record_game, show_stats
 from src.ui.cli import CLI
 
 
@@ -58,10 +59,19 @@ def main() -> None:
         action="store_true",
         help="Enable INFO logging (shows LLM usage stats per API call)",
     )
+    parser.add_argument(
+        "--stats",
+        action="store_true",
+        help="Show win-rate statistics and exit",
+    )
     args = parser.parse_args()
 
     if args.info:
         logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+    if args.stats:
+        show_stats()
+        return
 
     spectator_mode: bool = args.spectator
 
@@ -89,6 +99,8 @@ def main() -> None:
 
         winner = engine.run()
         cli.show_winner(winner)
+
+        record_game(agents, winner)
 
         archive_path = archive_state()
         if archive_path:

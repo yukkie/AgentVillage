@@ -24,13 +24,16 @@ AgentVillage/
 │   ├── action/                 # 構造化アクション処理
 │   ├── logger/                 # ログ保存・リプレイ
 │   ├── legacy/                 # Legacy-Adapter: 旧フォーマットの正規化のみ。adaptation以外のコード禁止
+│   ├── stats/                  # ゲーム統計の記録（state/stats/ への書き込み）・集計・表示
 │   └── ui/                     # UIレイヤー（CLI / 将来Web）
 ├── state/
 │   ├── world.json              # ゲーム全体の状態
 │   ├── public_log.jsonl        # 公開ログ
-│   └── agents/                 # エージェントごとの状態ファイル
-│       ├── setsu.json
-│       └── ...
+│   ├── agents/                 # エージェントごとの状態ファイル
+│   │   ├── setsu.json
+│   │   └── ...
+│   └── stats/
+│       └── game_stats.json     # ゲームごとの統計（累積）
 ├── tests/
 │   ├── conftest.py
 │   ├── unit/
@@ -191,7 +194,13 @@ Contract test: `tests/contract/test_day_phase_contract.py`, `tests/contract/test
 - 公開ログ（`public_log.jsonl`）と観戦者ログ（真実込み）を分けて保存
 - リプレイ機能の基盤
 
-### 3.7 UI / CLI（`src/ui/`）
+### 3.7 Stats（`src/stats/`）
+
+- ゲーム終了時に結果を `state/stats/game_stats.json` へ累積追記する
+- `--stats` フラグ指定時にキャラ別・役職別・陣営別・モデル別の勝率を Rich テーブルで表示する
+- LLM を呼ばない。IO のみ
+
+### 3.8 UI / CLI（`src/ui/`）
 
 - Richを使ったカラー表示
 - 表示内容の色分けは Spec.md §5 を参照

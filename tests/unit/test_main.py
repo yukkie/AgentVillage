@@ -14,11 +14,12 @@ def _run_main(argv: list[str]) -> None:
 
 
 @patch("main.archive_state", return_value="state_archive/game_20240101.json")
+@patch("main.record_game")
 @patch("main.LogWriter")
 @patch("main.CLI")
 @patch("main.GameEngine")
 @patch("main.initialize_agents")
-def test_main_prints_archive_path(mock_init, mock_engine_cls, mock_cli_cls, mock_writer_cls, mock_archive, capsys):
+def test_main_prints_archive_path(mock_init, mock_engine_cls, mock_cli_cls, mock_writer_cls, mock_record, mock_archive, capsys):
     """
     SUT: main.main
     Mock: archive_state が実パスを返す
@@ -38,11 +39,12 @@ def test_main_prints_archive_path(mock_init, mock_engine_cls, mock_cli_cls, mock
 
 
 @patch("main.archive_state", return_value=None)
+@patch("main.record_game")
 @patch("main.LogWriter")
 @patch("main.CLI")
 @patch("main.GameEngine")
 @patch("main.initialize_agents")
-def test_main_normal_game(mock_init, mock_engine_cls, mock_cli_cls, mock_writer_cls, mock_archive):
+def test_main_normal_game(mock_init, mock_engine_cls, mock_cli_cls, mock_writer_cls, mock_record, mock_archive):
     """デフォルト引数でゲームが1回実行されること。"""
     fake_agents = [MagicMock()]
     mock_init.return_value = fake_agents
