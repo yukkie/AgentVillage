@@ -17,6 +17,7 @@ from src.domain.actor import Actor, actor_from_dict, load_agent_catalog, make_ac
 from src.domain.event import EventType, LogEvent
 from src.logger.reader import load_events
 from src.ui.renderer import Renderer
+from src.ui.roster import build_roster_full, build_roster_summary
 
 ARCHIVE_DIR = Path("state_archive")
 
@@ -135,6 +136,16 @@ class ReplayPager:
 
         renderer = Renderer(list(dynamic_actors.values()), self._spectator)
         all_lines: list[str] = []
+
+        if self._spectator:
+            roster_header = "\nAgent Roster:"
+            all_lines.append(roster_header)
+            for name, role_name, style in build_roster_full(self._agents):
+                all_lines.append(f"  {name} — {role_name} ({style})")
+            all_lines.append("")
+        else:
+            all_lines.append(f"\n{build_roster_summary(self._agents)}\n")
+
         for event in events:
             # Use event.claimed_role (structured field) rather than parsing content text.
             if event.event_type == EventType.CO_ANNOUNCEMENT and event.agent and event.claimed_role:

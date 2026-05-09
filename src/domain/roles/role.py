@@ -27,6 +27,10 @@ class Role(ABC):
     def faction(self) -> str: ...
 
     @property
+    def plural(self) -> str:
+        return self.name + "s"
+
+    @property
     @abstractmethod
     def night_action(self) -> str | None: ...
 
