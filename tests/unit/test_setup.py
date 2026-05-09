@@ -51,6 +51,48 @@ def test_initialize_agents_invalid_player_count():
         initialize_agents(99)
 
 
+def test_initialize_agents_too_few_agents(monkeypatch):
+    """
+    SUT: initialize_agents()
+    Mock: monkeypatch で agents.json を1件だけ含む内容に差し替え
+    Level: unit
+    Objective: agents.json のエージェント数が num_players 未満のとき sys.exit(1) が呼ばれること
+    """
+    original_read = Path.read_text
+
+    def fake_read(self, **kwargs):
+        if self.name == "agents.json":
+            return json.dumps([{"name": "Solo", "model": "claude-haiku-4-5-20251001", "personality": "", "speaking_style": "", "background": ""}])
+        return original_read(self, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", fake_read)
+    with pytest.raises(SystemExit):
+        initialize_agents(5)
+
+
+def test_initialize_agents_uses_random_sample(monkeypatch):
+    """
+    SUT: initialize_agents()
+    Mock: random.sample をモニタリングして呼ばれたか確認
+    Level: unit
+    Objective: random.sample が agent_configs 全体と num_players を引数に呼ばれること
+    """
+    import random as _random
+    sampled_args = []
+    original_sample = _random.sample
+
+    def fake_sample(population, k):
+        sampled_args.append((list(population), k))
+        return original_sample(population, k)
+
+    monkeypatch.setattr(_random, "sample", fake_sample)
+
+    with patch("src.agent.store.save"):
+        initialize_agents(5)
+
+    assert any(k == 5 for _, k in sampled_args)
+
+
 def test_initialize_agents_corrupt_agents_json(monkeypatch):
     """
     SUT: initialize_agents()
