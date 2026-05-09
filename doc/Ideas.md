@@ -13,6 +13,7 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| yukkie/AgentVillage#290 | enhancement | ❌ | - | Show role composition summary at game start in public and replay modes | Public/Replayモード開始時に役職構成サマリー（人数のみ）を表示。Spectatorは変更なし |
 | yukkie/AgentVillage#288 | enhancement | ❌ | - | Add win-rate statistics tracking for balance tuning | キャラ・役職・陣営・LLMモデル別の勝率を集計・保存し、--stats で表示する |
 | yukkie/AgentVillage#248 | enhancement | 🔴 | - | Feat: pass wolf CO reasoning to discussion phase prompt | 夜の偽CO決定時の reasoning を翌日 DISCUSSION フェーズのプロンプトに含め、狼の発言一貫性を高める |
 | yukkie/AgentVillage#266 | tech-debt | 🟡 | - | Replace intended_co flag with a typed scheduled-event model | intended_co をフラグから timing 付きスケジュール済みイベント型に置き換え、ライフサイクルを型で表現する |
