@@ -48,9 +48,9 @@ class TestRoleProperties:
         [
             ("Villager", "white"),
             ("Werewolf", "red"),
-            ("Seer", "blue"),
+            ("Seer", "cyan"),
             ("Knight", "bright_green"),
-            ("Medium", "cyan"),
+            ("Medium", "magenta"),
             ("Madman", "orange3"),
         ],
     )

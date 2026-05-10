@@ -13,7 +13,7 @@ AgentVillage/
 │   └── ci.yml                  # Push/PR 時: ruff + pytest
 ├── config/
 │   ├── agents.json             # エージェント定義（name / persona / occupation）
-│   └── icons/                  # エージェントアイコン PNG（frontend で使用）
+│   └── roles.json              # 役職定義
 ├── design/
 │   └── proposal/               # UI デザインプロポーザル（hifi プロトタイプ JSX/CSS）
 ├── doc/
@@ -22,6 +22,8 @@ AgentVillage/
 │   ├── Ideas.md                # アイデア・未決事項
 │   └── Task.md                 # タスク管理
 ├── frontend/                   # Web UI（Vite + React + CSS Modules）
+│   ├── public/
+│   │   └── icons/              # エージェントアイコン PNG（旧 config/icons/）
 │   ├── src/
 │   │   ├── components/         # 共通コンポーネント（Avatar, RoleTag など）
 │   │   ├── screens/            # 画面コンポーネント（観戦・一覧・エージェント詳細）

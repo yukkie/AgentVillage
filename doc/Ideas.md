@@ -18,7 +18,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#308 | enhancement | 🔴 | 2 | Frontend scaffolding | Vite + React + CSS Modules、デザイントークン、Avatar/RoleTag |
 | yukkie/AgentVillage#309 | enhancement | 🔴 | 5 | Spectator feed screen | 観戦メイン画面（3ペイン + 発言カード）スタブデータ |
 | yukkie/AgentVillage#310 | enhancement | 🔴 | 3 | Game list screen | ゲーム一覧画面、スタブデータ |
 | yukkie/AgentVillage#311 | enhancement | 🔴 | 3 | Agent detail screen | エージェント詳細画面、collapsible panes |
@@ -31,6 +30,7 @@
 | yukkie/AgentVillage#318 | enhancement | 🟡 | 3 | Replay viewer | state_archive/ から過去ゲームを表示（Milestone 2 前半） |
 | yukkie/AgentVillage#319 | enhancement | 🟡 | 3 | LIVE spectator | state/ を tail して進行中ゲームを表示（Milestone 2 後半） |
 | yukkie/AgentVillage#314 | enhancement | 🟡 | 2 | spectator / public mode toggle | viewerMode prop による表示切替 |
+| yukkie/AgentVillage#321 | enhancement | 🟡 | 2 | Unify config data as shared JSON (SSOT) | config/*.json を Python/JS 共有にして constants.js のハードコードを廃止。Architecture.md に配置指針を追記 |
 
 ### ゲームロジック系（Web UI 軸とは別系統）
 
