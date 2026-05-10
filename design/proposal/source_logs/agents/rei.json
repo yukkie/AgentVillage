@@ -1,0 +1,70 @@
+{
+  "profile": {
+    "name": "Rei",
+    "model": "claude-haiku-4-5-20251001",
+    "persona": {
+      "style": "reserved, sharp, calculating",
+      "lie_tendency": 0.65,
+      "aggression": 0.35,
+      "gender": "female",
+      "age": "adult",
+      "speech_style": "cool"
+    }
+  },
+  "state": {
+    "beliefs": {
+      "Sora": {
+        "suspicion": 0.6,
+        "reason": []
+      },
+      "Nox": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Sera": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Kael": {
+        "suspicion": 0.65,
+        "reason": []
+      },
+      "Ren": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Sable": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Mira": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Toma": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Shiki": {
+        "suspicion": 0.6,
+        "reason": []
+      },
+      "Kai": {
+        "suspicion": 0.35,
+        "reason": []
+      }
+    },
+    "memory_summary": [
+      "Kael と Sora が初日に役職情報を引き出そうとしている - 狼の可能性が高い",
+      "Shiki も役職露出を促している - やや疑わしい",
+      "Kai は冷静で矛盾を指摘している -村人的で信頼できる",
+      "Sable は説得的だが、過度に計算的に見える - 観察継続",
+      "初日の情報収集パターンを記録することが重要"
+    ],
+    "is_alive": false,
+    "claimed_role": null,
+    "intended_co": null,
+    "threat_scores": {}
+  },
+  "role": "Villager"
+}

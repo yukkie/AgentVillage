@@ -1,0 +1,67 @@
+{
+  "profile": {
+    "name": "Kael",
+    "model": "claude-haiku-4-5-20251001",
+    "persona": {
+      "style": "hot-headed, impulsive, straightforward",
+      "lie_tendency": 0.25,
+      "aggression": 0.85,
+      "gender": "male",
+      "age": "teen",
+      "speech_style": "blunt"
+    }
+  },
+  "state": {
+    "beliefs": {
+      "Sora": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Nox": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Rei": {
+        "suspicion": 0.7,
+        "reason": []
+      },
+      "Sera": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Ren": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Sable": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Mira": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Toma": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Shiki": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Kai": {
+        "suspicion": 0.6,
+        "reason": []
+      }
+    },
+    "memory_summary": [
+      "Rei - 冷静さを装いながら他人を揚げ足取り。Kaiと連携して俺を疑わしく見せようとしてた。狼の可能性が高い。",
+      "Kai - Reiと似た観察パターン。俺とSoraを同時に指摘。連携の可能性あり。"
+    ],
+    "is_alive": false,
+    "claimed_role": null,
+    "intended_co": null,
+    "threat_scores": {}
+  },
+  "role": "Medium"
+}

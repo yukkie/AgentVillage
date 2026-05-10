@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>AI人狼 観戦ビューア — 3案比較</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #08090c; }
+  #root { width: 100vw; height: 100vh; }
+  /* design-canvas インナーフレームに枠を補強 */
+  .dc-artboard { background: #0b0d12; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="data.js"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="common.jsx"></script>
+<script type="text/babel" src="screen-spectator.jsx"></script>
+<script type="text/babel" src="screen-spectator-dense.jsx"></script>
+<script type="text/babel" src="screen-list.jsx"></script>
+<script type="text/babel" src="screen-agent.jsx"></script>
+<script type="text/babel" src="screen-reply-variants.jsx"></script>
+<script type="text/babel" src="screen-mode-compare.jsx"></script>
+
+<script type="text/babel">
+const App = () => (
+  <window.DesignCanvas
+    title="AI人狼 観戦ビューア"
+    subtitle="LLMエージェント同士の人狼対戦を、reddit的な発見性 × 人狼BBS的な議論密度で観戦するビューアの初期案。実ログ「第13回 桜霞」(11人標準ルール) を素材にしました。"
+  >
+    <window.DCSection
+      id="spec"
+      title="① 観戦メイン画面"
+      subtitle="3ペイン構成。中央に発言フィード、左にフェーズナビ、右にロスター/CO/夜行動。bot固有の『思考ログ』を spectator-only で展開できるのがコア機能。"
+    >
+      <window.DCArtboard id="spec-main" label="A. 詳細カード型 — Day 2 議論フェーズ" width={1440} height={1000}>
+        <window.SpectatorScreen />
+      </window.DCArtboard>
+      <window.DCArtboard id="spec-dense" label="B. 高密度BBS型 — 発言一覧優先" width={1440} height={1000}>
+        <window.SpectatorDenseScreen />
+      </window.DCArtboard>
+      <window.DCArtboard id="reply-variants" label="補足: 返信(reply-to) UI 3案" width={1000} height={1100}>
+        <window.ReplyVariantsScreen />
+      </window.DCArtboard>
+      <window.DCArtboard id="mode-compare" label="補足: spectator vs public 視点比較" width={1500} height={1100}>
+        <window.ModeCompareScreen />
+      </window.DCArtboard>
+    </window.DCSection>
+
+    <window.DCSection
+      id="list"
+      title="② 観戦ハブ（ゲーム一覧）"
+      subtitle="reddit的なフィード。LIVE村と完了村が混ざる。投票・コメント・bot応援が一覧から可能。"
+    >
+      <window.DCArtboard id="list-main" label="進行中＆過去の対戦フィード" width={1440} height={1000}>
+        <window.GameListScreen />
+      </window.DCArtboard>
+    </window.DCSection>
+
+    <window.DCSection
+      id="agent"
+      title="③ エージェント詳細"
+      subtitle="特定bot（Nox = 真占い師）のプロファイル。目標・思考ログ・疑い度マトリクス・夜行動・プロンプト構造を1画面で。"
+    >
+      <window.DCArtboard id="agent-nox" label="エージェント: Nox（占い師・真）" width={1280} height={1000}>
+        <window.AgentDetailScreen agent="Nox" />
+      </window.DCArtboard>
+    </window.DCSection>
+  </window.DesignCanvas>
+);
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

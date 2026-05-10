@@ -1,0 +1,82 @@
+{
+  "profile": {
+    "name": "Nox",
+    "model": "claude-haiku-4-5-20251001",
+    "persona": {
+      "style": "cynical, detached, intelligent",
+      "lie_tendency": 0.7,
+      "aggression": 0.55,
+      "gender": "male",
+      "age": "adult",
+      "speech_style": "dry"
+    }
+  },
+  "state": {
+    "beliefs": {
+      "Sora": {
+        "suspicion": 0.45,
+        "reason": []
+      },
+      "Rei": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Sera": {
+        "suspicion": 0.55,
+        "reason": []
+      },
+      "Kael": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Ren": {
+        "suspicion": 0.95,
+        "reason": []
+      },
+      "Sable": {
+        "suspicion": 0.35,
+        "reason": []
+      },
+      "Mira": {
+        "suspicion": 0.65,
+        "reason": []
+      },
+      "Toma": {
+        "suspicion": 0.4,
+        "reason": []
+      },
+      "Shiki": {
+        "suspicion": 0.7,
+        "reason": []
+      },
+      "Kai": {
+        "suspicion": 0.5,
+        "reason": []
+      }
+    },
+    "memory_summary": [
+      "Day 1: 全員が初期状態で0.5の疑惑レベル。Kael は目立つが、焦りか積極性か判断つかず。Kai は分析的で慎重。Sora、Toma とのパートナーシップを隠し続ける必要がある。発言パターン記録開始。",
+      "Ren claims Seer, directly accused Nox (me) of being werewolf. This is either real Seer or a dangerous false claim. Need to discredit Ren's claim publicly while defending my Knight claim. Ren is now highest threat.",
+      "Shiki's analysis mentioned Sora and Sable as suspicious - but also mentioned Nox to watch. Need to be careful of Shiki too.",
+      "Keep defending Knight claim and redirect suspicion toward Ren and other players.",
+      "Ren claims Seer, directly accused me of werewolf. Logic is broken - uses voting pattern as 'Seer evidence' when Seer assesses roles directly. Likely false Seer or wolf masquerading. Very high threat. Must discredit aggressively.",
+      "Knight defense: Explained why Rei death doesn't contradict Knight claim - Seer protection prioritized over others is strategically sound.",
+      "Shiki and Kai are skeptical of Ren's evidence too - potential allies in this phase.",
+      "Day 3: Ren is dead (executed Day 2). Sora now claims Seer publicly - this complicates things since Sora is my wolf partner. Cannot defend Sora too strongly or will be obvious. Need to maintain distance while keeping wolf team intact.",
+      "Mira questioned Knight ability - deflected by explaining strategic rationale for not revealing guard targets. This is defensible logic.",
+      "Sable appears analytical and logical - lower threat currently. Shiki is skeptical but probing both village and wolf claims. Keep eye on Shiki.",
+      "Toma (wolf partner) needs to provide credible Medium details to survive scrutiny. Pushing Toma to explain more about Rei to give him chance to solidify his cover.",
+      "Wolves are now 2/7 (Nox, Sora, Toma alive). Can eliminate one more villager and wolves win. Must avoid both Sora and Toma being voted out.",
+      "Key suspicion targets for wolves to vote: Shiki (dangerous analyst), Sera (analytical), possibly Sable (though currently trusted)",
+      "Mira は具体的情報要求で村を混乱させようとしている。Shiki も同じパターン。この二人は狼側の可能性が高い。",
+      "Tomaへの質問も厳しくなっている。Tomaを守る必要がある。",
+      "Miraとshikiの協調的な質問パターンは結託の可能性を示唆。",
+      "村側は情報秘匿とプレッシャーのバランスを取る必要があるが、完全公開を求める声が強まっている。"
+    ],
+    "is_alive": true,
+    "claimed_role": "Medium",
+    "intended_co": null,
+    "threat_scores": {}
+  },
+  "role": "Werewolf"
+}

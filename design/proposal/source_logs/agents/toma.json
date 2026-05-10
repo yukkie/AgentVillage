@@ -1,0 +1,93 @@
+{
+  "profile": {
+    "name": "Toma",
+    "model": "claude-haiku-4-5-20251001",
+    "persona": {
+      "style": "sociable, opportunistic, adaptable",
+      "lie_tendency": 0.4,
+      "aggression": 0.45,
+      "gender": "male",
+      "age": "adult",
+      "speech_style": "casual"
+    }
+  },
+  "state": {
+    "beliefs": {
+      "Sora": {
+        "suspicion": 0.45,
+        "reason": []
+      },
+      "Nox": {
+        "suspicion": 0.2,
+        "reason": []
+      },
+      "Rei": {
+        "suspicion": 0.45,
+        "reason": []
+      },
+      "Sera": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Kael": {
+        "suspicion": 0.6,
+        "reason": []
+      },
+      "Ren": {
+        "suspicion": 0.85,
+        "reason": []
+      },
+      "Sable": {
+        "suspicion": 0.6,
+        "reason": []
+      },
+      "Mira": {
+        "suspicion": 0.55,
+        "reason": []
+      },
+      "Shiki": {
+        "suspicion": 0.65,
+        "reason": []
+      },
+      "Kai": {
+        "suspicion": 0.5,
+        "reason": []
+      }
+    },
+    "memory_summary": [
+      "Day 1: Kaelが熱く、ちょっと強気な発言をしている。監視対象。",
+      "Day 1: Sora, Noxは落ち着いている。パートナー。",
+      "Day 1: 全員がまだ情報がない状態で、様子見ムード。初日は運任せになる傾向がある。",
+      "Kaelの焦った発言パターンが特に目立つ。複数回の役職露出促し。監視継続。",
+      "Reiは観察力が高く、詳細に発言分析してる。油断禁物。",
+      "Soraは落ち着いてて信頼を勝ち取ってる状態。パートナーとして自然に見える。",
+      "全員まだ役職露出なし。初日投票は運任せ傾向。",
+      "Day 2: Mediumで偽装CO。Reiの死を知ってるので信頼を得やすい",
+      "Day 2: Reiの発言パターンに疑いを出して、自分の信頼性を強化",
+      "Day 2: Soraとnoxへの疑いは低く保つ。狼仲間として協力体制を維持",
+      "Renは初日からNoxを狼扱い。詐称Seerの可能性が高い",
+      "Renの論理が曖昧で、具体的な査定内容を示していない",
+      "Renはパートナーを消そうとしている可能性",
+      "Renはセイヤー詐称の確度が高い。具体的な根拠を一切示さずにNoxを告発している。",
+      "Noxはパートナーの狼。Renの詐称を暴露することで、村人の信用を得つつ、Noxを守護する",
+      "Renが詐称Seerなら、Noxへの投票は避けられる可能性が高い。村人の判断を揺さぶる戦略を継続",
+      "Day 3開始。Renが処刑される。詐称Seerの排除成功",
+      "現在7人生存。村人側は役職配置が不透明。狼3人の絞り込みが最優先",
+      "Mediumの偽装COを継続。Renの詐称を指摘することで信用維持",
+      "Noxへの疑いは低く保つ。パートナーの狼。Soraも0.50で距離を保つ",
+      "Day 3: Mediumの曖昧さを逆手に取り、故人との通信は不完全という言い訳を使用",
+      "Day 3: Renの詐称Seer詐称を強調して、自分の信用を維持する戦略継続",
+      "Day 3: Shiki, Sableの追及に対して、Mediumの能力の限界を理由に回答を曖昧にする",
+      "Day 3: 複数役職者への強い追求が来ている。Shiki, Sable, Miraが詳細情報を強く求めている。",
+      "Day 3: Mediumの曖昧さを理由に、詳細情報の提供困難を強調する戦略を継続",
+      "Day 3: 役職者への厳しい追求自体が、狼の混乱戦術に見える可能性をほのめかす",
+      "Day 3: Noxのknight護衛戦略の正当性を主張して、パートナー保護を継続",
+      "Day 3: Soraのseer新規CO受け入れ姿勢を示して、パートナー保護"
+    ],
+    "is_alive": true,
+    "claimed_role": "Medium",
+    "intended_co": "Villager",
+    "threat_scores": {}
+  },
+  "role": "Werewolf"
+}

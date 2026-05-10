@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "name": "Shiki",
+    "model": "claude-haiku-4-5-20251001",
+    "persona": {
+      "style": "empathic, grounded, firm",
+      "lie_tendency": 0.1,
+      "aggression": 0.3,
+      "gender": "female",
+      "age": "adult",
+      "speech_style": "assertive"
+    }
+  },
+  "state": {
+    "beliefs": {
+      "Sora": {
+        "suspicion": 0.68,
+        "reason": []
+      },
+      "Nox": {
+        "suspicion": 0.32,
+        "reason": []
+      },
+      "Rei": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Sera": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Kael": {
+        "suspicion": 0.55,
+        "reason": []
+      },
+      "Ren": {
+        "suspicion": 1.0,
+        "reason": []
+      },
+      "Sable": {
+        "suspicion": 0.68,
+        "reason": []
+      },
+      "Mira": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Toma": {
+        "suspicion": 0.55,
+        "reason": []
+      },
+      "Kai": {
+        "suspicion": 0.5,
+        "reason": []
+      }
+    },
+    "memory_summary": [
+      "Day 1初日観察：Sableの発言が形式的で長い。初日段階での「質が勝敗を左右する」という強調が説得的に見える。注視が必要。",
+      "Kaelは積極的だが、焦りがあるのか自然なのか不明。継続観察。",
+      "他の参加者（Mira, Ren, Kai, Toma, Rei, Sera, Sora, Nox）はバランスの取れた発言をしている。",
+      "Kaelとソラの発言パターン：初日段階で役職露出を促している。狼の早期情報収集戦略の可能性あり。継続観察が必要。",
+      "Sableの発言：形式的で長く、説得的な効果を狙っているように見える。「質が勝敗を左右する」という強調も注目。",
+      "Kaiの視点が鋭い。他のプレイヤーに対する『詰め寄る動き』に注目する分析は有用。",
+      "初日の役職露出促し：Kael、Sora、Kaiが関連する発言をしている。どの動きが自然で、どれが戦略的か見極めが必要。",
+      "Day 2開始：KaelとReiが処刑・殺害された。これはReiが狼に脅威と見なされたことを示唆。",
+      "初日のパターン分析：KaelとSoraが役職露出促し→狼の早期情報収集戦略の可能性。",
+      "Sableの発言：形式的・長い・説得的→戦略的な狼の動きの可能性が高まった。",
+      "Day 2の重点：Soraとsableを詰め寄り、彼らの意図を明確にさせる。Noxもまだ不透明。",
+      "Day 2: Renが急いでNoxを人狼だと断定。根拠が曖昧で、投票パターンのみで判断していると主張。これはSeersの能力で得た情報ではなく、推測である可能性が高い。",
+      "Renの戦術：強く主張してNoxを吊ろうとしている。これは狼が村人を騙すための典型的な戦法。",
+      "NoxはKnightをCOしており、発言も落ち着いており論理的。RenがNoxを狙う理由が不透明。",
+      "重点：Renに対してSeerの能力根拠を厳しく追求すべき。",
+      "Day 2: Renが強くNoxを人狼だと主張しているが、根拠が投票パターン分析のみで、Seerの能力を使った具体的な情報ではない可能性が高い。",
+      "Renの発言パターン：強く主張し、具体的な根拠を避け、村人を焦らせようとしている。これは狼の典型的な詐称戦法。",
+      "NoxはKnightをCOしており、論理的で冷静な発言をしている。Renがこれほど強く狙うのは、Noxが実は村側の重要な情報者であるか、Renが狼で信頼できる村人を吊ろうとしているかのどちらか。",
+      "今日の焦点：Renがアウトラインしている。彼の根拠の欠落と強引な主張が狼の典型的な行動パターン。",
+      "Day 3開始：Renが処刑された。Renの昨日の発言（NoxをSeerの根拠なく強く主張）は狼の典型的な詐称戦法だった可能性が高い。",
+      "残りの狼は2匹。Soraとsableの疑いが0.60以上。",
+      "今日の焦点：TomaのMedium能力情報、NoxのKnight能力、SoraとsableへのCO意図の詰め寄り。",
+      "Day 3：複数の役職CO者が現れた。Nox(Knight)、Sora(Seer)、Toma(Medium)の3人。Renも昨日Seerを主張していたが処刑。",
+      "重要な質問を投げかけた：Tomaの具体的なMedium情報、Noxの具体的なKnight護衛先、Soraのタイミング理由。",
+      "現在の高疑い：Sora 0.60、Sable 0.62。詐称の可能性が高い。",
+      "Toma、Noxの回答次第で、信頼度を大きく変える必要あり。",
+      "Day 3中盤：複数の役職CO者がいるが、具体的な情報が欠落している状況。",
+      "Nox(Knight)：護衛先の具体的な説明がないままで、戦略的な説明のみ。信頼度は中程度。",
+      "Toma(Medium)：Reiとの通信で『村側確認』のみで、具体的な情報内容が曖昧。疑い深まる。",
+      "Sora(Seer)：Day 3での急なCOが不自然。Renの詐称指摘は理由になるか検証が必要。",
+      "Sable：投票パターン分析は論理的だが、背後の意図が不透明。高疑い状態継続。",
+      "Day 3焦点：役職COの具体的な情報開示が急務。曖昧さが残ると狼に利用される。"
+    ],
+    "is_alive": false,
+    "claimed_role": null,
+    "intended_co": null,
+    "threat_scores": {
+      "Sora": 0.7,
+      "Sable": 0.7,
+      "Toma": 0.6
+    }
+  },
+  "role": "Villager"
+}

@@ -1,0 +1,85 @@
+{
+  "profile": {
+    "name": "Mira",
+    "model": "claude-haiku-4-5-20251001",
+    "persona": {
+      "style": "analytical, methodical, honest",
+      "lie_tendency": 0.05,
+      "aggression": 0.25,
+      "gender": "female",
+      "age": "adult",
+      "speech_style": "casual"
+    }
+  },
+  "state": {
+    "beliefs": {
+      "Sora": {
+        "suspicion": 0.6,
+        "reason": []
+      },
+      "Nox": {
+        "suspicion": 0.85,
+        "reason": []
+      },
+      "Rei": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Sera": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Kael": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Ren": {
+        "suspicion": 0.35,
+        "reason": []
+      },
+      "Sable": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Toma": {
+        "suspicion": 0.7,
+        "reason": []
+      },
+      "Shiki": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Kai": {
+        "suspicion": 0.5,
+        "reason": []
+      }
+    },
+    "memory_summary": [
+      "Day 2: Renがセイヤーを名乗り、Noxが人狼だと主張。Noxがナイトを名乗り反論。",
+      "Noxの矛盾点：ナイトなら昨夜誰を守ったのか説明がない。",
+      "Tomaのミディウム情報が曖昧。Reiの『疑いの余地』が具体的でない。",
+      "Shikiの指摘：SoraとSableが初日に情報露出を促していた。",
+      "Seraの指摘：ナイトクレームは狼が使いやすい詐称。",
+      "Kaiの指摘：Renが初日にNox情報を持っていたなら、投票に反映されるべき。",
+      "初日投票：Kaelにほぼ全員投票、Reiは2票のみ。それでもReiが狼に殺された。",
+      "Day 3: 初日・2日目ともに集中投票パターンが見られる → 狼の結託の可能性",
+      "Noxのナイト主張：守った対象の説明がない → 大きな矛盾",
+      "ミディウムと主張するTomaの情報の質が重要な判断材料",
+      "残り7人での投票。狼3人が残存している可能性が高い",
+      "Day 3: Noxがナイト主張だが、具体的な護衛先を説明していない。これは大きな矛盾。",
+      "Day 3: Tomaのミディウム情報が曖昧。Reiについて『疑いの余地』という抽象的な表現のみ。",
+      "Day 3: Soraの初日投票はKai。他全員がKaelに投票する中での異質な投票。理由不明。",
+      "Day 3: Nox(0.75)とToma(0.65)の疑いが最も高い。",
+      "Day 3: 狼3人が残存している可能性が高い。",
+      "Day 3: Noxがナイト主張だが、護衛先の説明が曖昧。「攻撃的な役職優先」という一般的な方針のみで、具体的対象を明かさない",
+      "Day 3: Reiが初夜に殺されたのに対し、Noxのナイト主張との矛盾を指摘。Noxが本当にナイトなら、Reiを守る選択肢があったはず",
+      "Day 3: Noxの説明は防御的で、自分の矛盾には目を向けようとしていない。疑いが更に高まった",
+      "Day 3: Noxの疑い度：0.85に上昇。Tomaは引き続き0.70"
+    ],
+    "is_alive": true,
+    "claimed_role": null,
+    "intended_co": null,
+    "threat_scores": {}
+  },
+  "role": "Knight"
+}

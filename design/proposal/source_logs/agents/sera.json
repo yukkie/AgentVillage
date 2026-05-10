@@ -1,0 +1,100 @@
+{
+  "profile": {
+    "name": "Sera",
+    "model": "claude-haiku-4-5-20251001",
+    "persona": {
+      "style": "elegant, calculating, merciless",
+      "lie_tendency": 0.55,
+      "aggression": 0.5,
+      "gender": "female",
+      "age": "adult",
+      "speech_style": "cool"
+    }
+  },
+  "state": {
+    "beliefs": {
+      "Sora": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Nox": {
+        "suspicion": 0.62,
+        "reason": []
+      },
+      "Rei": {
+        "suspicion": 0.4,
+        "reason": []
+      },
+      "Kael": {
+        "suspicion": 0.45,
+        "reason": []
+      },
+      "Ren": {
+        "suspicion": 0.65,
+        "reason": []
+      },
+      "Sable": {
+        "suspicion": 0.48,
+        "reason": []
+      },
+      "Mira": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Toma": {
+        "suspicion": 0.68,
+        "reason": []
+      },
+      "Shiki": {
+        "suspicion": 0.38,
+        "reason": []
+      },
+      "Kai": {
+        "suspicion": 0.4,
+        "reason": []
+      }
+    },
+    "memory_summary": [
+      "Day 1: Kael と Sora は役職情報を促す傾向。狼かもしれない",
+      "Kai は発言パターン観察を重視。比較的理性的で村人的",
+      "Rei は批判的視点で Shiki と Kael に疑問を呈している。村人の可能性",
+      "Shiki は焦りなく、初日の情報不足を認識。冷静派",
+      "Sable は論理的でバランスの取れた発言。村人的だが、説得的すぎる可能性も",
+      "Day 2開始時: Kael が初日処刑、Rei が狼に殺害",
+      "Rei の死は村人側にとって大きな損失。Rei は批判的思考で村人的",
+      "現在 9 人生存。狼の優位が高まっている",
+      "複数の疑いを分散させて村人の団結を弱めるべき",
+      "Ren claims Seer, says Nox is werewolf — need to assess credibility",
+      "Nox claims Knight — possible wolf deception",
+      "Toma claims Medium, vague about Rei details",
+      "Strategy: spread suspicion, avoid quick consensus, protect werewolves by delaying action",
+      "Ren claims Seer, accuses Nox of being werewolf—but logic is weak, seems rushed",
+      "Nox claims Knight but can't explain Rei's death—both claims have holes",
+      "Toma claims Medium, vague about Rei—typical wolf stalling tactic?",
+      "Multiple role claims creating confusion—perfect for Madman strategy to spread suspicion",
+      "Key insight: Keep doubt alive on all three claimants, prevent quick consensus",
+      "Kai, Toma, Shiki, Sable all pushing for clarification—rational village players",
+      "Current board favors Werewolves if confusion persists—maintain it",
+      "Day 3開始：生存7人、狼3を含む。Madmanとして混乱戦略継続",
+      "複数の役職主張（Nox Knight、Toma Medium）の矛盾を指摘し、村人陣営内の不信を深める",
+      "Ren処刑により信頼できる批判的視点を失った村人側。Madmanの立場が強化",
+      "焦った処刑を避け、複数の疑いを同時に維持することが狼側の利益",
+      "Day 3: 複数の役職主張による混乱が継続。Sora、Nox、Toma の主張の矛盾を指摘して、村人側の不信を深めた。焦った処刑を避け、情報不足の理由付けで時間稼ぎ成功",
+      "Sora（Seer主張）：新規主張で信頼性未検証。Nox、Tomaよりは村人的に見える",
+      "Sable：論理的で説得力が強い。村人の団結を促す可能性が高い。要注意",
+      "Mira：投票パターン分析で理性的。村人的で危険な存在",
+      "Shiki：冷静で的確な質問。村人的で危険",
+      "Day 3：Tomaの『断片的な印象』という説明は疑わしい。Medium能力の矛盾を指摘して村人陣営の不信を深めた",
+      "Noxの『具体的な護衛先を明かさない』戦略に疑問を提示。Rei死亡との矛盾を指摘",
+      "Soraの新規Seer主張も複数Seer問題として矛盾を強調。村人陣営の判断保留を促進",
+      "現在7人生存、狼3人。混乱戦略が継続中。焦った処刑を避けさせることが狼有利",
+      "Shiki、Miraは理性的で危険。Sableも説得力が強い。要注意プレイヤー",
+      "Madman戦略：複数の矛盾を同時に指摘して『判断不可能』状態を維持"
+    ],
+    "is_alive": true,
+    "claimed_role": null,
+    "intended_co": null,
+    "threat_scores": {}
+  },
+  "role": "Madman"
+}

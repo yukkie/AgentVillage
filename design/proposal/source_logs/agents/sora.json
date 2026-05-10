@@ -1,0 +1,99 @@
+{
+  "profile": {
+    "name": "Sora",
+    "model": "claude-haiku-4-5-20251001",
+    "persona": {
+      "style": "logical, calm, empathic",
+      "lie_tendency": 0.1,
+      "aggression": 0.2,
+      "gender": "non-binary",
+      "age": "adult",
+      "speech_style": "polite"
+    }
+  },
+  "state": {
+    "beliefs": {
+      "Nox": {
+        "suspicion": 0.35,
+        "reason": []
+      },
+      "Rei": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Sera": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Kael": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Ren": {
+        "suspicion": 0.75,
+        "reason": []
+      },
+      "Sable": {
+        "suspicion": 0.6,
+        "reason": []
+      },
+      "Mira": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Toma": {
+        "suspicion": 0.2,
+        "reason": []
+      },
+      "Shiki": {
+        "suspicion": 0.55,
+        "reason": []
+      },
+      "Kai": {
+        "suspicion": 0.4,
+        "reason": []
+      }
+    },
+    "memory_summary": [
+      "Day 1: All players responding logically and calmly",
+      "Nox and Toma are werewolf partners (keep secret)",
+      "Kael shows high energy - monitor for possible village role",
+      "Sable uses formal, analytical approach",
+      "Current focus: gather information and build village-like credibility",
+      "Kai points out that Kael and I may be pushing for role claims too aggressively - this is a fair observation. I should adjust my approach to be less directive about role disclosure.",
+      "Kai's analytical approach shows careful observation of behavioral patterns. He is a potential threat if he gains momentum in village analysis.",
+      "Nox and Toma's positions on cautious play are well-established. I should align with their 'wait and observe' strategy to maintain team cohesion.",
+      "Day 2開始。Kael処刑、Rei殺害。村人側と人狼側の均衡を保つ必要がある。",
+      "論理的で落ち着いた態度でVillagerを装う。昨日のKai指摘への反応が重要。",
+      "NoxとTomaとの連携を密に保つが、決して露出させない。",
+      "Renが昨朝Noxを人狼と主張。Ren自身がSeerを名乗っている。Noxはこれに対してどう反応するか注視必要",
+      "Shikiが私とSableを疑い始めた。昨日の『役職露出を促す』発言が村人的だったと説明することで疑いを軽減した",
+      "Kai同様にShikiも昨日の発言パターンを分析しており、ロジカルな村人として評価される可能性がある。この二人は論理的な脅威",
+      "Villager装い成功開始。昨日の発言の『意図』を説明することで、狼らしくない見方を獲得",
+      "Ren claims Seer, accuses Nox of werewolf. Nox claims Knight and denies. Critical conflict situation.",
+      "Kai and Shiki both raised logical inconsistency: if Seer had Day 1 info, why didn't it affect Day 1 vote on Kael?",
+      "Toma (my wolf partner) claims Medium but is vague about Rei observation - this vagueness is being noticed",
+      "I positioned myself as logical villager questioning Ren's claim without defending Nox directly (less suspicious)",
+      "Shiki and Kai are analytical threats who notice behavioral patterns - maintain careful balance",
+      "Day 2 strategy working: appeared to answer Shiki's suspicions about role disclosure, now appearing to question false claims",
+      "Day 3: Executed fake-CO as Seer to build trust and control the narrative",
+      "Need to maintain consistency with Seer claims going forward",
+      "Ren's credibility is now under pressure - use this to deflect suspicion from Nox",
+      "Kai and Shiki remain analytical threats - monitor their responses carefully",
+      "Must be careful not to contradict any future 'revelations' I claim as fake Seer",
+      "Shiki is analytical threat - directly questioning my actions and Day 1 behavior",
+      "Defended Toma's vagueness as strategic silence - this protects wolf partner",
+      "Challenged Sable's reasoning about Day 1 voting pattern",
+      "Maintained Seer persona while defending team - must continue consistency",
+      "Day 3: Need to monitor who supported Ren's false accusations"
+    ],
+    "is_alive": true,
+    "claimed_role": "Seer",
+    "intended_co": null,
+    "threat_scores": {
+      "Shiki": 0.5,
+      "Kai": 0.55
+    }
+  },
+  "role": "Werewolf"
+}
