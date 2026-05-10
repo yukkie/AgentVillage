@@ -27,13 +27,13 @@ AgentVillage/
 │   ├── stats/                  # ゲーム統計の記録（state/stats/ への書き込み）・集計・表示
 │   └── ui/                     # UIレイヤー（CLI / 将来Web）
 ├── state/
-│   ├── world.json              # ゲーム全体の状態
-│   ├── public_log.jsonl        # 公開ログ
-│   ├── agents/                 # エージェントごとの状態ファイル
+│   ├── public_log.jsonl        # 公開ログ（ゲーム開始時にクリア、アーカイブ後も残留）
+│   ├── spectator_log.jsonl     # 観戦者ログ（ゲーム開始時にクリア、アーカイブ後も残留）
+│   ├── agents/                 # エージェントごとの状態ファイル（ゲーム開始時に削除、アーカイブ後も残留）
 │   │   ├── setsu.json
 │   │   └── ...
 │   └── stats/
-│       └── game_stats.json     # ゲームごとの統計（累積）
+│       └── game_stats.json     # ゲームごとの統計（累積・削除しない）
 ├── tests/
 │   ├── conftest.py
 │   ├── unit/
@@ -193,6 +193,9 @@ Contract test: `tests/contract/test_day_phase_contract.py`, `tests/contract/test
 
 - 公開ログ（`public_log.jsonl`）と観戦者ログ（真実込み）を分けて保存
 - リプレイ機能の基盤
+- `LogWriter.__init__` がゲーム開始時にログファイルのクリアと同時に `state/agents/*.json` も削除する。ログと agents の初期化責務を同一箇所に集約するため
+- `state/stats/game_stats.json` は削除しない（累積統計を維持）
+- `main.py` の呼び出し順: `LogWriter()` → `initialize_agents()` の順を守ること（先にクリアしてから新しい JSON を書く）
 
 ### 3.7 Stats（`src/stats/`）
 

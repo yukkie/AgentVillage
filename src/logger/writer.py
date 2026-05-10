@@ -3,7 +3,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from src.config import ARCHIVE_DIR, LOG_DIR, PUBLIC_LOG, SPECTATOR_LOG
+from src.config import ARCHIVE_DIR, LOG_DIR, PUBLIC_LOG, SPECTATOR_LOG, AGENTS_DIR
 from src.domain.event import LogEvent
 
 
@@ -24,9 +24,11 @@ def archive_state() -> Path | None:
 class LogWriter:
     def __init__(self) -> None:
         LOG_DIR.mkdir(parents=True, exist_ok=True)
-        # Clear logs at start of new game
+        AGENTS_DIR.mkdir(parents=True, exist_ok=True)
         PUBLIC_LOG.write_text("", encoding="utf-8")
         SPECTATOR_LOG.write_text("", encoding="utf-8")
+        for f in AGENTS_DIR.glob("*.json"):
+            f.unlink()
 
     def write(self, event: LogEvent) -> None:
         line = event.model_dump_json() + "\n"

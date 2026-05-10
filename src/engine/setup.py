@@ -4,14 +4,14 @@ import random
 import sys
 from pathlib import Path
 
-from src.config import STATE_DIR
+from src.config import AGENTS_DIR
 from src.domain.actor import Actor, ActorProfile, ActorState, Belief, Persona, make_actor
 from src.agent import store
 
 
 def initialize_agents(num_players: int) -> list[Actor]:
     """Create and persist initial agent states with randomized roles."""
-    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    AGENTS_DIR.mkdir(parents=True, exist_ok=True)
 
     try:
         agent_configs = json.loads(Path("config/agents.json").read_text(encoding="utf-8"))

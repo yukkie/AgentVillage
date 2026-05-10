@@ -1,23 +1,23 @@
 import json
 from pathlib import Path
 
-from src.config import STATE_DIR
+from src.config import AGENTS_DIR
 from src.domain.actor import Actor, actor_from_dict, actor_to_dict
 
 
 def _ensure_dir() -> None:
-    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    AGENTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def save(actor: Actor) -> None:
     _ensure_dir()
-    path = STATE_DIR / f"{actor.name.lower()}.json"
+    path = AGENTS_DIR / f"{actor.name.lower()}.json"
     data = actor_to_dict(actor)
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def load(name: str) -> Actor:
-    path = STATE_DIR / f"{name.lower()}.json"
+    path = AGENTS_DIR / f"{name.lower()}.json"
     if not path.exists():
         raise FileNotFoundError(f"Agent state file not found: {path}")
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -34,4 +34,4 @@ def load_all_from_dir(path: Path) -> list[Actor]:
 
 def load_all() -> list[Actor]:
     _ensure_dir()
-    return load_all_from_dir(STATE_DIR)
+    return load_all_from_dir(AGENTS_DIR)
