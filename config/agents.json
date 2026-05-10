@@ -6,7 +6,9 @@
     "aggression": 0.2,
     "gender": "non-binary",
     "age": "adult",
-    "speech_style": "polite"
+    "speech_style": "polite",
+    "occupation": "Mediator",
+    "occupation_ja": "仲裁人"
   },
   {
     "name": "Nana",
@@ -15,7 +17,9 @@
     "aggression": 0.3,
     "gender": "female",
     "age": "teen",
-    "speech_style": "tsundere"
+    "speech_style": "tsundere",
+    "occupation": "Trickster",
+    "occupation_ja": "道化者"
   },
   {
     "name": "Ren",
@@ -24,7 +28,9 @@
     "aggression": 0.15,
     "gender": "male",
     "age": "adult",
-    "speech_style": "gentle"
+    "speech_style": "gentle",
+    "occupation": "Watcher",
+    "occupation_ja": "見張り番"
   },
   {
     "name": "Mira",
@@ -33,7 +39,9 @@
     "aggression": 0.25,
     "gender": "female",
     "age": "adult",
-    "speech_style": "casual"
+    "speech_style": "casual",
+    "occupation": "Analyst",
+    "occupation_ja": "記録係"
   },
   {
     "name": "Vael",
@@ -42,7 +50,9 @@
     "aggression": 0.6,
     "gender": null,
     "age": null,
-    "speech_style": "polite"
+    "speech_style": "polite",
+    "occupation": "Deceiver",
+    "occupation_ja": "詐欺師"
   },
   {
     "name": "Kai",
@@ -51,7 +61,9 @@
     "aggression": 0.25,
     "gender": "male",
     "age": "adult",
-    "speech_style": "dry"
+    "speech_style": "dry",
+    "occupation": "Strategist",
+    "occupation_ja": "策士"
   },
   {
     "name": "Sera",
@@ -60,7 +72,9 @@
     "aggression": 0.5,
     "gender": "female",
     "age": "adult",
-    "speech_style": "cool"
+    "speech_style": "cool",
+    "occupation": "Executioner",
+    "occupation_ja": "処刑人"
   },
   {
     "name": "Kael",
@@ -69,7 +83,9 @@
     "aggression": 0.85,
     "gender": "male",
     "age": "teen",
-    "speech_style": "blunt"
+    "speech_style": "blunt",
+    "occupation": "Guardian",
+    "occupation_ja": "守衛"
   },
   {
     "name": "Lumi",
@@ -78,7 +94,9 @@
     "aggression": 0.05,
     "gender": "female",
     "age": "teen",
-    "speech_style": "gentle"
+    "speech_style": "gentle",
+    "occupation": "Florist",
+    "occupation_ja": "花屋"
   },
   {
     "name": "Shiki",
@@ -87,7 +105,9 @@
     "aggression": 0.3,
     "gender": "female",
     "age": "adult",
-    "speech_style": "assertive"
+    "speech_style": "assertive",
+    "occupation": "Priest",
+    "occupation_ja": "司祭"
   },
   {
     "name": "Toma",
@@ -96,7 +116,9 @@
     "aggression": 0.45,
     "gender": "male",
     "age": "adult",
-    "speech_style": "casual"
+    "speech_style": "casual",
+    "occupation": "Merchant",
+    "occupation_ja": "商人"
   },
   {
     "name": "Rei",
@@ -105,7 +127,9 @@
     "aggression": 0.35,
     "gender": "female",
     "age": "adult",
-    "speech_style": "cool"
+    "speech_style": "cool",
+    "occupation": "Spy",
+    "occupation_ja": "密偵"
   },
   {
     "name": "Haru",
@@ -114,7 +138,9 @@
     "aggression": 0.2,
     "gender": "male",
     "age": "teen",
-    "speech_style": "gentle"
+    "speech_style": "gentle",
+    "occupation": "Farmhand",
+    "occupation_ja": "農夫"
   },
   {
     "name": "Nox",
@@ -123,7 +149,9 @@
     "aggression": 0.55,
     "gender": "male",
     "age": "adult",
-    "speech_style": "dry"
+    "speech_style": "dry",
+    "occupation": "Undertaker",
+    "occupation_ja": "葬儀屋"
   },
   {
     "name": "Sable",
@@ -132,6 +160,8 @@
     "aggression": 0.4,
     "gender": "male",
     "age": "adult",
-    "speech_style": "polite"
+    "speech_style": "polite",
+    "occupation": "Diplomat",
+    "occupation_ja": "外交官"
   }
 ]
