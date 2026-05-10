@@ -44,7 +44,7 @@ AgentVillage/
 │   └── ui/                     # UIレイヤー（CLI / 将来Web）
 ├── state/
 │   ├── public_log.jsonl        # 公開ログ（ゲーム開始時にクリア、アーカイブ後も残留）
-│   ├── spectator_log.jsonl     # 観戦者ログ（ゲーム開始時にクリア、アーカイブ後も残留）
+│   ├── spectator_log.jsonl     # 観戦者ログ（公開＋非公開の全イベントを is_public フラグ付きで記録。Web UI はこちらのみ読む）
 │   ├── agents/                 # エージェントごとの状態ファイル（ゲーム開始時に削除、アーカイブ後も残留）
 │   │   ├── setsu.json
 │   │   └── ...
@@ -92,9 +92,11 @@ Python (src/)              ファイルシステム              JS (frontend/)
 GameEngine がゲームを進行
   ↓
 spectator.py がログを書き出す  →  state_archive/{session}/
-                                   public_log.jsonl     →  JS がファイルを読む
-                                   spectator_log.jsonl      （lib/parseGameData.js）
-                                   agents/*.json
+                                   spectator_log.jsonl  →  JS がファイルを読む
+                                   agents/*.json            （lib/parseGameData.js）
+                                                            is_public=false のイベントは
+                                                            public モードで非表示にする
+                                   public_log.jsonl     ※ Web UI は使用しない（CLI 専用）
 ```
 
 **この方針を採用する理由**:
