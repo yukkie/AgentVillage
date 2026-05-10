@@ -30,6 +30,7 @@
 | yukkie/AgentVillage#318 | enhancement | 🟡 | 3 | Replay viewer | state_archive/ から過去ゲームを表示（Milestone 2 前半） |
 | yukkie/AgentVillage#319 | enhancement | 🟡 | 3 | LIVE spectator | state/ を tail して進行中ゲームを表示（Milestone 2 後半） |
 | yukkie/AgentVillage#314 | enhancement | 🟡 | 2 | spectator / public mode toggle | viewerMode prop による表示切替 |
+| yukkie/AgentVillage#321 | enhancement | 🟡 | 2 | Unify config data as shared JSON (SSOT) | config/*.json を Python/JS 共有にして constants.js のハードコードを廃止。Architecture.md に配置指針を追記 |
 
 ### ゲームロジック系（Web UI 軸とは別系統）
 
