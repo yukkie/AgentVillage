@@ -11,12 +11,35 @@
 
 ## GitHub Issues（未実装タスク）
 
+並び順は Sprint Goal に沿って Milestone 1 → Milestone 2 → ゲームロジック系（Web UI 軸とは別系統） → 将来フェーズの順。
+同一区分内では優先度（🔴 → 🟡 → 🟢）で並べる。
+
+### Milestone 1（Mock 観戦）
+
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#305 | bug | 🔴 | - | fix: include claimed_role in wolf prompts to prevent role-flip CO | claimed_role がプロンプトに渡されず、狼が自分の偽CO済み役職を忘れて別役職にCOしてしまう |
-| yukkie/AgentVillage#248 | enhancement | 🔴 | - | Feat: pass wolf CO reasoning to discussion phase prompt | 夜の偽CO決定時の reasoning を翌日 DISCUSSION フェーズのプロンプトに含め、狼の発言一貫性を高める |
-| yukkie/AgentVillage#266 | tech-debt | 🟡 | - | Replace intended_co flag with a typed scheduled-event model | intended_co をフラグから timing 付きスケジュール済みイベント型に置き換え、ライフサイクルを型で表現する |
+| yukkie/AgentVillage#308 | enhancement | 🔴 | 2 | Frontend scaffolding | Vite + React + CSS Modules、デザイントークン、Avatar/RoleTag |
+| yukkie/AgentVillage#309 | enhancement | 🔴 | 5 | Spectator feed screen | 観戦メイン画面（3ペイン + 発言カード）スタブデータ |
+| yukkie/AgentVillage#310 | enhancement | 🔴 | 3 | Game list screen | ゲーム一覧画面、スタブデータ |
+| yukkie/AgentVillage#311 | enhancement | 🔴 | 3 | Agent detail screen | エージェント詳細画面、collapsible panes |
+| yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 1/2 横串） |
+
+### Milestone 2（実データ観戦）
+
+| # | 種別 | 優先度 | SP | タイトル | 内容 |
+|---|---|---|---|---|---|
+| yukkie/AgentVillage#318 | enhancement | 🟡 | 3 | Replay viewer | state_archive/ から過去ゲームを表示（Milestone 2 前半） |
+| yukkie/AgentVillage#319 | enhancement | 🟡 | 3 | LIVE spectator | state/ を tail して進行中ゲームを表示（Milestone 2 後半） |
+| yukkie/AgentVillage#314 | enhancement | 🟡 | 2 | spectator / public mode toggle | viewerMode prop による表示切替 |
+
+### ゲームロジック系（Web UI 軸とは別系統）
+
+| # | 種別 | 優先度 | SP | タイトル | 内容 |
+|---|---|---|---|---|---|
 | yukkie/AgentVillage#207 | tech-debt | 🔴 | 1 | Add 'Why' rationale to project-discipline.md for key development process decisions | 主要プロセス決定の Why を project-discipline.md に記載し SKILL.md から参照する |
+| yukkie/AgentVillage#305 | bug | 🔴 | 1 | fix: include claimed_role in wolf prompts to prevent role-flip CO | claimed_role がプロンプトに渡されず、狼が自分の偽CO済み役職を忘れて別役職にCOしてしまう |
+| yukkie/AgentVillage#248 | enhancement | 🟡 | 2 | Feat: pass wolf CO reasoning to discussion phase prompt | 夜の偽CO決定時の reasoning を翌日 DISCUSSION フェーズのプロンプトに含め、狼の発言一貫性を高める |
+| yukkie/AgentVillage#266 | tech-debt | 🟡 | 5 | Replace intended_co flag with a typed scheduled-event model | intended_co をフラグから timing 付きスケジュール済みイベント型に置き換え、ライフサイクルを型で表現する |
 | yukkie/AgentVillage#23 | enhancement | 🟡 | 3 | Auto-summarize memory_summary | 記憶が長くなったら LLM で自動要約 |
 | yukkie/AgentVillage#227 | enhancement | 🟡 | 2 | Add early exit for wolf night chat consensus | 全狼の最新攻撃候補が一致したら夜会話を早期終了し、未合意時は既存ラウンド継続を維持する |
 | yukkie/AgentVillage#26 | enhancement | 🟢 | 2 | Thought log display mode switching | 思考ログの表示モード切り替え |
@@ -26,14 +49,11 @@
 | yukkie/AgentVillage#25 | enhancement | 🟢 | 8 | Skill memory (cross-game learning) | ゲームをまたいで引き継がれる戦略記憶 |
 | yukkie/AgentVillage#28 | enhancement | 🟢 | 8 | Human player participation mode | 人間がエージェントとして参加 |
 | yukkie/AgentVillage#29 | enhancement | 🟢 | 8 | Persona community sharing | キャラテンプレートの共有 |
-| yukkie/AgentVillage#308 | enhancement | 🔴 | 2 | Frontend scaffolding | Vite + React + CSS Modules、デザイントークン、Avatar/RoleTag |
-| yukkie/AgentVillage#309 | enhancement | 🔴 | 5 | Spectator feed screen | 観戦メイン画面（3ペイン + 発言カード）スタブデータ |
-| yukkie/AgentVillage#310 | enhancement | 🔴 | 3 | Game list screen | ゲーム一覧画面、スタブデータ |
-| yukkie/AgentVillage#311 | enhancement | 🔴 | 3 | Agent detail screen | エージェント詳細画面、collapsible panes |
-| yukkie/AgentVillage#312 | enhancement | 🟡 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 1/2 横串） |
-| yukkie/AgentVillage#318 | enhancement | 🟡 | 3 | Replay viewer | state_archive/ から過去ゲームを表示（Milestone 2 前半） |
-| yukkie/AgentVillage#319 | enhancement | 🟡 | 3 | LIVE spectator | state/ を tail して進行中ゲームを表示（Milestone 2 後半） |
-| yukkie/AgentVillage#314 | enhancement | 🟡 | 2 | spectator / public mode toggle | viewerMode prop による表示切替 |
+
+### 将来フェーズ
+
+| # | 種別 | 優先度 | SP | タイトル | 内容 |
+|---|---|---|---|---|---|
 | yukkie/AgentVillage#315 | enhancement | 🟢 | 8 | FastAPI + WebSocket backend | リアルタイムストリーミング（Milestone 2 完了後） |
 | yukkie/AgentVillage#316 | enhancement | 🟢 | 13 | Mobile app (React Native) | iOS/Android 対応（#315 完了後） |
 | yukkie/AgentVillage#30 | enhancement | 🟢 | 13 | State management DB migration | JSON → DB 移行 |
