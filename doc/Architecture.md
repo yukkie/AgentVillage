@@ -11,11 +11,25 @@
 AgentVillage/
 ├── .github/workflows/
 │   └── ci.yml                  # Push/PR 時: ruff + pytest
+├── config/
+│   ├── agents.json             # エージェント定義（name / persona / occupation）
+│   └── icons/                  # エージェントアイコン PNG（frontend で使用）
+├── design/
+│   └── proposal/               # UI デザインプロポーザル（hifi プロトタイプ JSX/CSS）
 ├── doc/
 │   ├── Architecture.md         # 本ドキュメント
 │   ├── Spec.md                 # 仕様書
 │   ├── Ideas.md                # アイデア・未決事項
 │   └── Task.md                 # タスク管理
+├── frontend/                   # Web UI（Vite + React + CSS Modules）
+│   ├── src/
+│   │   ├── components/         # 共通コンポーネント（Avatar, RoleTag など）
+│   │   ├── screens/            # 画面コンポーネント（観戦・一覧・エージェント詳細）
+│   │   ├── lib/                # ユーティリティ（JSONL パーサーなど）
+│   │   └── tokens.css          # デザイントークン（CSS Variables）
+│   ├── index.html
+│   ├── vite.config.js
+│   └── package.json
 ├── src/
 │   ├── domain/                 # Pydanticドメインモデル定義（ゲーム仕様依存の型）+ Role クラス群
 │   ├── engine/                 # ゲームエンジン（決定論的）
@@ -64,6 +78,31 @@ AgentVillage/
 CLI   →  src/ui/cli.py   ┐
 Web   →  src/ui/api.py   ├─  src/engine/ / src/agent/ には依存しない
 ```
+
+### 2.3（追記）フロントエンドと Python の連携方式
+
+`frontend/`（JS）と `src/`（Python）は **ファイルシステム経由の JSON のみで連携する**。
+直接の関数呼び出し・プロセス間通信は行わない。
+
+```
+Python (src/)              ファイルシステム              JS (frontend/)
+─────────────              ───────────────              ──────────────
+GameEngine がゲームを進行
+  ↓
+spectator.py がログを書き出す  →  state_archive/{session}/
+                                   public_log.jsonl     →  JS がファイルを読む
+                                   spectator_log.jsonl      （lib/parseGameData.js）
+                                   agents/*.json
+```
+
+**この方針を採用する理由**:
+- Python 側は既存の CLI 動作を一切変えずに済む（CLI を壊さない）
+- JS 側はファイルを読むだけなので Python への依存ゼロ
+- 将来 FastAPI（#315）に移行する際も、JS 側の fetch 先を変えるだけで済む
+
+**将来の FastAPI 化**（#315 実装時）:
+`src/ui/api.py` を追加して WebSocket でイベントをリアルタイム配信する。
+`src/ui/cli.py` / `src/ui/renderer.py` には触れない。
 
 ### 2.3 LLM出力は構造化して受け取る
 

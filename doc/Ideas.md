@@ -25,7 +25,15 @@
 | yukkie/AgentVillage#25 | enhancement | 🟢 | 8 | Skill memory (cross-game learning) | ゲームをまたいで引き継がれる戦略記憶 |
 | yukkie/AgentVillage#28 | enhancement | 🟢 | 8 | Human player participation mode | 人間がエージェントとして参加 |
 | yukkie/AgentVillage#29 | enhancement | 🟢 | 8 | Persona community sharing | キャラテンプレートの共有 |
-| yukkie/AgentVillage#27 | enhancement | 🟢 | 13 | Web / mobile app | FastAPI + WebSocket + React |
+| yukkie/AgentVillage#308 | enhancement | 🔴 | 2 | Frontend scaffolding | Vite + React + CSS Modules、デザイントークン、Avatar/RoleTag |
+| yukkie/AgentVillage#309 | enhancement | 🔴 | 5 | Spectator feed screen | 観戦メイン画面（3ペイン + 発言カード）スタブデータ |
+| yukkie/AgentVillage#310 | enhancement | 🔴 | 3 | Game list screen | ゲーム一覧画面、スタブデータ |
+| yukkie/AgentVillage#311 | enhancement | 🔴 | 3 | Agent detail screen | エージェント詳細画面、collapsible panes |
+| yukkie/AgentVillage#312 | enhancement | 🟡 | 3 | GameData gap analysis | 足りないデータの洗い出し・spectator_log 拡張 |
+| yukkie/AgentVillage#313 | enhancement | 🟡 | 3 | JSONL to GameData parser | 実ログ接続・ポーリング更新 |
+| yukkie/AgentVillage#314 | enhancement | 🟡 | 2 | spectator / public mode toggle | viewerMode prop による表示切替 |
+| yukkie/AgentVillage#315 | enhancement | 🟢 | 8 | FastAPI + WebSocket backend | リアルタイムストリーミング（Milestone 2 完了後） |
+| yukkie/AgentVillage#316 | enhancement | 🟢 | 13 | Mobile app (React Native) | iOS/Android 対応（#315 完了後） |
 | yukkie/AgentVillage#30 | enhancement | 🟢 | 13 | State management DB migration | JSON → DB 移行 |
 
 ---
