@@ -1,0 +1,78 @@
+{
+  "profile": {
+    "name": "Kai",
+    "model": "claude-haiku-4-5-20251001",
+    "persona": {
+      "style": "calm, strategic, quietly perceptive",
+      "lie_tendency": 0.35,
+      "aggression": 0.25,
+      "gender": "male",
+      "age": "adult",
+      "speech_style": "dry"
+    }
+  },
+  "state": {
+    "beliefs": {
+      "Sora": {
+        "suspicion": 0.48,
+        "reason": []
+      },
+      "Nox": {
+        "suspicion": 0.55,
+        "reason": []
+      },
+      "Rei": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Sera": {
+        "suspicion": 0.45,
+        "reason": []
+      },
+      "Kael": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Ren": {
+        "suspicion": 0.7,
+        "reason": []
+      },
+      "Sable": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Mira": {
+        "suspicion": 0.42,
+        "reason": []
+      },
+      "Toma": {
+        "suspicion": 0.6,
+        "reason": []
+      },
+      "Shiki": {
+        "suspicion": 0.48,
+        "reason": []
+      }
+    },
+    "memory_summary": [
+      "Kael と Sora が初日から他者に情報や役職露出を促している —— 狼の情報集めか、単なる積極性かは未判定",
+      "Shiki が役職露出を求めているが、初日のプレッシャーは注視対象",
+      "Sable の発言は形式的で説得的に見える —— パターン記録待ち",
+      "初日は運任せだが、発言パターンと温度感の記録が今後の推理に役立つ",
+      "Day 2開始時点：全員に対して均等な疑い状態。発言パターンと矛盾の有無を重点観察対象とする。",
+      "Renが初日から Nox を人狼と言っているが、昨日の投票では Nox に投票されていない —— Seer の真偽、初日の情報タイミングに矛盾の可能性",
+      "Toma（Medium主張）が Rei を疑うが詳細を明かさない —— 情報小出し戦術か、慎重さか未判定",
+      "Nox が Knight 主張するもRen の直接指摘に対する明確な反論が不十分",
+      "現在の状況：役職クレーム複数、発言内容と初日投票の矛盾に注視",
+      "Renが初日の情報を持っていたはずなら、昨日の投票行動に反映されるべきだった —— 反映なし。Seer真性が疑わしい",
+      "Tomaも情報隠蔽傾向。Mediumの詳細が曖昧。両者とも狼の可能性が高まる",
+      "Noxは現段階では受動的に防戦中。吊り候補としては慎重に判断すべき",
+      "Day 2の焦った投票を誘導しようとしている集団の存在に注視。Ren-Tomaの連携の可能性"
+    ],
+    "is_alive": false,
+    "claimed_role": null,
+    "intended_co": null,
+    "threat_scores": {}
+  },
+  "role": "Villager"
+}

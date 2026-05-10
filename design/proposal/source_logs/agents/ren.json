@@ -1,0 +1,84 @@
+{
+  "profile": {
+    "name": "Ren",
+    "model": "claude-haiku-4-5-20251001",
+    "persona": {
+      "style": "cautious, quiet, observant",
+      "lie_tendency": 0.15,
+      "aggression": 0.15,
+      "gender": "male",
+      "age": "adult",
+      "speech_style": "gentle"
+    }
+  },
+  "state": {
+    "beliefs": {
+      "Sora": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Nox": {
+        "suspicion": 1.0,
+        "reason": [
+          "Day 1: inspected as Werewolf"
+        ]
+      },
+      "Rei": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Sera": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Kael": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Sable": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Mira": {
+        "suspicion": 0.5,
+        "reason": []
+      },
+      "Toma": {
+        "suspicion": 0.25,
+        "reason": []
+      },
+      "Shiki": {
+        "suspicion": 0.25,
+        "reason": []
+      },
+      "Kai": {
+        "suspicion": 0.35,
+        "reason": []
+      }
+    },
+    "memory_summary": [
+      "初日、全員が慎重で理性的な姿勢を示している",
+      "Kaelが早期に役職露出を促している傾向",
+      "Soraも同様に情報提供を促している",
+      "Kaiがこうした動きに警戒心を示した",
+      "Shikiが『極めて正直』と述べ、Sableの発言を疑問視",
+      "発言パターンと『温度感』を記録することが重要",
+      "Day 2: Noxを人狼として開示。Seer CO実行。",
+      "初日Noxの発言パターンと査定結果が一致。確実な黒情報。",
+      "今後の焦点はNoxへの投票集約。",
+      "Day 2: Noxへの投票集約が重要。Noxが人狼であることを確実に示す必要がある",
+      "Noxのknight CO は矛盾している。Reiが殺されたのに守護できていない",
+      "Tomaはmedium COしており、Reiについて情報を持っている。彼は信頼できる可能性がある",
+      "Shikiはsableに疑いを示しているが、現在はNoxへの焦点を保つべき",
+      "Day 2: Noxへの複数の質問に対応。Knightの守護能力の矛盾を強調。",
+      "Toma、Kai、Shikiの質問は理性的で村人的。彼らは信頼できる可能性。",
+      "Noxの反論は私のSeer能力を否定しようとしている——警戒が必要。",
+      "Noxへの投票を促し続けることが重要。村の勝利のため。"
+    ],
+    "is_alive": false,
+    "claimed_role": "Seer",
+    "intended_co": null,
+    "threat_scores": {}
+  },
+  "role": "Seer"
+}
