@@ -29,8 +29,9 @@
 | yukkie/AgentVillage#309 | enhancement | 🔴 | 5 | Spectator feed screen | 観戦メイン画面（3ペイン + 発言カード）スタブデータ |
 | yukkie/AgentVillage#310 | enhancement | 🔴 | 3 | Game list screen | ゲーム一覧画面、スタブデータ |
 | yukkie/AgentVillage#311 | enhancement | 🔴 | 3 | Agent detail screen | エージェント詳細画面、collapsible panes |
-| yukkie/AgentVillage#312 | enhancement | 🟡 | 3 | GameData gap analysis | 足りないデータの洗い出し・spectator_log 拡張 |
-| yukkie/AgentVillage#313 | enhancement | 🟡 | 3 | JSONL to GameData parser | 実ログ接続・ポーリング更新 |
+| yukkie/AgentVillage#312 | enhancement | 🟡 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 1/2 横串） |
+| yukkie/AgentVillage#318 | enhancement | 🟡 | 3 | Replay viewer | state_archive/ から過去ゲームを表示（Milestone 2 前半） |
+| yukkie/AgentVillage#319 | enhancement | 🟡 | 3 | LIVE spectator | state/ を tail して進行中ゲームを表示（Milestone 2 後半） |
 | yukkie/AgentVillage#314 | enhancement | 🟡 | 2 | spectator / public mode toggle | viewerMode prop による表示切替 |
 | yukkie/AgentVillage#315 | enhancement | 🟢 | 8 | FastAPI + WebSocket backend | リアルタイムストリーミング（Milestone 2 完了後） |
 | yukkie/AgentVillage#316 | enhancement | 🟢 | 13 | Mobile app (React Native) | iOS/Android 対応（#315 完了後） |

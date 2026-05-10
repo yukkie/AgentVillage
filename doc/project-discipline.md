@@ -12,7 +12,16 @@
 | #311 | エージェント詳細画面（collapsible panes） |
 
 ### Milestone 2（次 Sprint）
-`python main.py` のログを実際にブラウザで観戦できる状態。構成 Issue: #312 / #313 / #314
+`python main.py` のログを実際にブラウザで観戦できる状態。
+
+| Issue | 内容 |
+|---|---|
+| #312 | GameData レジストリ（Milestone 1 から継続、本マイルストーン着手前にレジストリ全体の対応方針確定） |
+| #318 | Replay viewer（state_archive/ から過去ゲームを表示） |
+| #319 | LIVE spectator（state/ を tail して進行中ゲームをリアルタイム表示） |
+| #314 | spectator / public モード切替 |
+
+#318 を先に完成させて「過去ゲーム観戦」を達成し、#319 で LIVE 化する段階アプローチ。
 
 ### 将来フェーズ
 - #315: FastAPI + WebSocket バックエンド
