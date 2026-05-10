@@ -362,6 +362,69 @@ LLMの提案をゲームエンジンに渡す橋渡し役。
 | `renderer.py` | `Renderer` クラス（`on_event()`）でイベントを Rich `Text` に変換。将来的に EventPresenter（中立の `DisplayEvent`）→ `ConsoleRenderer` / `WebRenderer` へ分割する前提のシーム |
 | `replay.py` | アーカイブ選択UI + ページャー。LLMを一切呼ばずにJSONLログを再生する |
 
+---
+
+## frontend/ — Web UI（Vite + React + CSS Modules）
+
+Python 側（`src/`）には一切依存しない。`state_archive/` の JSONL ファイルを JS 側で読み込んで描画する。
+
+### 技術スタック
+
+| 項目 | 採用技術 | 理由 |
+|---|---|---|
+| ビルドツール | Vite | 高速 HMR、設定が軽量 |
+| UI ライブラリ | React | プロトタイプが JSX で書かれており移植コストが低い |
+| スタイリング | CSS Modules | `design/proposal/prototypes/styles.css` の CSS Variables をそのまま流用できる |
+| 将来移行先 | Next.js | React 資産を保持したまま SSR / API Routes を追加できる |
+
+### ディレクトリ構成
+
+```text
+frontend/
+├── src/
+│   ├── components/         # 共通コンポーネント
+│   │   ├── Avatar.jsx      # config/icons/ の PNG を表示。モノグラムフォールバックあり
+│   │   ├── RoleTag.jsx     # 役職名 + 役職カラー（--r-* トークン）
+│   │   └── Icon.jsx        # 吹き出し / 鍵 / チェブロン SVG
+│   ├── screens/            # 画面コンポーネント
+│   │   ├── SpectatorScreen.jsx   # 観戦メイン画面（3ペイン）
+│   │   ├── GameListScreen.jsx    # ゲーム一覧
+│   │   └── AgentScreen.jsx       # エージェント詳細
+│   ├── lib/
+│   │   └── parseGameData.js      # JSONL → GameData 型パーサー（#313）
+│   └── tokens.css          # デザイントークン（design/proposal/prototypes/styles.css の :root を移植）
+├── index.html
+├── vite.config.js
+└── package.json
+```
+
+### GameData 型（JS 側のデータ契約）
+
+`design/proposal/README.md §Source Data` で定義されたシェイプに準拠する。
+
+```js
+// GameData = { events: PublicEvent[], agents: Record<AgentName, AgentProfile> }
+// PublicEvent の主要フィールド:
+//   id, day, phase, event_type, agent, target, content,
+//   is_public, speech_id, reply_to, claimed_role, inspection_role,
+//   reasoning, decision, thought (spectator のみ)
+```
+
+Python 側の `LogEvent`（`src/domain/event.py`）と 1:1 対応する。
+フィールドの追加・変更は両側を同時に更新すること。
+
+### viewerMode — spectator / public
+
+`viewerMode: 'spectator' | 'public'` prop を各コンポーネントに伝播する。
+
+| 要素 | spectator | public |
+|---|---|---|
+| 役職タグ | 真の役職を常時表示 | 未CO は「役職不明」 |
+| 偽CO バッジ | 赤＋「偽」マーク | 中立色 |
+| 思考ログピル | 展開可 | ロックバッジ（存在のみ示す） |
+
+`spectator_log.jsonl`（`thought` フィールドあり）と `public_log.jsonl`（`thought` なし）を切り替えることで対応する。
+
 ### replay.py — クラス構成
 
 #### `run_replay(spectator_mode: bool, archive_path: Path | None = None)`

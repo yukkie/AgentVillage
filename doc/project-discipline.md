@@ -1,7 +1,31 @@
 # Project Discipline
 
 ## Sprint Goal
-ゴール: AIのみ15人制での人狼ゲームの実現（実装漏れ機能の優先実装）
+ゴール: Web UI Milestone 1 達成（ブラウザで `localhost:5173` を開くと `design/proposal` と同じ画面がスタブデータで動く状態）
+
+### Milestone 1 の構成 Issue
+| Issue | 内容 |
+|---|---|
+| #308 | Frontend scaffolding（Vite + React + CSS Modules + デザイントークン + 共通プリミティブ） |
+| #309 | 観戦メイン画面（3ペイン + 発言カード + 投票内訳 + ロスター） |
+| #310 | ゲーム一覧画面 |
+| #311 | エージェント詳細画面（collapsible panes） |
+
+### Milestone 2（次 Sprint）
+`python main.py` のログを実際にブラウザで観戦できる状態。
+
+| Issue | 内容 |
+|---|---|
+| #312 | GameData レジストリ（Milestone 1 から継続、本マイルストーン着手前にレジストリ全体の対応方針確定） |
+| #318 | Replay viewer（state_archive/ から過去ゲームを表示） |
+| #319 | LIVE spectator（state/ を tail して進行中ゲームをリアルタイム表示） |
+| #314 | spectator / public モード切替 |
+
+#318 を先に完成させて「過去ゲーム観戦」を達成し、#319 で LIVE 化する段階アプローチ。
+
+### 将来フェーズ
+- #315: FastAPI + WebSocket バックエンド
+- #316: モバイルアプリ（React Native）
 
 ## 優先度の価値観
 
