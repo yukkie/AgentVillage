@@ -41,17 +41,17 @@ def test_load_all_from_dir_empty(tmp_path: Path) -> None:
 def test_load_missing_file_raises(tmp_path: Path, monkeypatch) -> None:
     """
     SUT: load()
-    Mock: monkeypatch で STATE_DIR を tmp_path に差し替え
+    Mock: monkeypatch で AGENTS_DIR を tmp_path に差し替え
     Level: unit
     Objective: 存在しないエージェントファイルを load() したとき FileNotFoundError が送出されること。
     """
-    monkeypatch.setattr(store, "STATE_DIR", tmp_path)
+    monkeypatch.setattr(store, "AGENTS_DIR", tmp_path)
     with pytest.raises(FileNotFoundError, match="Agent state file not found"):
         store.load("ghost")
 
 
 def test_load_all_delegates_to_load_all_from_dir(agents_dir: Path, monkeypatch) -> None:
-    """load_all() が load_all_from_dir(STATE_DIR) に委譲していること。"""
+    """load_all() が load_all_from_dir(AGENTS_DIR) に委譲していること。"""
     called_with: list[Path] = []
 
     original = store.load_all_from_dir
@@ -61,14 +61,14 @@ def test_load_all_delegates_to_load_all_from_dir(agents_dir: Path, monkeypatch) 
         return original(path)
 
     monkeypatch.setattr(store, "load_all_from_dir", spy)
-    monkeypatch.setattr(store, "STATE_DIR", agents_dir)
+    monkeypatch.setattr(store, "AGENTS_DIR", agents_dir)
 
     store.load_all()
     assert called_with == [agents_dir]
 
 
 def test_save_writes_split_json(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setattr(store, "STATE_DIR", tmp_path)
+    monkeypatch.setattr(store, "AGENTS_DIR", tmp_path)
     actor = Actor(
         profile=ActorProfile(name="Alice", persona=Persona(style="calm")),
         state=ActorState(beliefs={}, memory_summary=[], is_alive=True),
@@ -115,12 +115,12 @@ def test_actor_state_loads_without_threat_scores_field(tmp_path: Path, monkeypat
 def test_save_preserves_non_ascii_text(tmp_path: Path, monkeypatch) -> None:
     """
     SUT: store.save()
-    Mock: monkeypatch で STATE_DIR を tmp_path に差し替え
+    Mock: monkeypatch で AGENTS_DIR を tmp_path に差し替え
     Level: unit
     Objective: memory_summary に日本語を含む ActorState を save したとき、
                書き込まれたファイルに \\uXXXX 形式のエスケープが含まれないこと。
     """
-    monkeypatch.setattr(store, "STATE_DIR", tmp_path)
+    monkeypatch.setattr(store, "AGENTS_DIR", tmp_path)
     japanese_memory = "初日：setsu を怪しいと感じた"
     actor = Actor(
         profile=ActorProfile(name="Alice", persona=Persona(style="calm")),

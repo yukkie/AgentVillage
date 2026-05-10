@@ -82,13 +82,13 @@ def main() -> None:
     else:
         lang: str = args.lang
 
+        log_writer = LogWriter()
+
         agents = initialize_agents(args.players)
 
         cli = CLI(agents=agents, spectator_mode=spectator_mode)
         cli.show_intro()
         cli.show_agent_roles()
-
-        log_writer = LogWriter()
 
         engine = GameEngine(
             agents=agents,
