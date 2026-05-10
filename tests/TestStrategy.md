@@ -291,3 +291,122 @@ Missing 行を発見
 | 実LLM API呼び出し（Live Integration） | APIコスト・Flakyリスクを避けるため。`MagicMock` で代替 |
 | LLM出力の品質・整合性検証 | Issue #45（promptfoo導入）で別途対応予定 |
 | UIのターミナル描画（Visual Regression） | 保守コストが高いため目視確認に留める |
+
+---
+
+## 9. Frontend Testing（`frontend/`）
+
+`frontend/` 配下の JS/JSX コードについても §1〜§8 の原則を適用する。
+言語・ツールが異なるだけで、**SUT-first・Mockポリシー・カバレッジ判断フロー**は同じ。
+本章では JS 固有の事情（採用ツール・段階導入方針・ファイル配置）を補足する。
+
+### 9.1 段階導入方針
+
+Web UI は段階的に複雑化するため、テスト基盤も段階的に導入する。
+**先回りでテスト基盤を整えると、スタブから実データへの差し替えで陳腐化する**ため避ける。
+
+| Sprint | 範囲 | 導入するテスト |
+|---|---|---|
+| Milestone 1（#308〜#311） | スタブデータの描画 | **なし**（AC をスクショで確認） |
+| Milestone 2（#312/#318/#319/#314） | 実データ接続・ロジック追加 | **Vitest によるユニットテスト**（純粋関数のみ） |
+| #315 以降（FastAPI 化） | WebSocket・状態管理・認証 | **コンポーネントテスト + E2E**（React Testing Library + Playwright） |
+
+#### 各段階で何をテストするか
+
+**Milestone 1**: テスト不要。
+- 大半が見た目・スタブ描画。コンポーネントテストを書いても「`<img>` の `src` 属性が正しい」程度しか検証できず、AC のスクショ確認の方が情報量が多い。
+- スタブから実データに差し替えるとロジックが大きく変わり、Milestone 1 で書いたテストはすぐ陳腐化する。
+- 例外: `Avatar` の「PNG が無いキャラはモノグラムにフォールバック」のような分岐ロジックがあれば、それだけは書いてよい。
+
+**Milestone 2**: `parseGameData.js` のような **純粋関数のみ** ユニットテストを書く。
+- 入出力が明確で陳腐化しにくい。
+- 実ログ（`design/proposal/source_logs/` や `state_archive/{session}/`）をフィクスチャとして使う。
+
+**#315 以降**: コンポーネント・E2E を本格導入する。
+- WebSocket イベントの順序・再接続、認証フロー、マルチタブ動作などはテストなしでは品質保証できない。
+
+### 9.2 採用ツール
+
+| 種別 | ツール | 用途 |
+|---|---|---|
+| Unit / 純粋関数 | **Vitest** | Vite と統合された高速テストランナー。Jest 互換 API |
+| コンポーネント | **React Testing Library**（#315 以降） | DOM 操作ベースでユーザー視点の動作を検証 |
+| E2E | **Playwright**（#315 以降） | 実ブラウザでの操作シナリオ検証 |
+| WebSocket Mock | **mock-socket** 等（#315 以降） | WS 接続のテスト |
+
+### 9.3 ファイル配置
+
+JS のテストは Python と同じ `tests/` 配下ではなく、**`frontend/` 内にコロケーション**する。
+
+```text
+frontend/
+├── src/
+│   ├── lib/
+│   │   ├── parseGameData.js
+│   │   └── parseGameData.test.js     # コロケーション
+│   ├── components/
+│   │   ├── Avatar.jsx
+│   │   └── Avatar.test.jsx           # コロケーション（#315 以降）
+│   └── ...
+└── tests/                            # E2E（Playwright）はここ（#315 以降）
+    └── e2e/
+```
+
+**理由**:
+- Vitest は `*.test.js` をデフォルトで拾うため設定が単純
+- ソースとテストが隣り合うことで参照しやすく、削除忘れも防げる
+- E2E だけは `frontend/tests/e2e/` に分離（複数コンポーネントを跨ぐため）
+
+### 9.4 docstring 規約（JS 版）
+
+§3 の規約を JS の慣習（JSDoc）に合わせて適用する。
+
+```js
+/**
+ * SUT: parseGameData()
+ * Mock: なし（design/proposal/source_logs/ の実ログを fixture に使用）
+ * Level: unit
+ * Objective: JSONL 形式のログを { events, agents } の GameData 型に変換できること。
+ */
+test('parses public_log.jsonl into events array', () => {
+  const result = parseGameData(fixtures.publicLog);
+  expect(result.events).toHaveLength(42);
+});
+```
+
+### 9.5 Mock 使用ポリシー（JS 版）
+
+§4 の3分類（Required / Forbidden / Conditional）はそのまま JS にも適用する。
+
+#### Required（モック必須）
+- `fetch()` / WebSocket の外部呼び出し（実通信は Flaky）
+- `Date.now()` / `Math.random()`（非決定要素）
+
+#### Forbidden（モック禁止 = 実物を使う）
+
+JS 側でも、**Python と JS の境界で受け渡される契約データ**は実物を使う。
+
+| 型 | ファイル | 契約の相手 |
+|---|---|---|
+| `GameData` | `frontend/src/lib/parseGameData.js`（型定義） | Python LogWriter（producer）↔ React 画面（consumer） |
+| `PublicEvent` | 同上 | 同上 |
+
+これらは Python 側の `LogEvent`（`src/domain/event.py`、Mock-Policy: Forbidden）と 1:1 対応する境界型。
+テストでは `design/proposal/source_logs/` や実ログを fixture として使い、合成しない。
+
+#### Conditional
+上記以外のオブジェクトはデフォルトで Conditional 扱い。
+
+### 9.6 カバレッジ判断フロー（JS 版）
+
+§7 の3分類チェック（A: 内部不変条件 / B: 外部境界フォールバック / C: テスト不可）はそのまま適用する。
+カバレッジ計測は Vitest の `--coverage` オプションを使う（v8 / istanbul）。
+
+### 9.7 CI 統合
+
+**Milestone 2 以降**:
+- `frontend/package.json` に `"test": "vitest run"` スクリプトを追加
+- `.github/workflows/ci.yml` に JS テスト job を追加（Node のセットアップ + `npm ci` + `npm test`）
+- Python の pytest job と並列実行する
+
+CI 統合は #318 の AC に含める（`npm test` がコマンド一発で実行できること）。
