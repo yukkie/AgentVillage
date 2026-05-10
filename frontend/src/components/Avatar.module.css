@@ -1,0 +1,92 @@
+.av {
+  width: 60px;
+  height: 76px;
+  border-radius: 4px;
+  background: var(--bg-2);
+  border: 1px solid var(--bd);
+  position: relative;
+  overflow: hidden;
+  flex: 0 0 60px;
+}
+
+.grad {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 30%, var(--av-c, #444) 0%, transparent 70%),
+    linear-gradient(180deg, color-mix(in oklab, var(--av-c, #555) 35%, #1a1d24), #0e1015);
+}
+
+.img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mono {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.03em;
+}
+
+.roleTag {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  font-size: 9px;
+  font-family: var(--serif);
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--av-c);
+  padding: 1px 4px;
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+}
+
+.deadMark {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0.55) 0 2px,
+    rgba(0, 0, 0, 0.2) 2px 8px
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 0.9),
+    0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* サイズ variants */
+.sm {
+  width: 32px;
+  height: 40px;
+  flex: 0 0 32px;
+}
+.sm .mono { font-size: 14px; }
+.sm .roleTag { display: none; }
+
+.xs {
+  width: 22px;
+  height: 28px;
+  flex: 0 0 22px;
+  border-radius: 3px;
+}
+.xs .mono { font-size: 10px; }
+.xs .roleTag { display: none; }

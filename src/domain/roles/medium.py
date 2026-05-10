@@ -8,7 +8,7 @@ class Medium(Role):
 
     @property
     def color(self) -> str:
-        return "cyan"
+        return "magenta"
 
     @property
     def faction(self) -> str:
