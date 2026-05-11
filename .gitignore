@@ -19,5 +19,6 @@ issues/
 htmlcov/
 coverage.json
 frontend/.vite/
+frontend/dist/
 design/proposal/prototypes/_sample_events.json
 *.png
