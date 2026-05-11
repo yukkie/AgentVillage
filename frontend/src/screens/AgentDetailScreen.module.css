@@ -1,0 +1,429 @@
+/* AgentDetailScreen — CSS Modules */
+
+.frame {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ===== 左ペイン: エージェント一覧 ===== */
+
+.pickerHead {
+  padding: 14px 14px 8px;
+  border-bottom: 1px solid var(--bd-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pickerTitle {
+  font-family: var(--serif);
+  font-size: 12px;
+  color: var(--tx-2);
+  letter-spacing: 0.05em;
+}
+
+.pickerCount {
+  font-size: 10px;
+  color: var(--tx-4);
+  font-family: var(--mono);
+}
+
+.agentPicker {
+  padding: 8px 6px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.pick {
+  display: grid;
+  grid-template-columns: 32px 1fr 8px;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: var(--r1);
+  cursor: pointer;
+  font-size: 12.5px;
+  border-left: 2px solid transparent;
+  margin-bottom: 2px;
+}
+
+.pick:hover { background: var(--bg-2); }
+.pickOn { background: var(--bg-2); border-left-color: var(--acc); }
+.pickDead { opacity: 0.55; }
+
+.who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pickName {
+  font-family: var(--serif);
+  font-weight: 600;
+  color: var(--tx);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pickDead .pickName { text-decoration: line-through; }
+
+.pickRole {
+  font-size: 10px;
+  color: var(--r-color, var(--tx-3));
+  font-family: var(--serif);
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--alive);
+}
+
+.pickDead .statusDot { background: var(--tx-4); }
+
+.sectionLabel {
+  font-size: 10px;
+  color: var(--tx-4);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 6px 8px 4px;
+}
+
+.sortBtn {
+  width: 100%;
+  text-align: left;
+  padding: 5px 8px;
+  font-size: 11px;
+  color: var(--tx-3);
+  background: none;
+  border: none;
+  border-radius: var(--r1);
+  cursor: pointer;
+  font-family: var(--sans);
+  margin-bottom: 2px;
+}
+
+.sortBtn:hover { background: var(--bg-2); color: var(--tx); }
+
+/* ===== 中央ペイン ===== */
+
+.mainPane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.agentHero {
+  background: linear-gradient(180deg,
+    color-mix(in oklab, var(--r-color, #333) 14%, var(--bg-1)),
+    var(--bg-1)
+  );
+  border-bottom: 1px solid var(--bd);
+  padding: 24px 36px 20px;
+  display: grid;
+  grid-template-columns: 120px 1fr auto;
+  gap: 24px;
+  align-items: end;
+}
+
+.heroInfo h1 {
+  font-family: var(--serif);
+  font-size: 32px;
+  margin: 0 0 4px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.heroSub {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  color: var(--tx-3);
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+.heroRoleLabel {
+  font-family: var(--serif);
+  font-size: 14px;
+  color: var(--r-color);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 1px solid color-mix(in oklab, var(--r-color) 50%, transparent);
+  padding: 1px 8px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--r-color) 10%, transparent);
+}
+
+.heroBlurb {
+  margin-top: 12px;
+  color: var(--tx-2);
+  font-size: 14px;
+  line-height: 1.7;
+  max-width: 560px;
+  font-family: var(--serif);
+  font-weight: 500;
+}
+
+.heroStats {
+  display: flex;
+  gap: 18px;
+}
+
+.heroStat { text-align: right; }
+
+.statNum {
+  font-family: var(--mono);
+  font-size: 24px;
+  color: var(--tx);
+  font-weight: 500;
+}
+
+.statLabel {
+  font-size: 10px;
+  color: var(--tx-3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ===== タブ ===== */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 36px;
+  border-bottom: 1px solid var(--bd);
+  background: var(--bg-1);
+  flex-shrink: 0;
+}
+
+.tab {
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--tx-3);
+  border-bottom: 2px solid transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  cursor: pointer;
+  background: none;
+  font-family: var(--sans);
+  white-space: nowrap;
+}
+
+.tab:hover { color: var(--tx-2); }
+.tabOn { color: var(--tx); border-bottom-color: var(--acc); }
+
+/* ===== タブコンテンツ ===== */
+
+.tabContent {
+  padding: 20px 36px 60px;
+}
+
+.panel {
+  background: var(--bg-1);
+  border: 1px solid var(--bd);
+  border-radius: var(--r2);
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+
+.panel h3 {
+  font-family: var(--serif);
+  font-size: 14px;
+  margin: 0 0 12px;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel h3 small {
+  font-family: var(--sans);
+  font-size: 10px;
+  color: var(--tx-3);
+  letter-spacing: 0.1em;
+  margin-left: auto;
+  font-weight: 400;
+}
+
+.goalLine {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--tx);
+  line-height: 1.7;
+  border-left: 3px solid var(--acc);
+  padding: 4px 12px;
+  background: rgba(240, 199, 95, 0.04);
+}
+
+/* 推論ログ */
+.thought {
+  border-left: 2px solid var(--bd);
+  padding: 8px 12px 8px 14px;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.thought::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 14px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bg-3);
+  border: 2px solid var(--bd);
+}
+
+.thoughtHead {
+  font-size: 11px;
+  color: var(--tx-3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.thoughtHead strong { color: var(--tx-2); }
+
+.thoughtTs {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--tx-4);
+  margin-left: auto;
+}
+
+.thoughtBody {
+  font-size: 13px;
+  color: var(--tx);
+  line-height: 1.65;
+}
+
+/* 夜の行動（中央タブ） */
+.nightRow {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--bd-soft);
+  font-size: 12px;
+  align-items: center;
+}
+
+.nightRow:last-child { border-bottom: none; }
+
+.nightDay {
+  font-family: var(--mono);
+  color: var(--tx-4);
+  font-size: 10px;
+}
+
+.nightAction { color: var(--tx-2); margin-bottom: 2px; }
+
+.nightTarget {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.nightTarget span { color: var(--tx); font-family: var(--serif); }
+
+.nightResult {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.resultBlack { color: var(--danger); }
+.resultWhite { color: var(--info); }
+.resultSafe  { color: var(--alive); }
+
+/* 過去の戦績 */
+.recordRow {
+  display: flex;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--bd-soft);
+  font-size: 12px;
+  align-items: center;
+}
+
+.recordRow:last-child { border-bottom: none; }
+.recordNum   { font-family: var(--mono); color: var(--tx-4); width: 28px; }
+.recordRole  { font-family: var(--serif); color: var(--r-color, var(--tx-3)); width: 60px; }
+.recordResult { font-family: var(--mono); font-size: 11px; }
+.win  { color: var(--alive); }
+.lose { color: var(--danger); }
+
+/* ===== 右ペイン: 疑い度マトリクス ===== */
+
+.rightInner {
+  padding: 14px 14px 30px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.matrix {
+  display: grid;
+  grid-template-columns: 80px 1fr 38px 38px;
+  gap: 4px 8px;
+  font-size: 12px;
+  align-items: center;
+}
+
+.matrixHead {
+  font-size: 10px;
+  color: var(--tx-3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--bd-soft);
+  padding-bottom: 4px;
+}
+
+.matrixName {
+  color: var(--tx);
+  font-weight: 500;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.dualBar {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.barWrap {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.barWrap:first-child { transform: scaleX(-1); }
+
+.barFill {
+  display: block;
+  height: 100%;
+  background: var(--danger);
+  border-radius: 3px;
+}
+
+.barTrust .barFill { background: var(--info); }
+
+.matrixNum {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-align: right;
+}
