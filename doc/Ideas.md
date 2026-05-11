@@ -18,6 +18,8 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| yukkie/AgentVillage#329 | enhancement | 🔴 | 2 | Add new game creation form to GameListScreen | リスト上部にアコーディオン展開フォーム（人数選択・アバターピッカー・村名プリセット） |
+| yukkie/AgentVillage#328 | enhancement | 🔴 | 2 | Add collapsible side panes to all 3-pane screens | ThreePaneLayout に collapse 機能を追加し、全3画面で左右ペインを折りたたみ可能にする |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 1/2 横串） |
 
 ### Milestone 2（実データ観戦）
