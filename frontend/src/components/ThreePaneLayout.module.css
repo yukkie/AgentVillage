@@ -1,0 +1,31 @@
+/* 共通3カラムレイアウト — CSS Modules */
+
+.shell {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 256px 1fr 360px;
+  min-height: 0;
+}
+
+.colLeft {
+  border-right: 1px solid var(--bd);
+  background: var(--bg-1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.colCenter {
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.colRight {
+  border-left: 1px solid var(--bd);
+  background: var(--bg-1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}

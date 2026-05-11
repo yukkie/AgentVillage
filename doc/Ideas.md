@@ -18,8 +18,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| ~~yukkie/AgentVillage#309~~ | enhancement | 🔴 | 5 | ~~Spectator feed screen~~ | 完了 |
-| yukkie/AgentVillage#310 | enhancement | 🔴 | 3 | Game list screen | ゲーム一覧画面、スタブデータ |
 | yukkie/AgentVillage#311 | enhancement | 🔴 | 3 | Agent detail screen | エージェント詳細画面、collapsible panes |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 1/2 横串） |
 
