@@ -14,101 +14,6 @@
   flex-direction: column;
 }
 
-/* === Top header === */
-.topbar {
-  height: 52px;
-  flex: 0 0 52px;
-  background: linear-gradient(180deg, #14181f, #0e1117);
-  border-bottom: 1px solid var(--bd);
-  display: flex;
-  align-items: center;
-  padding: 0 18px;
-  gap: 16px;
-}
-.brand {
-  font-family: var(--serif);
-  font-weight: 700;
-  font-size: 17px;
-  letter-spacing: 0.02em;
-  color: var(--tx);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.brand .mark {
-  width: 22px; height: 22px;
-  display: inline-flex; align-items: center; justify-content: center;
-  border: 1px solid var(--acc);
-  color: var(--acc);
-  font-family: var(--serif);
-  font-size: 13px;
-  border-radius: 2px;
-}
-.brand small {
-  font-family: var(--sans);
-  font-weight: 400;
-  font-size: 11px;
-  color: var(--tx-3);
-  margin-left: 4px;
-  letter-spacing: 0.05em;
-}
-.crumb {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 12px; color: var(--tx-3);
-}
-.crumb .sep { color: var(--tx-4); }
-.crumb a { color: var(--tx-2); text-decoration: none; }
-.crumb a:hover { color: var(--tx); }
-.crumb .now { color: var(--tx); }
-.spacer { flex: 1; }
-.topbtn {
-  height: 28px;
-  padding: 0 10px;
-  background: transparent;
-  border: 1px solid var(--bd);
-  border-radius: var(--r1);
-  color: var(--tx-2);
-  font-size: 12px;
-  font-family: var(--sans);
-  display: inline-flex; align-items: center; gap: 6px;
-  cursor: pointer;
-}
-.topbtn:hover { color: var(--tx); border-color: var(--tx-3); }
-.topbtn.primary {
-  background: var(--acc);
-  border-color: var(--acc);
-  color: #1a1408;
-  font-weight: 600;
-}
-.liveDot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--danger);
-  box-shadow: 0 0 0 0 rgba(226,107,107,0.6);
-  animation: pulse 1.6s ease-out infinite;
-}
-@keyframes pulse {
-  0%   { box-shadow: 0 0 0 0   rgba(226,107,107,0.5); }
-  70%  { box-shadow: 0 0 0 6px rgba(226,107,107,0); }
-  100% { box-shadow: 0 0 0 0   rgba(226,107,107,0); }
-}
-
-/* === 3-pane layout === */
-.pane3 {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 256px 1fr 360px;
-  min-height: 0;
-}
-.pane3 > .col {
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-.pane3 > .colLeft  { border-right: 1px solid var(--bd); background: var(--bg-1); }
-.pane3 > .colRight { border-left:  1px solid var(--bd); background: var(--bg-1); }
-.pane3 > .colCenter { background: var(--bg); }
-
 .sectionLabel {
   font-size: 10px;
   font-weight: 700;
@@ -493,34 +398,6 @@
 .action .res.black { color: var(--r-werewolf); background: rgba(226,107,107,0.12); }
 .action .res.white { color: var(--r-seer);     background: rgba(110,168,255,0.12); }
 
-/* === 3-pane grid (used in SpectatorScreen root) === */
-.threePane {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 256px 1fr 360px;
-  min-height: 0;
-}
-.colLeft {
-  border-right: 1px solid var(--bd);
-  background: var(--bg-1);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.colCenter {
-  background: var(--bg);
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-.colRight {
-  border-left: 1px solid var(--bd);
-  background: var(--bg-1);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
 /* phaseNav / filt scroll */
 .phaseNav { padding: 8px 12px 16px; overflow-y: auto; }
 .filt { padding: 4px 14px 16px; overflow-y: auto; flex: 1; }
@@ -585,10 +462,8 @@
 .phaseTurn { font-family: var(--mono); font-size: 10px; color: var(--tx-4); margin-left: auto; }
 .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--tx-4); flex: 0 0 6px; }
 
-/* topbar inner */
-.mark { width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--acc); color: var(--acc); font-family: var(--serif); font-size: 13px; border-radius: 2px; }
-.sep { color: var(--tx-4); }
-.now { color: var(--tx); }
+/* feed head */
+.spacer { flex: 1; }
 
 /* feed head stat */
 .stat { font-size: 11px; color: var(--tx-3); display: flex; align-items: center; gap: 6px; }

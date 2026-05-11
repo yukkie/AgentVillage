@@ -25,8 +25,8 @@ AgentVillage/
 │   ├── public/
 │   │   └── icons/              # エージェントアイコン PNG（旧 config/icons/）
 │   ├── src/
-│   │   ├── components/         # 共通コンポーネント（Avatar, RoleTag など）
-│   │   ├── screens/            # 画面コンポーネント（観戦・一覧・エージェント詳細）
+│   │   ├── components/         # 共通コンポーネント（Avatar, RoleTag, TopBar, ThreePaneLayout など）
+│   │   ├── screens/            # 画面コンポーネント（SpectatorScreen, GameListScreen など）
 │   │   ├── lib/                # ユーティリティ（JSONL パーサーなど）
 │   │   └── tokens.css          # デザイントークン（CSS Variables）
 │   ├── index.html

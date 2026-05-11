@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import Avatar from '../components/Avatar.jsx';
 import RoleTag from '../components/RoleTag.jsx';
+import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
+import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLES, AGENT_PALETTE } from '../lib/constants.js';
 import {
   ROLE_ASSIGNMENT, NIGHT_RESULTS, EXEC_RESULTS,
@@ -322,59 +324,40 @@ export default function SpectatorScreen() {
 
   return (
     <div className={styles.frame}>
-      <div className={styles.topbar}>
-        <div className={styles.brand}>
-          <span className={styles.mark}>人</span>
-          AGENT-WOLF
-          <small>v0.13 / 観戦モード</small>
-        </div>
-        <div className={styles.crumb}>
-          <span className={styles.sep}>/</span>
-          <a>観戦</a>
-          <span className={styles.sep}>›</span>
-          <a>第13回 桜霞村</a>
-          <span className={styles.sep}>›</span>
-          <span className={styles.now}>Day {activeDay} 議論</span>
-        </div>
-        <span className={styles.spacer} />
-        <button className={styles.topbtn}><span className={styles.liveDot} /> LIVE</button>
-        <button className={styles.topbtn}>同時観戦 142</button>
-        <button className={styles.topbtn}>⤓ 全ログDL</button>
-        <button className={`${styles.topbtn} ${styles.primary}`}>★ 応援</button>
-      </div>
+      <TopBar crumbs={[{ label: '観戦' }, { label: '第13回 桜霞村' }, { label: `Day ${activeDay} 議論` }]}>
+        <TopBarBtn><span className={topBarStyles.liveDot} /> LIVE</TopBarBtn>
+        <TopBarBtn>同時観戦 142</TopBarBtn>
+        <TopBarBtn>⤓ 全ログDL</TopBarBtn>
+        <TopBarBtn primary>★ 応援</TopBarBtn>
+      </TopBar>
 
-      <div className={styles.threePane}>
-        <div className={styles.colLeft}>
-          <LeftPane activeDay={activeDay} setDay={setActiveDay} />
+      <ThreePaneLayout
+        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} />}
+        right={<RightPane />}
+      >
+        <div className={styles.feedHead}>
+          <h2>Day {activeDay} 議論 <small>3:47 経過 / 残り 4:13</small></h2>
+          <span className={styles.stat}>発言 <strong>{d1.length + d2.length}</strong></span>
+          <span className={styles.stat}>CO <strong>2</strong></span>
+          <span className={styles.stat}>投票確定 <strong>6/9</strong></span>
+          <span className={styles.spacer} />
+          <TopBarBtn>⇅ 新しい順</TopBarBtn>
+          <TopBarBtn>🔍 検索</TopBarBtn>
         </div>
-        <div className={styles.colCenter}>
-          <div className={styles.feedHead}>
-            <h2>Day {activeDay} 議論 <small>3:47 経過 / 残り 4:13</small></h2>
-            <span className={styles.stat}>発言 <strong>{d1.length + d2.length}</strong></span>
-            <span className={styles.stat}>CO <strong>2</strong></span>
-            <span className={styles.stat}>投票確定 <strong>6/9</strong></span>
-            <span className={styles.spacer} />
-            <button className={styles.topbtn}>⇅ 新しい順</button>
-            <button className={styles.topbtn}>🔍 検索</button>
-          </div>
-          <div className={styles.feed}>
-            {d1.map((e, i) => <FeedItem key={i} ev={annotate(e)} prevById={prevById} />)}
-            <SystemRow kind="exec" label="処刑" ts="11:14">
-              <strong>Toma</strong> が処刑された（4票）。役職は <strong style={{ color: 'var(--r-villager)' }}>村人</strong> でした。
-            </SystemRow>
-            <VoteDetail day={1} />
-            <SystemRow kind="phase" label="夜フェーズ" ts="11:20">夜が訪れた。占い師・人狼・狩人が行動を選択中…</SystemRow>
-            <SystemRow kind="death" label="襲撃" ts="08:00">
-              朝、<strong>Sora</strong> が無残な姿で発見された。村は大きく動揺している。
-            </SystemRow>
-            <SystemRow kind="phase" label="Day 2 議論開始" ts="08:05">2日目の議論が始まりました。</SystemRow>
-            {d2.map((e, i) => <FeedItem key={`d2-${i}`} ev={annotate(e)} prevById={prevById} />)}
-          </div>
+        <div className={styles.feed}>
+          {d1.map((e, i) => <FeedItem key={i} ev={annotate(e)} prevById={prevById} />)}
+          <SystemRow kind="exec" label="処刑" ts="11:14">
+            <strong>Toma</strong> が処刑された（4票）。役職は <strong style={{ color: 'var(--r-villager)' }}>村人</strong> でした。
+          </SystemRow>
+          <VoteDetail day={1} />
+          <SystemRow kind="phase" label="夜フェーズ" ts="11:20">夜が訪れた。占い師・人狼・狩人が行動を選択中…</SystemRow>
+          <SystemRow kind="death" label="襲撃" ts="08:00">
+            朝、<strong>Sora</strong> が無残な姿で発見された。村は大きく動揺している。
+          </SystemRow>
+          <SystemRow kind="phase" label="Day 2 議論開始" ts="08:05">2日目の議論が始まりました。</SystemRow>
+          {d2.map((e, i) => <FeedItem key={`d2-${i}`} ev={annotate(e)} prevById={prevById} />)}
         </div>
-        <div className={styles.colRight}>
-          <RightPane />
-        </div>
-      </div>
+      </ThreePaneLayout>
     </div>
   );
 }
