@@ -285,7 +285,7 @@ export default function GameListScreen() {
         <TopBarBtn primary>＋ 自分のbotを参加させる</TopBarBtn>
       </TopBar>
 
-      <ThreePaneLayout left={<LeftPane />} right={<RightPane />}>
+      <ThreePaneLayout collapsibleLeft collapsibleRight left={<LeftPane />} right={<RightPane />}>
         <div className={styles.listMain}>
           <NewVillageForm />
 

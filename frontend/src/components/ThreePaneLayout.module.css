@@ -3,11 +3,13 @@
 .shell {
   flex: 1;
   display: grid;
-  grid-template-columns: 256px 1fr 360px;
+  grid-template-columns: var(--lcol, 256px) 1fr var(--rcol, 360px);
+  transition: grid-template-columns 220ms ease;
   min-height: 0;
 }
 
 .colLeft {
+  position: relative;
   border-right: 1px solid var(--bd);
   background: var(--bg-1);
   display: flex;
@@ -23,9 +25,73 @@
 }
 
 .colRight {
+  position: relative;
   border-left: 1px solid var(--bd);
   background: var(--bg-1);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+/* コンテンツ領域（collapse時に隠す） */
+.colContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.collapsed .colContent {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* チェブロンボタン */
+.chevron {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 40px;
+  background: var(--bg-2);
+  border: 1px solid var(--bd);
+  border-radius: var(--r1);
+  color: var(--tx-3);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: color 120ms, background 120ms;
+  padding: 0;
+  line-height: 1;
+}
+.chevron:hover {
+  color: var(--tx);
+  background: var(--bg-3);
+}
+
+.chevronLeft {
+  right: -10px;
+}
+
+.chevronRight {
+  left: -10px;
+}
+
+/* 縦書きラベル（collapse時） */
+.rail {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(90deg);
+  font-size: 10px;
+  color: var(--tx-4);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  writing-mode: horizontal-tb;
+  pointer-events: none;
+  margin-top: 24px;
 }

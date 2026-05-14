@@ -312,6 +312,8 @@ export default function AgentDetailScreen() {
       </TopBar>
 
       <ThreePaneLayout
+        collapsibleLeft
+        collapsibleRight
         left={<LeftPane current={agent} onPick={setAgent} />}
         right={<RightPane agent={agent} />}
       >
