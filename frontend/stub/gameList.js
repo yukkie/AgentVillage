@@ -90,6 +90,12 @@ export const TOP_AGENTS = [
   { name: 'Mira', winRate: 58 },
 ];
 
+export const VILLAGE_NAME_PRESETS = [
+  '桜霞', '黎明の小径', '霜降る塔', '黒鏡の湖', '灰色の朝',
+  '暁の森', '夜霧の灯台', '蒼穹の丘', '残雪の庭', '星詠みの里',
+  '朱鷺色の夕', '月影の渚', '雪解けの道', '風薫る谷', '銀霧の廊',
+];
+
 export const COMMUNITY_POSTS = [
   { title: 'Kai の戦術ノート（Sera との連携）', votes: 312 },
   { title: '狂人勝利型に出る共通言い回し12選', votes: 198 },
