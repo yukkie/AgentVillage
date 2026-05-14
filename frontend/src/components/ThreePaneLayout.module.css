@@ -3,16 +3,19 @@
 .shell {
   flex: 1;
   display: grid;
-  grid-template-columns: 256px 1fr 360px;
+  grid-template-columns: var(--lcol, 256px) 1fr var(--rcol, 360px);
+  transition: grid-template-columns 220ms ease;
   min-height: 0;
+  position: relative;
 }
 
 .colLeft {
+  position: relative;
   border-right: 1px solid var(--bd);
   background: var(--bg-1);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .colCenter {
@@ -23,9 +26,76 @@
 }
 
 .colRight {
+  position: relative;
   border-left: 1px solid var(--bd);
   background: var(--bg-1);
   display: flex;
   flex-direction: column;
+  overflow: visible;
+}
+
+/* コンテンツ領域（collapse時に隠す） */
+.colContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  min-height: 0;
+  min-width: 0;
+}
+
+.collapsed .colContent {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* チェブロンボタン */
+.chevron {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 48px;
+  background: var(--bg-3);
+  border: 1px solid var(--tx-4);
+  border-radius: var(--r1);
+  color: var(--tx-2);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: color 120ms, background 120ms, border-color 120ms;
+  padding: 0;
+  line-height: 1;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+.chevron:hover {
+  color: var(--acc);
+  background: var(--bg-4, color-mix(in oklab, var(--bg-3) 70%, white 30%));
+  border-color: var(--acc);
+}
+
+.chevronLeft {
+  /* inline style で left を設定 */
+}
+
+.chevronRight {
+  /* inline style で right を設定 */
+}
+
+/* 縦書きラベル（collapse時） */
+.rail {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(90deg);
+  font-size: 10px;
+  color: var(--tx-4);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  writing-mode: horizontal-tb;
+  pointer-events: none;
+  margin-top: 24px;
 }

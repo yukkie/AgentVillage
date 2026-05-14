@@ -332,6 +332,8 @@ export default function SpectatorScreen() {
       </TopBar>
 
       <ThreePaneLayout
+        collapsibleLeft
+        collapsibleRight
         left={<LeftPane activeDay={activeDay} setDay={setActiveDay} />}
         right={<RightPane />}
       >
