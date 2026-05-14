@@ -2,10 +2,111 @@ import { useState } from 'react';
 import Avatar from '../components/Avatar.jsx';
 import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
-import { GAMES, TOP_AGENTS, COMMUNITY_POSTS } from '../../stub/gameList.js';
+import { GAMES, TOP_AGENTS, COMMUNITY_POSTS, VILLAGE_NAME_PRESETS } from '../../stub/gameList.js';
+import { AGENT_PALETTE } from '../lib/constants.js';
 import styles from './GameListScreen.module.css';
 
 const TABS = ['▶ 注目', '🔥 熱い議論', '🆕 新着', '完了'];
+const COUNTS = [5, 8, 11];
+const ALL_AGENTS = Object.keys(AGENT_PALETTE);
+
+function NewVillageForm() {
+  const [open, setOpen] = useState(false);
+  const [count, setCount] = useState(COUNTS[0]);
+  const [selected, setSelected] = useState(new Set());
+  const [villageName] = useState(
+    () => VILLAGE_NAME_PRESETS[Math.floor(Math.random() * VILLAGE_NAME_PRESETS.length)]
+  );
+
+  function toggleAgent(name) {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) {
+        next.delete(name);
+      } else if (next.size < count) {
+        next.add(name);
+      }
+      return next;
+    });
+  }
+
+  function handleCountChange(n) {
+    setCount(n);
+    setSelected(new Set());
+  }
+
+  const canCreate = selected.size === count;
+
+  return (
+    <div className={styles.newVillage}>
+      <button
+        className={`${styles.newVillageBtn} ${open ? styles.newVillageBtnOpen : ''}`}
+        onClick={() => setOpen(o => !o)}
+      >
+        <span className={styles.newVillagePlus}>{open ? '✕' : '＋'}</span>
+        新しい村を作る
+      </button>
+
+      {open && (
+        <div className={styles.newVillageForm}>
+          <div className={styles.formRow}>
+            <span className={styles.formLabel}>村名</span>
+            <span className={styles.villageName}>{villageName}</span>
+          </div>
+
+          <div className={styles.formRow}>
+            <span className={styles.formLabel}>人数</span>
+            <div className={styles.countBtns}>
+              {COUNTS.map(n => (
+                <button
+                  key={n}
+                  className={`${styles.countBtn} ${count === n ? styles.countBtnOn : ''}`}
+                  onClick={() => handleCountChange(n)}
+                >
+                  {n}人
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.formRow}>
+            <span className={styles.formLabel}>エージェント</span>
+            <span className={styles.selectHint}>{selected.size}/{count}人選択中</span>
+          </div>
+
+          <div className={styles.agentGrid}>
+            {ALL_AGENTS.map(name => {
+              const isSelected = selected.has(name);
+              const color = AGENT_PALETTE[name];
+              return (
+                <button
+                  key={name}
+                  className={`${styles.agentChip} ${isSelected ? styles.agentChipOn : ''}`}
+                  style={{ '--chip-c': color }}
+                  onClick={() => toggleAgent(name)}
+                  title={name}
+                >
+                  <Avatar name={name} size="sm" />
+                  <span className={styles.chipName}>{name}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className={styles.formFooter}>
+            <button
+              className={styles.createBtn}
+              disabled={!canCreate}
+              onClick={() => setOpen(false)}
+            >
+              村を作る
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function filterGames(games, tab) {
   if (tab === '完了') return games.filter(g => !g.live);
@@ -186,6 +287,8 @@ export default function GameListScreen() {
 
       <ThreePaneLayout left={<LeftPane />} right={<RightPane />}>
         <div className={styles.listMain}>
+          <NewVillageForm />
+
           <div className={styles.listTabs}>
             {TABS.map(t => (
               <button
