@@ -18,7 +18,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#331 | tech-debt | 🔴 | 2 | Write frontend design document | Milestone 2 着手前に doc/FrontendDesign.md を新設（コンポーネント・CSS方針・画面遷移仕様） |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 1/2 横串） |
 
 ### Milestone 2（実データ観戦）
