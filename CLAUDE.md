@@ -15,6 +15,7 @@ LLMエージェント同士が自律的に人狼ゲームをプレイする「�
 | [doc/Spec.md](doc/Spec.md) | 何を作るか（ゲームルール・機能要件） |
 | [doc/Architecture.md](doc/Architecture.md) | どう作るか（設計方針・ADR・コンポーネント） |
 | [doc/DetailDesign.md](doc/DetailDesign.md) | どう実装するか（モジュール・クラス詳細） |
+| [doc/FrontendDesign.md](doc/FrontendDesign.md) | フロントエンド設計（コンポーネント・CSS方針・画面遷移・スタブ差し替え） |
 | [doc/Task.md](doc/Task.md) | タスク・進捗管理 |
 | [tests/TestStrategy.md](tests/TestStrategy.md) | テスト方針 |
 

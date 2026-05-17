@@ -253,6 +253,7 @@ Contract test: `tests/contract/test_day_phase_contract.py`, `tests/contract/test
 - `replay.py` — アーカイブ選択 UI とページャー。LLM を呼ばずに JSONL ログを再生する（Spec.md §6 参照）
 
 各モジュールの詳細（ファイル一覧・個別責務）は [DetailDesign.md](DetailDesign.md) を参照。
+フロントエンドのコンポーネント設計・CSS 分割方針・画面遷移・スタブ差し替え計画は [FrontendDesign.md](FrontendDesign.md) を参照。
 
 ---
 
