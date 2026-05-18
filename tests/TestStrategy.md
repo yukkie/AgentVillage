@@ -368,8 +368,8 @@ frontend/
  * Level: unit
  * Objective: JSONL 形式のログを { events, agents } の GameData 型に変換できること。
  */
-test('parses public_log.jsonl into events array', () => {
-  const result = parseGameData(fixtures.publicLog);
+test('parses spectator_log.jsonl into events array', () => {
+  const result = parseGameData(fixtures.spectatorLog);
   expect(result.events).toHaveLength(42);
 });
 ```

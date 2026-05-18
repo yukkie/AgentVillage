@@ -3,7 +3,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from src.config import ARCHIVE_DIR, LOG_DIR, PUBLIC_LOG, SPECTATOR_LOG, AGENTS_DIR
+from src.config import ARCHIVE_DIR, LOG_DIR, SPECTATOR_LOG, AGENTS_DIR
 from src.domain.event import LogEvent
 
 
@@ -12,7 +12,7 @@ def archive_state() -> Path | None:
 
     Returns the archive path, or None if there was nothing to archive.
     """
-    if not PUBLIC_LOG.exists() or PUBLIC_LOG.stat().st_size == 0:
+    if not SPECTATOR_LOG.exists() or SPECTATOR_LOG.stat().st_size == 0:
         return None
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     dest = ARCHIVE_DIR / timestamp
@@ -25,7 +25,6 @@ class LogWriter:
     def __init__(self) -> None:
         LOG_DIR.mkdir(parents=True, exist_ok=True)
         AGENTS_DIR.mkdir(parents=True, exist_ok=True)
-        PUBLIC_LOG.write_text("", encoding="utf-8")
         SPECTATOR_LOG.write_text("", encoding="utf-8")
         for f in AGENTS_DIR.glob("*.json"):
             f.unlink()
@@ -33,12 +32,7 @@ class LogWriter:
     def write(self, event: LogEvent) -> None:
         line = event.model_dump_json() + "\n"
         try:
-            # Spectator log contains everything
             with SPECTATOR_LOG.open("a", encoding="utf-8") as f:
                 f.write(line)
-            # Public log only contains public events
-            if event.is_public:
-                with PUBLIC_LOG.open("a", encoding="utf-8") as f:
-                    f.write(line)
         except IOError as e:
             print(f"[LogWriter] write failed: {e}", file=sys.stderr)

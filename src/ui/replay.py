@@ -118,8 +118,10 @@ class ReplayPager:
         return actors
 
     def _load_events(self) -> list[LogEvent]:
-        log_file = "spectator_log.jsonl" if self._spectator else "public_log.jsonl"
-        return load_events(self._archive / log_file)
+        events = load_events(self._archive / "spectator_log.jsonl")
+        if self._spectator:
+            return events
+        return [event for event in events if event.is_public]
 
     def _build_lines(self) -> list[str]:
         width = shutil.get_terminal_size().columns

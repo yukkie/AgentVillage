@@ -310,7 +310,7 @@ LLMの提案をゲームエンジンに渡す橋渡し役。
 | モジュール | 責務 |
 |---|---|
 | `logger.py` | 削除済み。定数は `src/config.py` に移管 |
-| `writer.py` | `public_log.jsonl`（全員公開）と `spectator_log.jsonl`（真実込み）への書き込み。定数は `src/config` から import |
+| `writer.py` | `spectator_log.jsonl` への書き込み。公開・非公開の全イベントを `is_public` フラグ付きで保存する。定数は `src/config` から import |
 | `reader.py` | `load_events(path: Path) -> list[LogEvent]` — JSONL ログの読み込みユーティリティ。GUI・リプレイ・将来の外部ツールが共通利用する |
 | `replay.py` | ログを読んで再生する（将来のリプレイUI用） |
 
@@ -451,7 +451,7 @@ parseGameData(jsonlText, agentJsonByName)
 | 偽CO バッジ | 赤＋「偽」マーク | 中立色 |
 | 思考ログピル | 展開可 | ロックバッジ（存在のみ示す） |
 
-`spectator_log.jsonl`（`thought` フィールドあり）と `public_log.jsonl`（`thought` なし）を切り替えることで対応する。
+`spectator_log.jsonl` を読み込み、public モードでは `is_public=true` のイベントのみを表示し、spectator モードでは全イベントを表示することで対応する。
 
 ### replay.py — クラス構成
 
@@ -481,7 +481,7 @@ class ReplayPager:
 
 **初期化:**
 1. `archive_path/agents/*.json` を `actor_from_dict()` 経由で `Actor` としてロード
-2. `spectator_mode` に応じて `spectator_log.jsonl` または `public_log.jsonl` を読み込み
+2. `spectator_log.jsonl` を読み込み、public モードでは `is_public=true` のイベントだけに絞る
 3. 各 `LogEvent` を `Renderer.on_event()` で描画し、`list[str]`（ANSI 文字列）としてバッファに積む
 
 **`_build_lines()` の claimed_role 動的追跡:**
