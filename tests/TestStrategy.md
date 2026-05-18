@@ -392,7 +392,33 @@ test('parses spectator_log.jsonl into events array', () => {
 });
 ```
 
-### 9.5 Mock 使用ポリシー（JS 版）
+### 9.5 Frontend TDD / Contract Test ルール
+
+Python 側の contract テストと同じく、フロントエンドでも **contract が絡む変更は TDD を必須**とする。
+ここでいう contract は、単なる実装詳細ではなく、producer と consumer の間で守るべき振る舞い・データ形状・UI 操作境界を指す。
+
+対象例:
+
+- Python LogEvent / agent JSON → `parseGameData()` / React 画面のデータ契約
+- `FeedItem` の `event_type` → 表示カード種別のルーティング契約
+- `LeftPane` のクリック操作 → `activeDay` / `activePhase` state 更新契約
+- view model / filter 関数 → 画面が必要とする検索・絞り込み結果の契約
+
+手順:
+
+1. AC から contract を先に切り出す
+2. 実装前に Vitest / React Testing Library でテストを書く
+3. `npm test` で **RED を確認する**
+4. 実装して GREEN にする
+5. `npm run test:coverage` で追加・変更行のカバレッジを確認する
+
+RED にならないテストは、既存実装で既に満たされているか、アサートが弱すぎる。
+後者の場合は実装に進まず、テスト観点を見直す。
+
+RTL を使う場合も同じで、先に「ユーザー操作または表示契約」をテストで固定してから実装する。
+CSS の見た目そのものではなく、ユーザーが観測できる DOM、テキスト、クリック結果、選択状態を優先して検証する。
+
+### 9.6 Mock 使用ポリシー（JS 版）
 
 §4 の3分類（Required / Forbidden / Conditional）はそのまま JS にも適用する。
 
@@ -415,12 +441,12 @@ JS 側でも、**Python と JS の境界で受け渡される契約データ**�
 #### Conditional
 上記以外のオブジェクトはデフォルトで Conditional 扱い。
 
-### 9.6 カバレッジ判断フロー（JS 版）
+### 9.7 カバレッジ判断フロー（JS 版）
 
 §7 の3分類チェック（A: 内部不変条件 / B: 外部境界フォールバック / C: テスト不可）はそのまま適用する。
 カバレッジ計測は Vitest の `--coverage` オプションを使う（v8 / istanbul）。
 
-### 9.7 ローカル品質ゲート
+### 9.8 ローカル品質ゲート
 
 **Milestone 2 以降**:
 - `frontend/package.json` に `"test": "vitest run"` スクリプトを追加
