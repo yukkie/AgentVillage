@@ -19,7 +19,6 @@
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
-| yukkie/AgentVillage#349 | tech-debt | 🔴 | 2 | Remove public_log.jsonl — use spectator_log.jsonl with is_public filter | spectator_log.jsonl に一本化し public_log.jsonl の出力を廃止。CUI は is_public フラグでフィルタ |
 | yukkie/AgentVillage#346 | bug | 🔴 | 2 | SpectatorScreen left pane shows hardcoded execution target and phase labels | 左ペインの処刑対象・夜フェーズラベルが実ログ未接続。elimination / vote / night_attack から導出可能 |
 | yukkie/AgentVillage#314 | enhancement | 🔴 | 2 | spectator / public mode toggle | viewerMode prop による表示切替。#350 のブロッカー |
 | yukkie/AgentVillage#351 | enhancement | 🔴 | 2 | Structured game_over event with winner field + frontend result screen | game_over に winner フィールドを追加し文字列パース依存を除去。観戦画面に勝敗サマリーを表示 |

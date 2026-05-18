@@ -22,7 +22,7 @@ def _make_event_jsonl(*events: LogEvent) -> str:
 
 @pytest.fixture()
 def tmp_archive(tmp_path: Path) -> Path:
-    """Minimal archive with 2 agents and a public log."""
+    """Minimal archive with 2 agents and a spectator log."""
     archive = tmp_path / "20260101_000000"
     agents_dir = archive / "agents"
     agents_dir.mkdir(parents=True)
@@ -34,7 +34,7 @@ def tmp_archive(tmp_path: Path) -> Path:
         json.dumps(make_split_agent_json("Bob", "Werewolf")), encoding="utf-8"
     )
 
-    event = LogEvent.make(
+    public_event = LogEvent.make(
         day=1,
         phase="day_opening",
         event_type=EventType.SPEECH,
@@ -42,11 +42,17 @@ def tmp_archive(tmp_path: Path) -> Path:
         content="Hello everyone.",
         is_public=True,
     )
-    (archive / "public_log.jsonl").write_text(
-        _make_event_jsonl(event), encoding="utf-8"
+    private_event = LogEvent.make(
+        day=1,
+        phase="night",
+        event_type=EventType.NIGHT_ATTACK,
+        agent="Bob",
+        target="Alice",
+        content="Bob attacks Alice.",
+        is_public=False,
     )
     (archive / "spectator_log.jsonl").write_text(
-        _make_event_jsonl(event), encoding="utf-8"
+        _make_event_jsonl(public_event, private_event), encoding="utf-8"
     )
     return archive
 
@@ -94,6 +100,40 @@ def test_pager_spectator_shows_more_lines(tmp_archive: Path) -> None:
     assert len(spectator_pager._lines) >= len(public_pager._lines)
 
 
+def test_pager_public_mode_filters_private_events_from_spectator_log(
+    tmp_archive: Path,
+) -> None:
+    """
+    SUT: ReplayPager._load_events
+    Mock: なし
+    Level: unit
+    Objective: public モードでは spectator_log.jsonl の is_public=True イベントだけを読み込むこと。
+    """
+    pager = ReplayPager(tmp_archive, spectator_mode=False)
+
+    events = pager._load_events()
+
+    assert events
+    assert all(event.is_public for event in events)
+
+
+def test_pager_spectator_mode_loads_all_events_from_spectator_log(
+    tmp_archive: Path,
+) -> None:
+    """
+    SUT: ReplayPager._load_events
+    Mock: なし
+    Level: unit
+    Objective: spectator モードでは spectator_log.jsonl の公開・非公開イベントを両方読み込むこと。
+    """
+    pager = ReplayPager(tmp_archive, spectator_mode=True)
+
+    events = pager._load_events()
+
+    assert any(event.is_public for event in events)
+    assert any(not event.is_public for event in events)
+
+
 # ── ArchiveSelector ──────────────────────────────────────────────────────────
 
 
@@ -128,7 +168,6 @@ def test_pager_loads_empty_when_agents_dir_missing(tmp_path: Path) -> None:
         content="Hello.",
         is_public=True,
     )
-    (archive / "public_log.jsonl").write_text(event.model_dump_json(), encoding="utf-8")
     (archive / "spectator_log.jsonl").write_text(event.model_dump_json(), encoding="utf-8")
 
     import sys
@@ -160,7 +199,6 @@ def test_pager_skips_corrupt_agent_file(tmp_path: Path) -> None:
         content="Hello.",
         is_public=True,
     )
-    (archive / "public_log.jsonl").write_text(event.model_dump_json(), encoding="utf-8")
     (archive / "spectator_log.jsonl").write_text(event.model_dump_json(), encoding="utf-8")
 
     import sys
@@ -192,7 +230,6 @@ def test_pager_loads_legacy_agent_json_without_profile(tmp_path: Path) -> None:
         content="Hello.",
         is_public=True,
     )
-    (archive / "public_log.jsonl").write_text(event.model_dump_json(), encoding="utf-8")
     (archive / "spectator_log.jsonl").write_text(event.model_dump_json(), encoding="utf-8")
 
     pager = ReplayPager(archive, spectator_mode=False)

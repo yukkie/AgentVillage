@@ -4,7 +4,7 @@ Run from the repository root:
     python tools/generate_archive_index.py
 
 Reads each session under state_archive/ and extracts game metadata from
-public_log.jsonl and agents/*.json. The resulting index.json is consumed
+spectator_log.jsonl and agents/*.json. The resulting index.json is consumed
 by the frontend via archiveLoader.js.
 """
 
@@ -25,7 +25,7 @@ _SESSION_RE = re.compile(r"^(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})$")
 
 
 def parse_session(session_id: str, session_dir: str) -> dict | None:
-    log_path = os.path.join(session_dir, "public_log.jsonl")
+    log_path = os.path.join(session_dir, "spectator_log.jsonl")
     agents_dir = os.path.join(session_dir, "agents")
 
     if not os.path.isfile(log_path) or not os.path.isdir(agents_dir):

@@ -1,5 +1,5 @@
 // スタブデータ — Issue #309 Spectator feed screen
-// 本実装（#318 Replay viewer）で fetch('../state_archive/.../public_log.jsonl') に差し替える
+// 本実装（#318 Replay viewer）で fetch('../state_archive/.../spectator_log.jsonl') に差し替える
 
 // 役職割り当て（観戦者視点の真実情報 — 実ログには存在しない）
 export const ROLE_ASSIGNMENT = {
@@ -55,7 +55,7 @@ export const ACTIONS_TIMELINE = [
 ];
 
 // イベント列（data.js から抜粋・最小化）
-// GameData.md ギャップ: thought フィールドは実ログの public_log.jsonl には含まれない（spectator専用）
+// GameData.md ギャップ: thought フィールドは spectator_log.jsonl の非公開イベントから結合する
 export const EVENTS = [
   { day: 1, event_type: 'phase_start', content: '=== GAME START ===', agent: null, speech_id: null, reply_to: null },
   { day: 1, event_type: 'phase_start', content: '=== DAY 1  TURN 1 ===', agent: null, speech_id: null, reply_to: null },

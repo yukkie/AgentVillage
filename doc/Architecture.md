@@ -43,8 +43,7 @@ AgentVillage/
 │   ├── stats/                  # ゲーム統計の記録（state/stats/ への書き込み）・集計・表示
 │   └── ui/                     # UIレイヤー（CLI / 将来Web）
 ├── state/
-│   ├── public_log.jsonl        # 公開ログ（ゲーム開始時にクリア、アーカイブ後も残留）
-│   ├── spectator_log.jsonl     # 観戦者ログ（公開＋非公開の全イベントを is_public フラグ付きで記録。Web UI はこちらのみ読む）
+│   ├── spectator_log.jsonl     # 公開＋非公開の全イベントを is_public フラグ付きで記録
 │   ├── agents/                 # エージェントごとの状態ファイル（ゲーム開始時に削除、アーカイブ後も残留）
 │   │   ├── setsu.json
 │   │   └── ...
@@ -96,11 +95,10 @@ spectator.py がログを書き出す  →  state_archive/{session}/
                                    agents/*.json            （lib/parseGameData.js）
                                                             is_public=false のイベントは
                                                             public モードで非表示にする
-                                   public_log.jsonl     ※ Web UI は使用しない（CLI 専用）
 ```
 
 **この方針を採用する理由**:
-- Python 側は既存の CLI 動作を一切変えずに済む（CLI を壊さない）
+- Python 側はログ出力を1本に集約し、CLI/Web ともに `is_public` フィルタで公開範囲を切り替えられる
 - JS 側はファイルを読むだけなので Python への依存ゼロ
 - 将来 FastAPI（#315）に移行する際も、JS 側の fetch 先を変えるだけで済む
 
@@ -234,7 +232,8 @@ Contract test: `tests/contract/test_day_phase_contract.py`, `tests/contract/test
 
 ### 3.6 Logger（`src/logger/`）
 
-- 公開ログ（`public_log.jsonl`）と観戦者ログ（真実込み）を分けて保存
+- `spectator_log.jsonl` に公開・非公開の全イベントを `is_public` フラグ付きで保存する
+- CUI replay の public モードは `is_public=true` のイベントのみを表示し、spectator モードは全イベントを表示する
 - リプレイ機能の基盤
 - `LogWriter.__init__` がゲーム開始時にログファイルのクリアと同時に `state/agents/*.json` も削除する。ログと agents の初期化責務を同一箇所に集約するため
 - `state/stats/game_stats.json` は削除しない（累積統計を維持）
@@ -265,7 +264,7 @@ Contract test: `tests/contract/test_day_phase_contract.py`, `tests/contract/test
 |---|---|---|
 | 長期記憶 | 性格・他エージェントの基本印象 | `persona` / `beliefs` フィールド |
 | 中期記憶 | 今回のゲームの出来事 | `memory_summary` フィールド |
-| 短期記憶 | 今日の議論・投票候補 | 当日の `public_log` をそのまま渡す |
+| 短期記憶 | 今日の議論・投票候補 | 当日の公開イベントと投票候補を渡す |
 
 ---
 

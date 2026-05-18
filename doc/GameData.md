@@ -18,7 +18,7 @@ Issue #312 の責務：Milestone 1/2 実装中に発覚した「実ログにな�
 | `hot` | 注目フラグ（「注目」タブのフィルター条件） | ❌ ログに存在しない | ❌ スタブ固定（`false` で代替） |
 | `live` | 進行中フラグ（LIVE表示・「注目」タブのフィルター条件） | ❌ ログに存在しない（完了済みアーカイブのみ） | ❌ スタブ固定（`false` で代替） |
 
-上記フィールドは `public_log.jsonl` / `agents/*.json` のいずれにも存在しない。
+上記フィールドは `spectator_log.jsonl` / `agents/*.json` のいずれにも存在しない。
 Milestone 3（FastAPI / DB 導入後）に改めて対応方針を検討する。
 
 ### #338 で確認したスタブUI（データギャップとは別）
@@ -78,9 +78,9 @@ Milestone 3（FastAPI / DB 導入後）に改めて対応方針を検討する�
 | フィールド | 用途 | 現状 | 対応方針 |
 |---|---|---|---|
 | `thought` | 発言前の思考ログ（spectator限定表示） | ✅ `spectator_log.jsonl` に `is_public=false` + `content: "[THINK] ..."` の speech 行として存在。`parseGameData.js` が同じ `day/agent/speech_id` の公開 speech に結合して `thought` プロパティを生成 | ✅ 実装済み（スタブ不要） |
-| `claimed_role` | CO（カミングアウト）フラグ | ✅ `public_log.jsonl` / `spectator_log.jsonl` の speech 行・co_announcement 行に存在 | ✅ 実装済み（スタブ不要） |
-| `reply_to` | 返信先 speech_id | ✅ `public_log.jsonl` / `spectator_log.jsonl` の speech 行に存在（返信なし時は `null`） | ✅ 実装済み（スタブ不要） |
-| `speech_id` | 発言の連番ID（日内） | ✅ `public_log.jsonl` / `spectator_log.jsonl` の speech 行に存在 | ✅ 実装済み（スタブ不要） |
+| `claimed_role` | CO（カミングアウト）フラグ | ✅ `spectator_log.jsonl` の speech 行・co_announcement 行に存在 | ✅ 実装済み（スタブ不要） |
+| `reply_to` | 返信先 speech_id | ✅ `spectator_log.jsonl` の speech 行に存在（返信なし時は `null`） | ✅ 実装済み（スタブ不要） |
+| `speech_id` | 発言の連番ID（日内） | ✅ `spectator_log.jsonl` の speech 行に存在 | ✅ 実装済み（スタブ不要） |
 
 #### スタブUI（データ・機能が未実装の UI 要素）
 
@@ -142,7 +142,7 @@ AgentDetailScreen は現在 `stub/agentDetail.js` のデータのみを参照し
 | `persona_short`（blurb） | エージェントの1行プロフィール | ❌ `config/agents.json` に存在しない | `stub/agentDetail.js` の `AGENT_BLURB` スタブ固定。`config/agents.json` への追加が必要 |
 | 通算戦績（wins / games / cheers） | ヒーローヘッダーの統計表示 | ❌ アーカイブから集計されていない | `stub/agentDetail.js` の `AGENT_STATS` スタブ固定。#337 実データ集計で対応予定 |
 | 疑い・信頼スコア | 疑いマトリクス表示 | ❌ 実ログに存在しない | `getSuspicionMatrix()` が `charCodeAt` ベースのハッシュで生成。エージェントの `thought` から推定する設計が必要 |
-| 夜の行動ログ | 夜の行動タブ | ❌ `public_log.jsonl` に存在しない | `stub/agentDetail.js` の `NIGHT_ACTIONS` スタブ固定。夜フェーズログの出力が必要 |
+| 夜の行動ログ | 夜の行動タブ | ✅ `spectator_log.jsonl` に観戦者向けイベントとして存在 | `stub/agentDetail.js` の `NIGHT_ACTIONS` スタブ固定。実ログ接続が必要 |
 
 #### スタブUI
 
@@ -198,5 +198,5 @@ AgentDetailScreen は現在 `stub/agentDetail.js` のデータのみを参照し
 ## 凡例
 
 - **発見Issue**: このギャップを発見した実装 Issue
-- **現状**: 実ログ（`public_log.jsonl` / `state_archive/`）における現在の状態
+- **現状**: 実ログ（`spectator_log.jsonl` / `state_archive/`）における現在の状態
 - **対応方針**: Milestone 2 以降の実データ接続時に取るべきアクション
