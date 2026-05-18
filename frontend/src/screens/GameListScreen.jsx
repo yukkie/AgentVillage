@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Avatar from '../components/Avatar.jsx';
 import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
-import { GAMES, TOP_AGENTS, COMMUNITY_POSTS, VILLAGE_NAME_PRESETS } from '../../stub/gameList.js';
+import { TOP_AGENTS, COMMUNITY_POSTS, VILLAGE_NAME_PRESETS } from '../../stub/gameList.js';
+import { fetchGameList } from '../lib/archiveLoader.js';
 import { AGENT_PALETTE } from '../lib/constants.js';
 import styles from './GameListScreen.module.css';
 
@@ -261,9 +262,18 @@ function RightPane() {
 
 // === メインゲーム一覧画面 ===
 export default function GameListScreen() {
-  const [activeTab, setActiveTab] = useState(TABS[0]);
-  const visibleGames = filterGames(GAMES, activeTab);
-  const liveGame = GAMES.find(g => g.live);
+  const [activeTab, setActiveTab] = useState('完了');
+  const [games, setGames] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchGameList()
+      .then(setGames)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const visibleGames = filterGames(games, activeTab);
+  const liveGame = games.find(g => g.live);
 
   return (
     <div className={styles.frame}>
@@ -288,6 +298,10 @@ export default function GameListScreen() {
       <ThreePaneLayout collapsibleLeft collapsibleRight left={<LeftPane />} right={<RightPane />}>
         <div className={styles.listMain}>
           <NewVillageForm />
+
+          {loading && (
+            <div className={styles.loadingMsg}>読み込み中…</div>
+          )}
 
           <div className={styles.listTabs}>
             {TABS.map(t => (

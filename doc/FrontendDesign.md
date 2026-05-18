@@ -555,9 +555,14 @@ fetch('../state_archive/20260510_102927/spectator_log.jsonl')
 
 差し替え対象: `stub/spectator.js` を除去し、`SpectatorScreen` が `parseGameData` の結果を受け取る props ベースに変更する。
 
-**Phase B — ゲーム一覧の動的化（#312 GameData registry）**
+**Phase B — ゲーム一覧の動的化（#338 完了）**
 
-`state_archive/` のディレクトリ一覧を fetch して `GameListScreen` に渡す。`stub/gameList.js` の `GAMES` 配列を置き換える。
+`state_archive/index.json`（`tools/generate_archive_index.py` で事前生成）を fetch して `GameListScreen` に渡す。`stub/gameList.js` の `GAMES` 配列を削除済み。
+
+- `src/lib/archiveLoader.js` — `fetchGameList()` / `parseIndexToGameList()` でデータ取得・変換
+- `src/legacy/normalizeAgentJson.js` — pre-#52 flat 形式エージェント JSON を正規化（Legacy-Adapter）
+- fetch 先 URL は `archiveLoader.js` に集約。#315 FastAPI 導入時は URL 差し替えのみで対応可能
+- `votes` / `desc` 等ログにないフィールドのギャップは `doc/GameData.md` に記録済み
 
 **Phase C — リアルタイム連携（#319 LIVE spectator / #315 FastAPI）**
 
