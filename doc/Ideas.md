@@ -34,6 +34,7 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| yukkie/AgentVillage#349 | tech-debt | 🔴 | 2 | Remove public_log.jsonl — use spectator_log.jsonl with is_public filter | spectator_log.jsonl に一本化し public_log.jsonl の出力を廃止。CUI は is_public フラグでフィルタ |
 | yukkie/AgentVillage#348 | bug | 🔴 | 1 | SpectatorScreen feed overflows viewport — colCenter height exceeds 100vh | 中央フィードが画面外にはみ出しスクロール不能。colCenter が flex コンテナ外に膨張している |
 | yukkie/AgentVillage#346 | bug | 🔴 | 2 | SpectatorScreen left pane shows hardcoded execution target and phase labels | 左ペインの処刑対象・夜フェーズラベルが実ログ未接続。elimination / vote / night_attack から導出可能 |
 | yukkie/AgentVillage#347 | enhancement | 🟡 | 3 | Implement feed filters in SpectatorScreen left pane (agent / role / event type) | 参加者・役職・表示種別フィルターチップを実際に動作させる。追加データ不要でクライアントサイドのみで実装可能 |
