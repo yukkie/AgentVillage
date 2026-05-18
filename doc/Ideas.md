@@ -18,7 +18,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#360 | enhancement | 🔴 | 3 | Introduce React Testing Library and browser-JS contract tests | RTL 導入 + FeedItem / LeftPane のコンポーネントテスト追加。TestStrategy.md §9.1 の導入判断基準を条件ベースに更新 |
 | yukkie/AgentVillage#362 | bug | 🔴 | 3 | UI polish for vote/execution and night phase feed cards | アイコン重複・「神」アイコン・処刑記号・ホバー背景・THINKの折り畳み・アバター表示など11件。#360 完了後に実装 |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#314 | enhancement | 🔴 | 2 | spectator / public mode toggle | viewerMode prop による表示切替。#350 のブロッカー |
