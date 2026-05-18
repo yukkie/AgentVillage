@@ -18,6 +18,8 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| yukkie/AgentVillage#360 | enhancement | 🔴 | 3 | Introduce React Testing Library and browser-JS contract tests | RTL 導入 + FeedItem / LeftPane のコンポーネントテスト追加。TestStrategy.md §9.1 の導入判断基準を条件ベースに更新 |
+| yukkie/AgentVillage#362 | bug | 🔴 | 3 | UI polish for vote/execution and night phase feed cards | アイコン重複・「神」アイコン・処刑記号・ホバー背景・THINKの折り畳み・アバター表示など11件。#360 完了後に実装 |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#314 | enhancement | 🔴 | 2 | spectator / public mode toggle | viewerMode prop による表示切替。#350 のブロッカー |
 | yukkie/AgentVillage#351 | enhancement | 🔴 | 2 | Structured game_over event with winner field + frontend result screen | game_over に winner フィールドを追加し文字列パース依存を除去。観戦画面に勝敗サマリーを表示 |
@@ -25,7 +27,6 @@
 | yukkie/AgentVillage#352 | enhancement | 🟡 | 1 | Show prologue message on game start in SpectatorScreen feed | GAME START 時にプロローグ固定文をフォールバック表示。将来の role_assigned イベント実装時に差し替え |
 | yukkie/AgentVillage#353 | enhancement | 🟡 | 1 | Emit role_assigned events at game start for each agent | init フェーズで全エージェント分の役職割り当てイベントを spectator_log に出力。#352 のフォールバック差し替え用 |
 | yukkie/AgentVillage#357 | tech-debt | 🔴 | 2 | Remove remaining stub fallbacks in SpectatorScreen (NIGHT_RESULTS, VOTE_TABLE_D1, ACTIONS_TIMELINE, ROLE_ASSIGNMENT) | #346 で未対応のスタブ依存4件を実ログ由来データに差し替え、stub/spectator.js の import を完全除去 |
-| yukkie/AgentVillage#360 | enhancement | 🔴 | 3 | Introduce React Testing Library and browser-JS contract tests | RTL 導入 + FeedItem / LeftPane のコンポーネントテスト追加。TestStrategy.md §9.1 の導入判断基準を条件ベースに更新 |
 | yukkie/AgentVillage#350 | enhancement | 🟡 | 3 | Rework SpectatorScreen right pane — role display, real log actions, day-linked view | 容疑度メーター削除・役職表示改善・夜行動実ログ接続・左ペイン日付クリック連動。#314/#346 依存 |
 | yukkie/AgentVillage#347 | enhancement | 🟡 | 3 | Implement feed filters in SpectatorScreen left pane (agent / role / event type) | 参加者・役職・表示種別フィルターチップを実際に動作させる。追加データ不要でクライアントサイドのみで実装可能 |
 | yukkie/AgentVillage#337 | enhancement | 🟡 | 2 | Top agents real stats | stub/gameList.js の TOP_AGENTS を実ゲーム結果の集計データに置き換え |
