@@ -3,10 +3,10 @@ import Avatar from '../components/Avatar.jsx';
 import RoleTag from '../components/RoleTag.jsx';
 import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
-import { ROLES, AGENT_PALETTE } from '../lib/constants.js';
+import { ROLES } from '../lib/constants.js';
 import {
-  ROLE_ASSIGNMENT, NIGHT_RESULTS, EXEC_RESULTS,
-  VOTE_TABLE_D1, ACTIONS_TIMELINE, EVENTS,
+  ROLE_ASSIGNMENT, NIGHT_RESULTS,
+  VOTE_TABLE_D1, ACTIONS_TIMELINE,
 } from '../../stub/spectator.js';
 import { fetchReplayAgents, fetchReplayLog } from '../lib/replayLoader.js';
 import { parseGameData } from '../lib/parseGameData.js';
@@ -105,9 +105,10 @@ function SystemRow({ kind, label, children, ts }) {
 }
 
 // --- 投票内訳カード ---
-function VoteDetail({ day }) {
+function VoteDetail({ day, daySummary }) {
   if (day !== 1) return null;
-  const exec = EXEC_RESULTS[1];
+  const exec = daySummary[1];
+  if (!exec) return null;
   return (
     <div className={styles.voteDetail}>
       <h4>
@@ -146,7 +147,7 @@ function FeedItem({ ev, prevById, roleAssignment, title }) {
 }
 
 // === 左ペイン ===
-function LeftPane({ activeDay, setDay, days, agentNames }) {
+function LeftPane({ activeDay, setDay, days, agentNames, daySummary }) {
   return (
     <>
       <div className={styles.phaseNav}>
@@ -165,10 +166,10 @@ function LeftPane({ activeDay, setDay, days, agentNames }) {
                 <span className={styles.dot} /> 議論フェーズ <span className={styles.phaseTurn}>12 発言</span>
               </div>
               <div className={`${styles.phaseItem} ${styles.phaseExec}`}>
-                <span className={styles.dot} /> 投票・処刑 <span className={styles.phaseTurn}>{EXEC_RESULTS[d]?.target || '—'}</span>
+                <span className={styles.dot} /> 投票・処刑 <span className={styles.phaseTurn}>{daySummary[d]?.target || '—'}</span>
               </div>
               <div className={`${styles.phaseItem} ${styles.phaseNight}`}>
-                <span className={styles.dot} /> 夜フェーズ <span className={styles.phaseTurn}>{d < 3 ? '完了' : '進行中'}</span>
+                <span className={styles.dot} /> 夜フェーズ <span className={styles.phaseTurn}>{daySummary[d]?.nightDone ? '完了' : '進行中'}</span>
               </div>
             </div>
           </div>
@@ -310,6 +311,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
   const [activeDay, setActiveDay] = useState(2);
   const [replayEvents, setReplayEvents] = useState(null);
   const [replayAgents, setReplayAgents] = useState({});
+  const [replayDaySummary, setReplayDaySummary] = useState(null);
   const [loadingEvents, setLoadingEvents] = useState(Boolean(sessionId));
   const [loadingAgents, setLoadingAgents] = useState(Boolean(sessionId));
   const [loadError, setLoadError] = useState(null);
@@ -320,6 +322,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
     let cancelled = false;
     setReplayEvents(null);
     setReplayAgents({});
+    setReplayDaySummary(null);
     setLoadingEvents(true);
     setLoadingAgents(true);
     setLoadError(null);
@@ -341,6 +344,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
         if (cancelled) return;
         const parsed = parseGameData(jsonlText);
         setReplayEvents(parsed.events);
+        setReplayDaySummary(parsed.daySummary);
         const firstDay = parsed.events.find(event => event.day)?.day;
         if (firstDay) setActiveDay(firstDay);
       })
@@ -356,47 +360,28 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
     };
   }, [sessionId, cast]);
 
-  const events = replayEvents ?? EVENTS;
+  const events = replayEvents ?? [];
   const agents = replayAgents;
-  const roleAssignment = useMemo(() => {
-    if (!Object.keys(agents).length) return ROLE_ASSIGNMENT;
-    return Object.fromEntries(
-      Object.entries(agents).map(([name, agent]) => [name, agent.role])
-    );
-  }, [agents]);
-  const agentNames = Object.keys(agents).length ? Object.keys(agents) : Object.keys(AGENT_PALETTE);
-  const days = [...new Set(events.map(event => event.day).filter(Boolean))].sort((a, b) => a - b);
-  const visibleDays = days.length ? days : [1, 2, 3];
+  const daySummary = replayDaySummary ?? {};
+  const roleAssignment = useMemo(() => Object.fromEntries(
+    Object.entries(agents).map(([name, agent]) => [name, agent.role])
+  ), [agents]);
+  const agentNames = Object.keys(agents);
+  const visibleDays = [...new Set(events.map(event => event.day).filter(Boolean))].sort((a, b) => a - b);
 
   const prevById = {};
   events.forEach(e => {
     if (e.speech_id != null) prevById[`${e.day}-${e.speech_id}`] = e;
   });
 
-  const d1 = events.filter(e =>
-    e.day === 1 && (
-      e.event_type === 'speech' ||
-      (e.event_type === 'phase_start' && e.content.includes('GAME START'))
-    )
-  );
-  const d2 = events.filter(e => e.day === 2 && e.event_type === 'speech');
-  const activeEvents = events.filter(e =>
+  const feedEvents = events.filter(e =>
     e.day === activeDay && (
       e.event_type === 'speech' ||
       e.event_type === 'phase_start'
     )
   );
-  const feedEvents = sessionId
-    ? activeEvents
-    : [...d1, ...d2];
   const speechCount = events.filter(e => e.event_type === 'speech').length;
   const coCount = events.filter(e => e.claimed_role).length;
-
-  const annotate = (e) => {
-    if (e.day === 2 && e.agent === 'Ren' && e.speech_id === 1) return { ...e, claimed_role: 'Seer' };
-    if (e.day === 2 && e.agent === 'Nox' && e.speech_id === 2) return { ...e, claimed_role: 'Seer' };
-    return e;
-  };
 
   return (
     <div className={styles.frame}>
@@ -411,7 +396,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
       <ThreePaneLayout
         collapsibleLeft
         collapsibleRight
-        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} days={visibleDays} agentNames={agentNames} />}
+        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} days={visibleDays} agentNames={agentNames} daySummary={daySummary} />}
         right={<RightPane agents={agents} roleAssignment={roleAssignment} />}
       >
         <div className={styles.feedHead}>
@@ -438,25 +423,12 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
           {feedEvents.map((e, i) => (
             <FeedItem
               key={e.id || `${e.day}-${e.event_type}-${e.agent}-${e.speech_id}-${i}`}
-              ev={annotate(e)}
+              ev={e}
               prevById={prevById}
               roleAssignment={roleAssignment}
               title={title || sessionId}
             />
           ))}
-          {!sessionId && (
-            <>
-              <SystemRow kind="exec" label="処刑" ts="11:14">
-                <strong>Toma</strong> が処刑された（4票）。役職は <strong style={{ color: 'var(--r-villager)' }}>村人</strong> でした。
-              </SystemRow>
-              <VoteDetail day={1} />
-              <SystemRow kind="phase" label="夜フェーズ" ts="11:20">夜が訪れた。占い師・人狼・狩人が行動を選択中…</SystemRow>
-              <SystemRow kind="death" label="襲撃" ts="08:00">
-                朝、<strong>Sora</strong> が無残な姿で発見された。村は大きく動揺している。
-              </SystemRow>
-              <SystemRow kind="phase" label="Day 2 議論開始" ts="08:05">2日目の議論が始まりました。</SystemRow>
-            </>
-          )}
         </div>
       </ThreePaneLayout>
     </div>

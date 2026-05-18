@@ -93,6 +93,39 @@ function parseAgent(agentJson) {
 }
 
 /**
+ * Aggregate per-day execution target, vote count, and night completion from
+ * elimination / vote / night_attack events. Days with only other event types
+ * (speech, guard, etc.) have no entry in the returned map.
+ *
+ * @param {object[]} events
+ * @returns {Record<number, { target: string|null, votes: number, nightDone: boolean }>}
+ */
+export function aggregateDayResults(events) {
+  const result = {};
+  const voteCounts = {};
+
+  for (const ev of events) {
+    const d = ev.day;
+    if (!d) continue;
+
+    if (ev.event_type === 'elimination' && ev.is_public) {
+      if (!result[d]) result[d] = { target: null, votes: 0, nightDone: false };
+      result[d].target = ev.agent;
+    } else if (ev.event_type === 'vote') {
+      if (!result[d]) result[d] = { target: null, votes: 0, nightDone: false };
+      if (!voteCounts[d]) voteCounts[d] = {};
+      voteCounts[d][ev.target] = (voteCounts[d][ev.target] || 0) + 1;
+      result[d].votes = Math.max(...Object.values(voteCounts[d]));
+    } else if (ev.event_type === 'night_attack' && ev.is_public) {
+      if (!result[d]) result[d] = { target: null, votes: 0, nightDone: false };
+      result[d].nightDone = true;
+    }
+  }
+
+  return result;
+}
+
+/**
  * Parse archive JSONL and agent JSON into the GameData shape consumed by React.
  *
  * This function is intentionally synchronous and pure. I/O stays in
@@ -101,7 +134,7 @@ function parseAgent(agentJson) {
  *
  * @param {string} jsonlText
  * @param {Record<string, object>} agentJsonByName
- * @returns {{ events: object[], agents: Record<string, object> }}
+ * @returns {{ events: object[], agents: Record<string, object>, daySummary: object }}
  */
 export function parseGameData(jsonlText, agentJsonByName = {}) {
   const rawEvents = jsonlText
@@ -115,8 +148,10 @@ export function parseGameData(jsonlText, agentJsonByName = {}) {
     if (agent.name) agents[agent.name] = agent;
   });
 
+  const events = normalizeEvents(rawEvents);
   return {
-    events: normalizeEvents(rawEvents),
+    events,
     agents,
+    daySummary: aggregateDayResults(rawEvents),
   };
 }
