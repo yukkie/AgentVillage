@@ -129,6 +129,15 @@
 }
 .speech:hover { background: rgba(255,255,255,0.012); }
 .speechWolf { background: linear-gradient(90deg, rgba(226,107,107,0.04), transparent 60%); }
+.wolfChat {
+  background: linear-gradient(90deg, rgba(180,40,40,0.10), transparent 70%);
+  border-left: 2px solid rgba(200,60,60,0.5);
+}
+.wolfBadge {
+  display: flex; align-items: center; justify-content: center;
+  width: 60px; font-size: 20px;
+  flex-shrink: 0;
+}
 .vert {
   position: absolute;
   left: 53px;

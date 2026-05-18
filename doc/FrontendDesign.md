@@ -48,7 +48,9 @@ frontend/
 │   │   ├── GameListScreen.jsx / .module.css
 │   │   └── AgentDetailScreen.jsx / .module.css
 │   ├── lib/
-│   │   └── constants.js    # ROLES 定義・AGENT_PALETTE（#321 で API fetch に移行予定）
+│   │   ├── constants.js    # ROLES 定義・AGENT_PALETTE（#321 で API fetch に移行予定）
+│   │   ├── feedFilter.js   # filterFeedEvents(events, day, phase) — フェーズ別フィルタ純粋関数
+│   │   └── feedFilter.test.js
 │   ├── App.jsx / .module.css
 │   ├── main.jsx
 │   └── tokens.css      # デザイントークン（CSS Variables）
@@ -470,16 +472,45 @@ CSS Grid `grid-template-columns: var(--lcol) 1fr var(--rcol)` で 3 ペインを
 
 #### `SpectatorScreen`
 
-特定ゲームの議論フィードを観戦する画面。発言・処刑・夜の通知をタイムライン順に表示する。
+特定ゲームの議論フィードを観戦する画面。発言・処刑・夜の通知をタイムライン順に表示する。SpectatorScreen は全情報開示モード（wolf_chat / inspection / guard 等の非公開イベントも表示する）。
 
 | 内部コンポーネント | 責務 |
 |---|---|
 | `SpeechCard` | 発言1件。役職ティント / 引用ブロック / 本文 / 思考ログ `<details>` |
+| `WolfChatCard` | 人狼夜間会話1件。`SpeechCard` ベースで赤みがかった背景（`styles.wolfChat`）+ 🐺バッジ |
 | `SystemRow` | GM通知・処刑・夜フェーズ移行など非発言イベント |
-| `VoteDetail` | 処刑ターゲットと投票内訳グリッド |
-| `FeedItem` | `event_type` でルーティングして `SpeechCard` / `SystemRow` に振り分ける |
-| `LeftPane` | フェーズナビ（日 × フェーズ） + エージェント/役職/表示フィルタ |
+| `FeedItem` | `event_type` でルーティングして各カードに振り分ける |
+| `LeftPane` | フェーズナビ（日 × フェーズ、クリックで中央フィードを切り替え） + エージェント/役職/表示フィルタ |
 | `RightPane` | ロスター（生存/死亡 + 容疑度メーター）/ COボード / 夜の行動タイムライン |
+
+#### フェーズクリックの仕様（#358）
+
+左ペインの各フェーズ行をクリックすると、中央フィードがそのフェーズのイベントに絞り込まれる。
+`activeDay`（number）と `activePhase`（`'discuss' | 'vote' | 'night'`）の2つの state で管理する。
+日行をクリックした場合は `activePhase` を `'discuss'` にリセットする。
+
+フェーズ別に表示するイベント種別は `src/lib/feedFilter.js` の `filterFeedEvents(events, day, phase)` が担う:
+
+| activePhase | 表示するイベント種別 |
+|---|---|
+| `'discuss'` | `speech`（public）, `phase_start`（TURN系）, `co_announcement` |
+| `'vote'` | `vote`, `elimination`, `medium_result`, `phase_start`（VOTE系） |
+| `'night'` | `wolf_chat`, `inspection`, `guard`, `guard_block`, `night_attack`, `phase_start`（NIGHT / NIGHT_WOLF_CHAT 系） |
+
+各イベントのカード表示仕様:
+
+| イベント | 表示 |
+|---|---|
+| `vote` | `⚑ {agent} → {target}`（SystemRow kind="exec"） |
+| `elimination` | `☩ {agent} が処刑されました`（SystemRow kind="death"） |
+| `medium_result` | `🔮 [霊媒] {agent} の判定: {target} は村人/人狼陣営`（SystemRow kind="gm"） |
+| `wolf_chat` | WolfChatCard（発言形式・赤背景・🐺バッジ） |
+| `inspection` | `🔮 [占い師] {agent} → {target}: 村人/人狼陣営`（SystemRow kind="gm"） |
+| `guard` | `🛡 [騎士] {agent} が {target} を護衛`（SystemRow kind="gm"） |
+| `guard_block`（private） | `🛡 護衛成功: {target} は守られた`（SystemRow kind="gm"） |
+| `guard_block`（public） | `🛡 全員無事でした`（SystemRow kind="gm"） |
+| `night_attack`（private） | `🐺 [人狼] {target} を襲撃`（SystemRow kind="exec"） |
+| `night_attack`（public） | `☩ {target} が死亡しました`（SystemRow kind="death"） |
 
 データソース: `stub/spectator.js`（`EVENTS`, `ROLE_ASSIGNMENT`, `NIGHT_RESULTS`, `EXEC_RESULTS`, `VOTE_TABLE_D1`, `ACTIONS_TIMELINE`）。
 
