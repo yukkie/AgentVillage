@@ -262,7 +262,7 @@ function RightPane() {
 
 // === メインゲーム一覧画面 ===
 export default function GameListScreen() {
-  const [activeTab, setActiveTab] = useState(TABS[0]);
+  const [activeTab, setActiveTab] = useState('完了');
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
 

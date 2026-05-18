@@ -6,9 +6,9 @@
  * swapped to a FastAPI endpoint (#315) without touching GameListScreen.
  */
 
-// index.json is served from the repository root via Vite's fs.allow setting
-// (local dev only). Replace this path with a FastAPI endpoint in production.
-const INDEX_URL = '../state_archive/index.json';
+// index.json is served via Vite's static file middleware (see vite.config.js).
+// Replace this with a FastAPI endpoint URL in production (#315).
+const INDEX_URL = '/state_archive/index.json';
 
 /**
  * Convert a single index.json entry to a GameCard-compatible object.
