@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseEventLine, parseGameData, normalizeEvents } from './parseGameData.js';
+import { parseEventLine, parseGameData, normalizeEvents, aggregateDayResults } from './parseGameData.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '../../..');
@@ -92,5 +92,70 @@ describe('parseGameData', () => {
 
     expect(miraSpeech.thought).toContain('Day 1');
     expect(miraSpeech.thought).not.toContain('[THINK]');
+  });
+
+  it('includes daySummary in returned GameData', () => {
+    /*
+     * SUT: parseGameData
+     * Mock: なし（design/proposal/source_logs/ の実ログを fixture に使用）
+     * Level: unit
+     * Objective: parseGameData の返り値に daySummary が含まれ、実ログの elimination/night_attack から正しく導出されることを検証する。
+     */
+    const gameData = parseGameData(readFixture('spectator_log.jsonl'));
+    expect(gameData.daySummary).toBeDefined();
+    const day1 = gameData.daySummary[1];
+    expect(day1.target).toBeTruthy();
+    expect(typeof day1.votes).toBe('number');
+    expect(typeof day1.nightDone).toBe('boolean');
+  });
+});
+
+describe('aggregateDayResults', () => {
+  it('extracts elimination target and top vote count', () => {
+    /*
+     * SUT: aggregateDayResults
+     * Mock: なし
+     * Level: unit
+     * Objective: elimination イベントの agent フィールドが daySummary の target に反映され、vote 集計で最多票数が votes に入ることを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'elimination', agent: 'Kael', is_public: true },
+      { day: 1, event_type: 'vote', agent: 'Nox',  target: 'Kael' },
+      { day: 1, event_type: 'vote', agent: 'Mira', target: 'Kael' },
+      { day: 1, event_type: 'vote', agent: 'Ren',  target: 'Sora' },
+    ];
+    const summary = aggregateDayResults(events);
+    expect(summary[1].target).toBe('Kael');
+    expect(summary[1].votes).toBe(2);
+  });
+
+  it('sets nightDone true when public night_attack exists', () => {
+    /*
+     * SUT: aggregateDayResults
+     * Mock: なし
+     * Level: unit
+     * Objective: is_public な night_attack イベントがある日は nightDone が true、ない日は false になることを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'night_attack', agent: 'Rei',  is_public: true },
+      { day: 2, event_type: 'night_attack', agent: 'Sora', is_public: false },
+    ];
+    const summary = aggregateDayResults(events);
+    expect(summary[1].nightDone).toBe(true);
+    expect(summary[2]).toBeUndefined();
+  });
+
+  it('returns no entry for days with only speech events', () => {
+    /*
+     * SUT: aggregateDayResults
+     * Mock: なし
+     * Level: unit
+     * Objective: speech のみのイベント列では daySummary にエントリが作られないことを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'speech', agent: 'Mira', speech_id: 1 },
+    ];
+    const summary = aggregateDayResults(events);
+    expect(summary[1]).toBeUndefined();
   });
 });
