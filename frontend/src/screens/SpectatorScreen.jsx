@@ -148,7 +148,7 @@ function WolfChatCard({ ev }) {
 }
 
 // --- フィードアイテム ---
-function FeedItem({ ev, prevById, roleAssignment, title }) {
+export function FeedItem({ ev, prevById, roleAssignment, title }) {
   if (ev.event_type === 'speech') return <SpeechCard ev={ev} prevById={prevById} roleAssignment={roleAssignment} />;
   if (ev.event_type === 'wolf_chat') return <WolfChatCard ev={ev} />;
 
@@ -215,7 +215,7 @@ function FeedItem({ ev, prevById, roleAssignment, title }) {
 }
 
 // === 左ペイン ===
-function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agentNames, daySummary }) {
+export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agentNames, daySummary }) {
   const handlePhase = (d, phase) => {
     setDay(d);
     setPhase(phase);

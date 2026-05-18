@@ -304,12 +304,14 @@ Missing 行を発見
 
 Web UI は段階的に複雑化するため、テスト基盤も段階的に導入する。
 **先回りでテスト基盤を整えると、スタブから実データへの差し替えで陳腐化する**ため避ける。
+ただし、実データ接続済みでコンポーネント構造が安定し、ユーザー操作・state 変化・表示切り替えが
+Acceptance Criteria になった箇所は、FastAPI 化を待たずに React Testing Library で contract test を追加する。
 
 | Sprint | 範囲 | 導入するテスト |
 |---|---|---|
 | Milestone 1（#308〜#311） | スタブデータの描画 | **なし**（AC をスクショで確認） |
-| Milestone 2（#312/#318/#319/#314） | 実データ接続・ロジック追加 | **Vitest によるユニットテスト**（純粋関数のみ） |
-| #315 以降（FastAPI 化） | WebSocket・状態管理・認証 | **コンポーネントテスト + E2E**（React Testing Library + Playwright） |
+| Milestone 2（#312/#318/#319/#314） | 実データ接続・ロジック追加 | **Vitest によるユニットテスト**（純粋関数）+ 条件を満たす箇所の **RTL コンポーネントテスト** |
+| #315 以降（FastAPI 化） | WebSocket・状態管理・認証 | **コンポーネントテスト拡充 + E2E**（React Testing Library + Playwright） |
 
 #### 各段階で何をテストするか
 
@@ -318,28 +320,35 @@ Web UI は段階的に複雑化するため、テスト基盤も段階的に導�
 - スタブから実データに差し替えるとロジックが大きく変わり、Milestone 1 で書いたテストはすぐ陳腐化する。
 - 例外: `Avatar` の「PNG が無いキャラはモノグラムにフォールバック」のような分岐ロジックがあれば、それだけは書いてよい。
 
-**Milestone 2**: `parseGameData.js` のような **純粋関数のみ** ユニットテストを書く。
+**Milestone 2**: `parseGameData.js` のような **純粋関数** はユニットテストを書く。
 - 入出力が明確で陳腐化しにくい。
 - 実ログ（`design/proposal/source_logs/` や `state_archive/{session}/`）をフィクスチャとして使う。
+
+加えて、以下をすべて満たすコンポーネントには React Testing Library を導入してよい。
+
+- スタブ専用ではなく、実ログ・実 agent JSON 由来のデータ構造に接続済みである
+- コンポーネント責務と props が短期的に大きく変わる見込みが低い
+- `onClick` などのブラウザイベント、React state 更新、条件付きレンダリングが AC に含まれる
+- 純粋関数テストだけでは「ユーザー操作から表示更新まで」の contract を検証できない
 
 > **既知のギャップ（Milestone 2 時点）**: コンポーネントの onClick ハンドラや state 変化は
 > Vitest 純粋関数テストでは検証できない。例えば「左ペインのフェーズ行をクリックすると
 > 中央フィードが切り替わる」という AC は、純粋関数テスト（`feedFilter.test.js`）で
 > フィルタロジックは担保できるが、**クリックで `setPhase` が呼ばれること・フィードが
-> 実際に更新されること**は現状 Playwright による手動目視確認のみに依存している。
-> React Testing Library（RTL）の導入（下記 §9.2）でこのギャップを埋めることが望ましいが、
-> #315 以降の作業として後回しにしている。
+> 実際に更新されること**は純粋関数テストでは担保できない。
+> `SpectatorScreen` の `FeedItem` event_type ルーティングや `LeftPane` フェーズ選択のように
+> 条件を満たす箇所から RTL でこのギャップを埋める。
 
-**#315 以降**: コンポーネント・E2E を本格導入する。
+**#315 以降**: WebSocket・認証・複数画面を跨ぐ E2E を本格導入する。
 - WebSocket イベントの順序・再接続、認証フロー、マルチタブ動作などはテストなしでは品質保証できない。
-- 上記「既知のギャップ」も合わせて RTL で解消する。
+- 既存 RTL テストを実データ配信・状態管理の contract に合わせて拡充する。
 
 ### 9.2 採用ツール
 
 | 種別 | ツール | 用途 |
 |---|---|---|
 | Unit / 純粋関数 | **Vitest** | Vite と統合された高速テストランナー。Jest 互換 API |
-| コンポーネント | **React Testing Library**（#315 以降） | DOM 操作ベースでユーザー視点の動作を検証 |
+| コンポーネント | **React Testing Library** | DOM 操作ベースでユーザー視点の動作を検証 |
 | E2E | **Playwright**（#315 以降） | 実ブラウザでの操作シナリオ検証 |
 | WebSocket Mock | **mock-socket** 等（#315 以降） | WS 接続のテスト |
 
@@ -355,7 +364,7 @@ frontend/
 │   │   └── parseGameData.test.js     # コロケーション
 │   ├── components/
 │   │   ├── Avatar.jsx
-│   │   └── Avatar.test.jsx           # コロケーション（#315 以降）
+│   │   └── Avatar.test.jsx           # コロケーション
 │   └── ...
 └── tests/                            # E2E（Playwright）はここ（#315 以降）
     └── e2e/
