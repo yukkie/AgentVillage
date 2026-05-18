@@ -10,6 +10,7 @@ import {
 } from '../../stub/spectator.js';
 import { fetchReplayAgents, fetchReplayLog } from '../lib/replayLoader.js';
 import { parseGameData } from '../lib/parseGameData.js';
+import { filterFeedEvents } from '../lib/feedFilter.js';
 import styles from './SpectatorScreen.module.css';
 
 // --- ユーティリティ ---
@@ -129,9 +130,76 @@ function VoteDetail({ day, daySummary }) {
   );
 }
 
+// --- 人狼会話カード ---
+function WolfChatCard({ ev }) {
+  return (
+    <div className={`${styles.speech} ${styles.wolfChat}`}>
+      <div className={styles.wolfBadge}>🐺</div>
+      <div className={styles.vert} />
+      <div>
+        <div className={styles.spHead}>
+          <span className={styles.name}>{ev.agent}</span>
+          <span className={styles.alias}>[人狼]</span>
+        </div>
+        <div className={styles.spBody}>{ev.content}</div>
+      </div>
+    </div>
+  );
+}
+
 // --- フィードアイテム ---
 function FeedItem({ ev, prevById, roleAssignment, title }) {
   if (ev.event_type === 'speech') return <SpeechCard ev={ev} prevById={prevById} roleAssignment={roleAssignment} />;
+  if (ev.event_type === 'wolf_chat') return <WolfChatCard ev={ev} />;
+
+  if (ev.event_type === 'vote') {
+    return (
+      <SystemRow kind="exec" label="投票" ts="—">
+        ⚑ {ev.agent} → {ev.target}
+      </SystemRow>
+    );
+  }
+  if (ev.event_type === 'elimination') {
+    return (
+      <SystemRow kind="death" label="処刑" ts="—">
+        ☩ {ev.agent} が処刑されました
+      </SystemRow>
+    );
+  }
+  if (ev.event_type === 'medium_result') {
+    const isWolf = ev.content?.toLowerCase().includes('werewolf');
+    return (
+      <SystemRow kind="gm" label="霊媒結果" ts="—">
+        🔮 [{ev.agent}] の判定: {ev.target} は{isWolf ? '人狼陣営' : '村人陣営'}
+      </SystemRow>
+    );
+  }
+  if (ev.event_type === 'inspection') {
+    const isWolf = ev.content?.toLowerCase().includes('werewolf');
+    return (
+      <SystemRow kind="gm" label="占い結果" ts="—">
+        🔮 [{ev.agent}] → {ev.target}: {isWolf ? '人狼陣営' : '村人陣営'}
+      </SystemRow>
+    );
+  }
+  if (ev.event_type === 'guard') {
+    return (
+      <SystemRow kind="gm" label="護衛" ts="—">
+        🛡 [{ev.agent}] が {ev.target} を護衛
+      </SystemRow>
+    );
+  }
+  if (ev.event_type === 'guard_block') {
+    return ev.is_public
+      ? <SystemRow kind="gm" label="護衛" ts="—">🛡 全員無事でした</SystemRow>
+      : <SystemRow kind="gm" label="護衛成功" ts="—">🛡 護衛成功: {ev.target} は守られた</SystemRow>;
+  }
+  if (ev.event_type === 'night_attack') {
+    return ev.is_public
+      ? <SystemRow kind="death" label="襲撃結果" ts="—">☩ {ev.target} が死亡しました</SystemRow>
+      : <SystemRow kind="exec" label="人狼の襲撃" ts="—">🐺 {ev.target} を襲撃</SystemRow>;
+  }
+
   if (ev.event_type === 'phase_start') {
     if (ev.content.includes('GAME START')) {
       return (
@@ -147,7 +215,12 @@ function FeedItem({ ev, prevById, roleAssignment, title }) {
 }
 
 // === 左ペイン ===
-function LeftPane({ activeDay, setDay, days, agentNames, daySummary }) {
+function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agentNames, daySummary }) {
+  const handlePhase = (d, phase) => {
+    setDay(d);
+    setPhase(phase);
+  };
+
   return (
     <>
       <div className={styles.phaseNav}>
@@ -160,15 +233,21 @@ function LeftPane({ activeDay, setDay, days, agentNames, daySummary }) {
             </div>
             <div className={styles.phaseList}>
               <div
-                className={`${styles.phaseItem} ${styles.phaseDiscuss} ${activeDay === d ? styles.active : ''}`}
-                onClick={() => setDay(d)}
+                className={`${styles.phaseItem} ${styles.phaseDiscuss} ${activeDay === d && activePhase === 'discuss' ? styles.active : ''}`}
+                onClick={() => handlePhase(d, 'discuss')}
               >
                 <span className={styles.dot} /> 議論フェーズ <span className={styles.phaseTurn}>12 発言</span>
               </div>
-              <div className={`${styles.phaseItem} ${styles.phaseExec}`}>
+              <div
+                className={`${styles.phaseItem} ${styles.phaseExec} ${activeDay === d && activePhase === 'vote' ? styles.active : ''}`}
+                onClick={() => handlePhase(d, 'vote')}
+              >
                 <span className={styles.dot} /> 投票・処刑 <span className={styles.phaseTurn}>{daySummary[d]?.target || '—'}</span>
               </div>
-              <div className={`${styles.phaseItem} ${styles.phaseNight}`}>
+              <div
+                className={`${styles.phaseItem} ${styles.phaseNight} ${activeDay === d && activePhase === 'night' ? styles.active : ''}`}
+                onClick={() => handlePhase(d, 'night')}
+              >
                 <span className={styles.dot} /> 夜フェーズ <span className={styles.phaseTurn}>{daySummary[d]?.nightDone ? '完了' : '進行中'}</span>
               </div>
             </div>
@@ -309,6 +388,7 @@ function RightPane({ agents, roleAssignment }) {
 // === メイン観戦画面 ===
 export default function SpectatorScreen({ sessionId, cast = [], title, onBack }) {
   const [activeDay, setActiveDay] = useState(2);
+  const [activePhase, setActivePhase] = useState('discuss');
   const [replayEvents, setReplayEvents] = useState(null);
   const [replayAgents, setReplayAgents] = useState({});
   const [replayDaySummary, setReplayDaySummary] = useState(null);
@@ -346,7 +426,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
         setReplayEvents(parsed.events);
         setReplayDaySummary(parsed.daySummary);
         const firstDay = parsed.events.find(event => event.day)?.day;
-        if (firstDay) setActiveDay(firstDay);
+        if (firstDay) { setActiveDay(firstDay); setActivePhase('discuss'); }
       })
       .catch(error => {
         if (!cancelled) setLoadError(error);
@@ -374,18 +454,13 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
     if (e.speech_id != null) prevById[`${e.day}-${e.speech_id}`] = e;
   });
 
-  const feedEvents = events.filter(e =>
-    e.day === activeDay && (
-      e.event_type === 'speech' ||
-      e.event_type === 'phase_start'
-    )
-  );
+  const feedEvents = filterFeedEvents(events, activeDay, activePhase);
   const speechCount = events.filter(e => e.event_type === 'speech').length;
   const coCount = events.filter(e => e.claimed_role).length;
 
   return (
     <div className={styles.frame}>
-      <TopBar crumbs={[{ label: '観戦' }, { label: title || sessionId || '第13回 桜霞村' }, { label: `Day ${activeDay} 議論` }]}>
+      <TopBar crumbs={[{ label: '観戦' }, { label: title || sessionId || '第13回 桜霞村' }, { label: `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}` }]}>
         {onBack && <TopBarBtn onClick={onBack}>← 一覧</TopBarBtn>}
         <TopBarBtn><span className={topBarStyles.liveDot} /> REPLAY</TopBarBtn>
         <TopBarBtn>同時観戦 142</TopBarBtn>
@@ -396,11 +471,11 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
       <ThreePaneLayout
         collapsibleLeft
         collapsibleRight
-        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} days={visibleDays} agentNames={agentNames} daySummary={daySummary} />}
+        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} activePhase={activePhase} setPhase={setActivePhase} days={visibleDays} agentNames={agentNames} daySummary={daySummary} />}
         right={<RightPane agents={agents} roleAssignment={roleAssignment} />}
       >
         <div className={styles.feedHead}>
-          <h2>Day {activeDay} 議論 <small>{sessionId ? sessionId : '3:47 経過 / 残り 4:13'}</small></h2>
+          <h2>Day {activeDay} {{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]} <small>{sessionId ? sessionId : '3:47 経過 / 残り 4:13'}</small></h2>
           <span className={styles.stat}>発言 <strong>{speechCount}</strong></span>
           <span className={styles.stat}>CO <strong>{coCount}</strong></span>
           <span className={styles.stat}>投票確定 <strong>6/9</strong></span>
