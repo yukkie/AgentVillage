@@ -122,7 +122,7 @@ function winnerClass(winner) {
   return '';
 }
 
-function GameCard({ g }) {
+function GameCard({ g, onOpen }) {
   return (
     <div className={`${styles.gcard} ${g.hot ? styles.featured : ''}`}>
       <div className={styles.vote}>
@@ -130,7 +130,18 @@ function GameCard({ g }) {
         <span className={styles.voteNum}>{g.votes}</span>
         <button>▼</button>
       </div>
-      <div className={styles.cardBody}>
+      <div
+        className={styles.cardBody}
+        role="button"
+        tabIndex={0}
+        onClick={() => onOpen(g)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onOpen(g);
+          }
+        }}
+      >
         <div className={styles.gmeta}>
           {g.live
             ? (
@@ -261,7 +272,7 @@ function RightPane() {
 }
 
 // === メインゲーム一覧画面 ===
-export default function GameListScreen() {
+export default function GameListScreen({ onOpenGame = () => {} }) {
   const [activeTab, setActiveTab] = useState('完了');
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -332,7 +343,7 @@ export default function GameListScreen() {
             </div>
           )}
 
-          {visibleGames.map(g => <GameCard key={g.id} g={g} />)}
+          {visibleGames.map(g => <GameCard key={g.id} g={g} onOpen={onOpenGame} />)}
         </div>
       </ThreePaneLayout>
     </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Avatar from '../components/Avatar.jsx';
 import RoleTag from '../components/RoleTag.jsx';
 import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
@@ -8,6 +8,8 @@ import {
   ROLE_ASSIGNMENT, NIGHT_RESULTS, EXEC_RESULTS,
   VOTE_TABLE_D1, ACTIONS_TIMELINE, EVENTS,
 } from '../../stub/spectator.js';
+import { fetchReplayAgents, fetchReplayLog } from '../lib/replayLoader.js';
+import { parseGameData } from '../lib/parseGameData.js';
 import styles from './SpectatorScreen.module.css';
 
 // --- ユーティリティ ---
@@ -27,8 +29,8 @@ function Mentioned({ text }) {
 }
 
 // --- 発言カード ---
-function SpeechCard({ ev, prevById }) {
-  const role = ROLE_ASSIGNMENT[ev.agent];
+function SpeechCard({ ev, prevById, roleAssignment }) {
+  const role = roleAssignment[ev.agent];
   const r = ROLES[role];
   const replied = ev.reply_to ? prevById[`${ev.day}-${ev.reply_to}`] : null;
   const isWolf = role === 'Werewolf';
@@ -127,13 +129,13 @@ function VoteDetail({ day }) {
 }
 
 // --- フィードアイテム ---
-function FeedItem({ ev, prevById }) {
-  if (ev.event_type === 'speech') return <SpeechCard ev={ev} prevById={prevById} />;
+function FeedItem({ ev, prevById, roleAssignment, title }) {
+  if (ev.event_type === 'speech') return <SpeechCard ev={ev} prevById={prevById} roleAssignment={roleAssignment} />;
   if (ev.event_type === 'phase_start') {
     if (ev.content.includes('GAME START')) {
       return (
         <SystemRow kind="gm" label="ゲームマスター" ts="10:00">
-          <strong>第13回 観測村「桜霞」</strong> が開始されました。村人陣営 7 / 人狼陣営 2 / 占・霊・狩・狂 各1。
+          <strong>{title || 'Archived Game'}</strong> が開始されました。
         </SystemRow>
       );
     }
@@ -144,12 +146,12 @@ function FeedItem({ ev, prevById }) {
 }
 
 // === 左ペイン ===
-function LeftPane({ activeDay, setDay }) {
+function LeftPane({ activeDay, setDay, days, agentNames }) {
   return (
     <>
       <div className={styles.phaseNav}>
         <div className={styles.sectionLabel}>タイムライン</div>
-        {[1, 2, 3].map(d => (
+        {days.map(d => (
           <div key={d}>
             <div className={styles.phaseDay}>
               <h3>第 {d} 日 <small>{d === 1 ? '初日' : d === 2 ? '荒れる' : '進行中'}</small></h3>
@@ -175,7 +177,7 @@ function LeftPane({ activeDay, setDay }) {
       <div className={styles.filt}>
         <div className={styles.sectionLabel}>参加者で絞る</div>
         <div className={styles.filtRow}>
-          {Object.keys(AGENT_PALETTE).slice(0, 8).map(n => (
+          {agentNames.slice(0, 8).map(n => (
             <button key={n} className={styles.chip}>
               <Avatar name={n} size="xs" /> {n}
             </button>
@@ -203,10 +205,14 @@ function LeftPane({ activeDay, setDay }) {
 }
 
 // === 右ペイン ===
-function RightPane() {
-  const order = ['Nox','Mira','Ren','Kai','Toma','Shiki','Rei','Sable','Sera','Kael','Sora'];
-  const dead = ['Sora', 'Toma'];
-  const alive = order.filter(n => !dead.includes(n));
+function RightPane({ agents, roleAssignment }) {
+  const order = Object.keys(agents).length
+    ? Object.keys(agents)
+    : ['Nox','Mira','Ren','Kai','Toma','Shiki','Rei','Sable','Sera','Kael','Sora'];
+  const dead = order.filter(n => agents[n]?.is_alive === false);
+  const fallbackDead = Object.keys(agents).length ? [] : ['Sora', 'Toma'];
+  const deadNames = dead.length ? dead : fallbackDead;
+  const alive = order.filter(n => !deadNames.includes(n));
 
   return (
     <div className={styles.roster}>
@@ -218,7 +224,7 @@ function RightPane() {
       <div className={styles.rosterSection}>
         <h4>生存 <span className={styles.count}>{alive.length}</span></h4>
         {alive.map(n => {
-          const role = ROLE_ASSIGNMENT[n];
+          const role = roleAssignment[n];
           const r = ROLES[role];
           const sus = (n.charCodeAt(0) * 13) % 100;
           return (
@@ -241,9 +247,9 @@ function RightPane() {
       </div>
 
       <div className={styles.rosterSection}>
-        <h4>死亡者 <span className={styles.count}>{dead.length}</span></h4>
-        {dead.map(n => {
-          const role = ROLE_ASSIGNMENT[n];
+        <h4>死亡者 <span className={styles.count}>{deadNames.length}</span></h4>
+        {deadNames.map(n => {
+          const role = roleAssignment[n];
           const r = ROLES[role];
           return (
             <div key={n} className={`${styles.rosterRow} ${styles.dead}`} style={{ '--r-color': r?.color }}>
@@ -300,21 +306,91 @@ function RightPane() {
 }
 
 // === メイン観戦画面 ===
-export default function SpectatorScreen() {
+export default function SpectatorScreen({ sessionId, cast = [], title, onBack }) {
   const [activeDay, setActiveDay] = useState(2);
+  const [replayEvents, setReplayEvents] = useState(null);
+  const [replayAgents, setReplayAgents] = useState({});
+  const [loadingEvents, setLoadingEvents] = useState(Boolean(sessionId));
+  const [loadingAgents, setLoadingAgents] = useState(Boolean(sessionId));
+  const [loadError, setLoadError] = useState(null);
+
+  useEffect(() => {
+    if (!sessionId) return undefined;
+
+    let cancelled = false;
+    setReplayEvents(null);
+    setReplayAgents({});
+    setLoadingEvents(true);
+    setLoadingAgents(true);
+    setLoadError(null);
+
+    fetchReplayAgents({ sessionId, cast })
+      .then(agentJsonByName => {
+        if (cancelled) return;
+        setReplayAgents(parseGameData('', agentJsonByName).agents);
+      })
+      .catch(error => {
+        if (!cancelled) setLoadError(error);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingAgents(false);
+      });
+
+    fetchReplayLog({ sessionId })
+      .then(jsonlText => {
+        if (cancelled) return;
+        const parsed = parseGameData(jsonlText);
+        setReplayEvents(parsed.events);
+        const firstDay = parsed.events.find(event => event.day)?.day;
+        if (firstDay) setActiveDay(firstDay);
+      })
+      .catch(error => {
+        if (!cancelled) setLoadError(error);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingEvents(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId, cast]);
+
+  const events = replayEvents ?? EVENTS;
+  const agents = replayAgents;
+  const roleAssignment = useMemo(() => {
+    if (!Object.keys(agents).length) return ROLE_ASSIGNMENT;
+    return Object.fromEntries(
+      Object.entries(agents).map(([name, agent]) => [name, agent.role])
+    );
+  }, [agents]);
+  const agentNames = Object.keys(agents).length ? Object.keys(agents) : Object.keys(AGENT_PALETTE);
+  const days = [...new Set(events.map(event => event.day).filter(Boolean))].sort((a, b) => a - b);
+  const visibleDays = days.length ? days : [1, 2, 3];
 
   const prevById = {};
-  EVENTS.forEach(e => {
+  events.forEach(e => {
     if (e.speech_id != null) prevById[`${e.day}-${e.speech_id}`] = e;
   });
 
-  const d1 = EVENTS.filter(e =>
+  const d1 = events.filter(e =>
     e.day === 1 && (
       e.event_type === 'speech' ||
       (e.event_type === 'phase_start' && e.content.includes('GAME START'))
     )
   );
-  const d2 = EVENTS.filter(e => e.day === 2 && e.event_type === 'speech');
+  const d2 = events.filter(e => e.day === 2 && e.event_type === 'speech');
+  const activeEvents = events.filter(e =>
+    e.day === activeDay && (
+      e.event_type === 'speech' ||
+      e.event_type === 'phase_start'
+    )
+  );
+  const feedEvents = sessionId
+    ? activeEvents
+    : [...d1, ...d2];
+  const speechCount = events.filter(e => e.event_type === 'speech').length;
+  const coCount = events.filter(e => e.claimed_role).length;
 
   const annotate = (e) => {
     if (e.day === 2 && e.agent === 'Ren' && e.speech_id === 1) return { ...e, claimed_role: 'Seer' };
@@ -324,8 +400,9 @@ export default function SpectatorScreen() {
 
   return (
     <div className={styles.frame}>
-      <TopBar crumbs={[{ label: '観戦' }, { label: '第13回 桜霞村' }, { label: `Day ${activeDay} 議論` }]}>
-        <TopBarBtn><span className={topBarStyles.liveDot} /> LIVE</TopBarBtn>
+      <TopBar crumbs={[{ label: '観戦' }, { label: title || sessionId || '第13回 桜霞村' }, { label: `Day ${activeDay} 議論` }]}>
+        {onBack && <TopBarBtn onClick={onBack}>← 一覧</TopBarBtn>}
+        <TopBarBtn><span className={topBarStyles.liveDot} /> REPLAY</TopBarBtn>
         <TopBarBtn>同時観戦 142</TopBarBtn>
         <TopBarBtn>⤓ 全ログDL</TopBarBtn>
         <TopBarBtn primary>★ 応援</TopBarBtn>
@@ -334,30 +411,52 @@ export default function SpectatorScreen() {
       <ThreePaneLayout
         collapsibleLeft
         collapsibleRight
-        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} />}
-        right={<RightPane />}
+        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} days={visibleDays} agentNames={agentNames} />}
+        right={<RightPane agents={agents} roleAssignment={roleAssignment} />}
       >
         <div className={styles.feedHead}>
-          <h2>Day {activeDay} 議論 <small>3:47 経過 / 残り 4:13</small></h2>
-          <span className={styles.stat}>発言 <strong>{d1.length + d2.length}</strong></span>
-          <span className={styles.stat}>CO <strong>2</strong></span>
+          <h2>Day {activeDay} 議論 <small>{sessionId ? sessionId : '3:47 経過 / 残り 4:13'}</small></h2>
+          <span className={styles.stat}>発言 <strong>{speechCount}</strong></span>
+          <span className={styles.stat}>CO <strong>{coCount}</strong></span>
           <span className={styles.stat}>投票確定 <strong>6/9</strong></span>
           <span className={styles.spacer} />
           <TopBarBtn>⇅ 新しい順</TopBarBtn>
           <TopBarBtn>🔍 検索</TopBarBtn>
         </div>
         <div className={styles.feed}>
-          {d1.map((e, i) => <FeedItem key={i} ev={annotate(e)} prevById={prevById} />)}
-          <SystemRow kind="exec" label="処刑" ts="11:14">
-            <strong>Toma</strong> が処刑された（4票）。役職は <strong style={{ color: 'var(--r-villager)' }}>村人</strong> でした。
-          </SystemRow>
-          <VoteDetail day={1} />
-          <SystemRow kind="phase" label="夜フェーズ" ts="11:20">夜が訪れた。占い師・人狼・狩人が行動を選択中…</SystemRow>
-          <SystemRow kind="death" label="襲撃" ts="08:00">
-            朝、<strong>Sora</strong> が無残な姿で発見された。村は大きく動揺している。
-          </SystemRow>
-          <SystemRow kind="phase" label="Day 2 議論開始" ts="08:05">2日目の議論が始まりました。</SystemRow>
-          {d2.map((e, i) => <FeedItem key={`d2-${i}`} ev={annotate(e)} prevById={prevById} />)}
+          {loadError && (
+            <SystemRow kind="death" label="読み込みエラー" ts="—">
+              {loadError.message}
+            </SystemRow>
+          )}
+          {(loadingEvents || loadingAgents) && (
+            <SystemRow kind="phase" label="読み込み中" ts="—">
+              {loadingAgents ? '参加者情報を読み込み中。' : ''}
+              {loadingEvents ? '発言ログを読み込み中。' : ''}
+            </SystemRow>
+          )}
+          {feedEvents.map((e, i) => (
+            <FeedItem
+              key={e.id || `${e.day}-${e.event_type}-${e.agent}-${e.speech_id}-${i}`}
+              ev={annotate(e)}
+              prevById={prevById}
+              roleAssignment={roleAssignment}
+              title={title || sessionId}
+            />
+          ))}
+          {!sessionId && (
+            <>
+              <SystemRow kind="exec" label="処刑" ts="11:14">
+                <strong>Toma</strong> が処刑された（4票）。役職は <strong style={{ color: 'var(--r-villager)' }}>村人</strong> でした。
+              </SystemRow>
+              <VoteDetail day={1} />
+              <SystemRow kind="phase" label="夜フェーズ" ts="11:20">夜が訪れた。占い師・人狼・狩人が行動を選択中…</SystemRow>
+              <SystemRow kind="death" label="襲撃" ts="08:00">
+                朝、<strong>Sora</strong> が無残な姿で発見された。村は大きく動揺している。
+              </SystemRow>
+              <SystemRow kind="phase" label="Day 2 議論開始" ts="08:05">2日目の議論が始まりました。</SystemRow>
+            </>
+          )}
         </div>
       </ThreePaneLayout>
     </div>

@@ -85,6 +85,24 @@ const SCREENS = { list: GameListScreen, spectator: SpectatorScreen, agent: Agent
 const [screen, setScreen] = useState('list');
 ```
 
+### 4.2.1 Replay viewer（#318）
+
+ゲーム一覧の `GameCard` を選択すると、`App.jsx` が `{ sessionId, cast }` を `SpectatorScreen` に渡す。
+`SpectatorScreen` は画面枠を先に描画し、`useEffect` で `state_archive/{session}/spectator_log.jsonl` と `agents/*.json` を非同期に読み込む。
+
+データ取得と変換の責務は `frontend/src/lib/` に分離する:
+
+| ファイル | 責務 |
+|---|---|
+| `archiveLoader.js` | `state_archive/index.json` → ゲーム一覧カード |
+| `replayLoader.js` | 選択 session の spectator log / agent JSON を fetch |
+| `parseGameData.js` | JSONL + agent JSON → `{ events, agents }` |
+
+`parseGameData.js` は同期の純粋関数として保つ。
+将来ログが大きくなった場合は、`replayLoader.js` 内を day chunk / cursor API / streaming parser に差し替え、画面側は `events` と `agents` を受け取る構造を維持する。
+
+#312 で「❌ スタブ固定」とされた村名・ルール名・投票内訳・夜行動サマリ・ソーシャル系メトリクスは、#318 では fallback 表示のまま残す。
+
 ### 4.3 ルーティング方針（Milestone 2）
 
 react-router を導入し、URL ベースの遷移に移行する。

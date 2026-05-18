@@ -391,7 +391,9 @@ frontend/
 │   │   ├── GameListScreen.jsx    # ゲーム一覧
 │   │   └── AgentScreen.jsx       # エージェント詳細
 │   ├── lib/
-│   │   └── parseGameData.js      # JSONL → GameData 型パーサー（#313）
+│   │   ├── archiveLoader.js      # state_archive/index.json → GameList 用データ
+│   │   ├── replayLoader.js       # replay session のログ・agent JSON fetch
+│   │   └── parseGameData.js      # JSONL → GameData 型パーサー（#318）
 │   └── tokens.css          # デザイントークン（design/proposal/prototypes/styles.css の :root を移植）
 ├── index.html
 ├── vite.config.js
@@ -412,6 +414,32 @@ frontend/
 
 Python 側の `LogEvent`（`src/domain/event.py`）と 1:1 対応する。
 フィールドの追加・変更は両側を同時に更新すること。
+
+### Replay loader（#318）
+
+`SpectatorScreen` は `sessionId` を受け取ると、画面 shell を先に表示してから `replayLoader.js` 経由で archived replay を読み込む。
+
+```text
+GameListScreen
+  ↓ GameCard click
+App.jsx state: { screen: "spectator", selectedGame: { id, cast } }
+  ↓ props
+SpectatorScreen(sessionId, cast)
+  ↓ async fetch
+replayLoader.js
+  ├─ spectator_log.jsonl
+  └─ agents/*.json
+      ↓
+parseGameData(jsonlText, agentJsonByName)
+      ↓
+{ events, agents }
+```
+
+`parseGameData()` は I/O を持たない同期・純粋関数。
+現在は `spectator_log.jsonl` 全体を一括 fetch して行単位に JSON parse する。
+ログ量が増えた場合の変更ポイントは `replayLoader.js` に閉じ、day chunk、cursor pagination、ReadableStream JSONL parser、または FastAPI endpoint に置き換える。
+
+`spectator_log.jsonl` の非公開 `[THINK]` speech 行は、同じ `day` / `agent` / `speech_id` を持つ公開 speech の `thought` に結合する。
 
 ### viewerMode — spectator / public
 

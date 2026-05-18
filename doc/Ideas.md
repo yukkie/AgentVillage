@@ -24,7 +24,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#318 | enhancement | 🟡 | 3 | Replay viewer | state_archive/ から過去ゲームを表示（Milestone 2 前半） |
 | yukkie/AgentVillage#337 | enhancement | 🟡 | 2 | Top agents real stats | stub/gameList.js の TOP_AGENTS を実ゲーム結果の集計データに置き換え |
 | yukkie/AgentVillage#319 | enhancement | 🟡 | 3 | LIVE spectator | state/ を tail して進行中ゲームを表示（Milestone 2 後半） |
 | yukkie/AgentVillage#314 | enhancement | 🟡 | 2 | spectator / public mode toggle | viewerMode prop による表示切替 |
