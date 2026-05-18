@@ -37,6 +37,7 @@
 | yukkie/AgentVillage#349 | tech-debt | 🔴 | 2 | Remove public_log.jsonl — use spectator_log.jsonl with is_public filter | spectator_log.jsonl に一本化し public_log.jsonl の出力を廃止。CUI は is_public フラグでフィルタ |
 | yukkie/AgentVillage#348 | bug | 🔴 | 1 | SpectatorScreen feed overflows viewport — colCenter height exceeds 100vh | 中央フィードが画面外にはみ出しスクロール不能。colCenter が flex コンテナ外に膨張している |
 | yukkie/AgentVillage#346 | bug | 🔴 | 2 | SpectatorScreen left pane shows hardcoded execution target and phase labels | 左ペインの処刑対象・夜フェーズラベルが実ログ未接続。elimination / vote / night_attack から導出可能 |
+| yukkie/AgentVillage#353 | enhancement | 🟡 | 1 | Emit role_assigned events at game start for each agent | init フェーズで全エージェント分の役職割り当てイベントを spectator_log に出力。#352 のフォールバック差し替え用 |
 | yukkie/AgentVillage#352 | enhancement | 🟡 | 1 | Show prologue message on game start in SpectatorScreen feed | GAME START 時にプロローグ固定文をフォールバック表示。将来の role_assigned イベント実装時に差し替え |
 | yukkie/AgentVillage#351 | enhancement | 🟡 | 2 | Structured game_over event with winner field + frontend result screen | game_over に winner フィールドを追加し文字列パース依存を除去。観戦画面に勝敗サマリーを表示 |
 | yukkie/AgentVillage#350 | enhancement | 🟡 | 3 | Rework SpectatorScreen right pane — role display, real log actions, day-linked view | 容疑度メーター削除・役職表示改善・夜行動実ログ接続・左ペイン日付クリック連動。#346 依存 |
