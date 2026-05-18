@@ -12,4 +12,18 @@ repos:
         entry: uv run pytest
         language: system
         pass_filenames: false
-        always_run: true
+        exclude: ^frontend/
+      - id: frontend-test
+        name: frontend test
+        entry: npm --prefix frontend test
+        language: system
+        pass_filenames: false
+        files: ^frontend/
+        stages: [pre-commit]
+      - id: frontend-coverage
+        name: frontend coverage
+        entry: npm --prefix frontend run test:coverage
+        language: system
+        pass_filenames: false
+        files: ^frontend/
+        stages: [pre-commit]
