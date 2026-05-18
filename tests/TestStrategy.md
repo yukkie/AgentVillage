@@ -402,11 +402,12 @@ JS 側でも、**Python と JS の境界で受け渡される契約データ**�
 §7 の3分類チェック（A: 内部不変条件 / B: 外部境界フォールバック / C: テスト不可）はそのまま適用する。
 カバレッジ計測は Vitest の `--coverage` オプションを使う（v8 / istanbul）。
 
-### 9.7 CI 統合
+### 9.7 ローカル品質ゲート
 
 **Milestone 2 以降**:
 - `frontend/package.json` に `"test": "vitest run"` スクリプトを追加
-- `.github/workflows/ci.yml` に JS テスト job を追加（Node のセットアップ + `npm ci` + `npm test`）
-- Python の pytest job と並列実行する
+- `frontend/package.json` に `"test:coverage": "vitest run --coverage"` スクリプトを追加
+- `.pre-commit-config.yaml` に JS テスト hook を追加（`npm test` + `npm run test:coverage`）
+- Python の pytest hook と同じく、コミット前に frontend の回帰と coverage を確認する
 
-CI 統合は #318 の AC に含める（`npm test` がコマンド一発で実行できること）。
+GitHub Actions への frontend job 追加は必須にしない。ローカルの pre-commit gate で `npm test` と coverage がコマンド一発で実行できることを保証する。
