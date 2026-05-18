@@ -5,15 +5,14 @@ from unittest.mock import patch
 from src.logger.writer import LogWriter, archive_state
 
 
-def _make_state(tmp_path: Path) -> tuple[Path, Path, Path]:
+def _make_state(tmp_path: Path) -> tuple[Path, Path]:
     """テスト用の state/ 構造を作成して返す。"""
     agents_dir = tmp_path / "agents"
     agents_dir.mkdir()
     stats_dir = tmp_path / "stats"
     stats_dir.mkdir()
     spectator_log = tmp_path / "spectator_log.jsonl"
-    public_log = tmp_path / "public_log.jsonl"
-    return agents_dir, public_log, spectator_log
+    return agents_dir, spectator_log
 
 
 def test_log_writer_clears_agent_json(tmp_path: Path) -> None:
@@ -23,7 +22,7 @@ def test_log_writer_clears_agent_json(tmp_path: Path) -> None:
     Level: unit
     Objective: LogWriter 生成時に state/agents/*.json が削除されること
     """
-    agents_dir, _public_log, spectator_log = _make_state(tmp_path)
+    agents_dir, spectator_log = _make_state(tmp_path)
     stale = agents_dir / "wolf1.json"
     stale.write_text("{}", encoding="utf-8")
 
@@ -44,7 +43,7 @@ def test_log_writer_preserves_stats(tmp_path: Path) -> None:
     Level: unit
     Objective: LogWriter 生成時に state/stats/ 配下のファイルが削除されないこと
     """
-    agents_dir, _public_log, spectator_log = _make_state(tmp_path)
+    agents_dir, spectator_log = _make_state(tmp_path)
     stats_file = tmp_path / "stats" / "game_stats.json"
     stats_file.write_text("[]", encoding="utf-8")
 
@@ -65,7 +64,7 @@ def test_log_writer_clears_multiple_agent_json(tmp_path: Path) -> None:
     Level: unit
     Objective: state/agents/ 内の複数 JSON がすべて削除されること
     """
-    agents_dir, _public_log, spectator_log = _make_state(tmp_path)
+    agents_dir, spectator_log = _make_state(tmp_path)
     files = [agents_dir / f"{name}.json" for name in ("alice", "wolf1", "wolf2")]
     for f in files:
         f.write_text("{}", encoding="utf-8")
@@ -87,7 +86,8 @@ def test_log_writer_no_error_when_agents_dir_empty(tmp_path: Path) -> None:
     Level: unit
     Objective: state/agents/ が空のときでもエラーなく初期化できること
     """
-    agents_dir, public_log, spectator_log = _make_state(tmp_path)
+    agents_dir, spectator_log = _make_state(tmp_path)
+    public_log = tmp_path / "public_log.jsonl"
 
     with (
         patch("src.logger.writer.LOG_DIR", tmp_path),
