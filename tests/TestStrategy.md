@@ -304,12 +304,14 @@ Missing 行を発見
 
 Web UI は段階的に複雑化するため、テスト基盤も段階的に導入する。
 **先回りでテスト基盤を整えると、スタブから実データへの差し替えで陳腐化する**ため避ける。
+ただし、実データ接続済みでコンポーネント構造が安定し、ユーザー操作・state 変化・表示切り替えが
+Acceptance Criteria になった箇所は、FastAPI 化を待たずに React Testing Library で contract test を追加する。
 
 | Sprint | 範囲 | 導入するテスト |
 |---|---|---|
 | Milestone 1（#308〜#311） | スタブデータの描画 | **なし**（AC をスクショで確認） |
-| Milestone 2（#312/#318/#319/#314） | 実データ接続・ロジック追加 | **Vitest によるユニットテスト**（純粋関数のみ） |
-| #315 以降（FastAPI 化） | WebSocket・状態管理・認証 | **コンポーネントテスト + E2E**（React Testing Library + Playwright） |
+| Milestone 2（#312/#318/#319/#314） | 実データ接続・ロジック追加 | **Vitest によるユニットテスト**（純粋関数）+ 条件を満たす箇所の **RTL コンポーネントテスト** |
+| #315 以降（FastAPI 化） | WebSocket・状態管理・認証 | **コンポーネントテスト拡充 + E2E**（React Testing Library + Playwright） |
 
 #### 各段階で何をテストするか
 
@@ -318,28 +320,35 @@ Web UI は段階的に複雑化するため、テスト基盤も段階的に導�
 - スタブから実データに差し替えるとロジックが大きく変わり、Milestone 1 で書いたテストはすぐ陳腐化する。
 - 例外: `Avatar` の「PNG が無いキャラはモノグラムにフォールバック」のような分岐ロジックがあれば、それだけは書いてよい。
 
-**Milestone 2**: `parseGameData.js` のような **純粋関数のみ** ユニットテストを書く。
+**Milestone 2**: `parseGameData.js` のような **純粋関数** はユニットテストを書く。
 - 入出力が明確で陳腐化しにくい。
 - 実ログ（`design/proposal/source_logs/` や `state_archive/{session}/`）をフィクスチャとして使う。
+
+加えて、以下をすべて満たすコンポーネントには React Testing Library を導入してよい。
+
+- スタブ専用ではなく、実ログ・実 agent JSON 由来のデータ構造に接続済みである
+- コンポーネント責務と props が短期的に大きく変わる見込みが低い
+- `onClick` などのブラウザイベント、React state 更新、条件付きレンダリングが AC に含まれる
+- 純粋関数テストだけでは「ユーザー操作から表示更新まで」の contract を検証できない
 
 > **既知のギャップ（Milestone 2 時点）**: コンポーネントの onClick ハンドラや state 変化は
 > Vitest 純粋関数テストでは検証できない。例えば「左ペインのフェーズ行をクリックすると
 > 中央フィードが切り替わる」という AC は、純粋関数テスト（`feedFilter.test.js`）で
 > フィルタロジックは担保できるが、**クリックで `setPhase` が呼ばれること・フィードが
-> 実際に更新されること**は現状 Playwright による手動目視確認のみに依存している。
-> React Testing Library（RTL）の導入（下記 §9.2）でこのギャップを埋めることが望ましいが、
-> #315 以降の作業として後回しにしている。
+> 実際に更新されること**は純粋関数テストでは担保できない。
+> `SpectatorScreen` の `FeedItem` event_type ルーティングや `LeftPane` フェーズ選択のように
+> 条件を満たす箇所から RTL でこのギャップを埋める。
 
-**#315 以降**: コンポーネント・E2E を本格導入する。
+**#315 以降**: WebSocket・認証・複数画面を跨ぐ E2E を本格導入する。
 - WebSocket イベントの順序・再接続、認証フロー、マルチタブ動作などはテストなしでは品質保証できない。
-- 上記「既知のギャップ」も合わせて RTL で解消する。
+- 既存 RTL テストを実データ配信・状態管理の contract に合わせて拡充する。
 
 ### 9.2 採用ツール
 
 | 種別 | ツール | 用途 |
 |---|---|---|
 | Unit / 純粋関数 | **Vitest** | Vite と統合された高速テストランナー。Jest 互換 API |
-| コンポーネント | **React Testing Library**（#315 以降） | DOM 操作ベースでユーザー視点の動作を検証 |
+| コンポーネント | **React Testing Library** | DOM 操作ベースでユーザー視点の動作を検証 |
 | E2E | **Playwright**（#315 以降） | 実ブラウザでの操作シナリオ検証 |
 | WebSocket Mock | **mock-socket** 等（#315 以降） | WS 接続のテスト |
 
@@ -355,7 +364,7 @@ frontend/
 │   │   └── parseGameData.test.js     # コロケーション
 │   ├── components/
 │   │   ├── Avatar.jsx
-│   │   └── Avatar.test.jsx           # コロケーション（#315 以降）
+│   │   └── Avatar.test.jsx           # コロケーション
 │   └── ...
 └── tests/                            # E2E（Playwright）はここ（#315 以降）
     └── e2e/
@@ -383,7 +392,33 @@ test('parses spectator_log.jsonl into events array', () => {
 });
 ```
 
-### 9.5 Mock 使用ポリシー（JS 版）
+### 9.5 Frontend TDD / Contract Test ルール
+
+Python 側の contract テストと同じく、フロントエンドでも **contract が絡む変更は TDD を必須**とする。
+ここでいう contract は、単なる実装詳細ではなく、producer と consumer の間で守るべき振る舞い・データ形状・UI 操作境界を指す。
+
+対象例:
+
+- Python LogEvent / agent JSON → `parseGameData()` / React 画面のデータ契約
+- `FeedItem` の `event_type` → 表示カード種別のルーティング契約
+- `LeftPane` のクリック操作 → `activeDay` / `activePhase` state 更新契約
+- view model / filter 関数 → 画面が必要とする検索・絞り込み結果の契約
+
+手順:
+
+1. AC から contract を先に切り出す
+2. 実装前に Vitest / React Testing Library でテストを書く
+3. `npm test` で **RED を確認する**
+4. 実装して GREEN にする
+5. `npm run test:coverage` で追加・変更行のカバレッジを確認する
+
+RED にならないテストは、既存実装で既に満たされているか、アサートが弱すぎる。
+後者の場合は実装に進まず、テスト観点を見直す。
+
+RTL を使う場合も同じで、先に「ユーザー操作または表示契約」をテストで固定してから実装する。
+CSS の見た目そのものではなく、ユーザーが観測できる DOM、テキスト、クリック結果、選択状態を優先して検証する。
+
+### 9.6 Mock 使用ポリシー（JS 版）
 
 §4 の3分類（Required / Forbidden / Conditional）はそのまま JS にも適用する。
 
@@ -406,12 +441,12 @@ JS 側でも、**Python と JS の境界で受け渡される契約データ**�
 #### Conditional
 上記以外のオブジェクトはデフォルトで Conditional 扱い。
 
-### 9.6 カバレッジ判断フロー（JS 版）
+### 9.7 カバレッジ判断フロー（JS 版）
 
 §7 の3分類チェック（A: 内部不変条件 / B: 外部境界フォールバック / C: テスト不可）はそのまま適用する。
 カバレッジ計測は Vitest の `--coverage` オプションを使う（v8 / istanbul）。
 
-### 9.7 ローカル品質ゲート
+### 9.8 ローカル品質ゲート
 
 **Milestone 2 以降**:
 - `frontend/package.json` に `"test": "vitest run"` スクリプトを追加
