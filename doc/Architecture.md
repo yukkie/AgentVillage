@@ -264,7 +264,7 @@ Contract test: `tests/contract/test_day_phase_contract.py`, `tests/contract/test
 |---|---|---|
 | 長期記憶 | 性格・他エージェントの基本印象 | `persona` / `beliefs` フィールド |
 | 中期記憶 | 今回のゲームの出来事 | `memory_summary` フィールド |
-| 短期記憶 | 今日の議論・投票候補 | 当日の `public_log` をそのまま渡す |
+| 短期記憶 | 今日の議論・投票候補 | 当日の公開イベントと投票候補を渡す |
 
 ---
 
