@@ -133,6 +133,7 @@
   background: linear-gradient(90deg, rgba(180,40,40,0.10), transparent 70%);
   border-left: 2px solid rgba(200,60,60,0.5);
 }
+.wolfChat:hover { background: linear-gradient(90deg, rgba(180,40,40,0.16), transparent 70%); }
 .wolfBadge {
   display: flex; align-items: center; justify-content: center;
   width: 60px; font-size: 20px;
@@ -283,10 +284,7 @@
 .sysrow.death .icon { background: #2a1418; color: var(--danger); }
 .sysrow.gm    .icon { background: rgba(240,199,95,0.12);  color: var(--acc); }
 .sysrow.phase .icon { background: rgba(125,108,255,0.18); color: #b6abff; }
-.sysrow .sysLabel { font-family: var(--serif); font-size: 11px; color: var(--tx-3); letter-spacing: 0.1em; }
-.sysrow .sysText  { font-size: 13px; color: var(--tx); }
 .sysrow .sysText strong { font-family: var(--serif); font-weight: 600; }
-.sysrow .sysTs    { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--tx-4); }
 
 /* Vote breakdown */
 .voteDetail {
@@ -432,6 +430,10 @@
 .thinkBody { padding: 0 14px 12px 36px; white-space: pre-wrap; line-height: 1.65; font-family: var(--sans); color: var(--tx-2); }
 
 /* sysrow inner */
+.sysIconCol { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 0 0 64px; width: 64px; }
+.sysLabel { font-family: var(--serif); font-size: 10px; color: var(--tx-3); letter-spacing: 0.08em; text-align: center; }
+.sysText { font-size: 13px; color: var(--tx); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; flex: 1; }
+.sysTs { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--tx-4); }
 .sysIcon {
   width: 28px; height: 28px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;

@@ -81,6 +81,133 @@ describe('FeedItem event routing', () => {
   });
 });
 
+describe('FeedItem: phase_start visibility', () => {
+  it('hides day_vote phase_start', () => {
+    /**
+     * SUT: FeedItem
+     * Mock: なし
+     * Level: unit
+     * Objective: day_vote の phase_start が中央フィードに表示されないことを検証する。
+     */
+    const { container } = renderFeedItem({ event_type: 'phase_start', phase: 'day_vote', content: '=== DAY 1  VOTE ===' });
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('hides night phase_start', () => {
+    /**
+     * SUT: FeedItem
+     * Mock: なし
+     * Level: unit
+     * Objective: night の phase_start が中央フィードに表示されないことを検証する。
+     */
+    const { container } = renderFeedItem({ event_type: 'phase_start', phase: 'night', content: '=== NIGHT 1 ===' });
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('shows GAME START phase_start', () => {
+    /**
+     * SUT: FeedItem
+     * Mock: なし
+     * Level: unit
+     * Objective: init の phase_start（GAME START）が表示されることを検証する。
+     */
+    renderFeedItem({ event_type: 'phase_start', phase: 'init', content: '=== GAME START ===' });
+    expect(screen.getByText(/が開始されました/)).toBeTruthy();
+  });
+});
+
+describe('FeedItem: vote card', () => {
+  it('shows voter and target avatars without duplicate icon', () => {
+    /**
+     * SUT: FeedItem
+     * Mock: なし
+     * Level: unit
+     * Objective: 投票カードに投票者・被投票者の img が表示され、本文テキスト内に ⚑ アイコン文字が含まれないことを検証する。
+     */
+    const { container } = renderFeedItem({ event_type: 'vote', agent: 'Alice', target: 'Bob' });
+    const imgs = container.querySelectorAll('img');
+    expect(imgs.length).toBeGreaterThanOrEqual(1);
+    const sysText = container.querySelector('[class*="sysText"]');
+    expect(sysText?.textContent).not.toMatch(/⚑/);
+  });
+});
+
+describe('FeedItem: elimination card', () => {
+  it('shows target avatar', () => {
+    /**
+     * SUT: FeedItem
+     * Mock: なし
+     * Level: unit
+     * Objective: 処刑カードに対象者の img が表示されることを検証する。
+     */
+    const { container } = renderFeedItem({ event_type: 'elimination', agent: 'Bob' });
+    const imgs = container.querySelectorAll('img');
+    expect(imgs.length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('FeedItem: wolf_chat card', () => {
+  it('folds thought into details when ev.thought is present', () => {
+    /**
+     * SUT: FeedItem (WolfChatCard)
+     * Mock: なし
+     * Level: unit
+     * Objective: wolf_chat に thought がある場合「思考ログを読む」details が表示されることを検証する。
+     */
+    renderFeedItem({ event_type: 'wolf_chat', agent: 'Bob', content: 'Attack tonight.', thought: '狼として最適な標的を選ぶ。' });
+    expect(screen.getByText(/思考ログを読む/)).toBeTruthy();
+  });
+
+  it('does not show thought details when ev.thought is absent', () => {
+    /**
+     * SUT: FeedItem (WolfChatCard)
+     * Mock: なし
+     * Level: unit
+     * Objective: wolf_chat に thought がない場合「思考ログを読む」が表示されないことを検証する。
+     */
+    renderFeedItem({ event_type: 'wolf_chat', agent: 'Bob', content: 'Attack tonight.' });
+    expect(screen.queryByText(/思考ログを読む/)).toBeNull();
+  });
+});
+
+describe('FeedItem: system event icons', () => {
+  it('guard uses 🛡 icon in SystemRow', () => {
+    /**
+     * SUT: FeedItem (SystemRow)
+     * Mock: なし
+     * Level: unit
+     * Objective: guard イベントの SystemRow 左アイコンが 🛡 であることを検証する。
+     */
+    const { container } = renderFeedItem({ event_type: 'guard', agent: 'Carol', target: 'Alice' });
+    const icon = container.querySelector('[class*="sysIconCol"] > [class*="sysIcon"]');
+    expect(icon?.textContent).toBe('🛡');
+  });
+
+  it('inspection uses 🔮 icon in SystemRow', () => {
+    /**
+     * SUT: FeedItem (SystemRow)
+     * Mock: なし
+     * Level: unit
+     * Objective: inspection イベントの SystemRow 左アイコンが 🔮 であることを検証する。
+     */
+    const { container } = renderFeedItem({ event_type: 'inspection', agent: 'Alice', target: 'Bob', content: 'Bob is Werewolf' });
+    const icon = container.querySelector('[class*="sysIconCol"] > [class*="sysIcon"]');
+    expect(icon?.textContent).toBe('🔮');
+  });
+
+  it('body text has no redundant emoji prefix for guard', () => {
+    /**
+     * SUT: FeedItem
+     * Mock: なし
+     * Level: unit
+     * Objective: guard の本文テキスト（sysText）に 🛡 が含まれないことを検証する（sysIcon は対象外）。
+     */
+    const { container } = renderFeedItem({ event_type: 'guard', agent: 'Carol', target: 'Alice' });
+    const sysText = container.querySelector('[class*="sysText"]');
+    expect(sysText?.textContent).not.toMatch(/🛡/);
+  });
+});
+
 describe('LeftPane phase interaction', () => {
   it.each([
     ['議論フェーズ', 'discuss'],

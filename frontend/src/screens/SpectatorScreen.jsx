@@ -91,15 +91,15 @@ function SpeechCard({ ev, prevById, roleAssignment }) {
 }
 
 // --- システム行 ---
-function SystemRow({ kind, label, children, ts }) {
-  const iconChar = { gm: '神', death: '☩', exec: '⚑', phase: '☾' }[kind] || '⌘';
+function SystemRow({ kind, icon, label, children, ts }) {
+  const defaultIcon = { gm: '👁', death: '💀', exec: '⚑', phase: '☾' }[kind] || '⌘';
   return (
     <div className={`${styles.sysrow} ${styles[kind] || ''}`}>
-      <div className={styles.sysIcon}>{iconChar}</div>
-      <div>
+      <div className={styles.sysIconCol}>
+        <div className={styles.sysIcon}>{icon ?? defaultIcon}</div>
         <div className={styles.sysLabel}>{label}</div>
-        <div className={styles.sysText}>{children}</div>
       </div>
+      <div className={styles.sysText}>{children}</div>
       <div className={styles.sysTs}>{ts}</div>
     </div>
   );
@@ -134,14 +134,34 @@ function VoteDetail({ day, daySummary }) {
 function WolfChatCard({ ev }) {
   return (
     <div className={`${styles.speech} ${styles.wolfChat}`}>
-      <div className={styles.wolfBadge}>🐺</div>
+      <Avatar name={ev.agent} />
       <div className={styles.vert} />
       <div>
         <div className={styles.spHead}>
           <span className={styles.name}>{ev.agent}</span>
-          <span className={styles.alias}>[人狼]</span>
+          <span className={styles.alias}>人狼</span>
         </div>
         <div className={styles.spBody}>{ev.content}</div>
+        {ev.thought && (
+          <details className={styles.spThink}>
+            <summary>
+              <svg className={styles.bubbleIco} width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M2 3.5C2 2.67 2.67 2 3.5 2h9c.83 0 1.5.67 1.5 1.5v6c0 .83-.67 1.5-1.5 1.5H7.5L4.7 13.4a.4.4 0 0 1-.7-.28V11H3.5C2.67 11 2 10.33 2 9.5v-6Z"
+                  stroke="currentColor" strokeWidth="1.2"
+                />
+                <circle cx="5.5" cy="6.5" r="0.7" fill="currentColor" />
+                <circle cx="8"   cy="6.5" r="0.7" fill="currentColor" />
+                <circle cx="10.5" cy="6.5" r="0.7" fill="currentColor" />
+              </svg>
+              <span className={styles.thinkLabel}>思考ログを読む</span>
+              <span className={styles.conf}>{ev.thought.length} 字 · spectator限定</span>
+            </summary>
+            <div className={styles.thinkBody}>
+              {ev.thought.slice(0, 380)}{ev.thought.length > 380 ? '…' : ''}
+            </div>
+          </details>
+        )}
       </div>
     </div>
   );
@@ -155,60 +175,62 @@ export function FeedItem({ ev, prevById, roleAssignment, title }) {
   if (ev.event_type === 'vote') {
     return (
       <SystemRow kind="exec" label="投票" ts="—">
-        ⚑ {ev.agent} → {ev.target}
+        <Avatar name={ev.agent} size="xs" /> {ev.agent} → <Avatar name={ev.target} size="xs" /> {ev.target}
       </SystemRow>
     );
   }
   if (ev.event_type === 'elimination') {
     return (
-      <SystemRow kind="death" label="処刑" ts="—">
-        ☩ {ev.agent} が処刑されました
+      <SystemRow kind="death" icon="💀" label="処刑" ts="—">
+        <Avatar name={ev.agent} size="xs" /> {ev.agent} が処刑されました
       </SystemRow>
     );
   }
   if (ev.event_type === 'medium_result') {
     const isWolf = ev.content?.toLowerCase().includes('werewolf');
     return (
-      <SystemRow kind="gm" label="霊媒結果" ts="—">
-        🔮 [{ev.agent}] の判定: {ev.target} は{isWolf ? '人狼陣営' : '村人陣営'}
+      <SystemRow kind="gm" icon="👁" label="霊媒結果" ts="—">
+        <Avatar name={ev.agent} size="xs" /> {ev.agent} の判定: <Avatar name={ev.target} size="xs" /> {ev.target} は{isWolf ? '人狼陣営' : '村人陣営'}
       </SystemRow>
     );
   }
   if (ev.event_type === 'inspection') {
     const isWolf = ev.content?.toLowerCase().includes('werewolf');
     return (
-      <SystemRow kind="gm" label="占い結果" ts="—">
-        🔮 [{ev.agent}] → {ev.target}: {isWolf ? '人狼陣営' : '村人陣営'}
+      <SystemRow kind="gm" icon="🔮" label="占い結果" ts="—">
+        <Avatar name={ev.agent} size="xs" /> {ev.agent} → <Avatar name={ev.target} size="xs" /> {ev.target}: {isWolf ? '人狼陣営' : '村人陣営'}
       </SystemRow>
     );
   }
   if (ev.event_type === 'guard') {
     return (
-      <SystemRow kind="gm" label="護衛" ts="—">
-        🛡 [{ev.agent}] が {ev.target} を護衛
+      <SystemRow kind="gm" icon="🛡" label="護衛" ts="—">
+        <Avatar name={ev.agent} size="xs" /> {ev.agent} が <Avatar name={ev.target} size="xs" /> {ev.target} を護衛
       </SystemRow>
     );
   }
   if (ev.event_type === 'guard_block') {
     return ev.is_public
-      ? <SystemRow kind="gm" label="護衛" ts="—">🛡 全員無事でした</SystemRow>
-      : <SystemRow kind="gm" label="護衛成功" ts="—">🛡 護衛成功: {ev.target} は守られた</SystemRow>;
+      ? <SystemRow kind="gm" icon="🛡" label="護衛" ts="—">全員無事でした</SystemRow>
+      : <SystemRow kind="gm" icon="🛡" label="護衛成功" ts="—">護衛成功: <Avatar name={ev.target} size="xs" /> {ev.target} は守られた</SystemRow>;
   }
   if (ev.event_type === 'night_attack') {
+    const victim = ev.target ?? ev.agent;
     return ev.is_public
-      ? <SystemRow kind="death" label="襲撃結果" ts="—">☩ {ev.target} が死亡しました</SystemRow>
-      : <SystemRow kind="exec" label="人狼の襲撃" ts="—">🐺 {ev.target} を襲撃</SystemRow>;
+      ? <SystemRow kind="death" icon="💀" label="襲撃結果" ts="—"><Avatar name={victim} size="xs" /> {victim} が死亡しました</SystemRow>
+      : <SystemRow kind="exec" icon="🐺" label="人狼の襲撃" ts="—"><Avatar name={ev.target} size="xs" /> {ev.target} を襲撃</SystemRow>;
   }
 
   if (ev.event_type === 'phase_start') {
-    if (ev.content.includes('GAME START')) {
+    if (ev.phase === 'init') {
       return (
         <SystemRow kind="gm" label="ゲームマスター" ts="10:00">
           <strong>{title || 'Archived Game'}</strong> が開始されました。
         </SystemRow>
       );
     }
-    if (ev.content.match(/TURN \d+/)) return null;
+    if (ev.phase === 'day_vote' || ev.phase === 'night' || ev.phase === 'night_wolf_chat' || ev.phase === 'pre_night') return null;
+    if (ev.phase === 'day_opening' || ev.phase === 'day_discussion') return null;
     return <SystemRow kind="phase" label="フェーズ" ts="—">{ev.content}</SystemRow>;
   }
   return null;

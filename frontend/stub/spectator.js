@@ -57,8 +57,8 @@ export const ACTIONS_TIMELINE = [
 // イベント列（data.js から抜粋・最小化）
 // GameData.md ギャップ: thought フィールドは spectator_log.jsonl の非公開イベントから結合する
 export const EVENTS = [
-  { day: 1, event_type: 'phase_start', content: '=== GAME START ===', agent: null, speech_id: null, reply_to: null },
-  { day: 1, event_type: 'phase_start', content: '=== DAY 1  TURN 1 ===', agent: null, speech_id: null, reply_to: null },
+  { day: 1, event_type: 'phase_start', phase: 'init',           content: '=== GAME START ===',   agent: null, speech_id: null, reply_to: null },
+  { day: 1, event_type: 'phase_start', phase: 'day_opening',    content: '=== DAY 1  TURN 1 ===', agent: null, speech_id: null, reply_to: null },
   {
     day: 1, event_type: 'speech', agent: 'Mira', speech_id: 1, reply_to: null, claimed_role: null,
     content: 'みんな、おはよう。Day 1だから、まずは様子を見ていこう。今は誰が何の役職かわからないから、みんなで協力して情報を集めるのが大事だと思う。何か気になることがあれば、遠慮なく言ってほしいね。',
