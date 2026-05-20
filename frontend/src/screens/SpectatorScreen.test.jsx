@@ -60,14 +60,14 @@ function renderLeftPane(overrides = {}) {
 
 describe('FeedItem event routing', () => {
   it.each([
-    ['vote', { event_type: 'vote', agent: 'Alice', target: 'Bob' }, /Alice → Bob/],
-    ['elimination', { event_type: 'elimination', agent: 'Bob' }, /Bob が処刑されました/],
-    ['medium_result', { event_type: 'medium_result', agent: 'Alice', target: 'Bob', content: 'Bob was Werewolf' }, /Bob は人狼陣営/],
+    ['vote', { event_type: 'vote', agent: 'Alice', target: 'Bob', content: 'Alice votes for Bob' }, /Alice votes for Bob/],
+    ['elimination', { event_type: 'elimination', agent: 'Bob', content: 'Bob was executed by the village vote.' }, /Bob was executed by the village vote\./],
+    ['medium_result', { event_type: 'medium_result', agent: 'Alice', target: 'Bob', content: 'Alice senses: Bob was Werewolf' }, /Alice senses: Bob was Werewolf/],
     ['wolf_chat', { event_type: 'wolf_chat', agent: 'Bob', content: 'Attack Alice tonight.' }, /Attack Alice tonight\./],
-    ['inspection', { event_type: 'inspection', agent: 'Alice', target: 'Bob', content: 'Bob is Werewolf' }, /Bob: 人狼陣営/],
-    ['guard', { event_type: 'guard', agent: 'Carol', target: 'Alice' }, /Carol.*Alice を護衛/],
-    ['guard_block', { event_type: 'guard_block', target: 'Alice', is_public: false }, /護衛成功: Alice は守られた/],
-    ['night_attack', { event_type: 'night_attack', target: 'Alice', is_public: false }, /Alice を襲撃/],
+    ['inspection', { event_type: 'inspection', agent: 'Alice', target: 'Bob', content: 'Alice inspects Bob: Werewolf' }, /Alice inspects Bob: Werewolf/],
+    ['guard', { event_type: 'guard', agent: 'Carol', target: 'Alice', content: 'Carol guards Alice' }, /Carol guards Alice/],
+    ['guard_block', { event_type: 'guard_block', target: 'Alice', is_public: false, content: 'Alice was protected by the Knight! The attack was blocked.' }, /Alice was protected by the Knight! The attack was blocked\./],
+    ['night_attack', { event_type: 'night_attack', target: 'Alice', is_public: false, content: 'Werewolves attack Alice' }, /Werewolves attack Alice/],
   ])('renders %s events with the expected card', (_eventType, event, expectedText) => {
     /**
      * SUT: FeedItem
@@ -78,6 +78,79 @@ describe('FeedItem event routing', () => {
     renderFeedItem(event);
 
     expect(screen.getByText(expectedText)).toBeTruthy();
+  });
+
+  it.each([
+    ['medium_result villager-side result', { event_type: 'medium_result', agent: 'Alice', target: 'Carol', content: 'Alice senses: Carol was Not Werewolf' }],
+    ['medium_result werewolf result', { event_type: 'medium_result', agent: 'Alice', target: 'Bob', content: 'Alice senses: Bob was Werewolf' }],
+    ['inspection villager-side result', { event_type: 'inspection', agent: 'Alice', target: 'Carol', content: 'Alice inspects Carol: Not Werewolf', inspection_role: 'Villager' }],
+    ['inspection werewolf result', { event_type: 'inspection', agent: 'Alice', target: 'Bob', content: 'Alice inspects Bob: Werewolf', inspection_role: 'Werewolf' }],
+  ])('renders %s without frontend translation', (_caseName, event) => {
+    /**
+     * SUT: FeedItem
+     * Mock: なし（LogEvent 形状の plain object を入力）
+     * Level: unit
+     * Objective: 霊媒/占い結果をフロントエンドで陣営文言へ翻訳せず、ログ content のまま表示することを検証する。
+     */
+    renderFeedItem(event);
+
+    expect(screen.getByText(event.content)).toBeTruthy();
+    expect(screen.queryByText(/村人陣営|人狼陣営/)).toBeNull();
+  });
+
+  it('renders actor avatars around two-party system logs', () => {
+    /**
+     * SUT: FeedItem
+     * Mock: なし（LogEvent 形状の plain object を入力）
+     * Level: unit
+     * Objective: 二者が関わるシステムログで agent / target のアバターが左右に表示されることを検証する。
+     */
+    renderFeedItem({
+      event_type: 'inspection',
+      agent: 'Alice',
+      target: 'Bob',
+      content: 'Alice inspects Bob: Werewolf',
+    });
+
+    expect(screen.getByAltText('Alice')).toBeTruthy();
+    expect(screen.getByAltText('Bob')).toBeTruthy();
+  });
+
+  it('renders a missing-content marker instead of reconstructing a system log message', () => {
+    /**
+     * SUT: FeedItem
+     * Mock: なし（LogEvent 形状の plain object を入力）
+     * Level: unit
+     * Objective: content が欠損したシステムログでは表示文を再構築せず、欠損マーカーを表示することを検証する。
+     */
+    renderFeedItem({
+      event_type: 'medium_result',
+      agent: 'Alice',
+      target: 'Bob',
+      content: '',
+    });
+
+    expect(screen.getByText('[missing content]')).toBeTruthy();
+    expect(screen.queryByText(/Alice senses|Bob was|村人陣営|人狼陣営/)).toBeNull();
+  });
+
+  it('renders the only actor avatar on the right side for single-actor system logs', () => {
+    /**
+     * SUT: FeedItem
+     * Mock: なし（LogEvent 形状の plain object を入力）
+     * Level: unit
+     * Objective: 一者だけが関わるシステムログでは右側に対象アバターが表示されることを検証する。
+     */
+    const { container } = renderFeedItem({
+      event_type: 'elimination',
+      agent: 'Bob',
+      content: 'Bob was executed by the village vote.',
+    });
+
+    const row = container.querySelector(`.${styles.sysrow}`);
+    const avatar = screen.getByAltText('Bob');
+
+    expect(row.lastElementChild.querySelector('img[alt="Bob"]')).toBe(avatar);
   });
 });
 

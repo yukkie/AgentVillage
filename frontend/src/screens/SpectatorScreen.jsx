@@ -13,6 +13,8 @@ import { parseGameData } from '../lib/parseGameData.js';
 import { filterFeedEvents } from '../lib/feedFilter.js';
 import styles from './SpectatorScreen.module.css';
 
+const MISSING_CONTENT = '[missing content]';
+
 // --- ユーティリティ ---
 function fmtTurn(day, speechId) {
   return `D${day}-${String(speechId).padStart(2, '0')}`;
@@ -90,17 +92,27 @@ function SpeechCard({ ev, prevById, roleAssignment }) {
   );
 }
 
+function logContent(ev) {
+  return ev.content || MISSING_CONTENT;
+}
+
 // --- システム行 ---
-function SystemRow({ kind, icon, label, children, ts }) {
+function SystemRow({ kind, icon, label, children, ts, leftName, rightName, roleAssignment = {} }) {
   const defaultIcon = { gm: '👁', death: '💀', exec: '⚑', phase: '☾' }[kind] || '⌘';
   return (
     <div className={`${styles.sysrow} ${styles[kind] || ''}`}>
+      {leftName && (
+        <Avatar name={leftName} role={roleAssignment[leftName]} size="xs" />
+      )}
       <div className={styles.sysIconCol}>
         <div className={styles.sysIcon}>{icon ?? defaultIcon}</div>
         <div className={styles.sysLabel}>{label}</div>
       </div>
       <div className={styles.sysText}>{children}</div>
       <div className={styles.sysTs}>{ts}</div>
+      {rightName && (
+        <Avatar name={rightName} role={roleAssignment[rightName]} size="xs" />
+      )}
     </div>
   );
 }
@@ -174,51 +186,49 @@ export function FeedItem({ ev, prevById, roleAssignment, title }) {
 
   if (ev.event_type === 'vote') {
     return (
-      <SystemRow kind="exec" label="投票" ts="—">
-        <Avatar name={ev.agent} size="xs" /> {ev.agent} → <Avatar name={ev.target} size="xs" /> {ev.target}
+      <SystemRow kind="exec" label="投票" ts="—" leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
+        {logContent(ev)}
       </SystemRow>
     );
   }
   if (ev.event_type === 'elimination') {
     return (
-      <SystemRow kind="death" icon="💀" label="処刑" ts="—">
-        <Avatar name={ev.agent} size="xs" /> {ev.agent} が処刑されました
+      <SystemRow kind="death" icon="💀" label="処刑" ts="—" rightName={ev.agent} roleAssignment={roleAssignment}>
+        {logContent(ev)}
       </SystemRow>
     );
   }
   if (ev.event_type === 'medium_result') {
-    const isWolf = ev.content?.toLowerCase().includes('werewolf');
     return (
-      <SystemRow kind="gm" icon="👁" label="霊媒結果" ts="—">
-        <Avatar name={ev.agent} size="xs" /> {ev.agent} の判定: <Avatar name={ev.target} size="xs" /> {ev.target} は{isWolf ? '人狼陣営' : '村人陣営'}
+      <SystemRow kind="gm" icon="👁" label="霊媒結果" ts="—" leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
+        {logContent(ev)}
       </SystemRow>
     );
   }
   if (ev.event_type === 'inspection') {
-    const isWolf = ev.content?.toLowerCase().includes('werewolf');
     return (
-      <SystemRow kind="gm" icon="🔮" label="占い結果" ts="—">
-        <Avatar name={ev.agent} size="xs" /> {ev.agent} → <Avatar name={ev.target} size="xs" /> {ev.target}: {isWolf ? '人狼陣営' : '村人陣営'}
+      <SystemRow kind="gm" icon="🔮" label="占い結果" ts="—" leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
+        {logContent(ev)}
       </SystemRow>
     );
   }
   if (ev.event_type === 'guard') {
     return (
-      <SystemRow kind="gm" icon="🛡" label="護衛" ts="—">
-        <Avatar name={ev.agent} size="xs" /> {ev.agent} が <Avatar name={ev.target} size="xs" /> {ev.target} を護衛
+      <SystemRow kind="gm" icon="🛡" label="護衛" ts="—" leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
+        {logContent(ev)}
       </SystemRow>
     );
   }
   if (ev.event_type === 'guard_block') {
     return ev.is_public
-      ? <SystemRow kind="gm" icon="🛡" label="護衛" ts="—">全員無事でした</SystemRow>
-      : <SystemRow kind="gm" icon="🛡" label="護衛成功" ts="—">護衛成功: <Avatar name={ev.target} size="xs" /> {ev.target} は守られた</SystemRow>;
+      ? <SystemRow kind="gm" icon="🛡" label="護衛" ts="—">{logContent(ev)}</SystemRow>
+      : <SystemRow kind="gm" icon="🛡" label="護衛成功" ts="—" rightName={ev.target} roleAssignment={roleAssignment}>{logContent(ev)}</SystemRow>;
   }
   if (ev.event_type === 'night_attack') {
     const victim = ev.target ?? ev.agent;
     return ev.is_public
-      ? <SystemRow kind="death" icon="💀" label="襲撃結果" ts="—"><Avatar name={victim} size="xs" /> {victim} が死亡しました</SystemRow>
-      : <SystemRow kind="exec" icon="🐺" label="人狼の襲撃" ts="—"><Avatar name={ev.target} size="xs" /> {ev.target} を襲撃</SystemRow>;
+      ? <SystemRow kind="death" icon="💀" label="襲撃結果" ts="—" rightName={victim} roleAssignment={roleAssignment}>{logContent(ev)}</SystemRow>
+      : <SystemRow kind="exec" icon="🐺" label="人狼の襲撃" ts="—" rightName={ev.target} roleAssignment={roleAssignment}>{logContent(ev)}</SystemRow>;
   }
 
   if (ev.event_type === 'phase_start') {

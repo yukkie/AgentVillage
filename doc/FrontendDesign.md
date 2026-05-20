@@ -501,16 +501,16 @@ CSS Grid `grid-template-columns: var(--lcol) 1fr var(--rcol)` で 3 ペインを
 
 | イベント | 表示 |
 |---|---|
-| `vote` | `⚑ {agent} → {target}`（SystemRow kind="exec"） |
-| `elimination` | `☩ {agent} が処刑されました`（SystemRow kind="death"） |
-| `medium_result` | `🔮 [霊媒] {agent} の判定: {target} は村人/人狼陣営`（SystemRow kind="gm"） |
+| `vote` | `{content}`（SystemRow kind="exec"、左に agent アバター / 右に target アバター） |
+| `elimination` | `{content}`（SystemRow kind="death"、右に agent アバター） |
+| `medium_result` | `{content}`（SystemRow kind="gm"、左に agent アバター / 右に target アバター。フロントエンドでは翻訳しない） |
 | `wolf_chat` | WolfChatCard（発言形式・赤背景・🐺バッジ） |
-| `inspection` | `🔮 [占い師] {agent} → {target}: 村人/人狼陣営`（SystemRow kind="gm"） |
-| `guard` | `🛡 [騎士] {agent} が {target} を護衛`（SystemRow kind="gm"） |
-| `guard_block`（private） | `🛡 護衛成功: {target} は守られた`（SystemRow kind="gm"） |
-| `guard_block`（public） | `🛡 全員無事でした`（SystemRow kind="gm"） |
-| `night_attack`（private） | `🐺 [人狼] {target} を襲撃`（SystemRow kind="exec"） |
-| `night_attack`（public） | `☩ {target} が死亡しました`（SystemRow kind="death"） |
+| `inspection` | `{content}`（SystemRow kind="gm"、左に agent アバター / 右に target アバター。フロントエンドでは翻訳しない） |
+| `guard` | `{content}`（SystemRow kind="gm"、左に agent アバター / 右に target アバター） |
+| `guard_block`（private） | `{content}`（SystemRow kind="gm"、右に target アバター） |
+| `guard_block`（public） | `{content}`（SystemRow kind="gm"） |
+| `night_attack`（private） | `{content}`（SystemRow kind="exec"、右に target アバター） |
+| `night_attack`（public） | `{content}`（SystemRow kind="death"、右に target アバター） |
 
 データソース: `stub/spectator.js`（`EVENTS`, `ROLE_ASSIGNMENT`, `NIGHT_RESULTS`, `EXEC_RESULTS`, `VOTE_TABLE_D1`, `ACTIONS_TIMELINE`）。
 
