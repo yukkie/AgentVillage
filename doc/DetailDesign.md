@@ -12,7 +12,7 @@
 |---|---|
 | `game.py` | ゲーム全体の状態マシン。フェーズモジュールを呼び出すオーケストレーター |
 | `phase_day.py` | 昼フェーズ。DISCUSSION / VOTE を進行する |
-| `phase_night.py` | 夜フェーズ。狼会話の後、夜行動を「宣言」「解決」「公表」に分けて進行する |
+| `phase_night.py` | 夜フェーズ。狼会話の後、夜行動を「宣言」「解決」「公表」に分けて進行し、夜フェーズのシステムログ出力を集約する |
 | `setup.py` | ゲーム初期化（エージェント生成・役職割り当て・永続化） |
 | `phase.py` | フェーズ定義（昼/夜/終了）と遷移ロジック |
 | `vote.py` | 投票集計・同数処理・追放決定 |
@@ -20,6 +20,32 @@
 
 > **Note**: 旧 `role.py`（`ROLE_NIGHT_ACTIONS` 辞書）は `src/domain/roles/` パッケージに統合され削除された（#24）。
 > 夜行動の判定は `get_role(role).night_action` を使用する。
+
+#### phase_night.py — 夜フェーズの処理順とログ出力
+
+夜フェーズは `Spec.md` の参照元である人狼知能ルール詳細に沿って、宣言と解決を分離する。
+
+```
+宣言
+  └─ wolf_chat で襲撃候補を合意
+  └─ 騎士が護衛対象を宣言
+  └─ 占い師が占い対象を宣言
+
+解決
+  └─ 占い結果を先に確定する
+  └─ 護衛対象と襲撃対象を照合する
+  └─ 襲撃成功時だけ対象を死亡状態にする
+
+公表
+  └─ guard
+  └─ inspection（占い師が生存している場合のみ）
+  └─ night_attack（襲撃行動・private）
+  └─ guard_block（private → public）
+  └─ night_attack（死亡通知・public）
+```
+
+夜フェーズのシステムログは `_publish_night_results()` に集約する。
+死亡状態の反映はログ出力を伴わない内部処理として扱い、`GameEngine._eliminate()` の public event emit に依存しない。
 
 #### game.py — 霊媒師への処刑結果通知
 

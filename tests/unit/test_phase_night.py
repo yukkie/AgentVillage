@@ -14,6 +14,7 @@ from src.engine.phase_night import (
     InspectionResult,
     NightDeclarations,
     NightResolution,
+    _apply_night_attack_death,
     _apply_wolf_self_decisions,
     _publish_inspection,
     _publish_night_results,
@@ -176,6 +177,28 @@ class TestResolveNightOutcomes:
         assert resolution.attack is None
         assert villager.is_alive is True
 
+    def test_apply_night_attack_death_returns_false_for_unknown_target(
+        self, make_test_actor, make_test_engine
+    ):
+        """
+        SUT: _apply_night_attack_death
+        Mock: なし
+        Level: unit
+        Objective: 存在しない襲撃対象では死亡状態や死亡履歴を変更せず False を返すこと。
+        """
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        alice = make_test_actor("Alice")
+        engine, _ = make_test_engine([wolf, alice])
+
+        result = _apply_night_attack_death(
+            engine,
+            AttackDeclaration(actor=wolf, target="Unknown"),
+        )
+
+        assert result is False
+        assert alice.is_alive is True
+        assert engine._past_deaths == []
+
 
 class TestPublishNightResults:
     def test_guard_block_emits_private_and_public_events(self, make_test_actor, make_test_engine):
@@ -267,6 +290,84 @@ class TestPublishNightResults:
         attack_events = [e for e in events if e.event_type == EventType.NIGHT_ATTACK]
         assert len(attack_events) == 1
         assert attack_events[0].reasoning == "Alice is likely the Seer."
+
+    def test_night_events_are_published_in_resolution_order(self, make_test_actor, make_test_engine):
+        """
+        SUT: _publish_night_results
+        Mock: src.engine.phase_night.store.save — inspection のファイルI/Oを回避
+        Level: unit
+        Objective: 夜フェーズの観戦者ログが guard → inspection → private attack → public death の順で emit されること。
+        """
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        knight = make_test_actor("Knight1", "Knight")
+        seer = make_test_actor("Seer1", "Seer")
+        alice = make_test_actor("Alice")
+        bob = make_test_actor("Bob")
+        engine, events = make_test_engine([wolf, knight, seer, alice, bob])
+
+        attack = AttackDeclaration(actor=wolf, target="Alice")
+        guard = GuardDeclaration(actor=knight, target="Bob", succeeded=False)
+        inspection = InspectionResult(
+            declaration=InspectDeclaration(actor=seer, target="Wolf1"),
+            result=wolf.role,
+        )
+        resolution = NightResolution(
+            attack=attack,
+            guard=guard,
+            inspection=inspection,
+            attack_succeeded=True,
+        )
+
+        with patch("src.engine.phase_night.store.save"):
+            _publish_night_results(engine, resolution)
+
+        night_events = [
+            (event.event_type, event.is_public)
+            for event in events
+            if event.event_type
+            in {
+                EventType.GUARD,
+                EventType.INSPECTION,
+                EventType.NIGHT_ATTACK,
+                EventType.GUARD_BLOCK,
+            }
+        ]
+        assert night_events == [
+            (EventType.GUARD, False),
+            (EventType.INSPECTION, False),
+            (EventType.NIGHT_ATTACK, False),
+            (EventType.NIGHT_ATTACK, True),
+        ]
+
+    def test_guard_block_is_published_after_private_attack(self, make_test_actor, make_test_engine):
+        """
+        SUT: _publish_night_results
+        Mock: memory_mod.update_memory — メモリ更新のファイルI/Oを回避
+        Level: unit
+        Objective: 護衛成功時は private attack → private guard_block → public guard_block の順で emit されること。
+        """
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        knight = make_test_actor("Knight1", "Knight")
+        alice = make_test_actor("Alice")
+        engine, events = make_test_engine([wolf, knight, alice])
+
+        attack = AttackDeclaration(actor=wolf, target="Alice")
+        guard = GuardDeclaration(actor=knight, target="Alice", succeeded=True)
+        resolution = NightResolution(attack=attack, guard=guard, inspection=None)
+
+        with patch("src.engine.phase_night.memory_mod.update_memory"):
+            _publish_night_results(engine, resolution)
+
+        night_events = [
+            (event.event_type, event.is_public)
+            for event in events
+            if event.event_type in {EventType.NIGHT_ATTACK, EventType.GUARD_BLOCK}
+        ]
+        assert night_events == [
+            (EventType.NIGHT_ATTACK, False),
+            (EventType.GUARD_BLOCK, False),
+            (EventType.GUARD_BLOCK, True),
+        ]
 
 
 class TestGuardReasoning:
