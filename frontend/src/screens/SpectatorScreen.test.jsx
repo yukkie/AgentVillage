@@ -243,6 +243,41 @@ describe('FeedItem: wolf_chat card', () => {
   });
 });
 
+describe('FeedItem: private action thought details', () => {
+  it.each([
+    ['inspection', { event_type: 'inspection', agent: 'Alice', target: 'Bob', content: 'Alice inspects Bob: Werewolf' }],
+    ['guard', { event_type: 'guard', agent: 'Carol', target: 'Alice', content: 'Carol guards Alice' }],
+    ['medium_result', { event_type: 'medium_result', agent: 'Alice', target: 'Bob', content: 'Alice senses: Bob was Werewolf' }],
+  ])('folds thought into details for %s when ev.thought is present', (_eventType, event) => {
+    /**
+     * SUT: FeedItem (SystemRow)
+     * Mock: なし（LogEvent 形状の plain object を入力）
+     * Level: unit
+     * Objective: inspection / guard / medium_result に thought がある場合「思考ログを読む」details が表示されることを検証する。
+     */
+    renderFeedItem({ ...event, thought: '非公開能力の対象選択理由。' });
+
+    expect(screen.getByText(/思考ログを読む/)).toBeTruthy();
+    expect(screen.getByText(/非公開能力の対象選択理由/)).toBeTruthy();
+  });
+
+  it.each([
+    ['inspection', { event_type: 'inspection', agent: 'Alice', target: 'Bob', content: 'Alice inspects Bob: Werewolf' }],
+    ['guard', { event_type: 'guard', agent: 'Carol', target: 'Alice', content: 'Carol guards Alice' }],
+    ['medium_result', { event_type: 'medium_result', agent: 'Alice', target: 'Bob', content: 'Alice senses: Bob was Werewolf' }],
+  ])('does not show thought details for %s when ev.thought is absent', (_eventType, event) => {
+    /**
+     * SUT: FeedItem (SystemRow)
+     * Mock: なし（LogEvent 形状の plain object を入力）
+     * Level: unit
+     * Objective: inspection / guard / medium_result に thought がない場合「思考ログを読む」が表示されないことを検証する。
+     */
+    renderFeedItem(event);
+
+    expect(screen.queryByText(/思考ログを読む/)).toBeNull();
+  });
+});
+
 describe('FeedItem: system event icons', () => {
   it('guard uses 🛡 icon in SystemRow', () => {
     /**
