@@ -220,23 +220,23 @@ describe('FeedItem: elimination card', () => {
 });
 
 describe('FeedItem: wolf_chat card', () => {
-  it('folds thought into details when ev.thought is present', () => {
+  it('folds thought into details when ev.reasoning is present', () => {
     /**
      * SUT: FeedItem (WolfChatCard)
      * Mock: なし
      * Level: unit
-     * Objective: wolf_chat に thought がある場合「思考ログを読む」details が表示されることを検証する。
+     * Objective: wolf_chat に reasoning がある場合「思考ログを読む」details が表示されることを検証する。
      */
-    renderFeedItem({ event_type: 'wolf_chat', agent: 'Bob', content: 'Attack tonight.', thought: '狼として最適な標的を選ぶ。' });
+    renderFeedItem({ event_type: 'wolf_chat', agent: 'Bob', content: 'Attack tonight.', reasoning: '狼として最適な標的を選ぶ。' });
     expect(screen.getByText(/思考ログを読む/)).toBeTruthy();
   });
 
-  it('does not show thought details when ev.thought is absent', () => {
+  it('does not show thought details when ev.reasoning is absent', () => {
     /**
      * SUT: FeedItem (WolfChatCard)
      * Mock: なし
      * Level: unit
-     * Objective: wolf_chat に thought がない場合「思考ログを読む」が表示されないことを検証する。
+     * Objective: wolf_chat に reasoning がない場合「思考ログを読む」が表示されないことを検証する。
      */
     renderFeedItem({ event_type: 'wolf_chat', agent: 'Bob', content: 'Attack tonight.' });
     expect(screen.queryByText(/思考ログを読む/)).toBeNull();
@@ -248,14 +248,14 @@ describe('FeedItem: private action thought details', () => {
     ['inspection', { event_type: 'inspection', agent: 'Alice', target: 'Bob', content: 'Alice inspects Bob: Werewolf' }],
     ['guard', { event_type: 'guard', agent: 'Carol', target: 'Alice', content: 'Carol guards Alice' }],
     ['medium_result', { event_type: 'medium_result', agent: 'Alice', target: 'Bob', content: 'Alice senses: Bob was Werewolf' }],
-  ])('folds thought into details for %s when ev.thought is present', (_eventType, event) => {
+  ])('folds thought into details for %s when ev.reasoning is present', (_eventType, event) => {
     /**
      * SUT: FeedItem (SystemRow)
      * Mock: なし（LogEvent 形状の plain object を入力）
      * Level: unit
-     * Objective: inspection / guard / medium_result に thought がある場合「思考ログを読む」details が表示されることを検証する。
+     * Objective: inspection / guard / medium_result に reasoning がある場合「思考ログを読む」details が表示されることを検証する。
      */
-    renderFeedItem({ ...event, thought: '非公開能力の対象選択理由。' });
+    renderFeedItem({ ...event, reasoning: '非公開能力の対象選択理由。' });
 
     expect(screen.getByText(/思考ログを読む/)).toBeTruthy();
     expect(screen.getByText(/非公開能力の対象選択理由/)).toBeTruthy();
@@ -265,12 +265,12 @@ describe('FeedItem: private action thought details', () => {
     ['inspection', { event_type: 'inspection', agent: 'Alice', target: 'Bob', content: 'Alice inspects Bob: Werewolf' }],
     ['guard', { event_type: 'guard', agent: 'Carol', target: 'Alice', content: 'Carol guards Alice' }],
     ['medium_result', { event_type: 'medium_result', agent: 'Alice', target: 'Bob', content: 'Alice senses: Bob was Werewolf' }],
-  ])('does not show thought details for %s when ev.thought is absent', (_eventType, event) => {
+  ])('does not show thought details for %s when ev.reasoning is absent', (_eventType, event) => {
     /**
      * SUT: FeedItem (SystemRow)
      * Mock: なし（LogEvent 形状の plain object を入力）
      * Level: unit
-     * Objective: inspection / guard / medium_result に thought がない場合「思考ログを読む」が表示されないことを検証する。
+     * Objective: inspection / guard / medium_result に reasoning がない場合「思考ログを読む」が表示されないことを検証する。
      */
     renderFeedItem(event);
 

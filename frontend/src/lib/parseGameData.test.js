@@ -54,7 +54,7 @@ describe('normalizeEvents', () => {
 
     expect(events).toHaveLength(1);
     expect(events[0].content).toBe('おはよう');
-    expect(events[0].thought).toBe('内心');
+    expect(events[0].reasoning).toBe('内心');
   });
 
   it('merges private THINK wolf_chat rows into their visible wolf_chat event', () => {
@@ -62,7 +62,7 @@ describe('normalizeEvents', () => {
      * SUT: normalizeEvents
      * Mock: なし
      * Level: unit
-     * Objective: speech_id を持たない wolf_chat の THINK 行が同じカードの thought に結合されることを検証する。
+     * Objective: speech_id を持たない wolf_chat の THINK 行が同じカードの reasoning に結合されることを検証する。
      */
     const events = normalizeEvents([
       { day: 1, phase: 'night_wolf_chat', event_type: 'wolf_chat', agent: 'Nox', is_public: false, content: 'Nox: Renを噛みたい' },
@@ -71,7 +71,7 @@ describe('normalizeEvents', () => {
 
     expect(events).toHaveLength(1);
     expect(events[0].content).toBe('Nox: Renを噛みたい');
-    expect(events[0].thought).toBe('Renは騎士ではなさそう');
+    expect(events[0].reasoning).toBe('Renは騎士ではなさそう');
   });
 
   it('merges pending private THINK wolf_chat rows when they appear before visible chat', () => {
@@ -88,7 +88,48 @@ describe('normalizeEvents', () => {
 
     expect(events).toHaveLength(1);
     expect(events[0].content).toBe('Nox: Soraを噛もう');
-    expect(events[0].thought).toBe('先に考えた内容');
+    expect(events[0].reasoning).toBe('先に考えた内容');
+  });
+});
+
+describe('normalizeEvents: reasoning passthrough for non-THINK event types', () => {
+  it.each([
+    ['vote',          { event_type: 'vote',          agent: 'Alice', target: 'Bob',  content: 'Alice votes for Bob',              is_public: true  }],
+    ['inspection',    { event_type: 'inspection',    agent: 'Alice', target: 'Bob',  content: 'Alice inspects Bob: Werewolf',     is_public: false }],
+    ['guard',         { event_type: 'guard',         agent: 'Carol', target: 'Alice', content: 'Carol guards Alice',             is_public: false }],
+    ['medium_result', { event_type: 'medium_result', agent: 'Alice', target: 'Bob',  content: 'Alice senses: Bob was Werewolf',  is_public: false }],
+  ])('preserves ev.reasoning for %s events', (_eventType, rawEvent) => {
+    /**
+     * SUT: normalizeEvents
+     * Mock: なし
+     * Level: unit
+     * Objective: vote / inspection / guard / medium_result の reasoning フィールドが
+     *            normalizeEvents を通過しても失われないことを検証する。
+     *            これらはTHINKハックの対象外であり、ログの reasoning フィールドをそのまま
+     *            FeedItem に渡す必要がある（contract テスト）。
+     */
+    const events = normalizeEvents([{ ...rawEvent, reasoning: '対象選択の理由。' }]);
+
+    expect(events).toHaveLength(1);
+    expect(events[0].reasoning).toBe('対象選択の理由。');
+  });
+
+  it.each([
+    ['vote',          { event_type: 'vote',          agent: 'Alice', target: 'Bob',  content: 'Alice votes for Bob',              is_public: true  }],
+    ['inspection',    { event_type: 'inspection',    agent: 'Alice', target: 'Bob',  content: 'Alice inspects Bob: Werewolf',     is_public: false }],
+    ['guard',         { event_type: 'guard',         agent: 'Carol', target: 'Alice', content: 'Carol guards Alice',             is_public: false }],
+    ['medium_result', { event_type: 'medium_result', agent: 'Alice', target: 'Bob',  content: 'Alice senses: Bob was Werewolf',  is_public: false }],
+  ])('reasoning is undefined when absent for %s events', (_eventType, rawEvent) => {
+    /**
+     * SUT: normalizeEvents
+     * Mock: なし
+     * Level: unit
+     * Objective: reasoning フィールドがないイベントでは undefined のまま出力されることを検証する。
+     */
+    const events = normalizeEvents([rawEvent]);
+
+    expect(events).toHaveLength(1);
+    expect(events[0].reasoning).toBeUndefined();
   });
 });
 
@@ -117,15 +158,15 @@ describe('parseGameData', () => {
      * SUT: parseGameData
      * Mock: なし（design/proposal/source_logs/ の実ログを fixture に使用）
      * Level: unit
-     * Objective: 実 spectator log の THINK 行が speech.thought として利用できることを検証する。
+     * Objective: 実 spectator log の THINK 行が speech.reasoning として利用できることを検証する。
      */
     const gameData = parseGameData(readFixture('spectator_log.jsonl'));
     const miraSpeech = gameData.events.find(
       event => event.event_type === 'speech' && event.agent === 'Mira' && event.speech_id === 1
     );
 
-    expect(miraSpeech.thought).toContain('Day 1');
-    expect(miraSpeech.thought).not.toContain('[THINK]');
+    expect(miraSpeech.reasoning).toContain('Day 1');
+    expect(miraSpeech.reasoning).not.toContain('[THINK]');
   });
 
   it('includes daySummary in returned GameData', () => {
