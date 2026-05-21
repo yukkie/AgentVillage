@@ -73,15 +73,15 @@ export function normalizeEvents(rawEvents) {
     if (isPrivateThinkEvent(event)) {
       const key = eventKey(event);
       const fallbackKey = fallbackEventKey(event);
-      const thought = stripThinkPrefix(event.content);
+      const reasoning = stripThinkPrefix(event.content);
       const visibleEvent = eventByKey.get(key) ?? latestEventByFallbackKey.get(fallbackKey);
       if (visibleEvent) {
-        visibleEvent.thought = thought;
+        visibleEvent.reasoning = reasoning;
       } else {
         if (event.speech_id != null) {
-          pendingThoughts.set(key, thought);
+          pendingThoughts.set(key, reasoning);
         } else {
-          pendingFallbackThoughts.set(fallbackKey, thought);
+          pendingFallbackThoughts.set(fallbackKey, reasoning);
         }
       }
       return;
@@ -92,10 +92,10 @@ export function normalizeEvents(rawEvents) {
       const key = eventKey(normalized);
       const fallbackKey = fallbackEventKey(normalized);
       if (pendingThoughts.has(key)) {
-        normalized.thought = pendingThoughts.get(key);
+        normalized.reasoning = pendingThoughts.get(key);
         pendingThoughts.delete(key);
       } else if (pendingFallbackThoughts.has(fallbackKey)) {
-        normalized.thought = pendingFallbackThoughts.get(fallbackKey);
+        normalized.reasoning = pendingFallbackThoughts.get(fallbackKey);
         pendingFallbackThoughts.delete(fallbackKey);
       }
       eventByKey.set(key, normalized);

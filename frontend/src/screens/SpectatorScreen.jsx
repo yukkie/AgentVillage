@@ -31,8 +31,8 @@ function Mentioned({ text }) {
   );
 }
 
-function ThoughtDetails({ thought }) {
-  if (!thought) return null;
+function ThoughtDetails({ reasoning }) {
+  if (!reasoning) return null;
 
   return (
     <details className={styles.spThink}>
@@ -47,10 +47,10 @@ function ThoughtDetails({ thought }) {
           <circle cx="10.5" cy="6.5" r="0.7" fill="currentColor" />
         </svg>
         <span className={styles.thinkLabel}>思考ログを読む</span>
-        <span className={styles.conf}>{thought.length} 字 · spectator限定</span>
+        <span className={styles.conf}>{reasoning.length} 字 · spectator限定</span>
       </summary>
       <div className={styles.thinkBody}>
-        {thought.slice(0, 380)}{thought.length > 380 ? '…' : ''}
+        {reasoning.slice(0, 380)}{reasoning.length > 380 ? '…' : ''}
       </div>
     </details>
   );
@@ -92,7 +92,7 @@ function SpeechCard({ ev, prevById, roleAssignment }) {
         <div className={styles.spBody}>
           <Mentioned text={ev.content} />
         </div>
-        <ThoughtDetails thought={ev.thought} />
+        <ThoughtDetails reasoning={ev.reasoning} />
       </div>
     </div>
   );
@@ -103,7 +103,7 @@ function logContent(ev) {
 }
 
 // --- システム行 ---
-function SystemRow({ kind, icon, label, children, thought, ts, leftName, rightName, roleAssignment = {} }) {
+function SystemRow({ kind, icon, label, children, reasoning, ts, leftName, rightName, roleAssignment = {} }) {
   const defaultIcon = { gm: '👁', death: '💀', exec: '⚑', phase: '☾' }[kind] || '⌘';
   return (
     <div className={`${styles.sysrow} ${styles[kind] || ''}`}>
@@ -111,17 +111,19 @@ function SystemRow({ kind, icon, label, children, thought, ts, leftName, rightNa
         <div className={styles.sysIcon}>{icon ?? defaultIcon}</div>
         <div className={styles.sysLabel}>{label}</div>
       </div>
-      {leftName && (
-        <Avatar name={leftName} role={roleAssignment[leftName]} size="xs" />
-      )}
-      <div className={styles.sysText}>
-        {children}
-        <ThoughtDetails thought={thought} />
+      <div className={styles.sysContent}>
+        <div className={styles.sysMain}>
+          {leftName && (
+            <Avatar name={leftName} role={roleAssignment[leftName]} size="xs" />
+          )}
+          <div className={styles.sysText}>{children}</div>
+          {ts && <div className={styles.sysTs}>{ts}</div>}
+          {rightName && (
+            <Avatar name={rightName} role={roleAssignment[rightName]} size="xs" />
+          )}
+        </div>
+        <ThoughtDetails reasoning={reasoning} />
       </div>
-      {ts && <div className={styles.sysTs}>{ts}</div>}
-      {rightName && (
-        <Avatar name={rightName} role={roleAssignment[rightName]} size="xs" />
-      )}
     </div>
   );
 }
@@ -163,7 +165,7 @@ function WolfChatCard({ ev }) {
           <span className={styles.alias}>人狼</span>
         </div>
         <div className={styles.spBody}>{ev.content}</div>
-        <ThoughtDetails thought={ev.thought} />
+        <ThoughtDetails reasoning={ev.reasoning} />
       </div>
     </div>
   );
@@ -176,7 +178,7 @@ export function FeedItem({ ev, prevById, roleAssignment, title }) {
 
   if (ev.event_type === 'vote') {
     return (
-      <SystemRow kind="exec" label="投票" leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
+      <SystemRow kind="exec" label="投票" reasoning={ev.reasoning} leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
         {logContent(ev)}
       </SystemRow>
     );
@@ -190,21 +192,21 @@ export function FeedItem({ ev, prevById, roleAssignment, title }) {
   }
   if (ev.event_type === 'medium_result') {
     return (
-      <SystemRow kind="gm" icon="👁" label="霊媒結果" thought={ev.thought} leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
+      <SystemRow kind="gm" icon="👁" label="霊媒結果" reasoning={ev.reasoning} leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
         {logContent(ev)}
       </SystemRow>
     );
   }
   if (ev.event_type === 'inspection') {
     return (
-      <SystemRow kind="gm" icon="🔮" label="占い結果" thought={ev.thought} leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
+      <SystemRow kind="gm" icon="🔮" label="占い結果" reasoning={ev.reasoning} leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
         {logContent(ev)}
       </SystemRow>
     );
   }
   if (ev.event_type === 'guard') {
     return (
-      <SystemRow kind="gm" icon="🛡" label="護衛" thought={ev.thought} leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
+      <SystemRow kind="gm" icon="🛡" label="護衛" reasoning={ev.reasoning} leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
         {logContent(ev)}
       </SystemRow>
     );
