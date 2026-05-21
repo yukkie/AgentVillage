@@ -28,16 +28,18 @@ class TestRunNightPhaseOrderContract:
             return base_side_effect(actor, _context, _alive_names)
 
         engine._llm_client.call_night_action.side_effect = night_action
-        original_eliminate = engine._eliminate
 
-        def eliminate_and_record(*args, **kwargs):
+        def apply_attack_and_record(*args, **kwargs):
             order.append("resolve:attack")
-            return original_eliminate(*args, **kwargs)
+            return True
 
         with (
             patch("src.agent.store.save"),
             patch("src.engine.phase_night.resolve_inspect") as mock_resolve_inspect,
-            patch.object(engine, "_eliminate", side_effect=eliminate_and_record),
+            patch(
+                "src.engine.phase_night._apply_night_attack_death",
+                side_effect=apply_attack_and_record,
+            ),
         ):
             mock_resolve_inspect.side_effect = lambda action, agents: (
                 order.append("resolve:inspect"),

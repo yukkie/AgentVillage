@@ -60,6 +60,7 @@ class NightResolution:
     attack: AttackDeclaration | None
     guard: GuardDeclaration | None
     inspection: InspectionResult | None
+    attack_succeeded: bool = False
 
 
 def _apply_wolf_self_decisions(
@@ -224,12 +225,31 @@ def _resolve_night_outcomes(
         declarations.guard.succeeded = True
         return resolution
 
-    engine._eliminate(
-        declarations.attack.target,
-        EventType.NIGHT_ATTACK,
-        Phase.NIGHT.value,
-    )
+    resolution.attack_succeeded = _apply_night_attack_death(engine, declarations.attack)
     return resolution
+
+
+def _apply_night_attack_death(engine: GameEngine, attack: AttackDeclaration) -> bool:
+    actor = engine._get_agent(attack.target)
+    if actor is None:
+        return False
+
+    actor.state.is_alive = False
+    store.save(actor)
+    engine._past_deaths.append({"day": engine.day, "name": attack.target, "cause": "attack"})
+    return True
+
+
+def _make_public_night_attack_event(engine: GameEngine, attack: AttackDeclaration) -> LogEvent:
+    content = f"Werewolves attacked {attack.target}! {attack.target} was found dead at dawn."
+    return LogEvent.make(
+        day=engine.day,
+        phase=Phase.NIGHT.value,
+        event_type=EventType.NIGHT_ATTACK,
+        agent=attack.target,
+        content=content,
+        is_public=True,
+    )
 
 
 def _publish_inspection(engine: GameEngine, inspection: InspectionResult) -> None:
@@ -272,6 +292,9 @@ def _publish_night_results(engine: GameEngine, resolution: NightResolution) -> N
             reasoning=resolution.guard.reasoning,
         ))
 
+    if resolution.inspection and resolution.inspection.declaration.actor.is_alive:
+        _publish_inspection(engine, resolution.inspection)
+
     if resolution.attack is not None:
         engine._emit(LogEvent.make(
             day=engine.day,
@@ -309,8 +332,8 @@ def _publish_night_results(engine: GameEngine, resolution: NightResolution) -> N
             [f"Day {engine.day}: successfully guarded {resolution.guard.target} from werewolf attack"],
         )
 
-    if resolution.inspection and resolution.inspection.declaration.actor.is_alive:
-        _publish_inspection(engine, resolution.inspection)
+    if resolution.attack is not None and resolution.attack_succeeded:
+        engine._emit(_make_public_night_attack_event(engine, resolution.attack))
 
 
 def run_night_phase(engine: GameEngine) -> str | None:
