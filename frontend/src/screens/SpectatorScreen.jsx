@@ -107,18 +107,18 @@ function SystemRow({ kind, icon, label, children, thought, ts, leftName, rightNa
   const defaultIcon = { gm: '👁', death: '💀', exec: '⚑', phase: '☾' }[kind] || '⌘';
   return (
     <div className={`${styles.sysrow} ${styles[kind] || ''}`}>
-      {leftName && (
-        <Avatar name={leftName} role={roleAssignment[leftName]} size="xs" />
-      )}
       <div className={styles.sysIconCol}>
         <div className={styles.sysIcon}>{icon ?? defaultIcon}</div>
         <div className={styles.sysLabel}>{label}</div>
       </div>
+      {leftName && (
+        <Avatar name={leftName} role={roleAssignment[leftName]} size="xs" />
+      )}
       <div className={styles.sysText}>
         {children}
         <ThoughtDetails thought={thought} />
       </div>
-      <div className={styles.sysTs}>{ts}</div>
+      {ts && <div className={styles.sysTs}>{ts}</div>}
       {rightName && (
         <Avatar name={rightName} role={roleAssignment[rightName]} size="xs" />
       )}
@@ -176,49 +176,49 @@ export function FeedItem({ ev, prevById, roleAssignment, title }) {
 
   if (ev.event_type === 'vote') {
     return (
-      <SystemRow kind="exec" label="投票" ts="—" leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
+      <SystemRow kind="exec" label="投票" leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
         {logContent(ev)}
       </SystemRow>
     );
   }
   if (ev.event_type === 'elimination') {
     return (
-      <SystemRow kind="death" icon="💀" label="処刑" ts="—" rightName={ev.agent} roleAssignment={roleAssignment}>
+      <SystemRow kind="death" icon="💀" label="処刑" rightName={ev.agent} roleAssignment={roleAssignment}>
         {logContent(ev)}
       </SystemRow>
     );
   }
   if (ev.event_type === 'medium_result') {
     return (
-      <SystemRow kind="gm" icon="👁" label="霊媒結果" thought={ev.thought} ts="—" leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
+      <SystemRow kind="gm" icon="👁" label="霊媒結果" thought={ev.thought} leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
         {logContent(ev)}
       </SystemRow>
     );
   }
   if (ev.event_type === 'inspection') {
     return (
-      <SystemRow kind="gm" icon="🔮" label="占い結果" thought={ev.thought} ts="—" leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
+      <SystemRow kind="gm" icon="🔮" label="占い結果" thought={ev.thought} leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
         {logContent(ev)}
       </SystemRow>
     );
   }
   if (ev.event_type === 'guard') {
     return (
-      <SystemRow kind="gm" icon="🛡" label="護衛" thought={ev.thought} ts="—" leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
+      <SystemRow kind="gm" icon="🛡" label="護衛" thought={ev.thought} leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
         {logContent(ev)}
       </SystemRow>
     );
   }
   if (ev.event_type === 'guard_block') {
     return ev.is_public
-      ? <SystemRow kind="gm" icon="🛡" label="護衛" ts="—">{logContent(ev)}</SystemRow>
-      : <SystemRow kind="gm" icon="🛡" label="護衛成功" ts="—" rightName={ev.target} roleAssignment={roleAssignment}>{logContent(ev)}</SystemRow>;
+      ? <SystemRow kind="gm" icon="🛡" label="護衛">{logContent(ev)}</SystemRow>
+      : <SystemRow kind="gm" icon="🛡" label="護衛成功" rightName={ev.target} roleAssignment={roleAssignment}>{logContent(ev)}</SystemRow>;
   }
   if (ev.event_type === 'night_attack') {
     const victim = ev.target ?? ev.agent;
     return ev.is_public
-      ? <SystemRow kind="death" icon="💀" label="襲撃結果" ts="—" rightName={victim} roleAssignment={roleAssignment}>{logContent(ev)}</SystemRow>
-      : <SystemRow kind="exec" icon="🐺" label="人狼の襲撃" ts="—" rightName={ev.target} roleAssignment={roleAssignment}>{logContent(ev)}</SystemRow>;
+      ? <SystemRow kind="death" icon="💀" label="襲撃結果" rightName={victim} roleAssignment={roleAssignment}>{logContent(ev)}</SystemRow>
+      : <SystemRow kind="exec" icon="🐺" label="人狼の襲撃" rightName={ev.target} roleAssignment={roleAssignment}>{logContent(ev)}</SystemRow>;
   }
 
   if (ev.event_type === 'phase_start') {
@@ -231,7 +231,7 @@ export function FeedItem({ ev, prevById, roleAssignment, title }) {
     }
     if (ev.phase === 'day_vote' || ev.phase === 'night' || ev.phase === 'night_wolf_chat' || ev.phase === 'pre_night') return null;
     if (ev.phase === 'day_opening' || ev.phase === 'day_discussion') return null;
-    return <SystemRow kind="phase" label="フェーズ" ts="—">{ev.content}</SystemRow>;
+    return <SystemRow kind="phase" label="フェーズ">{ev.content}</SystemRow>;
   }
   return null;
 }
@@ -507,12 +507,12 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
         </div>
         <div className={styles.feed}>
           {loadError && (
-            <SystemRow kind="death" label="読み込みエラー" ts="—">
+            <SystemRow kind="death" label="読み込みエラー">
               {loadError.message}
             </SystemRow>
           )}
           {(loadingEvents || loadingAgents) && (
-            <SystemRow kind="phase" label="読み込み中" ts="—">
+            <SystemRow kind="phase" label="読み込み中">
               {loadingAgents ? '参加者情報を読み込み中。' : ''}
               {loadingEvents ? '発言ログを読み込み中。' : ''}
             </SystemRow>
