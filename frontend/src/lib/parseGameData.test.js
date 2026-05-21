@@ -56,6 +56,40 @@ describe('normalizeEvents', () => {
     expect(events[0].content).toBe('おはよう');
     expect(events[0].thought).toBe('内心');
   });
+
+  it('merges private THINK wolf_chat rows into their visible wolf_chat event', () => {
+    /**
+     * SUT: normalizeEvents
+     * Mock: なし
+     * Level: unit
+     * Objective: speech_id を持たない wolf_chat の THINK 行が同じカードの thought に結合されることを検証する。
+     */
+    const events = normalizeEvents([
+      { day: 1, phase: 'night_wolf_chat', event_type: 'wolf_chat', agent: 'Nox', is_public: false, content: 'Nox: Renを噛みたい' },
+      { day: 1, phase: 'night_wolf_chat', event_type: 'wolf_chat', agent: 'Nox', is_public: false, content: '[THINK] Renは騎士ではなさそう' },
+    ]);
+
+    expect(events).toHaveLength(1);
+    expect(events[0].content).toBe('Nox: Renを噛みたい');
+    expect(events[0].thought).toBe('Renは騎士ではなさそう');
+  });
+
+  it('merges pending private THINK wolf_chat rows when they appear before visible chat', () => {
+    /**
+     * SUT: normalizeEvents
+     * Mock: なし
+     * Level: unit
+     * Objective: JSONL 順序が逆転しても wolf_chat THINK 行を後続の表示イベントへ結合できることを検証する。
+     */
+    const events = normalizeEvents([
+      { day: 1, phase: 'night_wolf_chat', event_type: 'wolf_chat', agent: 'Nox', is_public: false, content: '[THINK] 先に考えた内容' },
+      { day: 1, phase: 'night_wolf_chat', event_type: 'wolf_chat', agent: 'Nox', is_public: false, content: 'Nox: Soraを噛もう' },
+    ]);
+
+    expect(events).toHaveLength(1);
+    expect(events[0].content).toBe('Nox: Soraを噛もう');
+    expect(events[0].thought).toBe('先に考えた内容');
+  });
 });
 
 describe('parseGameData', () => {

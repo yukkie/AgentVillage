@@ -465,7 +465,9 @@ parseGameData(jsonlText, agentJsonByName)
 現在は `spectator_log.jsonl` 全体を一括 fetch して行単位に JSON parse する。
 ログ量が増えた場合の変更ポイントは `replayLoader.js` に閉じ、day chunk、cursor pagination、ReadableStream JSONL parser、または FastAPI endpoint に置き換える。
 
-`spectator_log.jsonl` の非公開 `[THINK]` speech 行は、同じ `day` / `agent` / `speech_id` を持つ公開 speech の `thought` に結合する。
+`spectator_log.jsonl` の非公開 `[THINK]` 行は、`parseGameData.js` の Legacy-adapter で表示イベントの `thought` に結合する。
+speech は同じ `day` / `agent` / `speech_id` を持つ公開 speech に結合する。
+wolf_chat は現行ログに `speech_id` がないため、同じ `day` / `agent` の直近 wolf_chat に結合する暫定互換処理とする。
 
 ### viewerMode — spectator / public
 
