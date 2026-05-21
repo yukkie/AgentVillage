@@ -18,6 +18,7 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| yukkie/AgentVillage#376 | bug | 🔴 | 1 | fix: reorder vote feed card layout — icon before voter avatar | 投票フィードカードのアイコン・アバター順序修正と右アバターの右寄せ解消 |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#314 | enhancement | 🔴 | 2 | spectator / public mode toggle | viewerMode prop による表示切替。#350 のブロッカー |
 | yukkie/AgentVillage#351 | enhancement | 🔴 | 2 | Structured game_over event with winner field + frontend result screen | game_over に winner フィールドを追加し文字列パース依存を除去。観戦画面に勝敗サマリーを表示 |
