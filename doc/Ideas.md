@@ -29,7 +29,6 @@
 | yukkie/AgentVillage#347 | enhancement | 🟡 | 3 | Implement feed filters in SpectatorScreen left pane (agent / role / event type) | 参加者・役職・表示種別フィルターチップを実際に動作させる。追加データ不要でクライアントサイドのみで実装可能 |
 | yukkie/AgentVillage#337 | enhancement | 🟡 | 2 | Top agents real stats | stub/gameList.js の TOP_AGENTS を実ゲーム結果の集計データに置き換え |
 | yukkie/AgentVillage#319 | enhancement | 🟡 | 3 | LIVE spectator | state/ を tail して進行中ゲームを表示（Milestone 2 後半） |
-| yukkie/AgentVillage#367 | enhancement | — | — | show reasoning/thought for inspection, guard, medium_result feed cards | 占い・護衛・霊媒結果カードにも thought details を表示する |
 | yukkie/AgentVillage#364 | enhancement | — | — | introduce SpectatorScreen view model indexes | SpectatorScreen 用 view model/index を導入し、render 中の events 全走査を減らす |
 | yukkie/AgentVillage#371 | tech-debt | — | — | reduce duplication in SpectatorScreen system event rendering | system event 表示の重複 JSX を設定テーブル化し、content そのまま表示と左右アバター配置を維持する |
 | yukkie/AgentVillage#321 | enhancement | 🟢 | 2 | Unify config data as shared JSON (SSOT) | config/*.json を Python/JS 共有にして constants.js のハードコードを廃止 |

@@ -31,6 +31,31 @@ function Mentioned({ text }) {
   );
 }
 
+function ThoughtDetails({ thought }) {
+  if (!thought) return null;
+
+  return (
+    <details className={styles.spThink}>
+      <summary>
+        <svg className={styles.bubbleIco} width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path
+            d="M2 3.5C2 2.67 2.67 2 3.5 2h9c.83 0 1.5.67 1.5 1.5v6c0 .83-.67 1.5-1.5 1.5H7.5L4.7 13.4a.4.4 0 0 1-.7-.28V11H3.5C2.67 11 2 10.33 2 9.5v-6Z"
+            stroke="currentColor" strokeWidth="1.2"
+          />
+          <circle cx="5.5" cy="6.5" r="0.7" fill="currentColor" />
+          <circle cx="8"   cy="6.5" r="0.7" fill="currentColor" />
+          <circle cx="10.5" cy="6.5" r="0.7" fill="currentColor" />
+        </svg>
+        <span className={styles.thinkLabel}>思考ログを読む</span>
+        <span className={styles.conf}>{thought.length} 字 · spectator限定</span>
+      </summary>
+      <div className={styles.thinkBody}>
+        {thought.slice(0, 380)}{thought.length > 380 ? '…' : ''}
+      </div>
+    </details>
+  );
+}
+
 // --- 発言カード ---
 function SpeechCard({ ev, prevById, roleAssignment }) {
   const role = roleAssignment[ev.agent];
@@ -67,26 +92,7 @@ function SpeechCard({ ev, prevById, roleAssignment }) {
         <div className={styles.spBody}>
           <Mentioned text={ev.content} />
         </div>
-        {ev.thought && (
-          <details className={styles.spThink}>
-            <summary>
-              <svg className={styles.bubbleIco} width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M2 3.5C2 2.67 2.67 2 3.5 2h9c.83 0 1.5.67 1.5 1.5v6c0 .83-.67 1.5-1.5 1.5H7.5L4.7 13.4a.4.4 0 0 1-.7-.28V11H3.5C2.67 11 2 10.33 2 9.5v-6Z"
-                  stroke="currentColor" strokeWidth="1.2"
-                />
-                <circle cx="5.5" cy="6.5" r="0.7" fill="currentColor" />
-                <circle cx="8"   cy="6.5" r="0.7" fill="currentColor" />
-                <circle cx="10.5" cy="6.5" r="0.7" fill="currentColor" />
-              </svg>
-              <span className={styles.thinkLabel}>思考ログを読む</span>
-              <span className={styles.conf}>{ev.thought.length} 字 · spectator限定</span>
-            </summary>
-            <div className={styles.thinkBody}>
-              {ev.thought.slice(0, 380)}{ev.thought.length > 380 ? '…' : ''}
-            </div>
-          </details>
-        )}
+        <ThoughtDetails thought={ev.thought} />
       </div>
     </div>
   );
@@ -97,7 +103,7 @@ function logContent(ev) {
 }
 
 // --- システム行 ---
-function SystemRow({ kind, icon, label, children, ts, leftName, rightName, roleAssignment = {} }) {
+function SystemRow({ kind, icon, label, children, thought, ts, leftName, rightName, roleAssignment = {} }) {
   const defaultIcon = { gm: '👁', death: '💀', exec: '⚑', phase: '☾' }[kind] || '⌘';
   return (
     <div className={`${styles.sysrow} ${styles[kind] || ''}`}>
@@ -108,7 +114,10 @@ function SystemRow({ kind, icon, label, children, ts, leftName, rightName, roleA
         <div className={styles.sysIcon}>{icon ?? defaultIcon}</div>
         <div className={styles.sysLabel}>{label}</div>
       </div>
-      <div className={styles.sysText}>{children}</div>
+      <div className={styles.sysText}>
+        {children}
+        <ThoughtDetails thought={thought} />
+      </div>
       <div className={styles.sysTs}>{ts}</div>
       {rightName && (
         <Avatar name={rightName} role={roleAssignment[rightName]} size="xs" />
@@ -154,26 +163,7 @@ function WolfChatCard({ ev }) {
           <span className={styles.alias}>人狼</span>
         </div>
         <div className={styles.spBody}>{ev.content}</div>
-        {ev.thought && (
-          <details className={styles.spThink}>
-            <summary>
-              <svg className={styles.bubbleIco} width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M2 3.5C2 2.67 2.67 2 3.5 2h9c.83 0 1.5.67 1.5 1.5v6c0 .83-.67 1.5-1.5 1.5H7.5L4.7 13.4a.4.4 0 0 1-.7-.28V11H3.5C2.67 11 2 10.33 2 9.5v-6Z"
-                  stroke="currentColor" strokeWidth="1.2"
-                />
-                <circle cx="5.5" cy="6.5" r="0.7" fill="currentColor" />
-                <circle cx="8"   cy="6.5" r="0.7" fill="currentColor" />
-                <circle cx="10.5" cy="6.5" r="0.7" fill="currentColor" />
-              </svg>
-              <span className={styles.thinkLabel}>思考ログを読む</span>
-              <span className={styles.conf}>{ev.thought.length} 字 · spectator限定</span>
-            </summary>
-            <div className={styles.thinkBody}>
-              {ev.thought.slice(0, 380)}{ev.thought.length > 380 ? '…' : ''}
-            </div>
-          </details>
-        )}
+        <ThoughtDetails thought={ev.thought} />
       </div>
     </div>
   );
@@ -200,21 +190,21 @@ export function FeedItem({ ev, prevById, roleAssignment, title }) {
   }
   if (ev.event_type === 'medium_result') {
     return (
-      <SystemRow kind="gm" icon="👁" label="霊媒結果" ts="—" leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
+      <SystemRow kind="gm" icon="👁" label="霊媒結果" thought={ev.thought} ts="—" leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
         {logContent(ev)}
       </SystemRow>
     );
   }
   if (ev.event_type === 'inspection') {
     return (
-      <SystemRow kind="gm" icon="🔮" label="占い結果" ts="—" leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
+      <SystemRow kind="gm" icon="🔮" label="占い結果" thought={ev.thought} ts="—" leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
         {logContent(ev)}
       </SystemRow>
     );
   }
   if (ev.event_type === 'guard') {
     return (
-      <SystemRow kind="gm" icon="🛡" label="護衛" ts="—" leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
+      <SystemRow kind="gm" icon="🛡" label="護衛" thought={ev.thought} ts="—" leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
         {logContent(ev)}
       </SystemRow>
     );
