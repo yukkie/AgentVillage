@@ -23,12 +23,29 @@ function stripThinkPrefix(content) {
 }
 
 function eventKey(event) {
-  return `${event.day ?? ''}:${event.agent ?? ''}:${event.speech_id ?? ''}`;
+  return `${event.event_type ?? ''}:${event.day ?? ''}:${event.agent ?? ''}:${event.speech_id ?? ''}`;
 }
 
+function fallbackEventKey(event) {
+  return `${event.event_type ?? ''}:${event.day ?? ''}:${event.agent ?? ''}`;
+}
+
+function mergeableThoughtEventType(event) {
+  return event.event_type === 'speech' || event.event_type === 'wolf_chat';
+}
+
+function isVisibleThoughtTarget(event) {
+  if (event.event_type === 'speech') return event.is_public !== false;
+  if (event.event_type === 'wolf_chat') return true;
+  return false;
+}
+
+// Legacy-adapter: archived logs store private thoughts as sibling "[THINK]"
+// events. Keep this bridge searchable until LogEvent can carry mixed
+// public/private fields directly.
 function isPrivateThinkEvent(event) {
   return (
-    event.event_type === 'speech' &&
+    mergeableThoughtEventType(event) &&
     event.is_public === false &&
     typeof event.content === 'string' &&
     event.content.startsWith(THINK_PREFIX)
@@ -47,29 +64,42 @@ function isPrivateThinkEvent(event) {
  */
 export function normalizeEvents(rawEvents) {
   const publicEvents = [];
-  const speechByKey = new Map();
+  const eventByKey = new Map();
+  const latestEventByFallbackKey = new Map();
   const pendingThoughts = new Map();
+  const pendingFallbackThoughts = new Map();
 
   rawEvents.forEach(event => {
     if (isPrivateThinkEvent(event)) {
       const key = eventKey(event);
+      const fallbackKey = fallbackEventKey(event);
       const thought = stripThinkPrefix(event.content);
-      const speech = speechByKey.get(key);
-      if (speech) {
-        speech.thought = thought;
+      const visibleEvent = eventByKey.get(key) ?? latestEventByFallbackKey.get(fallbackKey);
+      if (visibleEvent) {
+        visibleEvent.thought = thought;
       } else {
-        pendingThoughts.set(key, thought);
+        if (event.speech_id != null) {
+          pendingThoughts.set(key, thought);
+        } else {
+          pendingFallbackThoughts.set(fallbackKey, thought);
+        }
       }
       return;
     }
 
     const normalized = { ...event };
-    if (normalized.event_type === 'speech' && normalized.is_public !== false) {
+    if (isVisibleThoughtTarget(normalized)) {
       const key = eventKey(normalized);
+      const fallbackKey = fallbackEventKey(normalized);
       if (pendingThoughts.has(key)) {
         normalized.thought = pendingThoughts.get(key);
+        pendingThoughts.delete(key);
+      } else if (pendingFallbackThoughts.has(fallbackKey)) {
+        normalized.thought = pendingFallbackThoughts.get(fallbackKey);
+        pendingFallbackThoughts.delete(fallbackKey);
       }
-      speechByKey.set(key, normalized);
+      eventByKey.set(key, normalized);
+      latestEventByFallbackKey.set(fallbackKey, normalized);
     }
     publicEvents.push(normalized);
   });
