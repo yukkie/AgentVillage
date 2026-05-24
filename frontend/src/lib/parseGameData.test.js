@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseEventLine, parseGameData, normalizeEvents, aggregateDayResults, aggregateCoStatus, aggregateDayActions } from './parseGameData.js';
+import { parseEventLine, parseGameData, normalizeEvents, aggregateDayResults, aggregateNightResults, buildActionsTimeline, aggregateCoStatus, aggregateDayActions } from './parseGameData.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '../../..');
@@ -182,6 +182,165 @@ describe('parseGameData', () => {
     expect(day1.target).toBeTruthy();
     expect(typeof day1.votes).toBe('number');
     expect(typeof day1.nightDone).toBe('boolean');
+  });
+});
+
+describe('aggregateNightResults', () => {
+  it('returns attacked name from private night_attack per day', () => {
+    /*
+     * SUT: aggregateNightResults
+     * Mock: なし
+     * Level: unit
+     * Objective: is_public=false の night_attack の target（被害者）を day ごとにインデックスし、
+     *            { attacked: string } を返すことを検証する。
+     *            is_public=true の night_attack は agent/target が逆転しているバグがあるため使わない。
+     */
+    const events = [
+      { day: 1, event_type: 'night_attack', agent: 'Kai', target: 'Sora', is_public: false },
+      { day: 2, event_type: 'night_attack', agent: 'Kai', target: 'Rei',  is_public: false },
+      { day: 2, event_type: 'night_attack', agent: 'Rei', target: null,   is_public: true },
+    ];
+    const result = aggregateNightResults(events);
+    expect(result[1]).toEqual({ attacked: 'Sora' });
+    expect(result[2]).toEqual({ attacked: 'Rei' });
+  });
+
+  it('ignores public night_attack events', () => {
+    /*
+     * SUT: aggregateNightResults
+     * Mock: なし
+     * Level: unit
+     * Objective: is_public=true の night_attack は agent/target が逆転しているバグがあるため無視することを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'night_attack', agent: 'Sora', target: null, is_public: true },
+    ];
+    const result = aggregateNightResults(events);
+    expect(result[1]).toBeUndefined();
+  });
+
+  it('returns empty object when no night_attack events', () => {
+    /*
+     * SUT: aggregateNightResults
+     * Mock: なし
+     * Level: unit
+     * Objective: night_attack がないイベント列では空オブジェクトを返すことを検証する。
+     */
+    const result = aggregateNightResults([
+      { day: 1, event_type: 'speech', agent: 'Mira' },
+    ]);
+    expect(result).toEqual({});
+  });
+});
+
+describe('buildActionsTimeline', () => {
+  it('maps inspection event to divine kind entry', () => {
+    /*
+     * SUT: buildActionsTimeline
+     * Mock: なし
+     * Level: unit
+     * Objective: inspection イベントが kind="divine" のタイムラインエントリに変換されることを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'inspection', agent: 'Nox', target: 'Kai', content: 'Nox inspects Kai: Werewolf', is_public: false },
+    ];
+    const timeline = buildActionsTimeline(events);
+    expect(timeline).toHaveLength(1);
+    expect(timeline[0]).toMatchObject({ day: 1, when: 'N', kind: 'divine', who: 'Nox', target: 'Kai' });
+  });
+
+  it('maps guard event to guard kind entry', () => {
+    /*
+     * SUT: buildActionsTimeline
+     * Mock: なし
+     * Level: unit
+     * Objective: guard イベントが kind="guard" のタイムラインエントリに変換されることを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'guard', agent: 'Rei', target: 'Nox', content: 'Rei guards Nox', is_public: false },
+    ];
+    const timeline = buildActionsTimeline(events);
+    expect(timeline).toHaveLength(1);
+    expect(timeline[0]).toMatchObject({ day: 1, when: 'N', kind: 'guard', who: 'Rei', target: 'Nox' });
+  });
+
+  it('maps private night_attack to attack kind entry', () => {
+    /*
+     * SUT: buildActionsTimeline
+     * Mock: なし
+     * Level: unit
+     * Objective: is_public=false の night_attack が kind="attack" に変換されることを検証する
+     *            （狼視点の行動を表す）。
+     */
+    const events = [
+      { day: 1, event_type: 'night_attack', agent: 'Kai', target: 'Sora', content: 'Kai attacks Sora', is_public: false },
+    ];
+    const timeline = buildActionsTimeline(events);
+    expect(timeline).toHaveLength(1);
+    expect(timeline[0]).toMatchObject({ day: 1, when: 'N', kind: 'attack', who: 'Kai', target: 'Sora' });
+  });
+
+  it('maps elimination to exec kind entry with when="D"', () => {
+    /*
+     * SUT: buildActionsTimeline
+     * Mock: なし
+     * Level: unit
+     * Objective: elimination イベントが kind="exec", when="D" のタイムラインエントリに変換されることを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'elimination', agent: 'Toma', target: null, content: 'Toma was eliminated.', is_public: true },
+    ];
+    const timeline = buildActionsTimeline(events);
+    expect(timeline).toHaveLength(1);
+    expect(timeline[0]).toMatchObject({ day: 1, when: 'D', kind: 'exec', who: '村', target: 'Toma' });
+  });
+
+  it('ignores public night_attack (result announcement) in timeline', () => {
+    /*
+     * SUT: buildActionsTimeline
+     * Mock: なし
+     * Level: unit
+     * Objective: is_public=true の night_attack（村への結果通知）はタイムラインに含まれないことを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'night_attack', target: 'Sora', is_public: true },
+    ];
+    const timeline = buildActionsTimeline(events);
+    expect(timeline).toHaveLength(0);
+  });
+
+  it('orders entries: night actions before day actions', () => {
+    /*
+     * SUT: buildActionsTimeline
+     * Mock: なし
+     * Level: unit
+     * Objective: 同日内で夜行動（when="N"）が昼行動（when="D"）より先に並ぶことを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'elimination', agent: 'Toma', is_public: true },
+      { day: 1, event_type: 'inspection',  agent: 'Nox',  target: 'Kai', is_public: false },
+    ];
+    const timeline = buildActionsTimeline(events);
+    expect(timeline[0].when).toBe('N');
+    expect(timeline[1].when).toBe('D');
+  });
+
+  it('parseGameData returns nightResults and actionsTimeline', () => {
+    /*
+     * SUT: parseGameData
+     * Mock: なし
+     * Level: unit
+     * Objective: parseGameData の戻り値に nightResults と actionsTimeline が含まれることを検証する。
+     */
+    const jsonl = [
+      JSON.stringify({ day: 1, event_type: 'night_attack', agent: 'Kai', target: 'Sora', is_public: false }),
+      JSON.stringify({ day: 1, event_type: 'inspection', agent: 'Nox', target: 'Kai', is_public: false }),
+    ].join('\n');
+    const result = parseGameData(jsonl);
+    expect(result.nightResults).toBeDefined();
+    expect(result.nightResults[1]).toEqual({ attacked: 'Sora' });
+    expect(result.actionsTimeline).toBeDefined();
+    expect(result.actionsTimeline.length).toBeGreaterThan(0);
   });
 });
 

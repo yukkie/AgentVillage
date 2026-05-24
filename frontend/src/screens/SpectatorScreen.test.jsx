@@ -324,6 +324,43 @@ describe('FeedItem: system event icons', () => {
   });
 });
 
+describe('LeftPane night death display', () => {
+  it('shows attacked agent name from dayActions when available', () => {
+    /**
+     * SUT: LeftPane
+     * Mock: なし（dayActions plain object を入力）
+     * Level: unit
+     * Objective: dayActions[day].nightActions に night_attack がある場合 ⚰ マークと共に左ペインに表示されることを検証する。
+     */
+    renderLeftPane({
+      days: [1],
+      dayActions: {
+        1: {
+          nightActions: [{ event_type: 'night_attack', agent: 'Kai', target: 'Alice', is_public: false }],
+          execResult: null,
+        },
+      },
+    });
+
+    expect(screen.getByText(/⚰.*Alice|Alice.*⚰/)).toBeTruthy();
+  });
+
+  it('shows nothing when dayActions has no night_attack for the day', () => {
+    /**
+     * SUT: LeftPane
+     * Mock: なし
+     * Level: unit
+     * Objective: dayActions に night_attack がない場合は ⚰ が表示されないことを検証する。
+     */
+    const { container } = renderLeftPane({
+      days: [1],
+      dayActions: {},
+    });
+
+    expect(container.querySelector('[class*="deathline"]')).toBeNull();
+  });
+});
+
 const baseAgents = {
   Alice: { role: 'Seer',     is_alive: true,  claimed_role: null },
   Bob:   { role: 'Werewolf', is_alive: false, claimed_role: null },
