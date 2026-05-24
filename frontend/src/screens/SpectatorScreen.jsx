@@ -69,14 +69,13 @@ function SpeechCard({ ev, prevById, roleAssignment }) {
       <div>
         <div className={styles.spHead}>
           <span className={styles.name}>{ev.agent}</span>
-          <span className={styles.alias}>#{ev.agent.charCodeAt(0) % 99}</span>
+          <span className={styles.turn}>{fmtTurn(ev.day, ev.speech_id || 0)}</span>
           <RoleTag role={role} />
           {ev.claimed_role && (
             <span className={styles.coBadge}>
               ▶ {ROLES[ev.claimed_role]?.ja || ev.claimed_role} CO
             </span>
           )}
-          <span className={styles.turn}>{fmtTurn(ev.day, ev.speech_id || 0)}</span>
           <span className={styles.ts}>{fmtTime(ev.day, ev.speech_id || 0)}</span>
         </div>
         {replied && (
@@ -192,7 +191,6 @@ function WolfChatCard({ ev }) {
       <div>
         <div className={styles.spHead}>
           <span className={styles.name}>{ev.agent}</span>
-          <span className={styles.alias}>人狼</span>
         </div>
         <div className={styles.spBody}>{ev.content}</div>
         <ThoughtDetails reasoning={ev.reasoning} />
