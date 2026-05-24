@@ -246,7 +246,8 @@ def _make_public_night_attack_event(engine: GameEngine, attack: AttackDeclaratio
         day=engine.day,
         phase=Phase.NIGHT.value,
         event_type=EventType.NIGHT_ATTACK,
-        agent=attack.target,
+        agent=None,
+        target=attack.target,
         content=content,
         is_public=True,
     )

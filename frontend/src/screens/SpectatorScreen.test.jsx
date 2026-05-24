@@ -88,6 +88,25 @@ describe('FeedItem event routing', () => {
     expect(screen.getByText(expectedText)).toBeTruthy();
   });
 
+  it('renders public night_attack event using target (not agent) as victim', () => {
+    /**
+     * SUT: FeedItem (night_attack branch)
+     * Mock: なし（LogEvent 形状の plain object を入力）
+     * Level: unit
+     * Objective: is_public=true の night_attack で ev.target（被害者名）が表示され、
+     *            ev.agent（null）を誤ってフォールバックしないことを検証する。
+     */
+    renderFeedItem({
+      event_type: 'night_attack',
+      agent: null,
+      target: 'Alice',
+      is_public: true,
+      content: 'Werewolves attacked Alice! Alice was found dead at dawn.',
+    });
+
+    expect(screen.getByText(/Werewolves attacked Alice/)).toBeTruthy();
+  });
+
   it.each([
     ['medium_result villager-side result', { event_type: 'medium_result', agent: 'Alice', target: 'Carol', content: 'Alice senses: Carol was Not Werewolf' }],
     ['medium_result werewolf result', { event_type: 'medium_result', agent: 'Alice', target: 'Bob', content: 'Alice senses: Bob was Werewolf' }],
