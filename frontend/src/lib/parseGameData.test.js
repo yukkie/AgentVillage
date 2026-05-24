@@ -435,6 +435,50 @@ describe('aggregateCoStatus', () => {
     ];
     expect(aggregateCoStatus(events)).toEqual({ Ren: 'Villager' });
   });
+
+  it('filters out co_announcement events after upToDay', () => {
+    /*
+     * SUT: aggregateCoStatus
+     * Mock: なし
+     * Level: unit
+     * Objective: upToDay を指定した場合、その日以降の CO イベントが除外されることを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'co_announcement', agent: 'Jonas', claimed_role: 'Seer',   is_public: true },
+      { day: 2, event_type: 'co_announcement', agent: 'SQ',    claimed_role: 'Medium', is_public: true },
+      { day: 3, event_type: 'co_announcement', agent: 'Ren',   claimed_role: 'Hunter', is_public: true },
+    ];
+    expect(aggregateCoStatus(events, 2)).toEqual({ Jonas: 'Seer', SQ: 'Medium' });
+  });
+
+  it('returns only CO up to upToDay=1 when later days exist', () => {
+    /*
+     * SUT: aggregateCoStatus
+     * Mock: なし
+     * Level: unit
+     * Objective: Day 1 のみ選択時に Day 1 の CO だけが返されることを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'co_announcement', agent: 'Jonas', claimed_role: 'Seer',   is_public: true },
+      { day: 2, event_type: 'co_announcement', agent: 'SQ',    claimed_role: 'Medium', is_public: true },
+    ];
+    expect(aggregateCoStatus(events, 1)).toEqual({ Jonas: 'Seer' });
+  });
+
+  it('accumulates CO correctly when upToDay matches later days', () => {
+    /*
+     * SUT: aggregateCoStatus
+     * Mock: なし
+     * Level: unit
+     * Objective: upToDay を後の日に設定すると、その日までの CO が累積されることを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'co_announcement', agent: 'Jonas', claimed_role: 'Seer',   is_public: true },
+      { day: 2, event_type: 'co_announcement', agent: 'SQ',    claimed_role: 'Medium', is_public: true },
+      { day: 3, event_type: 'co_announcement', agent: 'Ren',   claimed_role: 'Hunter', is_public: true },
+    ];
+    expect(aggregateCoStatus(events, 3)).toEqual({ Jonas: 'Seer', SQ: 'Medium', Ren: 'Hunter' });
+  });
 });
 
 describe('computeDeadByDay', () => {
