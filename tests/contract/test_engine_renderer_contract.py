@@ -185,13 +185,11 @@ class TestNightAttackContract:
     def test_engine_emits_public_night_attack_as_victim_narrative(
         self, make_test_actor, make_test_engine
     ):
-        """Public NIGHT_ATTACK has its own contract distinct from the
-        spectator one: it announces the death to villagers without exposing
-        the attacker. ``target`` must be ``None`` so the renderer takes the
-        narrative ``content`` branch (see the next test); ``agent`` carries
-        the victim's name (NOT the attacker's), which is a known semantic
-        inversion vs the spectator event and is pinned here to prevent
-        accidental "fixes" that would silently break either variant.
+        """Public NIGHT_ATTACK announces the death to villagers without
+        exposing the attacker. ``target`` carries the victim's name and
+        ``agent`` is ``None`` (correct semantics: agent = initiator of action).
+        The renderer takes the narrative ``content`` branch because
+        ``agent`` is falsy (see the next test).
         """
         seer = make_test_actor("Seer1", "Seer")
         wolf = make_test_actor("Wolf1", "Werewolf")
@@ -201,13 +199,12 @@ class TestNightAttackContract:
         _run_night(engine, attack_target="Villager1", inspect_target="Wolf1")
 
         ev = _public_event(events, EventType.NIGHT_ATTACK)
-        assert ev.target is None, (
-            "public NIGHT_ATTACK must leave target=None so renderer takes "
-            "the narrative content branch instead of the structured one"
+        assert ev.target == "Villager1", (
+            "public NIGHT_ATTACK must set target=victim so callers can "
+            "identify who died without parsing the content string"
         )
-        assert ev.agent == "Villager1", (
-            "public NIGHT_ATTACK uses agent=victim (death notice), not "
-            "agent=attacker; this differs from the spectator variant"
+        assert ev.agent is None, (
+            "public NIGHT_ATTACK must not expose the attacker; agent=None"
         )
         assert "Villager1" in ev.content
 

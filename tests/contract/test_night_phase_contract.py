@@ -107,6 +107,38 @@ class TestRunNightPhaseOrderContract:
         )
 
 
+class TestNightAttackPublicEventContract:
+    def test_public_night_attack_event_has_target_as_victim_and_agent_null(
+        self, make_test_actor, make_test_engine
+    ):
+        """
+        SUT: _make_public_night_attack_event
+        Mock: store.save patched; call_night_action returns deterministic target
+        Level: contract
+        Objective: is_public=True の night_attack イベントで target に被害者名が入り agent が None である契約を検証する。
+        """
+        wolf = make_test_actor("Wolf1", "Werewolf")
+        victim = make_test_actor("Villager1")
+        engine, events = make_test_engine([wolf, victim])
+
+        engine._llm_client.call_night_action.side_effect = make_night_action_side_effect(
+            {"Wolf1": "Villager1"}
+        )
+
+        with patch("src.agent.store.save"):
+            engine._run_night()
+
+        public_attack_events = [
+            e
+            for e in events
+            if e.event_type == EventType.NIGHT_ATTACK and e.is_public
+        ]
+        assert len(public_attack_events) == 1
+        ev = public_attack_events[0]
+        assert ev.target == "Villager1", f"expected target='Villager1', got {ev.target!r}"
+        assert ev.agent is None, f"expected agent=None, got {ev.agent!r}"
+
+
 class TestWolfChatContract:
     def test_wolf_chat_sets_intended_co_from_self_decision(self, make_test_actor, make_test_engine):
         """

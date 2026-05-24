@@ -188,7 +188,7 @@ export function FeedItem({ ev, prevById, roleAssignment, title }) {
       : <SystemRow kind="gm" icon="🛡" label="護衛成功" rightName={ev.target} roleAssignment={roleAssignment}>{logContent(ev)}</SystemRow>;
   }
   if (ev.event_type === 'night_attack') {
-    const victim = ev.target ?? ev.agent;
+    const victim = ev.target;
     return ev.is_public
       ? <SystemRow kind="death" icon="💀" label="襲撃結果" rightName={victim} roleAssignment={roleAssignment}>{logContent(ev)}</SystemRow>
       : <SystemRow kind="exec" icon="🐺" label="人狼の襲撃" rightName={ev.target} roleAssignment={roleAssignment}>{logContent(ev)}</SystemRow>;
