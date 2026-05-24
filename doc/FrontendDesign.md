@@ -293,9 +293,9 @@ stateDiagram-v2
       == RightPane (360px)
       -- 参加エージェント  9/11生存 --
       生存 9
-      [Nox] Nox  占い師  容疑 ██░░ 45
-      [Mira] Mira 狩人   容疑 ███░ 62
-      [Kai]  Kai  人狼   容疑 ████ 88
+      [Nox] Nox  占い師
+      [Mira] Mira 狩人
+      [Kai]  Kai  人狼
       ...
       死亡 2
       [Sora] Sora 村人   Day1夜・襲撃
@@ -342,7 +342,7 @@ stateDiagram-v2
       [Sora]  Sora  村人   ✕
       [Toma]  Toma  村人   ✕
       --
-      [発言数↓] [容疑度↓] [役職別]
+      [発言数↓] [役職別]
     } |
     {+
       == Center (1fr)
@@ -481,7 +481,7 @@ CSS Grid `grid-template-columns: var(--lcol) 1fr var(--rcol)` で 3 ペインを
 | `SystemRow` | GM通知・処刑・夜フェーズ移行など非発言イベント |
 | `FeedItem` | `event_type` でルーティングして各カードに振り分ける |
 | `LeftPane` | フェーズナビ（日 × フェーズ、クリックで中央フィードを切り替え） + エージェント/役職/表示フィルタ |
-| `RightPane` | ロスター（生存/死亡 + 容疑度メーター）/ COボード / 夜の行動タイムライン |
+| `RightPane` | ロスター（生存/死亡）/ COボード / 夜の行動タイムライン |
 
 #### フェーズクリックの仕様（#358）
 

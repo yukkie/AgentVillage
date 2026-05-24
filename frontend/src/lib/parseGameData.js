@@ -262,6 +262,40 @@ export function aggregateDayActions(events) {
 }
 
 /**
+ * Build a cumulative dead-set per day from elimination events.
+ *
+ * Returns a map from day number → Set of agent names dead *at the end of that day*.
+ * Days with no elimination inherit the previous day's set so callers can simply
+ * do `deadByDay[activeDay]?.has(name)` without caring about history.
+ *
+ * @param {object[]} events
+ * @returns {Record<number, Set<string>>}
+ */
+export function computeDeadByDay(events) {
+  const dayNumbers = [...new Set(events.map(ev => ev.day).filter(Boolean))].sort((a, b) => a - b);
+  if (dayNumbers.length === 0) return {};
+
+  const eliminationsByDay = {};
+  for (const ev of events) {
+    if (ev.event_type === 'elimination' && ev.agent && ev.day) {
+      if (!eliminationsByDay[ev.day]) eliminationsByDay[ev.day] = [];
+      eliminationsByDay[ev.day].push(ev.agent);
+    }
+  }
+
+  const result = {};
+  let cumulative = new Set();
+  for (const day of dayNumbers) {
+    if (eliminationsByDay[day]) {
+      cumulative = new Set(cumulative);
+      for (const name of eliminationsByDay[day]) cumulative.add(name);
+    }
+    result[day] = cumulative;
+  }
+  return result;
+}
+
+/**
  * Parse archive JSONL and agent JSON into the GameData shape consumed by React.
  *
  * This function is intentionally synchronous and pure. I/O stays in
