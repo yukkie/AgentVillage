@@ -98,6 +98,65 @@ function logContent(ev) {
   return ev.content || MISSING_CONTENT;
 }
 
+const SYSTEM_EVENT_VIEWS = {
+  vote: {
+    kind: 'exec',
+    label: '投票',
+    leftName: ev => ev.agent,
+    rightName: ev => ev.target,
+    reasoning: ev => ev.reasoning,
+  },
+  elimination: {
+    kind: 'death',
+    icon: '💀',
+    label: '処刑',
+    rightName: ev => ev.agent,
+  },
+  medium_result: {
+    kind: 'gm',
+    icon: '👁',
+    label: '霊媒結果',
+    leftName: ev => ev.agent,
+    rightName: ev => ev.target,
+    reasoning: ev => ev.reasoning,
+  },
+  inspection: {
+    kind: 'gm',
+    icon: '🔮',
+    label: '占い結果',
+    leftName: ev => ev.agent,
+    rightName: ev => ev.target,
+    reasoning: ev => ev.reasoning,
+  },
+  guard: {
+    kind: 'gm',
+    icon: '🛡',
+    label: '護衛',
+    leftName: ev => ev.agent,
+    rightName: ev => ev.target,
+    reasoning: ev => ev.reasoning,
+  },
+};
+
+function renderConfiguredSystemEvent(ev, roleAssignment) {
+  const view = SYSTEM_EVENT_VIEWS[ev.event_type];
+  if (!view) return null;
+
+  return (
+    <SystemRow
+      kind={view.kind}
+      icon={view.icon}
+      label={view.label}
+      reasoning={view.reasoning?.(ev)}
+      leftName={view.leftName?.(ev)}
+      rightName={view.rightName?.(ev)}
+      roleAssignment={roleAssignment}
+    >
+      {logContent(ev)}
+    </SystemRow>
+  );
+}
+
 // --- システム行 ---
 function SystemRow({ kind, icon, label, children, reasoning, ts, leftName, rightName, roleAssignment = {} }) {
   const defaultIcon = { gm: '👁', death: '💀', exec: '⚑', phase: '☾' }[kind] || '⌘';
@@ -147,41 +206,9 @@ export function FeedItem({ ev, prevById, roleAssignment, title }) {
   if (ev.event_type === 'speech') return <SpeechCard ev={ev} prevById={prevById} roleAssignment={roleAssignment} />;
   if (ev.event_type === 'wolf_chat') return <WolfChatCard ev={ev} />;
 
-  if (ev.event_type === 'vote') {
-    return (
-      <SystemRow kind="exec" label="投票" reasoning={ev.reasoning} leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
-        {logContent(ev)}
-      </SystemRow>
-    );
-  }
-  if (ev.event_type === 'elimination') {
-    return (
-      <SystemRow kind="death" icon="💀" label="処刑" rightName={ev.agent} roleAssignment={roleAssignment}>
-        {logContent(ev)}
-      </SystemRow>
-    );
-  }
-  if (ev.event_type === 'medium_result') {
-    return (
-      <SystemRow kind="gm" icon="👁" label="霊媒結果" reasoning={ev.reasoning} leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
-        {logContent(ev)}
-      </SystemRow>
-    );
-  }
-  if (ev.event_type === 'inspection') {
-    return (
-      <SystemRow kind="gm" icon="🔮" label="占い結果" reasoning={ev.reasoning} leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
-        {logContent(ev)}
-      </SystemRow>
-    );
-  }
-  if (ev.event_type === 'guard') {
-    return (
-      <SystemRow kind="gm" icon="🛡" label="護衛" reasoning={ev.reasoning} leftName={ev.agent} rightName={ev.target} roleAssignment={roleAssignment}>
-        {logContent(ev)}
-      </SystemRow>
-    );
-  }
+  const configuredSystemEvent = renderConfiguredSystemEvent(ev, roleAssignment);
+  if (configuredSystemEvent) return configuredSystemEvent;
+
   if (ev.event_type === 'guard_block') {
     return ev.is_public
       ? <SystemRow kind="gm" icon="🛡" label="護衛">{logContent(ev)}</SystemRow>
