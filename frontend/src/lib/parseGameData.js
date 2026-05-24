@@ -123,6 +123,56 @@ function parseAgent(agentJson) {
 }
 
 /**
+ * Index public night_attack events by day to get the attacked agent name.
+ *
+ * @param {object[]} events
+ * @returns {Record<number, { attacked: string }>}
+ */
+export function aggregateNightResults(events) {
+  const result = {};
+  for (const ev of events) {
+    if (ev.event_type === 'night_attack' && !ev.is_public && ev.target) {
+      result[ev.day] = { attacked: ev.target };
+    }
+  }
+  return result;
+}
+
+const ACTION_KIND = {
+  inspection: 'divine',
+  guard: 'guard',
+  night_attack: 'attack',
+  elimination: 'exec',
+};
+
+/**
+ * Build a flat timeline of night/day actions for the right-pane action list.
+ * Includes inspection, guard, private night_attack (wolf POV), and elimination.
+ * Public night_attack (village result announcement) is excluded — use aggregateNightResults for that.
+ *
+ * @param {object[]} events
+ * @returns {Array<{ day: number, when: 'N'|'D', kind: string, who: string, target: string, label: string }>}
+ */
+export function buildActionsTimeline(events) {
+  const nightEntries = [];
+  const dayEntries = [];
+
+  for (const ev of events) {
+    if (ev.event_type === 'inspection') {
+      nightEntries.push({ day: ev.day, when: 'N', kind: 'divine', who: ev.agent, target: ev.target, label: '占い' });
+    } else if (ev.event_type === 'guard') {
+      nightEntries.push({ day: ev.day, when: 'N', kind: 'guard', who: ev.agent, target: ev.target, label: '護衛' });
+    } else if (ev.event_type === 'night_attack' && !ev.is_public) {
+      nightEntries.push({ day: ev.day, when: 'N', kind: 'attack', who: ev.agent, target: ev.target, label: '襲撃' });
+    } else if (ev.event_type === 'elimination' && ev.is_public) {
+      dayEntries.push({ day: ev.day, when: 'D', kind: 'exec', who: '村', target: ev.agent, label: '処刑' });
+    }
+  }
+
+  return [...nightEntries, ...dayEntries];
+}
+
+/**
  * Aggregate per-day execution target, vote count, and night completion from
  * elimination / vote / night_attack events. Days with only other event types
  * (speech, guard, etc.) have no entry in the returned map.
@@ -183,5 +233,7 @@ export function parseGameData(jsonlText, agentJsonByName = {}) {
     events,
     agents,
     daySummary: aggregateDayResults(rawEvents),
+    nightResults: aggregateNightResults(rawEvents),
+    actionsTimeline: buildActionsTimeline(rawEvents),
   };
 }

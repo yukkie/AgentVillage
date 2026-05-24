@@ -316,6 +316,38 @@ describe('FeedItem: system event icons', () => {
   });
 });
 
+describe('LeftPane night death display', () => {
+  it('shows attacked agent name from nightResults when available', () => {
+    /**
+     * SUT: LeftPane
+     * Mock: なし（nightResults plain object を入力）
+     * Level: unit
+     * Objective: nightResults[day].attacked が渡されると ⚰ マークと共に左ペインに表示されることを検証する。
+     */
+    renderLeftPane({
+      days: [1],
+      nightResults: { 1: { attacked: 'Alice' } },
+    });
+
+    expect(screen.getByText(/⚰.*Alice|Alice.*⚰/)).toBeTruthy();
+  });
+
+  it('shows nothing when nightResults has no entry for the day', () => {
+    /**
+     * SUT: LeftPane
+     * Mock: なし
+     * Level: unit
+     * Objective: nightResults に当該 day のエントリがない場合は ⚰ が表示されないことを検証する。
+     */
+    const { container } = renderLeftPane({
+      days: [1],
+      nightResults: {},
+    });
+
+    expect(container.querySelector('[class*="deathline"]')).toBeNull();
+  });
+});
+
 describe('LeftPane phase interaction', () => {
   it.each([
     ['議論フェーズ', 'discuss'],
