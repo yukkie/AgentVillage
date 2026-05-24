@@ -421,7 +421,6 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
   const [replayEvents, setReplayEvents] = useState(null);
   const [replayAgents, setReplayAgents] = useState({});
   const [replayDaySummary, setReplayDaySummary] = useState(null);
-  const [replayCoStatus, setReplayCoStatus] = useState({});
   const [replayDayActions, setReplayDayActions] = useState({});
   const [replayDeadByDay, setReplayDeadByDay] = useState({});
   const [loadingEvents, setLoadingEvents] = useState(Boolean(sessionId));
@@ -437,7 +436,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
     setReplayEvents(null);
     setReplayAgents({});
     setReplayDaySummary(null);
-    setReplayCoStatus({});
+
     setReplayDayActions({});
     setReplayDeadByDay({});
     setLoadingEvents(true);
@@ -462,7 +461,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
         const parsed = parseGameData(jsonlText);
         setReplayEvents(parsed.events);
         setReplayDaySummary(parsed.daySummary);
-        setReplayCoStatus(aggregateCoStatus(parsed.events));
+
         setReplayDayActions(aggregateDayActions(parsed.events));
         setReplayDeadByDay(computeDeadByDay(parsed.events));
         const firstDay = parsed.events.find(event => event.day)?.day;
@@ -486,6 +485,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
   const roleAssignment = useMemo(() => Object.fromEntries(
     Object.entries(agents).map(([name, agent]) => [name, agent.role])
   ), [agents]);
+  const replayCoStatus = useMemo(() => aggregateCoStatus(events, activeDay), [events, activeDay]);
   const agentNames = Object.keys(agents);
   const visibleDays = [...new Set(events.map(event => event.day).filter(Boolean))].sort((a, b) => a - b);
 

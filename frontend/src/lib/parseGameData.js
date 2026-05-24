@@ -211,9 +211,10 @@ export function aggregateDayResults(events) {
  * @param {object[]} events
  * @returns {Record<string, string>} agent name → claimed_role
  */
-export function aggregateCoStatus(events) {
+export function aggregateCoStatus(events, upToDay) {
   const result = {};
   for (const ev of events) {
+    if (upToDay !== undefined && ev.day > upToDay) continue;
     if (ev.event_type === 'co_announcement' && ev.agent && ev.claimed_role) {
       result[ev.agent] = ev.claimed_role;
     }
