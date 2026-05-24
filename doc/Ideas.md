@@ -22,6 +22,7 @@
 | yukkie/AgentVillage#314 | enhancement | 🔴 | 2 | spectator / public mode toggle | viewerMode prop による表示切替。#350 のブロッカー |
 | yukkie/AgentVillage#351 | enhancement | 🔴 | 2 | Structured game_over event with winner field + frontend result screen | game_over に winner フィールドを追加し文字列パース依存を除去。観戦画面に勝敗サマリーを表示 |
 | yukkie/AgentVillage#383 | bug | 🟡 | 2 | night_attack public event has agent/target fields swapped | is_public:true の night_attack で agent/target が逆転しているバグ。バックエンド修正後、SpectatorScreen.jsx:219 の `?? ev.agent` workaround を除去する |
+| yukkie/AgentVillage#386 | bug | 🟡 | 2 | include night_attack victims in computeDeadByDay | 夜の襲撃死が右ペインの死亡者リストに反映されていない。#383（バックエンド）完了後に private night_attack.target + guard_block で判定 |
 | yukkie/AgentVillage#344 | tech-debt | 🟡 | 3 | Design: LogEvent cannot express mixed public/private fields in a single speech event | speech イベントの公開/非公開混在問題の設計を定め Architecture.md に記載、[THINK] ハックを廃止する設計Issueを作る |
 | yukkie/AgentVillage#352 | enhancement | 🟡 | 1 | Show prologue message on game start in SpectatorScreen feed | GAME START 時にプロローグ固定文をフォールバック表示。将来の role_assigned イベント実装時に差し替え |
 | yukkie/AgentVillage#353 | enhancement | 🟡 | 1 | Emit role_assigned events at game start for each agent | init フェーズで全エージェント分の役職割り当てイベントを spectator_log に出力。#352 のフォールバック差し替え用 |
