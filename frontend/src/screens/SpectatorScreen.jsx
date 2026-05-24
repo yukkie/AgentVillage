@@ -324,60 +324,6 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, dayActions = 
 
   return (
     <div className={styles.roster}>
-      <div className={styles.sectionLabel}>
-        参加エージェント
-        <span style={{ float: 'right', color: 'var(--tx-4)' }}>{alive.length} / {order.length} 生存</span>
-      </div>
-
-      <div className={styles.rosterSection}>
-        <h4>生存 <span className={styles.count}>{alive.length}</span></h4>
-        {alive.map(n => {
-          const role = roleAssignment[n];
-          const r = ROLES[role];
-          const coRole = coStatus[n];
-          return (
-            <div key={n} className={styles.rosterRow} style={{ '--r-color': r?.color }}>
-              <Avatar name={n} role={role} size="sm" />
-              <div className={styles.who}>
-                <span className={styles.rosterName}>
-                  {n}
-                  {/* spectator mode: true role tag always shown; TODO(#314): hide in public mode */}
-                  {viewerMode === 'spectator' && <RoleTag role={role} />}
-                  {coRole && (
-                    <span className={styles.coBadge}>▶ {ROLES[coRole]?.ja || coRole} CO</span>
-                  )}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className={styles.rosterSection}>
-        <h4>死亡者 <span className={styles.count}>{deadNames.length}</span></h4>
-        {deadNames.map(n => {
-          const role = roleAssignment[n];
-          const r = ROLES[role];
-          const meta = activeDead.get(n);
-          return (
-            <div key={n} className={`${styles.rosterRow} ${styles.dead}`} style={{ '--r-color': r?.color }}>
-              <Avatar name={n} role={role} size="sm" dead />
-              <div className={styles.whoMeta}>
-                <div className={styles.whoBlock}>
-                  <span className={styles.rosterName}>{n}</span>
-                  <span className={styles.sub}>
-                    <RoleTag role={role} />
-                  </span>
-                </div>
-                {meta && (
-                  <span className={styles.deathReason}>Day {meta.day} · {meta.content}</span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
       <div className={styles.sectionLabel}>カミングアウト状況</div>
       <div className={styles.coBoard}>
         {Object.entries(ROLES)
@@ -434,6 +380,60 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, dayActions = 
           </div>
         </>
       )}
+
+      <div className={styles.sectionLabel}>
+        参加エージェント
+        <span style={{ float: 'right', color: 'var(--tx-4)' }}>{alive.length} / {order.length} 生存</span>
+      </div>
+
+      <div className={styles.rosterSection}>
+        <h4>生存 <span className={styles.count}>{alive.length}</span></h4>
+        {alive.map(n => {
+          const role = roleAssignment[n];
+          const r = ROLES[role];
+          const coRole = coStatus[n];
+          return (
+            <div key={n} className={styles.rosterRow} style={{ '--r-color': r?.color }}>
+              <Avatar name={n} role={role} size="sm" />
+              <div className={styles.who}>
+                <span className={styles.rosterName}>
+                  {n}
+                  {/* spectator mode: true role tag always shown; TODO(#314): hide in public mode */}
+                  {viewerMode === 'spectator' && <RoleTag role={role} />}
+                  {coRole && (
+                    <span className={styles.coBadge}>▶ {ROLES[coRole]?.ja || coRole} CO</span>
+                  )}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className={styles.rosterSection}>
+        <h4>死亡者 <span className={styles.count}>{deadNames.length}</span></h4>
+        {deadNames.map(n => {
+          const role = roleAssignment[n];
+          const r = ROLES[role];
+          const meta = activeDead.get(n);
+          return (
+            <div key={n} className={`${styles.rosterRow} ${styles.dead}`} style={{ '--r-color': r?.color }}>
+              <Avatar name={n} role={role} size="sm" dead />
+              <div className={styles.whoMeta}>
+                <div className={styles.whoBlock}>
+                  <span className={styles.rosterName}>{n}</span>
+                  <span className={styles.sub}>
+                    <RoleTag role={role} />
+                  </span>
+                </div>
+                {meta && (
+                  <span className={styles.deathReason}>Day {meta.day} · {meta.content}</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
