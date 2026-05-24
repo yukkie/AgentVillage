@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseEventLine, parseGameData, normalizeEvents, aggregateDayResults, aggregateNightResults, buildActionsTimeline } from './parseGameData.js';
+import { parseEventLine, parseGameData, normalizeEvents, aggregateDayResults, aggregateNightResults, buildActionsTimeline, aggregateCoStatus, aggregateDayActions } from './parseGameData.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '../../..');
@@ -391,5 +391,112 @@ describe('aggregateDayResults', () => {
     ];
     const summary = aggregateDayResults(events);
     expect(summary[1]).toBeUndefined();
+  });
+});
+
+describe('aggregateCoStatus', () => {
+  it('returns agent→claimed_role map from co_announcement events', () => {
+    /*
+     * SUT: aggregateCoStatus
+     * Mock: なし
+     * Level: unit
+     * Objective: co_announcement イベントから { エージェント名: claimed_role } マップを生成できることを検証する。
+     */
+    const events = [
+      { day: 2, event_type: 'co_announcement', agent: 'Jonas', claimed_role: 'Seer', is_public: true },
+      { day: 3, event_type: 'co_announcement', agent: 'SQ',    claimed_role: 'Medium', is_public: true },
+    ];
+    expect(aggregateCoStatus(events)).toEqual({ Jonas: 'Seer', SQ: 'Medium' });
+  });
+
+  it('returns empty object when no co_announcement events', () => {
+    /*
+     * SUT: aggregateCoStatus
+     * Mock: なし
+     * Level: unit
+     * Objective: co_announcement がない場合は空オブジェクトを返すことを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'speech', agent: 'Mira', speech_id: 1, is_public: true },
+    ];
+    expect(aggregateCoStatus(events)).toEqual({});
+  });
+
+  it('uses the last co_announcement when the same agent CO twice', () => {
+    /*
+     * SUT: aggregateCoStatus
+     * Mock: なし
+     * Level: unit
+     * Objective: 同一エージェントが複数回COした場合、最後のCOが上書きされることを検証する。
+     */
+    const events = [
+      { day: 2, event_type: 'co_announcement', agent: 'Ren', claimed_role: 'Seer',   is_public: true },
+      { day: 3, event_type: 'co_announcement', agent: 'Ren', claimed_role: 'Villager', is_public: true },
+    ];
+    expect(aggregateCoStatus(events)).toEqual({ Ren: 'Villager' });
+  });
+});
+
+describe('aggregateDayActions', () => {
+  it('collects night actions and exec result per day', () => {
+    /*
+     * SUT: aggregateDayActions
+     * Mock: なし
+     * Level: unit
+     * Objective: inspection / guard / night_attack(private) / elimination / vote から日別サマリを生成することを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'inspection',  agent: 'Nox',   target: 'Kai', content: 'Nox inspects Kai: Werewolf', is_public: false },
+      { day: 1, event_type: 'guard',       agent: 'Rei',   target: 'Nox', content: 'Rei guards Nox',             is_public: false },
+      { day: 1, event_type: 'night_attack', agent: 'Kai',  target: 'Sora', content: 'Werewolves attack Sora',    is_public: false },
+      { day: 1, event_type: 'vote',         agent: 'Nox',  target: 'Toma', content: 'Nox votes for Toma',        is_public: true },
+      { day: 1, event_type: 'vote',         agent: 'Mira', target: 'Toma', content: 'Mira votes for Toma',       is_public: true },
+      { day: 1, event_type: 'vote',         agent: 'Kai',  target: 'Nox',  content: 'Kai votes for Nox',         is_public: true },
+      { day: 1, event_type: 'elimination',  agent: 'Toma', target: null,   content: 'Toma was executed.',        is_public: true },
+    ];
+    const result = aggregateDayActions(events);
+    const d1 = result[1];
+
+    expect(d1.nightActions).toHaveLength(3);
+    expect(d1.nightActions.find(a => a.event_type === 'inspection')).toBeTruthy();
+    expect(d1.nightActions.find(a => a.event_type === 'guard')).toBeTruthy();
+    expect(d1.nightActions.find(a => a.event_type === 'night_attack' && !a.is_public)).toBeTruthy();
+
+    expect(d1.execResult.target).toBe('Toma');
+    expect(d1.execResult.voteTable).toEqual([
+      { from: 'Nox',  to: 'Toma' },
+      { from: 'Mira', to: 'Toma' },
+      { from: 'Kai',  to: 'Nox' },
+    ]);
+  });
+
+  it('excludes public night_attack from nightActions (already shown in feed)', () => {
+    /*
+     * SUT: aggregateDayActions
+     * Mock: なし
+     * Level: unit
+     * Objective: is_public な night_attack（夜明け公知イベント）は nightActions に含まれないことを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'night_attack', agent: 'Kai',  target: 'Sora', is_public: false },
+      { day: 1, event_type: 'night_attack', agent: 'Sora', target: null,   is_public: true },
+    ];
+    const result = aggregateDayActions(events);
+    expect(result[1].nightActions).toHaveLength(1);
+    expect(result[1].nightActions[0].is_public).toBe(false);
+  });
+
+  it('returns empty nightActions and null execResult for days with no relevant events', () => {
+    /*
+     * SUT: aggregateDayActions
+     * Mock: なし
+     * Level: unit
+     * Objective: 該当イベントがない日はデフォルト値を返すことを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'speech', agent: 'Mira', speech_id: 1 },
+    ];
+    const result = aggregateDayActions(events);
+    expect(result[1]).toBeUndefined();
   });
 });

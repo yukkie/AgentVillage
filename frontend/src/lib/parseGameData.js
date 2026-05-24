@@ -206,6 +206,62 @@ export function aggregateDayResults(events) {
 }
 
 /**
+ * Aggregate CO (coming-out) status from co_announcement events.
+ *
+ * @param {object[]} events
+ * @returns {Record<string, string>} agent name → claimed_role
+ */
+export function aggregateCoStatus(events) {
+  const result = {};
+  for (const ev of events) {
+    if (ev.event_type === 'co_announcement' && ev.agent && ev.claimed_role) {
+      result[ev.agent] = ev.claimed_role;
+    }
+  }
+  return result;
+}
+
+/**
+ * Aggregate per-day night actions and execution results.
+ *
+ * nightActions: inspection / guard / private night_attack (is_public=false)
+ * execResult:   elimination target + vote breakdown
+ *
+ * @param {object[]} events
+ * @returns {Record<number, { nightActions: object[], execResult: { target: string, voteTable: {from:string,to:string}[] } | null }>}
+ */
+export function aggregateDayActions(events) {
+  const result = {};
+
+  function ensureDay(d) {
+    if (!result[d]) result[d] = { nightActions: [], execResult: null };
+  }
+
+  for (const ev of events) {
+    const d = ev.day;
+    if (!d) continue;
+
+    if (
+      (ev.event_type === 'inspection' || ev.event_type === 'guard') ||
+      (ev.event_type === 'night_attack' && !ev.is_public)
+    ) {
+      ensureDay(d);
+      result[d].nightActions.push(ev);
+    } else if (ev.event_type === 'vote') {
+      ensureDay(d);
+      if (!result[d].execResult) result[d].execResult = { target: null, voteTable: [] };
+      result[d].execResult.voteTable.push({ from: ev.agent, to: ev.target });
+    } else if (ev.event_type === 'elimination') {
+      ensureDay(d);
+      if (!result[d].execResult) result[d].execResult = { target: null, voteTable: [] };
+      result[d].execResult.target = ev.agent;
+    }
+  }
+
+  return result;
+}
+
+/**
  * Parse archive JSONL and agent JSON into the GameData shape consumed by React.
  *
  * This function is intentionally synchronous and pure. I/O stays in

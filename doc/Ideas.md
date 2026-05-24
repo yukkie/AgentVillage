@@ -12,6 +12,7 @@
 ## GitHub Issues（未実装タスク）
 
 並び順は Sprint Goal に沿って Milestone 2 優先 → ゲームロジック系 → 将来フェーズの順。
+| yukkie/AgentVillage#382 | bug | 🟡 | 2 | fix(frontend): show day-accurate alive/dead status in SpectatorScreen right pane | 右ペインの生存/死亡リストを activeDay 時点の状態に切り替える |
 同一区分内では優先度（🔴 → 🟡 → 🟢）で並べる。
 
 ### Milestone 2（実データ観戦）— 現 Sprint
@@ -25,7 +26,6 @@
 | yukkie/AgentVillage#344 | tech-debt | 🟡 | 3 | Design: LogEvent cannot express mixed public/private fields in a single speech event | speech イベントの公開/非公開混在問題の設計を定め Architecture.md に記載、[THINK] ハックを廃止する設計Issueを作る |
 | yukkie/AgentVillage#352 | enhancement | 🟡 | 1 | Show prologue message on game start in SpectatorScreen feed | GAME START 時にプロローグ固定文をフォールバック表示。将来の role_assigned イベント実装時に差し替え |
 | yukkie/AgentVillage#353 | enhancement | 🟡 | 1 | Emit role_assigned events at game start for each agent | init フェーズで全エージェント分の役職割り当てイベントを spectator_log に出力。#352 のフォールバック差し替え用 |
-| yukkie/AgentVillage#350 | enhancement | 🟡 | 3 | Rework SpectatorScreen right pane — role display, real log actions, day-linked view | 容疑度メーター削除・役職表示改善・夜行動実ログ接続・左ペイン日付クリック連動。#314/#346 依存 |
 | yukkie/AgentVillage#347 | enhancement | 🟡 | 3 | Implement feed filters in SpectatorScreen left pane (agent / role / event type) | 参加者・役職・表示種別フィルターチップを実際に動作させる。追加データ不要でクライアントサイドのみで実装可能 |
 | yukkie/AgentVillage#337 | enhancement | 🟡 | 2 | Top agents real stats | stub/gameList.js の TOP_AGENTS を実ゲーム結果の集計データに置き換え |
 | yukkie/AgentVillage#319 | enhancement | 🟡 | 3 | LIVE spectator | state/ を tail して進行中ゲームを表示（Milestone 2 後半） |
