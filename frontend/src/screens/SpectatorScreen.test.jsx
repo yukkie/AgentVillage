@@ -606,10 +606,19 @@ const MINIMAL_AGENT_JSON = {
 
 describe('SpectatorScreen: sessionId integration', () => {
   afterEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   const CAST = [];
+
+  async function waitForReplayLoadToSettle() {
+    await waitFor(() => {
+      expect(replayLoader.fetchReplayLog).toHaveBeenCalledOnce();
+      expect(replayLoader.fetchReplayAgents).toHaveBeenCalledOnce();
+      expect(screen.queryByText(/読み込み中/)).toBeNull();
+      expect(screen.queryByText(/参加者情報を読み込み中。|発言ログを読み込み中。/)).toBeNull();
+    }, { timeout: 3000 });
+  }
 
   it('renders feed events from fetchReplayLog after load', async () => {
     /*
@@ -624,6 +633,7 @@ describe('SpectatorScreen: sessionId integration', () => {
     render(<SpectatorScreen sessionId="test-session-001" cast={CAST} />);
 
     await waitFor(() => expect(screen.getByText('こんにちは')).toBeTruthy(), { timeout: 3000 });
+    await waitForReplayLoadToSettle();
   });
 
   it('shows CO count from real log events', async () => {
@@ -642,6 +652,7 @@ describe('SpectatorScreen: sessionId integration', () => {
       const coSpan = [...document.querySelectorAll('span')].find(el => el.textContent.includes('CO'));
       expect(coSpan?.querySelector('strong')?.textContent).toBe('1');
     }, { timeout: 3000 });
+    await waitForReplayLoadToSettle();
   });
 
   it('shows load error when fetchReplayLog rejects', async () => {
@@ -657,6 +668,7 @@ describe('SpectatorScreen: sessionId integration', () => {
     render(<SpectatorScreen sessionId="bad-session" cast={CAST} />);
 
     await waitFor(() => expect(screen.getByText(/network error/)).toBeTruthy(), { timeout: 3000 });
+    await waitForReplayLoadToSettle();
   });
 
   it('calls onBack when back button is clicked', async () => {
@@ -673,6 +685,7 @@ describe('SpectatorScreen: sessionId integration', () => {
     const user = userEvent.setup();
     render(<SpectatorScreen sessionId="test-session-001" cast={CAST} onBack={onBack} />);
 
+    await waitForReplayLoadToSettle();
     await user.click(screen.getByText('← 一覧'));
     expect(onBack).toHaveBeenCalledOnce();
   });
