@@ -275,20 +275,36 @@ export function computeDeadByDay(events) {
   const dayNumbers = [...new Set(events.map(ev => ev.day).filter(Boolean))].sort((a, b) => a - b);
   if (dayNumbers.length === 0) return {};
 
-  const eliminationsByDay = {};
+  const deathsByDay = {};
+  const guardBlocksByDay = {};
   for (const ev of events) {
-    if (ev.event_type === 'elimination' && ev.agent && ev.day) {
-      if (!eliminationsByDay[ev.day]) eliminationsByDay[ev.day] = [];
-      eliminationsByDay[ev.day].push(ev.agent);
+    if (!ev.day) continue;
+    if (ev.event_type === 'elimination' && ev.agent) {
+      if (!deathsByDay[ev.day]) deathsByDay[ev.day] = [];
+      deathsByDay[ev.day].push(ev.agent);
+    } else if (ev.event_type === 'night_attack' && !ev.is_public && ev.target) {
+      if (!deathsByDay[ev.day]) deathsByDay[ev.day] = [];
+      deathsByDay[ev.day].push({ nightAttackTarget: ev.target });
+    } else if (ev.event_type === 'guard_block' && !ev.is_public && ev.target) {
+      if (!guardBlocksByDay[ev.day]) guardBlocksByDay[ev.day] = new Set();
+      guardBlocksByDay[ev.day].add(ev.target);
     }
   }
 
   const result = {};
   let cumulative = new Set();
   for (const day of dayNumbers) {
-    if (eliminationsByDay[day]) {
+    const blocked = guardBlocksByDay[day] ?? new Set();
+    const entries = deathsByDay[day] ?? [];
+    if (entries.length > 0) {
       cumulative = new Set(cumulative);
-      for (const name of eliminationsByDay[day]) cumulative.add(name);
+      for (const entry of entries) {
+        if (typeof entry === 'string') {
+          cumulative.add(entry);
+        } else if (!blocked.has(entry.nightAttackTarget)) {
+          cumulative.add(entry.nightAttackTarget);
+        }
+      }
     }
     result[day] = cumulative;
   }

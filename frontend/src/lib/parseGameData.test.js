@@ -516,6 +516,65 @@ describe('computeDeadByDay', () => {
     const result = computeDeadByDay(events);
     expect(result[2].has('Toma')).toBe(true);
   });
+
+  it('includes night_attack victim in dead set (AC1)', () => {
+    /*
+     * SUT: computeDeadByDay
+     * Mock: なし
+     * Level: unit
+     * Objective: private night_attack の target が死亡者 Set に含まれることを検証する（AC1）。
+     */
+    const events = [
+      { day: 1, event_type: 'night_attack', target: 'Rei', is_public: false },
+    ];
+    const result = computeDeadByDay(events);
+    expect(result[1].has('Rei')).toBe(true);
+  });
+
+  it('does not include night_attack victim when guard_block exists for same target (AC2)', () => {
+    /*
+     * SUT: computeDeadByDay
+     * Mock: なし
+     * Level: unit
+     * Objective: 同日同 target の private guard_block がある場合、night_attack の target が死亡者 Set に含まれないことを検証する（AC2）。
+     */
+    const events = [
+      { day: 1, event_type: 'night_attack', target: 'Toma', is_public: false },
+      { day: 1, event_type: 'guard_block',  target: 'Toma', is_public: false },
+    ];
+    const result = computeDeadByDay(events);
+    expect(result[1].has('Toma')).toBe(false);
+  });
+
+  it('night_attack victim appears in later days if killed on earlier day', () => {
+    /*
+     * SUT: computeDeadByDay
+     * Mock: なし
+     * Level: unit
+     * Objective: 夜襲犠牲者は翌日以降の累積 Set にも引き継がれることを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'night_attack', target: 'Rei', is_public: false },
+      { day: 2, event_type: 'speech', agent: 'Mira' },
+    ];
+    const result = computeDeadByDay(events);
+    expect(result[2].has('Rei')).toBe(true);
+  });
+
+  it('guard_block on different day does not protect night_attack victim', () => {
+    /*
+     * SUT: computeDeadByDay
+     * Mock: なし
+     * Level: unit
+     * Objective: guard_block が別の日のものであれば、night_attack の target は死亡者 Set に含まれることを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'night_attack', target: 'Rei', is_public: false },
+      { day: 2, event_type: 'guard_block',  target: 'Rei', is_public: false },
+    ];
+    const result = computeDeadByDay(events);
+    expect(result[1].has('Rei')).toBe(true);
+  });
 });
 
 describe('aggregateDayActions', () => {
