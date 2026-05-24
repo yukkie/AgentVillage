@@ -4,12 +4,8 @@ import RoleTag from '../components/RoleTag.jsx';
 import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLES } from '../lib/constants.js';
-import {
-  ROLE_ASSIGNMENT, NIGHT_RESULTS,
-  VOTE_TABLE_D1, ACTIONS_TIMELINE,
-} from '../../stub/spectator.js';
 import { fetchReplayAgents, fetchReplayLog } from '../lib/replayLoader.js';
-import { parseGameData } from '../lib/parseGameData.js';
+import { parseGameData, aggregateCoStatus, aggregateDayActions } from '../lib/parseGameData.js';
 import { filterFeedEvents } from '../lib/feedFilter.js';
 import styles from './SpectatorScreen.module.css';
 
@@ -128,31 +124,6 @@ function SystemRow({ kind, icon, label, children, reasoning, ts, leftName, right
   );
 }
 
-// --- 投票内訳カード ---
-function VoteDetail({ day, daySummary }) {
-  if (day !== 1) return null;
-  const exec = daySummary[1];
-  if (!exec) return null;
-  return (
-    <div className={styles.voteDetail}>
-      <h4>
-        Day {day} 投票結果{' '}
-        <span className={styles.pill}>処刑: {exec.target}（{exec.votes}票）</span>
-      </h4>
-      <div className={styles.voteGrid}>
-        {VOTE_TABLE_D1.map((v, i) => (
-          <div className={styles.voteCell} key={i}>
-            <Avatar name={v.from} size="xs" />
-            <span className={styles.voteFrom}>{v.from}</span>
-            <span className={styles.voteArrow}>▶</span>
-            <span className={v.to === exec.target ? styles.targetBad : styles.voteTo}>{v.to}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // --- 人狼会話カード ---
 function WolfChatCard({ ev }) {
   return (
@@ -239,7 +210,7 @@ export function FeedItem({ ev, prevById, roleAssignment, title }) {
 }
 
 // === 左ペイン ===
-export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agentNames, daySummary }) {
+export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agentNames, daySummary, dayActions = {} }) {
   const handlePhase = (d, phase) => {
     setDay(d);
     setPhase(phase);
@@ -253,7 +224,9 @@ export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agent
           <div key={d}>
             <div className={styles.phaseDay}>
               <h3>第 {d} 日 <small>{d === 1 ? '初日' : d === 2 ? '荒れる' : '進行中'}</small></h3>
-              {NIGHT_RESULTS[d] && <div className={styles.deathline}>⚰ {NIGHT_RESULTS[d].attacked}</div>}
+              {dayActions[d]?.nightActions?.find(a => a.event_type === 'night_attack') && (
+                <div className={styles.deathline}>⚰ {dayActions[d].nightActions.find(a => a.event_type === 'night_attack').target}</div>
+              )}
             </div>
             <div className={styles.phaseList}>
               <div
@@ -308,15 +281,19 @@ export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agent
   );
 }
 
+const NIGHT_ACTION_ICON = { inspection: '🔮', guard: '🛡', night_attack: '🐺' };
+const NIGHT_ACTION_LABEL = { inspection: '占い', guard: '護衛', night_attack: '襲撃' };
+
+// TODO(#314): public モードでは真の役職タグを非表示にし、CO役職のみ表示する
 // === 右ペイン ===
-function RightPane({ agents, roleAssignment }) {
-  const order = Object.keys(agents).length
-    ? Object.keys(agents)
-    : ['Nox','Mira','Ren','Kai','Toma','Shiki','Rei','Sable','Sera','Kael','Sora'];
-  const dead = order.filter(n => agents[n]?.is_alive === false);
-  const fallbackDead = Object.keys(agents).length ? [] : ['Sora', 'Toma'];
-  const deadNames = dead.length ? dead : fallbackDead;
+export function RightPane({ agents, roleAssignment, coStatus = {}, dayActions = {}, activeDay, viewerMode = 'spectator' }) {
+  const order = Object.keys(agents);
+  const deadNames = order.filter(n => agents[n]?.is_alive === false);
   const alive = order.filter(n => !deadNames.includes(n));
+
+  const dayData = dayActions[activeDay];
+  const nightActions = dayData?.nightActions ?? [];
+  const execResult = dayData?.execResult ?? null;
 
   return (
     <div className={styles.roster}>
@@ -330,20 +307,19 @@ function RightPane({ agents, roleAssignment }) {
         {alive.map(n => {
           const role = roleAssignment[n];
           const r = ROLES[role];
-          const sus = (n.charCodeAt(0) * 13) % 100;
+          const coRole = coStatus[n];
           return (
             <div key={n} className={styles.rosterRow} style={{ '--r-color': r?.color }}>
               <Avatar name={n} role={role} size="sm" />
               <div className={styles.who}>
-                <span className={styles.rosterName}>{n} <RoleTag role={role} /></span>
-                <span className={styles.sub}>
-                  {(n === 'Ren' || n === 'Nox') && <span style={{ color: 'var(--acc)' }}>占CO</span>}
-                  <span>発言 {(n.length * 3) + 4}</span>
+                <span className={styles.rosterName}>
+                  {n}
+                  {/* spectator mode: true role tag always shown; TODO(#314): hide in public mode */}
+                  {viewerMode === 'spectator' && <RoleTag role={role} />}
+                  {coRole && (
+                    <span className={styles.coBadge}>▶ {ROLES[coRole]?.ja || coRole} CO</span>
+                  )}
                 </span>
-              </div>
-              <div className={styles.meter}>
-                <div className={styles.bar}><i style={{ width: `${sus}%` }} /></div>
-                <small><span>容疑</span><span>{sus}</span></small>
               </div>
             </div>
           );
@@ -362,7 +338,6 @@ function RightPane({ agents, roleAssignment }) {
                 <span className={styles.rosterName}>{n}</span>
                 <span className={styles.sub}>
                   <RoleTag role={role} />
-                  <span>{n === 'Sora' ? 'Day1 夜・襲撃' : 'Day1 昼・処刑'}</span>
                 </span>
               </div>
             </div>
@@ -372,53 +347,79 @@ function RightPane({ agents, roleAssignment }) {
 
       <div className={styles.sectionLabel}>カミングアウト状況</div>
       <div className={styles.coBoard}>
-        {[
-          { roleKey: 'Seer',   coName: 'Ren', meta: '→ Mira（白）' },
-          { roleKey: 'Seer',   coName: 'Nox', meta: '→ Kai（黒）' },
-          { roleKey: 'Medium', coName: null,   meta: '—' },
-          { roleKey: 'Knight', coName: null,   meta: '—' },
-        ].map(({ roleKey, coName, meta }, i) => (
-          <div key={i} className={styles.coRow} style={{ '--r-color': ROLES[roleKey]?.color }}>
-            <span className={styles.coRole}>{ROLES[roleKey]?.ja}</span>
-            <span className={styles.coName} style={{ color: coName ? 'var(--tx)' : 'var(--tx-3)' }}>
-              {coName || '未CO'}
-            </span>
-            <span className={styles.coMeta}>{meta}</span>
-          </div>
-        ))}
+        {Object.entries(ROLES)
+          .filter(([k]) => k !== 'Villager' && k !== 'Werewolf' && k !== 'Madman')
+          .map(([roleKey, roleDef]) => {
+            const coAgents = Object.entries(coStatus)
+              .filter(([, cr]) => cr === roleKey)
+              .map(([name]) => name);
+            return (
+              <div key={roleKey} className={styles.coRow} style={{ '--r-color': roleDef.color }}>
+                <span className={styles.coRole}>{roleDef.ja}</span>
+                <span className={styles.coName} style={{ color: coAgents.length ? 'var(--tx)' : 'var(--tx-3)' }}>
+                  {coAgents.length ? coAgents.join(', ') : '未CO'}
+                </span>
+              </div>
+            );
+          })}
       </div>
 
-      <div className={styles.sectionLabel}>夜の行動・推測</div>
+      <div className={styles.sectionLabel}>Day {activeDay} 夜の行動</div>
       <div className={styles.actionList}>
-        {ACTIONS_TIMELINE.map((a, i) => (
-          <div key={i} className={`${styles.action} ${styles[a.kind] || ''}`}>
-            <div className={styles.when}>D{a.day}{a.when}</div>
-            <div className={styles.actionIco}>
-              {a.kind === 'divine' ? '◉' : a.kind === 'guard' ? '盾' : a.kind === 'attack' ? '✕' : a.kind === 'exec' ? '⚑' : '・'}
-            </div>
+        {nightActions.map((a, i) => (
+          <div key={i} className={`${styles.action} ${styles[a.event_type] || ''}`}>
+            <div className={styles.actionIco}>{NIGHT_ACTION_ICON[a.event_type] || '・'}</div>
             <div className={styles.what}>
-              <strong>{a.who}</strong> → <em style={{ '--r-color': ROLES[ROLE_ASSIGNMENT[a.target]]?.color }}>{a.target}</em>
-              <span style={{ color: 'var(--tx-4)', marginLeft: 6 }}>{a.label}</span>
+              <strong>{a.agent}</strong>
+              {a.target && <> → <em style={{ '--r-color': ROLES[roleAssignment[a.target]]?.color }}>{a.target}</em></>}
+              <span style={{ color: 'var(--tx-4)', marginLeft: 6 }}>{NIGHT_ACTION_LABEL[a.event_type]}</span>
             </div>
-            {a.result && <div className={`${styles.res} ${styles[a.result]}`}>{a.result === 'black' ? '黒' : '白'}</div>}
-            {a.votes  && <div className={styles.res} style={{ color: 'var(--tx-3)' }}>{a.votes}票</div>}
           </div>
         ))}
+        {nightActions.length === 0 && (
+          <div className={styles.action} style={{ color: 'var(--tx-3)' }}>夜の行動ログなし</div>
+        )}
       </div>
+
+      {execResult && (
+        <>
+          <div className={styles.sectionLabel}>Day {activeDay} 処刑結果</div>
+          <div className={styles.voteDetail}>
+            <h4>
+              処刑: <span className={styles.pill}>{execResult.target}</span>
+            </h4>
+            <div className={styles.voteGrid}>
+              {execResult.voteTable.map((v, i) => (
+                <div className={styles.voteCell} key={i}>
+                  <Avatar name={v.from} size="xs" />
+                  <span className={styles.voteFrom}>{v.from}</span>
+                  <span className={styles.voteArrow}>▶</span>
+                  <span className={v.to === execResult.target ? styles.targetBad : styles.voteTo}>{v.to}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
 // === メイン観戦画面 ===
+// TODO(#314): viewerMode の切り替えUI（spectator/public トグル）を追加する
 export default function SpectatorScreen({ sessionId, cast = [], title, onBack }) {
   const [activeDay, setActiveDay] = useState(2);
   const [activePhase, setActivePhase] = useState('discuss');
   const [replayEvents, setReplayEvents] = useState(null);
   const [replayAgents, setReplayAgents] = useState({});
   const [replayDaySummary, setReplayDaySummary] = useState(null);
+  const [replayCoStatus, setReplayCoStatus] = useState({});
+  const [replayDayActions, setReplayDayActions] = useState({});
   const [loadingEvents, setLoadingEvents] = useState(Boolean(sessionId));
   const [loadingAgents, setLoadingAgents] = useState(Boolean(sessionId));
   const [loadError, setLoadError] = useState(null);
+  // TODO(#314): public モード切り替えUIを追加したらここで toggle する
+  const viewerMode = 'spectator';
 
   useEffect(() => {
     if (!sessionId) return undefined;
@@ -427,6 +428,8 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
     setReplayEvents(null);
     setReplayAgents({});
     setReplayDaySummary(null);
+    setReplayCoStatus({});
+    setReplayDayActions({});
     setLoadingEvents(true);
     setLoadingAgents(true);
     setLoadError(null);
@@ -449,6 +452,8 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
         const parsed = parseGameData(jsonlText);
         setReplayEvents(parsed.events);
         setReplayDaySummary(parsed.daySummary);
+        setReplayCoStatus(aggregateCoStatus(parsed.events));
+        setReplayDayActions(aggregateDayActions(parsed.events));
         const firstDay = parsed.events.find(event => event.day)?.day;
         if (firstDay) { setActiveDay(firstDay); setActivePhase('discuss'); }
       })
@@ -480,7 +485,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
 
   const feedEvents = filterFeedEvents(events, activeDay, activePhase);
   const speechCount = events.filter(e => e.event_type === 'speech').length;
-  const coCount = events.filter(e => e.claimed_role).length;
+  const coCount = Object.keys(replayCoStatus).length;
 
   return (
     <div className={styles.frame}>
@@ -495,14 +500,13 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
       <ThreePaneLayout
         collapsibleLeft
         collapsibleRight
-        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} activePhase={activePhase} setPhase={setActivePhase} days={visibleDays} agentNames={agentNames} daySummary={daySummary} />}
-        right={<RightPane agents={agents} roleAssignment={roleAssignment} />}
+        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} activePhase={activePhase} setPhase={setActivePhase} days={visibleDays} agentNames={agentNames} daySummary={daySummary} dayActions={replayDayActions} />}
+        right={<RightPane agents={agents} roleAssignment={roleAssignment} coStatus={replayCoStatus} dayActions={replayDayActions} activeDay={activeDay} viewerMode={viewerMode} />}
       >
         <div className={styles.feedHead}>
           <h2>Day {activeDay} {{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]} <small>{sessionId ? sessionId : '3:47 経過 / 残り 4:13'}</small></h2>
           <span className={styles.stat}>発言 <strong>{speechCount}</strong></span>
           <span className={styles.stat}>CO <strong>{coCount}</strong></span>
-          <span className={styles.stat}>投票確定 <strong>6/9</strong></span>
           <span className={styles.spacer} />
           <TopBarBtn>⇅ 新しい順</TopBarBtn>
           <TopBarBtn>🔍 検索</TopBarBtn>

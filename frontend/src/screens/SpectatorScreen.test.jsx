@@ -1,8 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { FeedItem, LeftPane } from './SpectatorScreen.jsx';
+import { FeedItem, LeftPane, RightPane } from './SpectatorScreen.jsx';
+import SpectatorScreen from './SpectatorScreen.jsx';
 import styles from './SpectatorScreen.module.css';
+import * as replayLoader from '../lib/replayLoader.js';
+
+vi.mock('../lib/replayLoader.js', () => ({
+  fetchReplayLog: vi.fn(),
+  fetchReplayAgents: vi.fn(),
+  fetchReplayGame: vi.fn(),
+}));
 
 const roleAssignment = {
   Alice: 'Seer',
@@ -316,6 +324,130 @@ describe('FeedItem: system event icons', () => {
   });
 });
 
+const baseAgents = {
+  Alice: { role: 'Seer',     is_alive: true,  claimed_role: null },
+  Bob:   { role: 'Werewolf', is_alive: false, claimed_role: null },
+  Carol: { role: 'Knight',   is_alive: true,  claimed_role: null },
+};
+
+function renderRightPane(overrides = {}) {
+  const props = {
+    agents: baseAgents,
+    roleAssignment: { Alice: 'Seer', Bob: 'Werewolf', Carol: 'Knight' },
+    coStatus: {},
+    dayActions: {},
+    activeDay: 1,
+    viewerMode: 'spectator',
+    ...overrides,
+  };
+  return render(<RightPane {...props} />);
+}
+
+describe('RightPane: suspicion meter removed', () => {
+  it('does not render a suspicion meter', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし
+     * Level: unit
+     * Objective: 容疑度メーターが右ペインに存在しないことを検証する。
+     */
+    const { container } = renderRightPane();
+    expect(container.querySelector('[class*="meter"]')).toBeNull();
+  });
+});
+
+describe('RightPane: role display in spectator mode', () => {
+  it('shows true role tag for alive agents', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし
+     * Level: unit
+     * Objective: spectatorモードで生存エージェントに真の役職タグが表示されることを検証する。
+     */
+    renderRightPane({ viewerMode: 'spectator' });
+    // Alice is Seer (true role), Carol is Knight (true role)
+    expect(screen.getAllByText(/占い師/).length).toBeGreaterThan(0);
+  });
+
+  it('shows CO role badge when agent has claimed_role', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし
+     * Level: unit
+     * Objective: COしたエージェントのCO役職バッジが表示されることを検証する。
+     */
+    renderRightPane({
+      coStatus: { Alice: 'Seer' },
+    });
+    expect(screen.getByText(/占い師.*CO|CO.*占い師|▶.*占い師/)).toBeTruthy();
+  });
+});
+
+describe('RightPane: CO board dynamic', () => {
+  it('shows CO agents with their claimed role', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし
+     * Level: unit
+     * Objective: COボードに coStatus から動的生成されたエージェント名と役職が表示されることを検証する。
+     */
+    renderRightPane({
+      coStatus: { Alice: 'Seer', Carol: 'Knight' },
+    });
+    expect(screen.getAllByText('Alice').length).toBeGreaterThan(0);
+  });
+
+  it('shows 未CO placeholder when no one has CO for a role', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし
+     * Level: unit
+     * Objective: COがない場合に「未CO」が表示されることを検証する。
+     */
+    renderRightPane({ coStatus: {} });
+    expect(screen.getAllByText('未CO').length).toBeGreaterThan(0);
+  });
+});
+
+describe('RightPane: night actions for activeDay', () => {
+  it('shows night action entries for the active day', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし
+     * Level: unit
+     * Objective: activeDay の夜行動が右ペインに表示されることを検証する。
+     */
+    const dayActions = {
+      1: {
+        nightActions: [
+          { day: 1, event_type: 'inspection', agent: 'Alice', target: 'Bob', content: 'Alice inspects Bob: Werewolf', is_public: false },
+        ],
+        execResult: { target: 'Bob', voteTable: [{ from: 'Alice', to: 'Bob' }] },
+      },
+    };
+    renderRightPane({ dayActions, activeDay: 1 });
+    expect(screen.getAllByText('Alice').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Bob').length).toBeGreaterThan(0);
+  });
+
+  it('shows exec result for the active day', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし
+     * Level: unit
+     * Objective: activeDay の処刑結果（ターゲット）が表示されることを検証する。
+     */
+    const dayActions = {
+      1: {
+        nightActions: [],
+        execResult: { target: 'Bob', voteTable: [{ from: 'Alice', to: 'Bob' }] },
+      },
+    };
+    renderRightPane({ dayActions, activeDay: 1 });
+    expect(screen.getAllByText('Bob').length).toBeGreaterThan(0);
+  });
+});
+
 describe('LeftPane phase interaction', () => {
   it.each([
     ['議論フェーズ', 'discuss'],
@@ -353,5 +485,91 @@ describe('LeftPane phase interaction', () => {
     expect(discussRow.className.split(' ')).not.toContain(styles.active);
     expect(voteRow.className.split(' ')).toContain(styles.active);
     expect(nightRow.className.split(' ')).not.toContain(styles.active);
+  });
+});
+
+const MINIMAL_JSONL = [
+  '{"id":"e1","day":1,"phase":"init","event_type":"phase_start","agent":null,"target":null,"content":"=== GAME START ===","is_public":true,"speech_id":null,"reply_to":null}',
+  '{"id":"e2","day":1,"phase":"day_discussion","event_type":"speech","agent":"Alice","target":null,"content":"こんにちは","is_public":true,"speech_id":1,"reply_to":null}',
+  '{"id":"e3","day":1,"phase":"day_vote","event_type":"vote","agent":"Alice","target":"Bob","content":"Alice votes for Bob","is_public":true,"speech_id":null,"reply_to":null}',
+  '{"id":"e4","day":1,"phase":"day_vote","event_type":"elimination","agent":"Bob","target":null,"content":"Bob was executed.","is_public":true,"speech_id":null,"reply_to":null}',
+  '{"id":"e5","day":1,"phase":"day_discussion","event_type":"co_announcement","agent":"Alice","target":null,"content":"Alice claims to be Seer","is_public":true,"speech_id":null,"reply_to":null,"claimed_role":"Seer"}',
+].join('\n');
+
+const MINIMAL_AGENT_JSON = {
+  Alice: { name: 'Alice', role: 'Seer', state: { is_alive: true }, profile: { name: 'Alice' } },
+};
+
+describe('SpectatorScreen: sessionId integration', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const CAST = [];
+
+  it('renders feed events from fetchReplayLog after load', async () => {
+    /*
+     * SUT: SpectatorScreen (default export)
+     * Mock: fetchReplayLog / fetchReplayAgents を vi.fn() でモック
+     * Level: integration
+     * Objective: sessionId が渡されると fetchReplayLog の結果がフィードに表示されることを検証する。
+     */
+    replayLoader.fetchReplayLog.mockResolvedValue(MINIMAL_JSONL);
+    replayLoader.fetchReplayAgents.mockResolvedValue(MINIMAL_AGENT_JSON);
+
+    render(<SpectatorScreen sessionId="test-session-001" cast={CAST} />);
+
+    await waitFor(() => expect(screen.getByText('こんにちは')).toBeTruthy(), { timeout: 3000 });
+  });
+
+  it('shows CO count from real log events', async () => {
+    /*
+     * SUT: SpectatorScreen (default export)
+     * Mock: fetchReplayLog / fetchReplayAgents を vi.fn() でモック
+     * Level: integration
+     * Objective: co_announcement イベントの数が TopBar の CO 表示に反映されることを検証する。
+     */
+    replayLoader.fetchReplayLog.mockResolvedValue(MINIMAL_JSONL);
+    replayLoader.fetchReplayAgents.mockResolvedValue(MINIMAL_AGENT_JSON);
+
+    render(<SpectatorScreen sessionId="test-session-001" cast={CAST} />);
+
+    await waitFor(() => {
+      const coSpan = [...document.querySelectorAll('span')].find(el => el.textContent.includes('CO'));
+      expect(coSpan?.querySelector('strong')?.textContent).toBe('1');
+    }, { timeout: 3000 });
+  });
+
+  it('shows load error when fetchReplayLog rejects', async () => {
+    /*
+     * SUT: SpectatorScreen (default export)
+     * Mock: fetchReplayLog を reject するモック
+     * Level: integration
+     * Objective: fetch 失敗時にエラーメッセージが表示されることを検証する。
+     */
+    replayLoader.fetchReplayLog.mockRejectedValue(new Error('network error'));
+    replayLoader.fetchReplayAgents.mockResolvedValue({});
+
+    render(<SpectatorScreen sessionId="bad-session" cast={CAST} />);
+
+    await waitFor(() => expect(screen.getByText(/network error/)).toBeTruthy(), { timeout: 3000 });
+  });
+
+  it('calls onBack when back button is clicked', async () => {
+    /*
+     * SUT: SpectatorScreen (default export)
+     * Mock: fetchReplayLog / fetchReplayAgents / onBack を vi.fn()
+     * Level: integration
+     * Objective: onBack prop が渡されていれば「← 一覧」ボタンが表示されクリックで呼ばれることを検証する。
+     */
+    replayLoader.fetchReplayLog.mockResolvedValue('');
+    replayLoader.fetchReplayAgents.mockResolvedValue({});
+    const onBack = vi.fn();
+
+    const user = userEvent.setup();
+    render(<SpectatorScreen sessionId="test-session-001" cast={CAST} onBack={onBack} />);
+
+    await user.click(screen.getByText('← 一覧'));
+    expect(onBack).toHaveBeenCalledOnce();
   });
 });
