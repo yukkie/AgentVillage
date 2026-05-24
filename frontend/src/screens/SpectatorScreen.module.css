@@ -155,7 +155,6 @@
   margin-bottom: 6px;
 }
 .spHead .name   { font-family: var(--serif); font-weight: 600; font-size: 14px; color: var(--tx); }
-.spHead .alias  { color: var(--tx-3); font-size: 11px; }
 .spHead .turn   { font-family: var(--mono); font-size: 10px; color: var(--tx-4); }
 .spHead .ts     { font-size: 10px; color: var(--tx-3); margin-left: auto; font-family: var(--mono); }
 .spHead .coBadge {
@@ -417,7 +416,6 @@
 
 /* spHead child selectors (CSS Modules — using class names) */
 .name   { font-family: var(--serif); font-weight: 600; font-size: 14px; color: var(--tx); }
-.alias  { color: var(--tx-3); font-size: 11px; }
 .turn   { font-family: var(--mono); font-size: 10px; color: var(--tx-4); }
 .ts     { font-size: 10px; color: var(--tx-3); margin-left: auto; font-family: var(--mono); }
 .coBadge {
