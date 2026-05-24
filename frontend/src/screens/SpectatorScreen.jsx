@@ -288,8 +288,9 @@ const NIGHT_ACTION_LABEL = { inspection: '占い', guard: '護衛', night_attack
 // === 右ペイン ===
 export function RightPane({ agents, roleAssignment, coStatus = {}, dayActions = {}, activeDay, deadByDay = {}, viewerMode = 'spectator' }) {
   const order = Object.keys(agents);
-  const activeDead = deadByDay[activeDay] ?? new Set();
-  const deadNames = order.filter(n => activeDead.has(n));
+  const activeDead = deadByDay[activeDay] ?? new Map();
+  const deadNames = order.filter(n => activeDead.has(n))
+    .sort((a, b) => (activeDead.get(a)?.day ?? 0) - (activeDead.get(b)?.day ?? 0));
   const alive = order.filter(n => !activeDead.has(n));
 
   const dayData = dayActions[activeDay];
@@ -332,6 +333,7 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, dayActions = 
         {deadNames.map(n => {
           const role = roleAssignment[n];
           const r = ROLES[role];
+          const meta = activeDead.get(n);
           return (
             <div key={n} className={`${styles.rosterRow} ${styles.dead}`} style={{ '--r-color': r?.color }}>
               <Avatar name={n} role={role} size="sm" dead />
@@ -340,6 +342,9 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, dayActions = 
                 <span className={styles.sub}>
                   <RoleTag role={role} />
                 </span>
+                {meta && (
+                  <span className={styles.deathReason}>Day {meta.day} · {meta.content}</span>
+                )}
               </div>
             </div>
           );

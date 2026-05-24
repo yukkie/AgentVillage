@@ -262,14 +262,14 @@ export function aggregateDayActions(events) {
 }
 
 /**
- * Build a cumulative dead-set per day from elimination events.
+ * Build a cumulative dead-map per day from elimination and night_attack events.
  *
- * Returns a map from day number → Set of agent names dead *at the end of that day*.
- * Days with no elimination inherit the previous day's set so callers can simply
- * do `deadByDay[activeDay]?.has(name)` without caring about history.
+ * Returns a map from day number → Map<agentName, { day: number, content: string }>.
+ * Days with no new deaths inherit the previous day's map so callers can simply
+ * do `deadByDay[activeDay]?.has(name)` or `.get(name)` without caring about history.
  *
  * @param {object[]} events
- * @returns {Record<number, Set<string>>}
+ * @returns {Record<number, Map<string, { day: number, content: string }>>}
  */
 export function computeDeadByDay(events) {
   const dayNumbers = [...new Set(events.map(ev => ev.day).filter(Boolean))].sort((a, b) => a - b);
@@ -281,10 +281,10 @@ export function computeDeadByDay(events) {
     if (!ev.day) continue;
     if (ev.event_type === 'elimination' && ev.agent) {
       if (!deathsByDay[ev.day]) deathsByDay[ev.day] = [];
-      deathsByDay[ev.day].push(ev.agent);
+      deathsByDay[ev.day].push({ name: ev.agent, day: ev.day, content: ev.content ?? '' });
     } else if (ev.event_type === 'night_attack' && !ev.is_public && ev.target) {
       if (!deathsByDay[ev.day]) deathsByDay[ev.day] = [];
-      deathsByDay[ev.day].push({ nightAttackTarget: ev.target });
+      deathsByDay[ev.day].push({ name: ev.target, day: ev.day, content: ev.content ?? '', isNightAttack: true });
     } else if (ev.event_type === 'guard_block' && !ev.is_public && ev.target) {
       if (!guardBlocksByDay[ev.day]) guardBlocksByDay[ev.day] = new Set();
       guardBlocksByDay[ev.day].add(ev.target);
@@ -292,17 +292,19 @@ export function computeDeadByDay(events) {
   }
 
   const result = {};
-  let cumulative = new Set();
+  let cumulative = new Map();
   for (const day of dayNumbers) {
     const blocked = guardBlocksByDay[day] ?? new Set();
     const entries = deathsByDay[day] ?? [];
     if (entries.length > 0) {
-      cumulative = new Set(cumulative);
+      cumulative = new Map(cumulative);
       for (const entry of entries) {
-        if (typeof entry === 'string') {
-          cumulative.add(entry);
-        } else if (!blocked.has(entry.nightAttackTarget)) {
-          cumulative.add(entry.nightAttackTarget);
+        if (entry.isNightAttack) {
+          if (!blocked.has(entry.name)) {
+            cumulative.set(entry.name, { day: entry.day, content: entry.content });
+          }
+        } else {
+          cumulative.set(entry.name, { day: entry.day, content: entry.content });
         }
       }
     }
