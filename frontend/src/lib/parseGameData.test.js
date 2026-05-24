@@ -438,21 +438,21 @@ describe('aggregateCoStatus', () => {
 });
 
 describe('computeDeadByDay', () => {
-  it('returns empty Sets for all days when there are no eliminations', () => {
+  it('returns empty Maps for all days when there are no eliminations', () => {
     /*
      * SUT: computeDeadByDay
      * Mock: なし
      * Level: unit
-     * Objective: elimination イベントがない場合、全日で空の Set が返ることを検証する。
+     * Objective: elimination イベントがない場合、全日で空の Map が返ることを検証する。
      */
     const events = [
       { day: 1, event_type: 'speech', agent: 'Mira' },
     ];
     const result = computeDeadByDay(events);
-    expect(result[1]).toEqual(new Set());
+    expect(result[1]).toEqual(new Map());
   });
 
-  it('includes only Day 1 victim in Day 1 dead set', () => {
+  it('includes only Day 1 victim in Day 1 dead map', () => {
     /*
      * SUT: computeDeadByDay
      * Mock: なし
@@ -473,7 +473,7 @@ describe('computeDeadByDay', () => {
      * SUT: computeDeadByDay
      * Mock: なし
      * Level: unit
-     * Objective: Day 2 以降を選択したとき、それ以前の累積死亡者が Set に含まれることを検証する（AC2）。
+     * Objective: Day 2 以降を選択したとき、それ以前の累積死亡者が Map に含まれることを検証する（AC2）。
      */
     const events = [
       { day: 1, event_type: 'elimination', agent: 'Toma' },
@@ -486,22 +486,24 @@ describe('computeDeadByDay', () => {
     expect(result[2].has('Rei')).toBe(false);
   });
 
-  it('final day set matches total dead (AC3)', () => {
+  it('final day map contains all dead agents (AC3)', () => {
     /*
      * SUT: computeDeadByDay
      * Mock: なし
      * Level: unit
-     * Objective: 最終日の Set が全死亡者を含むことを検証する（AC3）。
+     * Objective: 最終日の Map が全死亡者を含むことを検証する（AC3）。
      */
     const events = [
       { day: 1, event_type: 'elimination', agent: 'Toma' },
       { day: 2, event_type: 'elimination', agent: 'Nox' },
     ];
     const result = computeDeadByDay(events);
-    expect(result[2]).toEqual(new Set(['Toma', 'Nox']));
+    expect(result[2].has('Toma')).toBe(true);
+    expect(result[2].has('Nox')).toBe(true);
+    expect(result[2].size).toBe(2);
   });
 
-  it('handles days with no elimination by copying previous day dead set', () => {
+  it('handles days with no elimination by copying previous day dead map', () => {
     /*
      * SUT: computeDeadByDay
      * Mock: なし
@@ -517,12 +519,12 @@ describe('computeDeadByDay', () => {
     expect(result[2].has('Toma')).toBe(true);
   });
 
-  it('includes night_attack victim in dead set (AC1)', () => {
+  it('includes night_attack victim in dead map (AC1)', () => {
     /*
      * SUT: computeDeadByDay
      * Mock: なし
      * Level: unit
-     * Objective: private night_attack の target が死亡者 Set に含まれることを検証する（AC1）。
+     * Objective: private night_attack の target が死亡者 Map に含まれることを検証する（AC1）。
      */
     const events = [
       { day: 1, event_type: 'night_attack', target: 'Rei', is_public: false },
@@ -536,7 +538,7 @@ describe('computeDeadByDay', () => {
      * SUT: computeDeadByDay
      * Mock: なし
      * Level: unit
-     * Objective: 同日同 target の private guard_block がある場合、night_attack の target が死亡者 Set に含まれないことを検証する（AC2）。
+     * Objective: 同日同 target の private guard_block がある場合、night_attack の target が死亡者 Map に含まれないことを検証する（AC2）。
      */
     const events = [
       { day: 1, event_type: 'night_attack', target: 'Toma', is_public: false },
@@ -551,7 +553,7 @@ describe('computeDeadByDay', () => {
      * SUT: computeDeadByDay
      * Mock: なし
      * Level: unit
-     * Objective: 夜襲犠牲者は翌日以降の累積 Set にも引き継がれることを検証する。
+     * Objective: 夜襲犠牲者は翌日以降の累積 Map にも引き継がれることを検証する。
      */
     const events = [
       { day: 1, event_type: 'night_attack', target: 'Rei', is_public: false },
@@ -566,7 +568,7 @@ describe('computeDeadByDay', () => {
      * SUT: computeDeadByDay
      * Mock: なし
      * Level: unit
-     * Objective: guard_block が別の日のものであれば、night_attack の target は死亡者 Set に含まれることを検証する。
+     * Objective: guard_block が別の日のものであれば、night_attack の target は死亡者 Map に含まれることを検証する。
      */
     const events = [
       { day: 1, event_type: 'night_attack', target: 'Rei', is_public: false },
@@ -574,6 +576,49 @@ describe('computeDeadByDay', () => {
     ];
     const result = computeDeadByDay(events);
     expect(result[1].has('Rei')).toBe(true);
+  });
+
+  it('stores day and content metadata for elimination victim (contract)', () => {
+    /*
+     * SUT: computeDeadByDay
+     * Mock: なし
+     * Level: unit
+     * Objective: elimination 死亡者のメタデータ（day, content）が Map の value として取得できることを検証する（#391 contract）。
+     */
+    const events = [
+      { day: 2, event_type: 'elimination', agent: 'Toma', content: 'Toma was executed.', is_public: true },
+    ];
+    const result = computeDeadByDay(events);
+    expect(result[2].get('Toma')).toEqual({ day: 2, content: 'Toma was executed.' });
+  });
+
+  it('stores day and content metadata for night_attack victim (contract)', () => {
+    /*
+     * SUT: computeDeadByDay
+     * Mock: なし
+     * Level: unit
+     * Objective: night_attack 死亡者のメタデータ（day, content）が Map の value として取得できることを検証する（#391 contract）。
+     */
+    const events = [
+      { day: 1, event_type: 'night_attack', target: 'Rei', content: 'Werewolves attacked Rei.', is_public: false },
+    ];
+    const result = computeDeadByDay(events);
+    expect(result[1].get('Rei')).toEqual({ day: 1, content: 'Werewolves attacked Rei.' });
+  });
+
+  it('metadata is preserved when victim carries over to later days', () => {
+    /*
+     * SUT: computeDeadByDay
+     * Mock: なし
+     * Level: unit
+     * Objective: 死亡者のメタデータが翌日以降の Map にも引き継がれることを検証する（#391 contract）。
+     */
+    const events = [
+      { day: 1, event_type: 'elimination', agent: 'Toma', content: 'Toma was executed.', is_public: true },
+      { day: 2, event_type: 'speech', agent: 'Mira' },
+    ];
+    const result = computeDeadByDay(events);
+    expect(result[2].get('Toma')).toEqual({ day: 1, content: 'Toma was executed.' });
   });
 });
 

@@ -387,7 +387,7 @@ const baseAgents = {
 };
 
 // Bob is dead at day 1
-const baseDeadByDay = { 1: new Set(['Bob']) };
+const baseDeadByDay = { 1: new Map([['Bob', { day: 1, content: 'Bob was executed.' }]]) };
 
 function renderRightPane(overrides = {}) {
   const props = {
@@ -402,6 +402,50 @@ function renderRightPane(overrides = {}) {
   };
   return render(<RightPane {...props} />);
 }
+
+describe('RightPane: death reason display (#391)', () => {
+  it('shows day and content for dead agent in roster', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし
+     * Level: unit
+     * Objective: 死亡者行に死亡日（Day N）と死因テキスト（content）が表示されることを検証する（AC1 / #391）。
+     */
+    renderRightPane({
+      deadByDay: { 1: new Map([['Bob', { day: 1, content: 'Bob was executed.' }]]) },
+      activeDay: 1,
+    });
+    expect(screen.getByText(/Day 1 · Bob was executed\./)).toBeTruthy();
+  });
+
+  it('shows night_attack content for dead agent', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし
+     * Level: unit
+     * Objective: 夜襲死亡者行に night_attack の content テキストが表示されることを検証する（AC2 / #391）。
+     */
+    renderRightPane({
+      deadByDay: { 1: new Map([['Bob', { day: 1, content: 'Werewolves attacked Bob.' }]]) },
+      activeDay: 1,
+    });
+    expect(screen.getByText(/Werewolves attacked Bob\./)).toBeTruthy();
+  });
+
+  it('shows no deathReason when deadByDay entry has no metadata', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし
+     * Level: unit
+     * Objective: メタデータなし（Map.get が undefined）の死亡者行には死亡理由が表示されないことを検証する。
+     */
+    const { container } = renderRightPane({
+      deadByDay: { 1: new Map([['Bob', undefined]]) },
+      activeDay: 1,
+    });
+    expect(container.querySelector('[class*="deathReason"]')).toBeNull();
+  });
+});
 
 describe('RightPane: suspicion meter removed', () => {
   it('does not render a suspicion meter', () => {
