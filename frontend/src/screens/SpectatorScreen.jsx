@@ -337,11 +337,13 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, dayActions = 
           return (
             <div key={n} className={`${styles.rosterRow} ${styles.dead}`} style={{ '--r-color': r?.color }}>
               <Avatar name={n} role={role} size="sm" dead />
-              <div className={styles.who}>
-                <span className={styles.rosterName}>{n}</span>
-                <span className={styles.sub}>
-                  <RoleTag role={role} />
-                </span>
+              <div className={styles.whoMeta}>
+                <div className={styles.whoBlock}>
+                  <span className={styles.rosterName}>{n}</span>
+                  <span className={styles.sub}>
+                    <RoleTag role={role} />
+                  </span>
+                </div>
                 {meta && (
                   <span className={styles.deathReason}>Day {meta.day} · {meta.content}</span>
                 )}
