@@ -12,7 +12,6 @@
 ## GitHub Issues（未実装タスク）
 
 並び順は Sprint Goal に沿って Milestone 2 優先 → ゲームロジック系 → 将来フェーズの順。
-| yukkie/AgentVillage#382 | bug | 🟡 | 2 | fix(frontend): show day-accurate alive/dead status in SpectatorScreen right pane | 右ペインの生存/死亡リストを activeDay 時点の状態に切り替える |
 同一区分内では優先度（🔴 → 🟡 → 🟢）で並べる。
 
 ### Milestone 2（実データ観戦）— 現 Sprint

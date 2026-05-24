@@ -367,6 +367,9 @@ const baseAgents = {
   Carol: { role: 'Knight',   is_alive: true,  claimed_role: null },
 };
 
+// Bob is dead at day 1
+const baseDeadByDay = { 1: new Set(['Bob']) };
+
 function renderRightPane(overrides = {}) {
   const props = {
     agents: baseAgents,
@@ -374,6 +377,7 @@ function renderRightPane(overrides = {}) {
     coStatus: {},
     dayActions: {},
     activeDay: 1,
+    deadByDay: baseDeadByDay,
     viewerMode: 'spectator',
     ...overrides,
   };

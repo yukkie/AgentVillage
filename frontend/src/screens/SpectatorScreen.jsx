@@ -5,7 +5,7 @@ import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLES } from '../lib/constants.js';
 import { fetchReplayAgents, fetchReplayLog } from '../lib/replayLoader.js';
-import { parseGameData, aggregateCoStatus, aggregateDayActions } from '../lib/parseGameData.js';
+import { parseGameData, aggregateCoStatus, aggregateDayActions, computeDeadByDay } from '../lib/parseGameData.js';
 import { filterFeedEvents } from '../lib/feedFilter.js';
 import styles from './SpectatorScreen.module.css';
 
@@ -286,10 +286,11 @@ const NIGHT_ACTION_LABEL = { inspection: '占い', guard: '護衛', night_attack
 
 // TODO(#314): public モードでは真の役職タグを非表示にし、CO役職のみ表示する
 // === 右ペイン ===
-export function RightPane({ agents, roleAssignment, coStatus = {}, dayActions = {}, activeDay, viewerMode = 'spectator' }) {
+export function RightPane({ agents, roleAssignment, coStatus = {}, dayActions = {}, activeDay, deadByDay = {}, viewerMode = 'spectator' }) {
   const order = Object.keys(agents);
-  const deadNames = order.filter(n => agents[n]?.is_alive === false);
-  const alive = order.filter(n => !deadNames.includes(n));
+  const activeDead = deadByDay[activeDay] ?? new Set();
+  const deadNames = order.filter(n => activeDead.has(n));
+  const alive = order.filter(n => !activeDead.has(n));
 
   const dayData = dayActions[activeDay];
   const nightActions = dayData?.nightActions ?? [];
@@ -415,6 +416,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
   const [replayDaySummary, setReplayDaySummary] = useState(null);
   const [replayCoStatus, setReplayCoStatus] = useState({});
   const [replayDayActions, setReplayDayActions] = useState({});
+  const [replayDeadByDay, setReplayDeadByDay] = useState({});
   const [loadingEvents, setLoadingEvents] = useState(Boolean(sessionId));
   const [loadingAgents, setLoadingAgents] = useState(Boolean(sessionId));
   const [loadError, setLoadError] = useState(null);
@@ -430,6 +432,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
     setReplayDaySummary(null);
     setReplayCoStatus({});
     setReplayDayActions({});
+    setReplayDeadByDay({});
     setLoadingEvents(true);
     setLoadingAgents(true);
     setLoadError(null);
@@ -454,6 +457,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
         setReplayDaySummary(parsed.daySummary);
         setReplayCoStatus(aggregateCoStatus(parsed.events));
         setReplayDayActions(aggregateDayActions(parsed.events));
+        setReplayDeadByDay(computeDeadByDay(parsed.events));
         const firstDay = parsed.events.find(event => event.day)?.day;
         if (firstDay) { setActiveDay(firstDay); setActivePhase('discuss'); }
       })
@@ -501,7 +505,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
         collapsibleLeft
         collapsibleRight
         left={<LeftPane activeDay={activeDay} setDay={setActiveDay} activePhase={activePhase} setPhase={setActivePhase} days={visibleDays} agentNames={agentNames} daySummary={daySummary} dayActions={replayDayActions} />}
-        right={<RightPane agents={agents} roleAssignment={roleAssignment} coStatus={replayCoStatus} dayActions={replayDayActions} activeDay={activeDay} viewerMode={viewerMode} />}
+        right={<RightPane agents={agents} roleAssignment={roleAssignment} coStatus={replayCoStatus} dayActions={replayDayActions} activeDay={activeDay} deadByDay={replayDeadByDay} viewerMode={viewerMode} />}
       >
         <div className={styles.feedHead}>
           <h2>Day {activeDay} {{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]} <small>{sessionId ? sessionId : '3:47 経過 / 残り 4:13'}</small></h2>

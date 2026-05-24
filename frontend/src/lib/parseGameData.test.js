@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseEventLine, parseGameData, normalizeEvents, aggregateDayResults, aggregateNightResults, buildActionsTimeline, aggregateCoStatus, aggregateDayActions } from './parseGameData.js';
+import { parseEventLine, parseGameData, normalizeEvents, aggregateDayResults, aggregateNightResults, buildActionsTimeline, aggregateCoStatus, aggregateDayActions, computeDeadByDay } from './parseGameData.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '../../..');
@@ -434,6 +434,87 @@ describe('aggregateCoStatus', () => {
       { day: 3, event_type: 'co_announcement', agent: 'Ren', claimed_role: 'Villager', is_public: true },
     ];
     expect(aggregateCoStatus(events)).toEqual({ Ren: 'Villager' });
+  });
+});
+
+describe('computeDeadByDay', () => {
+  it('returns empty Sets for all days when there are no eliminations', () => {
+    /*
+     * SUT: computeDeadByDay
+     * Mock: なし
+     * Level: unit
+     * Objective: elimination イベントがない場合、全日で空の Set が返ることを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'speech', agent: 'Mira' },
+    ];
+    const result = computeDeadByDay(events);
+    expect(result[1]).toEqual(new Set());
+  });
+
+  it('includes only Day 1 victim in Day 1 dead set', () => {
+    /*
+     * SUT: computeDeadByDay
+     * Mock: なし
+     * Level: unit
+     * Objective: Day 1 を選択したとき、Day 1 の処刑対象のみが死亡者として含まれることを検証する（AC1）。
+     */
+    const events = [
+      { day: 1, event_type: 'elimination', agent: 'Toma' },
+      { day: 2, event_type: 'elimination', agent: 'Nox' },
+    ];
+    const result = computeDeadByDay(events);
+    expect(result[1].has('Toma')).toBe(true);
+    expect(result[1].has('Nox')).toBe(false);
+  });
+
+  it('accumulates previous victims in later days (AC2)', () => {
+    /*
+     * SUT: computeDeadByDay
+     * Mock: なし
+     * Level: unit
+     * Objective: Day 2 以降を選択したとき、それ以前の累積死亡者が Set に含まれることを検証する（AC2）。
+     */
+    const events = [
+      { day: 1, event_type: 'elimination', agent: 'Toma' },
+      { day: 2, event_type: 'elimination', agent: 'Nox' },
+      { day: 3, event_type: 'elimination', agent: 'Rei' },
+    ];
+    const result = computeDeadByDay(events);
+    expect(result[2].has('Toma')).toBe(true);
+    expect(result[2].has('Nox')).toBe(true);
+    expect(result[2].has('Rei')).toBe(false);
+  });
+
+  it('final day set matches total dead (AC3)', () => {
+    /*
+     * SUT: computeDeadByDay
+     * Mock: なし
+     * Level: unit
+     * Objective: 最終日の Set が全死亡者を含むことを検証する（AC3）。
+     */
+    const events = [
+      { day: 1, event_type: 'elimination', agent: 'Toma' },
+      { day: 2, event_type: 'elimination', agent: 'Nox' },
+    ];
+    const result = computeDeadByDay(events);
+    expect(result[2]).toEqual(new Set(['Toma', 'Nox']));
+  });
+
+  it('handles days with no elimination by copying previous day dead set', () => {
+    /*
+     * SUT: computeDeadByDay
+     * Mock: なし
+     * Level: unit
+     * Objective: elimination がない日（speech のみ）も前日の累積を引き継ぐことを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'speech', agent: 'Mira' },
+      { day: 1, event_type: 'elimination', agent: 'Toma' },
+      { day: 2, event_type: 'speech', agent: 'Mira' },
+    ];
+    const result = computeDeadByDay(events);
+    expect(result[2].has('Toma')).toBe(true);
   });
 });
 
