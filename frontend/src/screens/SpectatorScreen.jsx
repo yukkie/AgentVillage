@@ -242,7 +242,7 @@ export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agent
   };
 
   return (
-    <>
+    <div className={styles.leftPaneInner}>
       <div className={styles.phaseNav}>
         <div className={styles.sectionLabel}>タイムライン</div>
         {days.map(d => (
@@ -302,7 +302,7 @@ export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agent
           <button className={styles.chip}>思考ログ</button>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
