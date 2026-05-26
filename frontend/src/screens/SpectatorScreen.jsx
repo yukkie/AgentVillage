@@ -270,7 +270,7 @@ export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agent
                 className={`${styles.phaseItem} ${styles.phaseNight} ${activeDay === d && activePhase === 'night' ? styles.active : ''}`}
                 onClick={() => handlePhase(d, 'night')}
               >
-                <span className={styles.dot} /> 夜フェーズ <span className={styles.phaseTurn}>{dayActions[d]?.nightActions?.find(a => a.event_type === 'night_attack' && a.is_public)?.target ?? ''}</span>
+                <span className={styles.dot} /> 夜フェーズ <span className={styles.phaseTurn}>{dayActions[d]?.nightActions?.find(a => a.event_type === 'night_attack')?.target ?? ''}</span>
               </div>
             </div>
           </div>
