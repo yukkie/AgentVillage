@@ -46,6 +46,15 @@
 }
 .phaseDay .deathline { font-size: 10px; color: var(--danger); }
 
+.dayBlock .phaseList {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 200ms ease;
+}
+.dayBlock:hover .phaseList,
+.dayBlockActive .phaseList {
+  max-height: 120px;
+}
 .phaseList { display: flex; flex-direction: column; gap: 2px; padding: 0 4px; }
 .phaseItem {
   display: flex; align-items: center; gap: 8px;
