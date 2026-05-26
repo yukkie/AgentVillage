@@ -188,16 +188,19 @@ export function aggregateDayResults(events) {
     const d = ev.day;
     if (!d) continue;
 
-    if (ev.event_type === 'elimination' && ev.is_public) {
-      if (!result[d]) result[d] = { target: null, votes: 0, nightDone: false };
+    if (ev.event_type === 'speech') {
+      if (!result[d]) result[d] = { target: null, votes: 0, nightDone: false, speechCount: 0 };
+      result[d].speechCount += 1;
+    } else if (ev.event_type === 'elimination' && ev.is_public) {
+      if (!result[d]) result[d] = { target: null, votes: 0, nightDone: false, speechCount: 0 };
       result[d].target = ev.agent;
     } else if (ev.event_type === 'vote') {
-      if (!result[d]) result[d] = { target: null, votes: 0, nightDone: false };
+      if (!result[d]) result[d] = { target: null, votes: 0, nightDone: false, speechCount: 0 };
       if (!voteCounts[d]) voteCounts[d] = {};
       voteCounts[d][ev.target] = (voteCounts[d][ev.target] || 0) + 1;
       result[d].votes = Math.max(...Object.values(voteCounts[d]));
     } else if (ev.event_type === 'night_attack' && ev.is_public) {
-      if (!result[d]) result[d] = { target: null, votes: 0, nightDone: false };
+      if (!result[d]) result[d] = { target: null, votes: 0, nightDone: false, speechCount: 0 };
       result[d].nightDone = true;
     }
   }
