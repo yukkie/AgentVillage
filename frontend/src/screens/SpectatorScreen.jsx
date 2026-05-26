@@ -246,7 +246,7 @@ export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agent
       <div className={styles.phaseNav}>
         <div className={styles.sectionLabel}>タイムライン</div>
         {days.map(d => (
-          <div key={d}>
+          <div key={d} className={`${styles.dayBlock} ${activeDay === d ? styles.dayBlockActive : ''}`}>
             <div className={styles.phaseDay}>
               <h3>第 {d} 日 <small>{d === 1 ? '初日' : d === 2 ? '荒れる' : '進行中'}</small></h3>
               {dayActions[d]?.nightActions?.find(a => a.event_type === 'night_attack') && (
