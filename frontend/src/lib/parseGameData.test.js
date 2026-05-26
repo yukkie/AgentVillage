@@ -379,18 +379,21 @@ describe('aggregateDayResults', () => {
     expect(summary[2]).toBeUndefined();
   });
 
-  it('returns no entry for days with only speech events', () => {
+  it('counts speech events per day', () => {
     /*
      * SUT: aggregateDayResults
      * Mock: なし
      * Level: unit
-     * Objective: speech のみのイベント列では daySummary にエントリが作られないことを検証する。
+     * Objective: speech イベントが speechCount に集計され、複数日が独立して集計されることを検証する。
      */
     const events = [
       { day: 1, event_type: 'speech', agent: 'Mira', speech_id: 1 },
+      { day: 1, event_type: 'speech', agent: 'Kael', speech_id: 2 },
+      { day: 2, event_type: 'speech', agent: 'Nox',  speech_id: 1 },
     ];
     const summary = aggregateDayResults(events);
-    expect(summary[1]).toBeUndefined();
+    expect(summary[1].speechCount).toBe(2);
+    expect(summary[2].speechCount).toBe(1);
   });
 });
 

@@ -487,7 +487,7 @@
 .phaseNight   .dot { background: #7d6cff; }
 .phaseExec    .dot { background: var(--danger); }
 .deathline { font-size: 10px; color: var(--danger); }
-.phaseTurn { font-family: var(--mono); font-size: 10px; color: var(--tx-4); margin-left: auto; }
+.phaseTurn { font-family: var(--mono); font-size: 10px; color: var(--tx-2); margin-left: auto; }
 .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--tx-4); flex: 0 0 6px; }
 
 /* feed head */

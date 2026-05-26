@@ -248,7 +248,7 @@ export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agent
         {days.map(d => (
           <div key={d} className={`${styles.dayBlock} ${activeDay === d ? styles.dayBlockActive : ''}`}>
             <div className={styles.phaseDay}>
-              <h3>第 {d} 日 <small>{d === 1 ? '初日' : d === 2 ? '荒れる' : '進行中'}</small></h3>
+              <h3>第 {d} 日</h3>
               {dayActions[d]?.nightActions?.find(a => a.event_type === 'night_attack') && (
                 <div className={styles.deathline}>⚰ {dayActions[d].nightActions.find(a => a.event_type === 'night_attack').target}</div>
               )}
@@ -258,7 +258,7 @@ export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agent
                 className={`${styles.phaseItem} ${styles.phaseDiscuss} ${activeDay === d && activePhase === 'discuss' ? styles.active : ''}`}
                 onClick={() => handlePhase(d, 'discuss')}
               >
-                <span className={styles.dot} /> 議論フェーズ <span className={styles.phaseTurn}>12 発言</span>
+                <span className={styles.dot} /> 議論フェーズ <span className={styles.phaseTurn}>{daySummary[d]?.speechCount != null ? `${daySummary[d].speechCount} 発言` : '発言'}</span>
               </div>
               <div
                 className={`${styles.phaseItem} ${styles.phaseExec} ${activeDay === d && activePhase === 'vote' ? styles.active : ''}`}
@@ -270,7 +270,7 @@ export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agent
                 className={`${styles.phaseItem} ${styles.phaseNight} ${activeDay === d && activePhase === 'night' ? styles.active : ''}`}
                 onClick={() => handlePhase(d, 'night')}
               >
-                <span className={styles.dot} /> 夜フェーズ <span className={styles.phaseTurn}>{daySummary[d]?.nightDone ? '完了' : '進行中'}</span>
+                <span className={styles.dot} /> 夜フェーズ <span className={styles.phaseTurn}>{dayActions[d]?.nightActions?.find(a => a.event_type === 'night_attack')?.target ?? ''}</span>
               </div>
             </div>
           </div>
