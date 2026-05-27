@@ -27,11 +27,16 @@
 | yukkie/AgentVillage#347 | enhancement | 🟡 | 3 | Implement feed filters in SpectatorScreen left pane (agent / role / event type) | 参加者・役職・表示種別フィルターチップを実際に動作させる。追加データ不要でクライアントサイドのみで実装可能 |
 | yukkie/AgentVillage#337 | enhancement | 🟡 | 2 | Top agents real stats | stub/gameList.js の TOP_AGENTS を実ゲーム結果の集計データに置き換え |
 | yukkie/AgentVillage#319 | enhancement | 🟡 | 3 | LIVE spectator | state/ を tail して進行中ゲームを表示（Milestone 2 後半） |
-| yukkie/AgentVillage#364 | enhancement | — | — | introduce SpectatorScreen view model indexes | SpectatorScreen 用 view model/index を導入し、render 中の events 全走査を減らす |
+| yukkie/AgentVillage#409 | tech-debt | 🔴 | 3 | Merge aggregateDayResults into aggregateDayActions and document all aggregate functions | 日別集計関数を統合し夜フェーズ被害者名バグの根因を解消。全 aggregate 関数を FrontendDesign.md に記載 |
+| yukkie/AgentVillage#364 | enhancement | 🟡 | 5 | introduce SpectatorScreen view model indexes | SpectatorScreen 用 view model/index を導入し、render 中の events 全走査を減らす |
+| yukkie/AgentVillage#410 | tech-debt | 🟡 | 2 | Refactor GameCard to use semantic HTML for stable identification | GameCard を `<article>` に変更し Playwright から安定して特定できるようにする |
+| yukkie/AgentVillage#411 | tech-debt | 🟡 | 5 | Replace div soup with semantic HTML elements | div/span を意味のある要素に置き換え Playwright・アクセシビリティを改善。FrontendDesign.md に方針追記 |
 | yukkie/AgentVillage#321 | enhancement | 🟢 | 2 | Unify config data as shared JSON (SSOT) | config/*.json を Python/JS 共有にして constants.js のハードコードを廃止 |
 | yukkie/AgentVillage#323 | enhancement | 🟢 | 3 | i18n support for frontend UI strings (ja/en) | JSX 内の日本語ハードコードを locale リソースに外出しし、ja/en 切り替えに対応 |
 | yukkie/AgentVillage#342 | enhancement | 🟢 | 3 | Introduce React Router for game and agent detail navigation | React Router 導入。AgentDetailScreen 依存 |
-| yukkie/AgentVillage#379 | enhancement | 🟢 | — | Add static type checking to frontend JS (JSDoc or TypeScript) | フィールド名ミスをエディタ/CIで検出できるようにする。スタブ撤廃（#318）以降に検討 |
+| yukkie/AgentVillage#402 | enhancement | 🟢 | 2 | Compact survivors/dead list in right pane | 右ペインの生存者/死亡者リストをコンパクトなレイアウトに変更しコンポーネント化 |
+| yukkie/AgentVillage#403 | enhancement | 🟢 | 2 | Add avatars to CO status and night action sections | CO状況・夜の行動セクションにアバターアイコンを追加しコンポーネント化 |
+| yukkie/AgentVillage#379 | enhancement | 🟢 | 3 | Add static type checking to frontend JS (JSDoc or TypeScript) | フィールド名ミスをエディタ/CIで検出できるようにする。スタブ撤廃（#318）以降に検討 |
 
 ### ゲームロジック系（Web UI 軸とは別系統）
 
