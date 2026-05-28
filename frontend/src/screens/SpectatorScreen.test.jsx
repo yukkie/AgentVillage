@@ -477,6 +477,23 @@ describe('RightPane: role display in spectator mode', () => {
     expect(screen.getAllByText(/占い師/).length).toBeGreaterThan(0);
   });
 
+  it('hides true role tag for alive agents in public mode (AC2)', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし
+     * Level: unit
+     * Objective: publicモードで生存エージェントの真の役職タグが非表示になることを検証する（AC2 / #314）。
+     *            死亡者行（Bob）は常時役職公開のため対象外。
+     */
+    const { container } = renderRightPane({ viewerMode: 'public', coStatus: {} });
+    // Find the alive section (first rosterSection) and check no roleTag inside it
+    const aliveSections = container.querySelectorAll('[class*="rosterSection"]');
+    // aliveSections[0] = 生存, aliveSections[1] = 死亡者
+    const aliveSection = aliveSections[0];
+    const roleTagsInAlive = aliveSection.querySelectorAll('[class*="roleTag"]');
+    expect(roleTagsInAlive.length).toBe(0);
+  });
+
   it('shows CO role badge when agent has claimed_role', () => {
     /*
      * SUT: RightPane
@@ -696,5 +713,199 @@ describe('SpectatorScreen: sessionId integration', () => {
     await waitForReplayLoadToSettle();
     await user.click(screen.getByText('← 一覧'));
     expect(onBack).toHaveBeenCalledOnce();
+  });
+});
+
+describe('FeedItem: public mode hides spectator-only events (AC3 / #314)', () => {
+  it.each([
+    ['inspection', { event_type: 'inspection', agent: 'Alice', target: 'Bob', content: 'Alice inspects Bob: Werewolf', is_public: false }],
+    ['guard', { event_type: 'guard', agent: 'Carol', target: 'Alice', content: 'Carol guards Alice', is_public: false }],
+    ['medium_result', { event_type: 'medium_result', agent: 'Alice', target: 'Bob', content: 'Alice senses: Bob was Werewolf', is_public: false }],
+    ['wolf_chat', { event_type: 'wolf_chat', agent: 'Bob', content: 'Attack Alice tonight.', is_public: false }],
+  ])('hides %s entirely in public mode', (_type, event) => {
+    /*
+     * SUT: FeedItem
+     * Mock: なし
+     * Level: unit
+     * Objective: public モードで spectator 限定イベント（inspection/guard/medium_result/wolf_chat）が完全非表示になることを検証する（AC3 / #314）。
+     */
+    const { container } = render(
+      <FeedItem ev={event} prevById={{}} roleAssignment={roleAssignment} title="Test" viewerMode="public" />
+    );
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('shows inspection in spectator mode', () => {
+    /*
+     * SUT: FeedItem
+     * Mock: なし
+     * Level: unit
+     * Objective: spectator モードでは inspection が表示されることを検証する（対比用）。
+     */
+    render(
+      <FeedItem
+        ev={{ event_type: 'inspection', agent: 'Alice', target: 'Bob', content: 'Alice inspects Bob: Werewolf', is_public: false }}
+        prevById={{}} roleAssignment={roleAssignment} title="Test" viewerMode="spectator"
+      />
+    );
+    expect(screen.getByText(/Alice inspects Bob: Werewolf/)).toBeTruthy();
+  });
+});
+
+describe('SpeechCard: viewerMode public (AC2 / #314)', () => {
+  function renderSpeechCard(viewerMode = 'spectator') {
+    const ev = {
+      day: 1,
+      event_type: 'speech',
+      agent: 'Alice',
+      target: null,
+      content: 'こんにちは',
+      speech_id: 1,
+      reply_to: null,
+      claimed_role: null,
+      reasoning: null,
+      is_public: true,
+    };
+    return render(
+      <FeedItem
+        ev={ev}
+        prevById={{}}
+        roleAssignment={roleAssignment}
+        title="Test Village"
+        viewerMode={viewerMode}
+      />
+    );
+  }
+
+  it('shows role tag in spectator mode', () => {
+    /*
+     * SUT: FeedItem → SpeechCard
+     * Mock: なし
+     * Level: unit
+     * Objective: spectator モードで発言カードに真の役職タグが表示されることを検証する（#314）。
+     */
+    renderSpeechCard('spectator');
+    expect(document.querySelectorAll('[class*="roleTag"]').length).toBeGreaterThan(0);
+  });
+
+  it('hides role tag in public mode (AC2)', () => {
+    /*
+     * SUT: FeedItem → SpeechCard
+     * Mock: なし
+     * Level: unit
+     * Objective: public モードで発言カードの役職タグが非表示になることを検証する（AC2 / #314）。
+     */
+    renderSpeechCard('public');
+    expect(document.querySelectorAll('[class*="roleTag"]').length).toBe(0);
+  });
+
+  it.each(['spectator', 'public'])('shows CO badge with coBadge class in %s mode', (mode) => {
+    /*
+     * SUT: FeedItem → SpeechCard
+     * Mock: なし
+     * Level: unit
+     * Objective: spectator / public 両モードで CO バッジが coBadge クラスで表示されることを検証する（#314 / #417）。
+     */
+    const ev = {
+      day: 1,
+      event_type: 'speech',
+      agent: 'Alice',
+      content: 'こんにちは',
+      speech_id: 1,
+      reply_to: null,
+      claimed_role: 'Seer',
+      reasoning: null,
+      is_public: true,
+    };
+    const { container } = render(
+      <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} title="Test" viewerMode={mode} />
+    );
+    const badge = container.querySelector('[class*="coBadge"]');
+    expect(badge).toBeTruthy();
+    expect(badge.className).toMatch(/coBadge/);
+  });
+});
+
+describe('ThoughtDetails: viewerMode public (AC4 / #314)', () => {
+  function renderWithReasoning(viewerMode = 'spectator') {
+    const ev = {
+      day: 1,
+      event_type: 'speech',
+      agent: 'Alice',
+      content: 'こんにちは',
+      speech_id: 1,
+      reply_to: null,
+      claimed_role: null,
+      reasoning: '村人として最適な行動を選ぶ。',
+      is_public: true,
+    };
+    return render(
+      <FeedItem
+        ev={ev}
+        prevById={{}}
+        roleAssignment={roleAssignment}
+        title="Test Village"
+        viewerMode={viewerMode}
+      />
+    );
+  }
+
+  it('shows expandable thought details in spectator mode', () => {
+    /*
+     * SUT: FeedItem → SpeechCard → ThoughtDetails
+     * Mock: なし
+     * Level: unit
+     * Objective: spectator モードで思考ログが <details> として展開可能であることを検証する（#314）。
+     */
+    const { container } = renderWithReasoning('spectator');
+    expect(container.querySelector('details')).toBeTruthy();
+    expect(screen.getByText(/思考ログを読む/)).toBeTruthy();
+  });
+
+  it('shows lock badge instead of expandable details in public mode (AC4)', () => {
+    /*
+     * SUT: FeedItem → SpeechCard → ThoughtDetails
+     * Mock: なし
+     * Level: unit
+     * Objective: public モードで思考ログが <details> でなくロックバッジに切り替わることを検証する（AC4 / #314）。
+     */
+    const { container } = renderWithReasoning('public');
+    expect(container.querySelector('details')).toBeNull();
+    expect(screen.getByText(/🔒/)).toBeTruthy();
+  });
+});
+
+describe('SpectatorScreen: viewerMode toggle (AC1 / #314)', () => {
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('toggles between spectator and public mode on header button click (AC1)', async () => {
+    /*
+     * SUT: SpectatorScreen (default export)
+     * Mock: fetchReplayLog / fetchReplayAgents を vi.fn()
+     * Level: integration
+     * Objective: ヘッダーのトグルボタンクリックで spectator / public が切り替わることを検証する（AC1 / #314）。
+     */
+    replayLoader.fetchReplayLog.mockResolvedValue('');
+    replayLoader.fetchReplayAgents.mockResolvedValue({});
+    const user = userEvent.setup();
+
+    render(<SpectatorScreen sessionId="test-session-001" cast={[]} />);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/読み込み中/)).toBeNull();
+    }, { timeout: 3000 });
+
+    // Initially in spectator mode
+    expect(screen.getByText(/観戦者モード/)).toBeTruthy();
+
+    // Click to switch to public mode
+    await user.click(screen.getByText(/観戦者モード/));
+    expect(screen.getByText(/参加者視点/)).toBeTruthy();
+
+    // Click again to switch back
+    await user.click(screen.getByText(/参加者視点/));
+    expect(screen.getByText(/観戦者モード/)).toBeTruthy();
   });
 });

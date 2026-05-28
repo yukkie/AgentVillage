@@ -27,8 +27,12 @@ function Mentioned({ text }) {
   );
 }
 
-function ThoughtDetails({ reasoning }) {
+function ThoughtDetails({ reasoning, viewerMode = 'spectator' }) {
   if (!reasoning) return null;
+
+  if (viewerMode === 'public') {
+    return <span className={styles.lockBadge}>🔒 思考ログ</span>;
+  }
 
   return (
     <details className={styles.spThink}>
@@ -53,24 +57,25 @@ function ThoughtDetails({ reasoning }) {
 }
 
 // --- 発言カード ---
-function SpeechCard({ ev, prevById, roleAssignment }) {
+function SpeechCard({ ev, prevById, roleAssignment, viewerMode = 'spectator' }) {
   const role = roleAssignment[ev.agent];
   const r = ROLES[role];
   const replied = ev.reply_to ? prevById[`${ev.day}-${ev.reply_to}`] : null;
   const isWolf = role === 'Werewolf';
+  const isPublic = viewerMode === 'public';
 
   return (
     <div
       className={`${styles.speech} ${isWolf ? styles.speechWolf : ''}`}
       style={{ '--r-color': r?.color }}
     >
-      <Avatar name={ev.agent} role={role} />
+      <Avatar name={ev.agent} role={isPublic ? undefined : role} />
       <div className={styles.vert} />
       <div>
         <div className={styles.spHead}>
           <span className={styles.name}>{ev.agent}</span>
           <span className={styles.turn}>{fmtTurn(ev.day, ev.speech_id || 0)}</span>
-          <RoleTag role={role} />
+          {!isPublic && <RoleTag role={role} />}
           {ev.claimed_role && (
             <span className={styles.coBadge}>
               ▶ {ROLES[ev.claimed_role]?.ja || ev.claimed_role} CO
@@ -87,7 +92,7 @@ function SpeechCard({ ev, prevById, roleAssignment }) {
         <div className={styles.spBody}>
           <Mentioned text={ev.content} />
         </div>
-        <ThoughtDetails reasoning={ev.reasoning} />
+        <ThoughtDetails reasoning={ev.reasoning} viewerMode={viewerMode} />
       </div>
     </div>
   );
@@ -137,7 +142,7 @@ const SYSTEM_EVENT_VIEWS = {
   },
 };
 
-function renderConfiguredSystemEvent(ev, roleAssignment) {
+function renderConfiguredSystemEvent(ev, roleAssignment, viewerMode) {
   const view = SYSTEM_EVENT_VIEWS[ev.event_type];
   if (!view) return null;
 
@@ -150,6 +155,7 @@ function renderConfiguredSystemEvent(ev, roleAssignment) {
       leftName={view.leftName?.(ev)}
       rightName={view.rightName?.(ev)}
       roleAssignment={roleAssignment}
+      viewerMode={viewerMode}
     >
       {logContent(ev)}
     </SystemRow>
@@ -157,7 +163,7 @@ function renderConfiguredSystemEvent(ev, roleAssignment) {
 }
 
 // --- システム行 ---
-function SystemRow({ kind, icon, label, children, reasoning, ts, leftName, rightName, roleAssignment = {} }) {
+function SystemRow({ kind, icon, label, children, reasoning, ts, leftName, rightName, roleAssignment = {}, viewerMode = 'spectator' }) {
   const defaultIcon = { gm: '👁', death: '💀', exec: '⚑', phase: '☾' }[kind] || '⌘';
   return (
     <div className={`${styles.sysrow} ${styles[kind] || ''}`}>
@@ -176,14 +182,14 @@ function SystemRow({ kind, icon, label, children, reasoning, ts, leftName, right
             <Avatar name={rightName} role={roleAssignment[rightName]} size="xs" />
           )}
         </div>
-        <ThoughtDetails reasoning={reasoning} />
+        <ThoughtDetails reasoning={reasoning} viewerMode={viewerMode} />
       </div>
     </div>
   );
 }
 
 // --- 人狼会話カード ---
-function WolfChatCard({ ev }) {
+function WolfChatCard({ ev, viewerMode = 'spectator' }) {
   return (
     <div className={`${styles.speech} ${styles.wolfChat}`}>
       <Avatar name={ev.agent} />
@@ -193,30 +199,40 @@ function WolfChatCard({ ev }) {
           <span className={styles.name}>{ev.agent}</span>
         </div>
         <div className={styles.spBody}>{ev.content}</div>
-        <ThoughtDetails reasoning={ev.reasoning} />
+        <ThoughtDetails reasoning={ev.reasoning} viewerMode={viewerMode} />
       </div>
     </div>
   );
 }
 
-// --- フィードアイテム ---
-export function FeedItem({ ev, prevById, roleAssignment, title }) {
-  if (ev.event_type === 'speech') return <SpeechCard ev={ev} prevById={prevById} roleAssignment={roleAssignment} />;
-  if (ev.event_type === 'wolf_chat') return <WolfChatCard ev={ev} />;
+// public モードで非表示にする非公開イベント種別
+const SPECTATOR_ONLY_EVENTS = new Set(['wolf_chat', 'inspection', 'guard', 'medium_result']);
 
-  const configuredSystemEvent = renderConfiguredSystemEvent(ev, roleAssignment);
+// --- フィードアイテム ---
+export function FeedItem({ ev, prevById, roleAssignment, title, viewerMode = 'spectator' }) {
+  const isPublic = viewerMode === 'public';
+
+  if (ev.event_type === 'speech') return <SpeechCard ev={ev} prevById={prevById} roleAssignment={roleAssignment} viewerMode={viewerMode} />;
+
+  // public モードでは spectator 限定イベントを完全非表示
+  if (isPublic && SPECTATOR_ONLY_EVENTS.has(ev.event_type)) return null;
+  if (isPublic && !ev.is_public) return null;
+
+  if (ev.event_type === 'wolf_chat') return <WolfChatCard ev={ev} viewerMode={viewerMode} />;
+
+  const configuredSystemEvent = renderConfiguredSystemEvent(ev, roleAssignment, viewerMode);
   if (configuredSystemEvent) return configuredSystemEvent;
 
   if (ev.event_type === 'guard_block') {
     return ev.is_public
-      ? <SystemRow kind="gm" icon="🛡" label="護衛">{logContent(ev)}</SystemRow>
-      : <SystemRow kind="gm" icon="🛡" label="護衛成功" rightName={ev.target} roleAssignment={roleAssignment}>{logContent(ev)}</SystemRow>;
+      ? <SystemRow kind="gm" icon="🛡" label="護衛" viewerMode={viewerMode}>{logContent(ev)}</SystemRow>
+      : <SystemRow kind="gm" icon="🛡" label="護衛成功" rightName={ev.target} roleAssignment={roleAssignment} viewerMode={viewerMode}>{logContent(ev)}</SystemRow>;
   }
   if (ev.event_type === 'night_attack') {
     const victim = ev.target;
     return ev.is_public
-      ? <SystemRow kind="death" icon="💀" label="襲撃結果" rightName={victim} roleAssignment={roleAssignment}>{logContent(ev)}</SystemRow>
-      : <SystemRow kind="exec" icon="🐺" label="人狼の襲撃" rightName={ev.target} roleAssignment={roleAssignment}>{logContent(ev)}</SystemRow>;
+      ? <SystemRow kind="death" icon="💀" label="襲撃結果" rightName={victim} roleAssignment={roleAssignment} viewerMode={viewerMode}>{logContent(ev)}</SystemRow>
+      : <SystemRow kind="exec" icon="🐺" label="人狼の襲撃" rightName={ev.target} roleAssignment={roleAssignment} viewerMode={viewerMode}>{logContent(ev)}</SystemRow>;
   }
 
   if (ev.event_type === 'phase_start') {
@@ -309,7 +325,6 @@ export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agent
 const NIGHT_ACTION_ICON = { inspection: '🔮', guard: '🛡', night_attack: '🐺' };
 const NIGHT_ACTION_LABEL = { inspection: '占い', guard: '護衛', night_attack: '襲撃' };
 
-// TODO(#314): public モードでは真の役職タグを非表示にし、CO役職のみ表示する
 // === 右ペイン ===
 export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = {}, activeDay, deadByDay = {}, viewerMode = 'spectator' }) {
   const order = Object.keys(agents);
@@ -394,11 +409,10 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
           const coRole = coStatus[n];
           return (
             <div key={n} className={styles.rosterRow} style={{ '--r-color': r?.color }}>
-              <Avatar name={n} role={role} size="sm" />
+              <Avatar name={n} role={viewerMode === 'spectator' ? role : undefined} size="sm" />
               <div className={styles.who}>
                 <span className={styles.rosterName}>
                   {n}
-                  {/* spectator mode: true role tag always shown; TODO(#314): hide in public mode */}
                   {viewerMode === 'spectator' && <RoleTag role={role} />}
                   {coRole && (
                     <span className={styles.coBadge}>▶ {ROLES[coRole]?.ja || coRole} CO</span>
@@ -450,8 +464,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
   const [loadingEvents, setLoadingEvents] = useState(Boolean(sessionId));
   const [loadingAgents, setLoadingAgents] = useState(Boolean(sessionId));
   const [loadError, setLoadError] = useState(null);
-  // TODO(#314): public モード切り替えUIを追加したらここで toggle する
-  const viewerMode = 'spectator';
+  const [viewerMode, setViewerMode] = useState('spectator');
 
   useEffect(() => {
     if (!sessionId) return undefined;
@@ -525,6 +538,9 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
         {onBack && <TopBarBtn onClick={onBack}>← 一覧</TopBarBtn>}
         <TopBarBtn><span className={topBarStyles.liveDot} /> REPLAY</TopBarBtn>
         <TopBarBtn>同時観戦 142</TopBarBtn>
+        <TopBarBtn onClick={() => setViewerMode(v => v === 'spectator' ? 'public' : 'spectator')}>
+          {viewerMode === 'spectator' ? '🔍 観戦者モード' : '👤 参加者視点'}
+        </TopBarBtn>
         <TopBarBtn>⤓ 全ログDL</TopBarBtn>
         <TopBarBtn primary>★ 応援</TopBarBtn>
       </TopBar>
@@ -562,6 +578,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
               prevById={prevById}
               roleAssignment={roleAssignment}
               title={title || sessionId}
+              viewerMode={viewerMode}
             />
           ))}
         </div>
