@@ -14,6 +14,8 @@
 並び順は Sprint Goal に沿って Milestone 2 優先 → ゲームロジック系 → 将来フェーズの順。
 同一区分内では優先度（🔴 → 🟡 → 🟢）で並べる。
 
+❌ yukkie/AgentVillage#415 | tech-debt | — | — | docs: introduce DataSpec.md | UI非依存のデータ定義（EventType・可視性ルール・ログスキーマ）を DataSpec.md に集約し、Spec.md §5・DetailDesign.md・flow-js.md から参照する
+
 ### Milestone 2（実データ観戦）— 現 Sprint
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
