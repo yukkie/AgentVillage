@@ -14,6 +14,7 @@
 並び順は Sprint Goal に沿って Milestone 2 優先 → ゲームロジック系 → 将来フェーズの順。
 同一区分内では優先度（🔴 → 🟡 → 🟢）で並べる。
 
+❌ yukkie/AgentVillage#417 | bug | — | — | CO badge style ignores viewerMode; false-CO detection not implemented | CO バッジのスタイルが viewerMode を無視、偽CO判定未実装。両モードでスタイル統一し spectator モードのみ偽COマークを付ける
 ❌ yukkie/AgentVillage#415 | tech-debt | — | — | docs: introduce DataSpec.md | UI非依存のデータ定義（EventType・可視性ルール・ログスキーマ）を DataSpec.md に集約し、Spec.md §5・DetailDesign.md・flow-js.md から参照する。依存: #344
 
 ### Milestone 2（実データ観戦）— 現 Sprint
