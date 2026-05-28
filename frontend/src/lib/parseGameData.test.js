@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseEventLine, parseGameData, normalizeEvents, aggregateDayResults, aggregateNightResults, buildActionsTimeline, aggregateCoStatus, aggregateDayActions, computeDeadByDay } from './parseGameData.js';
+import { parseEventLine, parseGameData, normalizeEvents, aggregateDaySummary, aggregateNightResults, buildActionsTimeline, aggregateCoStatus, computeDeadByDay } from './parseGameData.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '../../..');
@@ -179,8 +179,8 @@ describe('parseGameData', () => {
     const gameData = parseGameData(readFixture('spectator_log.jsonl'));
     expect(gameData.daySummary).toBeDefined();
     const day1 = gameData.daySummary[1];
-    expect(day1.target).toBeTruthy();
-    expect(typeof day1.votes).toBe('number');
+    expect(day1.execResult.target).toBeTruthy();
+    expect(typeof day1.execResult.votes).toBe('number');
     expect(typeof day1.nightDone).toBe('boolean');
   });
 });
@@ -344,10 +344,10 @@ describe('buildActionsTimeline', () => {
   });
 });
 
-describe('aggregateDayResults', () => {
+describe('aggregateDaySummary', () => {
   it('extracts elimination target and top vote count', () => {
     /*
-     * SUT: aggregateDayResults
+     * SUT: aggregateDaySummary
      * Mock: なし
      * Level: unit
      * Objective: elimination イベントの agent フィールドが daySummary の target に反映され、vote 集計で最多票数が votes に入ることを検証する。
@@ -358,14 +358,14 @@ describe('aggregateDayResults', () => {
       { day: 1, event_type: 'vote', agent: 'Mira', target: 'Kael' },
       { day: 1, event_type: 'vote', agent: 'Ren',  target: 'Sora' },
     ];
-    const summary = aggregateDayResults(events);
-    expect(summary[1].target).toBe('Kael');
-    expect(summary[1].votes).toBe(2);
+    const summary = aggregateDaySummary(events);
+    expect(summary[1].execResult.target).toBe('Kael');
+    expect(summary[1].execResult.votes).toBe(2);
   });
 
   it('sets nightDone true when public night_attack exists', () => {
     /*
-     * SUT: aggregateDayResults
+     * SUT: aggregateDaySummary
      * Mock: なし
      * Level: unit
      * Objective: is_public な night_attack イベントがある日は nightDone が true、ない日は false になることを検証する。
@@ -374,14 +374,14 @@ describe('aggregateDayResults', () => {
       { day: 1, event_type: 'night_attack', agent: 'Rei',  is_public: true },
       { day: 2, event_type: 'night_attack', agent: 'Sora', is_public: false },
     ];
-    const summary = aggregateDayResults(events);
+    const summary = aggregateDaySummary(events);
     expect(summary[1].nightDone).toBe(true);
-    expect(summary[2]).toBeUndefined();
+    expect(summary[2].nightDone).toBe(false);
   });
 
   it('counts speech events per day', () => {
     /*
-     * SUT: aggregateDayResults
+     * SUT: aggregateDaySummary
      * Mock: なし
      * Level: unit
      * Objective: speech イベントが speechCount に集計され、複数日が独立して集計されることを検証する。
@@ -391,7 +391,7 @@ describe('aggregateDayResults', () => {
       { day: 1, event_type: 'speech', agent: 'Kael', speech_id: 2 },
       { day: 2, event_type: 'speech', agent: 'Nox',  speech_id: 1 },
     ];
-    const summary = aggregateDayResults(events);
+    const summary = aggregateDaySummary(events);
     expect(summary[1].speechCount).toBe(2);
     expect(summary[2].speechCount).toBe(1);
   });
@@ -669,10 +669,10 @@ describe('computeDeadByDay', () => {
   });
 });
 
-describe('aggregateDayActions', () => {
+describe('aggregateDaySummary action fields', () => {
   it('collects night actions and exec result per day', () => {
     /*
-     * SUT: aggregateDayActions
+     * SUT: aggregateDaySummary
      * Mock: なし
      * Level: unit
      * Objective: inspection / guard / night_attack(private) / elimination / vote から日別サマリを生成することを検証する。
@@ -686,7 +686,7 @@ describe('aggregateDayActions', () => {
       { day: 1, event_type: 'vote',         agent: 'Kai',  target: 'Nox',  content: 'Kai votes for Nox',         is_public: true },
       { day: 1, event_type: 'elimination',  agent: 'Toma', target: null,   content: 'Toma was executed.',        is_public: true },
     ];
-    const result = aggregateDayActions(events);
+    const result = aggregateDaySummary(events);
     const d1 = result[1];
 
     expect(d1.nightActions).toHaveLength(3);
@@ -695,6 +695,7 @@ describe('aggregateDayActions', () => {
     expect(d1.nightActions.find(a => a.event_type === 'night_attack' && !a.is_public)).toBeTruthy();
 
     expect(d1.execResult.target).toBe('Toma');
+    expect(d1.execResult.votes).toBe(2);
     expect(d1.execResult.voteTable).toEqual([
       { from: 'Nox',  to: 'Toma' },
       { from: 'Mira', to: 'Toma' },
@@ -704,7 +705,7 @@ describe('aggregateDayActions', () => {
 
   it('excludes public night_attack from nightActions (already shown in feed)', () => {
     /*
-     * SUT: aggregateDayActions
+     * SUT: aggregateDaySummary
      * Mock: なし
      * Level: unit
      * Objective: is_public な night_attack（夜明け公知イベント）は nightActions に含まれないことを検証する。
@@ -713,22 +714,22 @@ describe('aggregateDayActions', () => {
       { day: 1, event_type: 'night_attack', agent: 'Kai',  target: 'Sora', is_public: false },
       { day: 1, event_type: 'night_attack', agent: 'Sora', target: null,   is_public: true },
     ];
-    const result = aggregateDayActions(events);
+    const result = aggregateDaySummary(events);
     expect(result[1].nightActions).toHaveLength(1);
     expect(result[1].nightActions[0].is_public).toBe(false);
   });
 
-  it('returns empty nightActions and null execResult for days with no relevant events', () => {
+  it('returns no summary entry for days with no summary-relevant events', () => {
     /*
-     * SUT: aggregateDayActions
+     * SUT: aggregateDaySummary
      * Mock: なし
      * Level: unit
-     * Objective: 該当イベントがない日はデフォルト値を返すことを検証する。
+     * Objective: 該当イベントがない日は daySummary エントリを作らないことを検証する。
      */
     const events = [
-      { day: 1, event_type: 'speech', agent: 'Mira', speech_id: 1 },
+      { day: 1, event_type: 'phase_start', phase: 'day_discussion' },
     ];
-    const result = aggregateDayActions(events);
+    const result = aggregateDaySummary(events);
     expect(result[1]).toBeUndefined();
   });
 });

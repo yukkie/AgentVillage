@@ -5,7 +5,7 @@ import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLES } from '../lib/constants.js';
 import { fetchReplayAgents, fetchReplayLog } from '../lib/replayLoader.js';
-import { parseGameData, aggregateCoStatus, aggregateDayActions, computeDeadByDay } from '../lib/parseGameData.js';
+import { parseGameData, aggregateCoStatus, computeDeadByDay } from '../lib/parseGameData.js';
 import { filterFeedEvents } from '../lib/feedFilter.js';
 import styles from './SpectatorScreen.module.css';
 
@@ -235,7 +235,7 @@ export function FeedItem({ ev, prevById, roleAssignment, title }) {
 }
 
 // === 左ペイン ===
-export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agentNames, daySummary, dayActions = {} }) {
+export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agentNames, daySummary = {} }) {
   const handlePhase = (d, phase) => {
     setDay(d);
     setPhase(phase);
@@ -249,8 +249,8 @@ export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agent
           <div key={d} className={`${styles.dayBlock} ${activeDay === d ? styles.dayBlockActive : ''}`}>
             <div className={styles.phaseDay}>
               <h3>第 {d} 日</h3>
-              {dayActions[d]?.nightActions?.find(a => a.event_type === 'night_attack') && (
-                <div className={styles.deathline}>⚰ {dayActions[d].nightActions.find(a => a.event_type === 'night_attack').target}</div>
+              {daySummary[d]?.nightActions?.find(a => a.event_type === 'night_attack') && (
+                <div className={styles.deathline}>⚰ {daySummary[d].nightActions.find(a => a.event_type === 'night_attack').target}</div>
               )}
             </div>
             <div className={styles.phaseList}>
@@ -264,13 +264,13 @@ export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agent
                 className={`${styles.phaseItem} ${styles.phaseExec} ${activeDay === d && activePhase === 'vote' ? styles.active : ''}`}
                 onClick={() => handlePhase(d, 'vote')}
               >
-                <span className={styles.dot} /> 投票・処刑 <span className={styles.phaseTurn}>{daySummary[d]?.target || '—'}</span>
+                <span className={styles.dot} /> 投票・処刑 <span className={styles.phaseTurn}>{daySummary[d]?.execResult?.target || '—'}</span>
               </div>
               <div
                 className={`${styles.phaseItem} ${styles.phaseNight} ${activeDay === d && activePhase === 'night' ? styles.active : ''}`}
                 onClick={() => handlePhase(d, 'night')}
               >
-                <span className={styles.dot} /> 夜フェーズ <span className={styles.phaseTurn}>{dayActions[d]?.nightActions?.find(a => a.event_type === 'night_attack')?.target ?? ''}</span>
+                <span className={styles.dot} /> 夜フェーズ <span className={styles.phaseTurn}>{daySummary[d]?.nightActions?.find(a => a.event_type === 'night_attack')?.target ?? ''}</span>
               </div>
             </div>
           </div>
@@ -311,14 +311,14 @@ const NIGHT_ACTION_LABEL = { inspection: '占い', guard: '護衛', night_attack
 
 // TODO(#314): public モードでは真の役職タグを非表示にし、CO役職のみ表示する
 // === 右ペイン ===
-export function RightPane({ agents, roleAssignment, coStatus = {}, dayActions = {}, activeDay, deadByDay = {}, viewerMode = 'spectator' }) {
+export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = {}, activeDay, deadByDay = {}, viewerMode = 'spectator' }) {
   const order = Object.keys(agents);
   const activeDead = deadByDay[activeDay] ?? new Map();
   const deadNames = order.filter(n => activeDead.has(n))
     .sort((a, b) => (activeDead.get(a)?.day ?? 0) - (activeDead.get(b)?.day ?? 0));
   const alive = order.filter(n => !activeDead.has(n));
 
-  const dayData = dayActions[activeDay];
+  const dayData = daySummary[activeDay];
   const nightActions = dayData?.nightActions ?? [];
   const execResult = dayData?.execResult ?? null;
 
@@ -445,8 +445,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
   const [activePhase, setActivePhase] = useState('discuss');
   const [replayEvents, setReplayEvents] = useState(null);
   const [replayAgents, setReplayAgents] = useState({});
-  const [replayDaySummary, setReplayDaySummary] = useState(null);
-  const [replayDayActions, setReplayDayActions] = useState({});
+  const [replayDaySummary, setReplayDaySummary] = useState({});
   const [replayDeadByDay, setReplayDeadByDay] = useState({});
   const [loadingEvents, setLoadingEvents] = useState(Boolean(sessionId));
   const [loadingAgents, setLoadingAgents] = useState(Boolean(sessionId));
@@ -460,9 +459,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
     let cancelled = false;
     setReplayEvents(null);
     setReplayAgents({});
-    setReplayDaySummary(null);
-
-    setReplayDayActions({});
+    setReplayDaySummary({});
     setReplayDeadByDay({});
     setLoadingEvents(true);
     setLoadingAgents(true);
@@ -487,7 +484,6 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
         setReplayEvents(parsed.events);
         setReplayDaySummary(parsed.daySummary);
 
-        setReplayDayActions(aggregateDayActions(parsed.events));
         setReplayDeadByDay(computeDeadByDay(parsed.events));
         const firstDay = parsed.events.find(event => event.day)?.day;
         if (firstDay) { setActiveDay(firstDay); setActivePhase('discuss'); }
@@ -506,7 +502,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
 
   const events = replayEvents ?? [];
   const agents = replayAgents;
-  const daySummary = replayDaySummary ?? {};
+  const daySummary = replayDaySummary;
   const roleAssignment = useMemo(() => Object.fromEntries(
     Object.entries(agents).map(([name, agent]) => [name, agent.role])
   ), [agents]);
@@ -536,8 +532,8 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
       <ThreePaneLayout
         collapsibleLeft
         collapsibleRight
-        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} activePhase={activePhase} setPhase={setActivePhase} days={visibleDays} agentNames={agentNames} daySummary={daySummary} dayActions={replayDayActions} />}
-        right={<RightPane agents={agents} roleAssignment={roleAssignment} coStatus={replayCoStatus} dayActions={replayDayActions} activeDay={activeDay} deadByDay={replayDeadByDay} viewerMode={viewerMode} />}
+        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} activePhase={activePhase} setPhase={setActivePhase} days={visibleDays} agentNames={agentNames} daySummary={daySummary} />}
+        right={<RightPane agents={agents} roleAssignment={roleAssignment} coStatus={replayCoStatus} daySummary={daySummary} activeDay={activeDay} deadByDay={replayDeadByDay} viewerMode={viewerMode} />}
       >
         <div className={styles.feedHead}>
           <h2>Day {activeDay} {{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]} <small>{sessionId ? sessionId : '3:47 経過 / 残り 4:13'}</small></h2>

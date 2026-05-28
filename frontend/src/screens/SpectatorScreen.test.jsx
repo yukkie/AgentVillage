@@ -53,8 +53,10 @@ function renderLeftPane(overrides = {}) {
     agentNames: ['Alice', 'Bob', 'Carol'],
     daySummary: {
       1: {
-        target: 'Bob',
+        execResult: { target: 'Bob', votes: 1, voteTable: [] },
         nightDone: true,
+        nightActions: [],
+        speechCount: 0,
       },
     },
     ...overrides,
@@ -344,19 +346,21 @@ describe('FeedItem: system event icons', () => {
 });
 
 describe('LeftPane night death display', () => {
-  it('shows attacked agent name from dayActions when available', () => {
+  it('shows attacked agent name from daySummary when available', () => {
     /**
      * SUT: LeftPane
-     * Mock: なし（dayActions plain object を入力）
+     * Mock: なし（daySummary plain object を入力）
      * Level: unit
-     * Objective: dayActions[day].nightActions に night_attack がある場合 ⚰ マークと共に左ペインに表示されることを検証する。
+     * Objective: daySummary[day].nightActions に night_attack がある場合 ⚰ マークと共に左ペインに表示されることを検証する。
      */
     renderLeftPane({
       days: [1],
-      dayActions: {
+      daySummary: {
         1: {
           nightActions: [{ event_type: 'night_attack', agent: 'Kai', target: 'Alice', is_public: false }],
           execResult: null,
+          speechCount: 0,
+          nightDone: false,
         },
       },
     });
@@ -364,16 +368,16 @@ describe('LeftPane night death display', () => {
     expect(screen.getByText(/⚰.*Alice|Alice.*⚰/)).toBeTruthy();
   });
 
-  it('shows nothing when dayActions has no night_attack for the day', () => {
+  it('shows nothing when daySummary has no night_attack for the day', () => {
     /**
      * SUT: LeftPane
      * Mock: なし
      * Level: unit
-     * Objective: dayActions に night_attack がない場合は ⚰ が表示されないことを検証する。
+     * Objective: daySummary に night_attack がない場合は ⚰ が表示されないことを検証する。
      */
     const { container } = renderLeftPane({
       days: [1],
-      dayActions: {},
+      daySummary: {},
     });
 
     expect(container.querySelector('[class*="deathline"]')).toBeNull();
@@ -394,7 +398,7 @@ function renderRightPane(overrides = {}) {
     agents: baseAgents,
     roleAssignment: { Alice: 'Seer', Bob: 'Werewolf', Carol: 'Knight' },
     coStatus: {},
-    dayActions: {},
+    daySummary: {},
     activeDay: 1,
     deadByDay: baseDeadByDay,
     viewerMode: 'spectator',
@@ -521,15 +525,17 @@ describe('RightPane: night actions for activeDay', () => {
      * Level: unit
      * Objective: activeDay の夜行動が右ペインに表示されることを検証する。
      */
-    const dayActions = {
+    const daySummary = {
       1: {
         nightActions: [
           { day: 1, event_type: 'inspection', agent: 'Alice', target: 'Bob', content: 'Alice inspects Bob: Werewolf', is_public: false },
         ],
-        execResult: { target: 'Bob', voteTable: [{ from: 'Alice', to: 'Bob' }] },
+        execResult: { target: 'Bob', votes: 1, voteTable: [{ from: 'Alice', to: 'Bob' }] },
+        speechCount: 0,
+        nightDone: false,
       },
     };
-    renderRightPane({ dayActions, activeDay: 1 });
+    renderRightPane({ daySummary, activeDay: 1 });
     expect(screen.getAllByText('Alice').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Bob').length).toBeGreaterThan(0);
   });
@@ -541,13 +547,15 @@ describe('RightPane: night actions for activeDay', () => {
      * Level: unit
      * Objective: activeDay の処刑結果（ターゲット）が表示されることを検証する。
      */
-    const dayActions = {
+    const daySummary = {
       1: {
         nightActions: [],
-        execResult: { target: 'Bob', voteTable: [{ from: 'Alice', to: 'Bob' }] },
+        execResult: { target: 'Bob', votes: 1, voteTable: [{ from: 'Alice', to: 'Bob' }] },
+        speechCount: 0,
+        nightDone: false,
       },
     };
-    renderRightPane({ dayActions, activeDay: 1 });
+    renderRightPane({ daySummary, activeDay: 1 });
     expect(screen.getAllByText('Bob').length).toBeGreaterThan(0);
   });
 });

@@ -173,34 +173,62 @@ export function buildActionsTimeline(events) {
 }
 
 /**
- * Aggregate per-day execution target, vote count, and night completion from
- * elimination / vote / night_attack events. Days with only other event types
- * (speech, guard, etc.) have no entry in the returned map.
+ * Aggregate per-day night actions and execution results.
+ *
+ * nightActions: inspection / guard / private night_attack (is_public=false)
+ * execResult:   elimination target + vote breakdown
+ * speechCount:  public/private speech count for the day
+ * nightDone:    true when a public night_attack announcement exists
  *
  * @param {object[]} events
- * @returns {Record<number, { target: string|null, votes: number, nightDone: boolean }>}
+ * @returns {Record<number, { nightActions: object[], execResult: { target: string|null, votes: number, voteTable: {from:string,to:string}[] } | null, speechCount: number, nightDone: boolean }>}
  */
-export function aggregateDayResults(events) {
+export function aggregateDaySummary(events) {
   const result = {};
   const voteCounts = {};
+
+  function ensureDay(d) {
+    if (!result[d]) {
+      result[d] = {
+        nightActions: [],
+        execResult: null,
+        speechCount: 0,
+        nightDone: false,
+      };
+    }
+  }
+
+  function ensureExecResult(d) {
+    ensureDay(d);
+    if (!result[d].execResult) {
+      result[d].execResult = { target: null, votes: 0, voteTable: [] };
+    }
+    return result[d].execResult;
+  }
 
   for (const ev of events) {
     const d = ev.day;
     if (!d) continue;
 
     if (ev.event_type === 'speech') {
-      if (!result[d]) result[d] = { target: null, votes: 0, nightDone: false, speechCount: 0 };
+      ensureDay(d);
       result[d].speechCount += 1;
-    } else if (ev.event_type === 'elimination' && ev.is_public) {
-      if (!result[d]) result[d] = { target: null, votes: 0, nightDone: false, speechCount: 0 };
-      result[d].target = ev.agent;
+    } else if (
+      (ev.event_type === 'inspection' || ev.event_type === 'guard') ||
+      (ev.event_type === 'night_attack' && !ev.is_public)
+    ) {
+      ensureDay(d);
+      result[d].nightActions.push(ev);
     } else if (ev.event_type === 'vote') {
-      if (!result[d]) result[d] = { target: null, votes: 0, nightDone: false, speechCount: 0 };
+      const execResult = ensureExecResult(d);
+      execResult.voteTable.push({ from: ev.agent, to: ev.target });
       if (!voteCounts[d]) voteCounts[d] = {};
       voteCounts[d][ev.target] = (voteCounts[d][ev.target] || 0) + 1;
-      result[d].votes = Math.max(...Object.values(voteCounts[d]));
+      execResult.votes = Math.max(...Object.values(voteCounts[d]));
+    } else if (ev.event_type === 'elimination' && ev.is_public) {
+      ensureExecResult(d).target = ev.agent;
     } else if (ev.event_type === 'night_attack' && ev.is_public) {
-      if (!result[d]) result[d] = { target: null, votes: 0, nightDone: false, speechCount: 0 };
+      ensureDay(d);
       result[d].nightDone = true;
     }
   }
@@ -222,46 +250,6 @@ export function aggregateCoStatus(events, upToDay) {
       result[ev.agent] = ev.claimed_role;
     }
   }
-  return result;
-}
-
-/**
- * Aggregate per-day night actions and execution results.
- *
- * nightActions: inspection / guard / private night_attack (is_public=false)
- * execResult:   elimination target + vote breakdown
- *
- * @param {object[]} events
- * @returns {Record<number, { nightActions: object[], execResult: { target: string, voteTable: {from:string,to:string}[] } | null }>}
- */
-export function aggregateDayActions(events) {
-  const result = {};
-
-  function ensureDay(d) {
-    if (!result[d]) result[d] = { nightActions: [], execResult: null };
-  }
-
-  for (const ev of events) {
-    const d = ev.day;
-    if (!d) continue;
-
-    if (
-      (ev.event_type === 'inspection' || ev.event_type === 'guard') ||
-      (ev.event_type === 'night_attack' && !ev.is_public)
-    ) {
-      ensureDay(d);
-      result[d].nightActions.push(ev);
-    } else if (ev.event_type === 'vote') {
-      ensureDay(d);
-      if (!result[d].execResult) result[d].execResult = { target: null, voteTable: [] };
-      result[d].execResult.voteTable.push({ from: ev.agent, to: ev.target });
-    } else if (ev.event_type === 'elimination') {
-      ensureDay(d);
-      if (!result[d].execResult) result[d].execResult = { target: null, voteTable: [] };
-      result[d].execResult.target = ev.agent;
-    }
-  }
-
   return result;
 }
 
@@ -326,7 +314,7 @@ export function computeDeadByDay(events) {
  *
  * @param {string} jsonlText
  * @param {Record<string, object>} agentJsonByName
- * @returns {{ events: object[], agents: Record<string, object>, daySummary: object }}
+ * @returns {{ events: object[], agents: Record<string, object>, daySummary: object, nightResults: object, actionsTimeline: object[] }}
  */
 export function parseGameData(jsonlText, agentJsonByName = {}) {
   const rawEvents = jsonlText
@@ -344,7 +332,7 @@ export function parseGameData(jsonlText, agentJsonByName = {}) {
   return {
     events,
     agents,
-    daySummary: aggregateDayResults(rawEvents),
+    daySummary: aggregateDaySummary(rawEvents),
     nightResults: aggregateNightResults(rawEvents),
     actionsTimeline: buildActionsTimeline(rawEvents),
   };

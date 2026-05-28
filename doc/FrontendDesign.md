@@ -105,6 +105,20 @@ const [screen, setScreen] = useState('list');
 
 #312 で「❌ スタブ固定」とされた村名・ルール名・投票内訳・夜行動サマリ・ソーシャル系メトリクスは、#318 では fallback 表示のまま残す。
 
+### 4.2.2 `parseGameData.js` 集計関数
+
+`parseGameData.js` の aggregate 関数は JSONL 由来の `LogEvent[]` を UI 用の派生データへ変換する純粋関数として扱う。I/O・fetch・React state 更新は `replayLoader.js` / screen component 側に置き、aggregate 関数には持ち込まない。
+
+| 関数 | 目的 | 入力 | 出力 | `is_public` の扱い |
+|---|---|---|---|---|
+| `aggregateDaySummary` | 日別タイムライン・右ペイン表示に必要なサマリを単一ソースとして作る。旧 `aggregateDayResults` と `aggregateDayActions` の責務を統合する | raw `LogEvent[]` | `{ [day]: { speechCount, nightDone, nightActions, execResult } }` | private `night_attack` は `nightActions` に含める。public `night_attack` は夜明け結果の公知イベントなので `nightActions` には入れず、`nightDone` 判定だけに使う。public `elimination` は `execResult.target` に使う |
+| `aggregateCoStatus` | CO 状況を agent 名から claimed role へ引く map にする。日別表示では `upToDay` までを累積する | normalized `LogEvent[]`, optional `upToDay` | `{ [agentName]: claimed_role }` | `co_announcement` は公開発言として扱う。現状は `is_public` でフィルタせず、`event_type` / `agent` / `claimed_role` を正とする |
+| `aggregateNightResults` | private 夜襲ログから日別の襲撃先を取り出す。後方互換の派生データ | raw `LogEvent[]` | `{ [day]: { attacked } }` | private `night_attack` の `target` のみ使う。public `night_attack` はログ生成側の agent/target 揺れを避けるため無視する |
+| `computeDeadByDay` | 各日終了時点の累積死亡者 map を作る | raw または normalized `LogEvent[]` | `{ [day]: Map<agentName, { day, content }> }` | `elimination` は死亡として扱う。private `night_attack` は死亡候補として扱い、同日同 target の private `guard_block` があれば除外する。public `night_attack` は使わない |
+| `buildActionsTimeline` | 夜行動・処刑を横断的なアクション履歴に平坦化する | raw `LogEvent[]` | `[{ day, when, kind, who, target, label }]` | private `night_attack` は人狼視点の行動として含める。public `night_attack` は村への結果告知なので除外する。public `elimination` は処刑アクションとして含める |
+
+`daySummary` は `SpectatorScreen` の左右ペインで共有する日別データ名とする。`nightActions` や `execResult` のような行動系フィールドも `daySummary` 配下に置き、左ペインと右ペインが別々の集計結果を参照して表示ずれを起こさないようにする。
+
 ### 4.3 ルーティング方針（Milestone 2）
 
 react-router を導入し、URL ベースの遷移に移行する。
