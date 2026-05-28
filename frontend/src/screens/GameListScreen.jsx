@@ -124,23 +124,19 @@ function winnerClass(winner) {
 
 function GameCard({ g, onOpen }) {
   return (
-    <div className={`${styles.gcard} ${g.hot ? styles.featured : ''}`}>
+    <article
+      className={`${styles.gcard} ${g.hot ? styles.featured : ''}`}
+      aria-label={g.id}
+    >
       <div className={styles.vote}>
         <button className={styles.up}>▲</button>
         <span className={styles.voteNum}>{g.votes}</span>
         <button>▼</button>
       </div>
-      <div
+      <button
+        type="button"
         className={styles.cardBody}
-        role="button"
-        tabIndex={0}
         onClick={() => onOpen(g)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            onOpen(g);
-          }
-        }}
       >
         <div className={styles.gmeta}>
           {g.live
@@ -184,8 +180,8 @@ function GameCard({ g, onOpen }) {
           <span>★ 保存</span>
           <span>↗ 共有</span>
         </div>
-      </div>
-    </div>
+      </button>
+    </article>
   );
 }
 
