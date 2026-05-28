@@ -504,3 +504,6 @@
 
 /* filter chip swatch */
 .swatch { width: 8px; height: 8px; border-radius: 2px; }
+
+/* viewerMode: public */
+.lockBadge { font-size: 11px; color: var(--tx-4); padding: 2px 6px; cursor: default; user-select: none; }

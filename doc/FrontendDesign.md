@@ -497,6 +497,17 @@ CSS Grid `grid-template-columns: var(--lcol) 1fr var(--rcol)` で 3 ペインを
 | `LeftPane` | フェーズナビ（日 × フェーズ、クリックで中央フィードを切り替え） + エージェント/役職/表示フィルタ |
 | `RightPane` | ロスター（生存/死亡）/ COボード / 夜の行動タイムライン |
 
+#### viewerMode トグル（#314）
+
+ヘッダーの「観戦者モード / 参加者視点」トグルで `viewerMode: 'spectator' | 'public'` を切り替える。
+
+| 要素 | spectator | public |
+|---|---|---|
+| `SpeechCard` 役職タグ・Avatar 役職刻印 | 真の役職を表示 | 非表示 |
+| `ThoughtDetails` / `WolfChatCard` 思考ログ | `<details>` で展開可 | `🔒 思考ログ` ロックバッジ（クリック不可） |
+| `RightPane` 生存ロスター役職タグ・Avatar 役職刻印 | 真の役職を表示 | 非表示 |
+| spectator 限定システムログ（`wolf_chat` / `inspection` / `guard` / `medium_result` および `is_public=false` のイベント） | 表示 | **完全非表示**（カード自体をマウントしない） |
+
 #### フェーズクリックの仕様（#358）
 
 左ペインの各フェーズ行をクリックすると、中央フィードがそのフェーズのイベントに絞り込まれる。
