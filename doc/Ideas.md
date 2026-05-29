@@ -14,13 +14,13 @@
 並び順は Sprint Goal に沿って Milestone 2 優先 → ゲームロジック系 → 将来フェーズの順。
 同一区分内では優先度（🔴 → 🟡 → 🟢）で並べる。
 
-❌ yukkie/AgentVillage#417 | bug | — | — | CO badge style ignores viewerMode; false-CO detection not implemented | CO バッジのスタイルが viewerMode を無視、偽CO判定未実装。両モードでスタイル統一し spectator モードのみ偽COマークを付ける
-❌ yukkie/AgentVillage#415 | tech-debt | — | — | docs: introduce DataSpec.md | UI非依存のデータ定義（EventType・可視性ルール・ログスキーマ）を DataSpec.md に集約し、Spec.md §5・DetailDesign.md・flow-js.md から参照する。依存: #344
 
 ### Milestone 2（実データ観戦）— 現 Sprint
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| yukkie/AgentVillage#417 | bug | ❌ | — | CO badge style ignores viewerMode; false-CO detection not implemented | CO バッジのスタイルが viewerMode を無視、偽CO判定未実装。両モードでスタイル統一し spectator モードのみ偽COマークを付ける|
+| yukkie/AgentVillage#415 | tech-debt | ❌ | — | docs: introduce DataSpec.md | UI非依存のデータ定義（EventType・可視性ルール・ログスキーマ）を DataSpec.md に集約し、Spec.md §5・DetailDesign.md・flow-js.md から参照する。依存: #344|
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#351 | enhancement | 🔴 | 2 | Structured game_over event with winner field + frontend result screen | game_over に winner フィールドを追加し文字列パース依存を除去。観戦画面に勝敗サマリーを表示 |
 | yukkie/AgentVillage#344 | tech-debt | 🔴 | 3 | Design: LogEvent cannot express mixed public/private fields in a single speech event | speech イベントの公開/非公開混在問題の設計を定め Architecture.md に記載、[THINK] ハックを廃止する設計Issueを作る |
