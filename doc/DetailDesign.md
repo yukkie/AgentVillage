@@ -465,9 +465,13 @@ parseGameData(jsonlText, agentJsonByName)
 現在は `spectator_log.jsonl` 全体を一括 fetch して行単位に JSON parse する。
 ログ量が増えた場合の変更ポイントは `replayLoader.js` に閉じ、day chunk、cursor pagination、ReadableStream JSONL parser、または FastAPI endpoint に置き換える。
 
-`spectator_log.jsonl` の非公開 `[THINK]` 行は、`parseGameData.js` の Legacy-adapter で表示イベントの `thought` に結合する。
-speech は同じ `day` / `agent` / `speech_id` を持つ公開 speech に結合する。
-wolf_chat は現行ログに `speech_id` がないため、同じ `day` / `agent` の直近 wolf_chat に結合する暫定互換処理とする。
+`speech` / `wolf_chat` の思考は、イベント自身の `reasoning` フィールドに格納する
+（Architecture.md §2.4 の3軸を参照）。`parseGameData.js` は `event.reasoning` を直接読むだけでよい。
+
+旧ログ（思考を `content="[THINK] ..."` の非公開別イベントとして記録した形式）に対しては、
+read 側に**読み取りフォールバック**を残す: `content` が `[THINK]` で始まる非公開 speech/wolf_chat 行を、
+同じ `day` / `agent` / `speech_id`（wolf_chat は `speech_id` がないため `day` / `agent` の直近行）の
+表示イベントの `reasoning` に結合する。新規 emit ではこの形式を一切出力しない。
 
 ### viewerMode — spectator / public
 
@@ -478,8 +482,18 @@ wolf_chat は現行ログに `speech_id` がないため、同じ `day` / `agent
 | 役職タグ | 真の役職を常時表示 | 未CO は「役職不明」 |
 | 偽CO バッジ | 赤＋「偽」マーク | 中立色 |
 | 思考ログピル | 展開可 | ロックバッジ（存在のみ示す） |
+| 文面択一（`spectator_content`） | `spectator_content` を表示 | `content` を表示 |
 
-`spectator_log.jsonl` を読み込み、public モードでは `is_public=true` のイベントのみを表示し、spectator モードでは全イベントを表示することで対応する。
+イベントの公開範囲は3軸で制御する（Architecture.md §2.4）:
+
+- **`is_public=false` のイベント**: public モードで非表示、spectator モードで表示
+- **`spectator_content` を持つイベント**（`guard_block` 等）: spectator は `spectator_content`、
+  public は `content` を表示する（イベントは1つ、文面を択一）
+- **`reasoning`**: viewerMode が spectator のときのみ思考ログとして表示
+
+CO 表示は `speech` イベントの `claimed_role` から consumer 側で生成する
+（`co_announcement` 別イベントには依存しない）。旧ログの `co_announcement` 別行に対しては
+read 側フォールバックで従来表示を維持する。
 
 ### replay.py — クラス構成
 
