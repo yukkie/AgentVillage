@@ -609,6 +609,7 @@ def test_wolf_chat_legacy_think_prefix_renders_dim_red(make_test_actor) -> None:
     result = renderer.on_event(event)
 
     assert result is not None
+    assert "[WOLF] [THINK] secret plan" in result.plain
     assert "secret plan" in result.plain
     spans = [s for s in result._spans if s.style == "dim red"]
     assert len(spans) > 0

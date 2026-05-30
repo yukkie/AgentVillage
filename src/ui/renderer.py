@@ -14,6 +14,7 @@ from rich.text import Text
 
 from src.domain.event import LogEvent, EventType
 from src.domain.actor import Actor
+from src.domain.roles import Role
 
 
 class Renderer:
@@ -70,8 +71,7 @@ class Renderer:
             text.append(f"\n{content}\n", style="bold red")
 
         elif event.event_type == EventType.WOLF_CHAT:
-            legacy_think = self._legacy_think_content(event)
-            if legacy_think is not None:
+            if event.content.startswith("[THINK]"):
                 text.append(f"[WOLF] {content}", style="dim red")
             else:
                 text.append(f"[WOLF] {content}", style="red")
@@ -174,7 +174,11 @@ class Renderer:
             return None
         return next((a for a in self.agents if a.name == agent_name), None)
 
-    def _speech_style(self, agent_name: str | None, claimed_role_override=None) -> str:
+    def _speech_style(
+        self,
+        agent_name: str | None,
+        claimed_role_override: Role | None = None,
+    ) -> str:
         """Return Rich color style for a speech event.
 
         Spectator mode: color by true role.
