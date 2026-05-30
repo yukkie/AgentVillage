@@ -5,7 +5,7 @@ import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLES } from '../lib/constants.js';
 import { fetchReplayAgents, fetchReplayLog } from '../lib/replayLoader.js';
-import { parseGameData, aggregateCoStatus, computeDeadByDay } from '../lib/parseGameData.js';
+import { parseGameData, aggregateCoStatus, computeDeadByDay, attachCoSnapshot } from '../lib/parseGameData.js';
 import { filterFeedEvents } from '../lib/feedFilter.js';
 import styles from './SpectatorScreen.module.css';
 
@@ -63,6 +63,8 @@ function SpeechCard({ ev, prevById, roleAssignment, viewerMode = 'spectator' }) 
   const replied = ev.reply_to ? prevById[`${ev.day}-${ev.reply_to}`] : null;
   const isWolf = role === 'Werewolf';
   const isPublic = viewerMode === 'public';
+  const coedRole = ev._coSnapshot?.[ev.agent];
+  const coColor = coedRole ? ROLES[coedRole]?.color : undefined;
 
   return (
     <div
@@ -76,9 +78,9 @@ function SpeechCard({ ev, prevById, roleAssignment, viewerMode = 'spectator' }) 
           <span className={styles.name}>{ev.agent}</span>
           <span className={styles.turn}>{fmtTurn(ev.day, ev.speech_id || 0)}</span>
           {!isPublic && <RoleTag role={role} />}
-          {ev.claimed_role && (
-            <span className={styles.coBadge}>
-              ▶ {ROLES[ev.claimed_role]?.ja || ev.claimed_role} CO
+          {coedRole && (
+            <span className={styles.coBadge} style={{ '--co-color': coColor }}>
+              ▶ {ROLES[coedRole]?.ja || coedRole} CO
             </span>
           )}
           <span className={styles.ts}>{fmtTime(ev.day, ev.speech_id || 0)}</span>
@@ -418,7 +420,7 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
                   {n}
                   {viewerMode === 'spectator' && <RoleTag role={role} />}
                   {coRole && (
-                    <span className={styles.coBadge}>▶ {ROLES[coRole]?.ja || coRole} CO</span>
+                    <span className={styles.coBadge} style={{ '--co-color': ROLES[coRole]?.color }}>▶ {ROLES[coRole]?.ja || coRole} CO</span>
                   )}
                 </span>
               </div>
@@ -531,7 +533,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
     if (e.speech_id != null) prevById[`${e.day}-${e.speech_id}`] = e;
   });
 
-  const feedEvents = filterFeedEvents(events, activeDay, activePhase);
+  const feedEvents = attachCoSnapshot(filterFeedEvents(events, activeDay, activePhase), replayCoStatus);
   const speechCount = events.filter(e => e.event_type === 'speech').length;
   const coCount = Object.keys(replayCoStatus).length;
 

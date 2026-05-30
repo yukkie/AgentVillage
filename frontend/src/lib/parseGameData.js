@@ -261,6 +261,25 @@ export function aggregateCoStatus(events, upToDay) {
 }
 
 /**
+ * Attach a _coSnapshot to each event representing the cumulative CO state
+ * (agentName → claimed_role) at the moment that event occurs.
+ *
+ * The snapshot is updated when a speech event carries a claimed_role, so the
+ * CO speech itself and all subsequent events reflect the new CO state. Events
+ * before the CO carry an empty (or partial) snapshot.
+ *
+ * @param {object[]} events
+ * @returns {object[]} new array of events with _coSnapshot added (originals not mutated)
+ */
+export function attachCoSnapshot(events, initialCoMap = {}) {
+  const map = { ...initialCoMap };
+  return events.map(ev => {
+    if (ev.claimed_role) map[ev.agent] = ev.claimed_role;
+    return { ...ev, _coSnapshot: { ...map } };
+  });
+}
+
+/**
  * Build a cumulative dead-map per day from elimination and night_attack events.
  *
  * Returns a map from day number → Map<agentName, { day: number, content: string }>.

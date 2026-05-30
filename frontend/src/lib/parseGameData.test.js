@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseEventLine, parseGameData, normalizeEvents, aggregateDaySummary, aggregateNightResults, buildActionsTimeline, aggregateCoStatus, computeDeadByDay } from './parseGameData.js';
+import { parseEventLine, parseGameData, normalizeEvents, aggregateDaySummary, aggregateNightResults, buildActionsTimeline, aggregateCoStatus, computeDeadByDay, attachCoSnapshot } from './parseGameData.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '../../..');
@@ -810,5 +810,103 @@ describe('aggregateDaySummary action fields', () => {
     ];
     const result = aggregateDaySummary(events);
     expect(result[1]).toBeUndefined();
+  });
+});
+
+describe('attachCoSnapshot', () => {
+  it('adds empty _coSnapshot to events before any CO speech', () => {
+    /*
+     * SUT: attachCoSnapshot
+     * Mock: なし
+     * Level: unit
+     * Objective: CO 発言より前のイベントには空の _coSnapshot が付くことを検証する（contract テスト）。
+     */
+    const events = [
+      { event_type: 'speech', agent: 'Mira', claimed_role: null },
+      { event_type: 'speech', agent: 'Ren',  claimed_role: null },
+    ];
+    const result = attachCoSnapshot(events);
+    expect(result[0]._coSnapshot).toEqual({});
+    expect(result[1]._coSnapshot).toEqual({});
+  });
+
+  it('adds _coSnapshot with claimed_role starting from the CO speech itself', () => {
+    /*
+     * SUT: attachCoSnapshot
+     * Mock: なし
+     * Level: unit
+     * Objective: CO 発言自体とそれ以降のイベントに claimed_role が _coSnapshot に反映されることを検証する（contract テスト）。
+     */
+    const events = [
+      { event_type: 'speech', agent: 'Mira', claimed_role: null },
+      { event_type: 'speech', agent: 'Ren',  claimed_role: 'Seer' },
+      { event_type: 'speech', agent: 'Mira', claimed_role: null },
+    ];
+    const result = attachCoSnapshot(events);
+    expect(result[0]._coSnapshot).toEqual({});
+    expect(result[1]._coSnapshot).toEqual({ Ren: 'Seer' });
+    expect(result[2]._coSnapshot).toEqual({ Ren: 'Seer' });
+  });
+
+  it('accumulates multiple agents CO in order', () => {
+    /*
+     * SUT: attachCoSnapshot
+     * Mock: なし
+     * Level: unit
+     * Objective: 複数エージェントが順に CO した場合、それぞれの発言以降に累積されることを検証する。
+     */
+    const events = [
+      { event_type: 'speech', agent: 'Ren', claimed_role: 'Seer' },
+      { event_type: 'speech', agent: 'Nox', claimed_role: 'Seer' },
+      { event_type: 'speech', agent: 'Kai', claimed_role: null },
+    ];
+    const result = attachCoSnapshot(events);
+    expect(result[0]._coSnapshot).toEqual({ Ren: 'Seer' });
+    expect(result[1]._coSnapshot).toEqual({ Ren: 'Seer', Nox: 'Seer' });
+    expect(result[2]._coSnapshot).toEqual({ Ren: 'Seer', Nox: 'Seer' });
+  });
+
+  it('does not mutate original events', () => {
+    /*
+     * SUT: attachCoSnapshot
+     * Mock: なし
+     * Level: unit
+     * Objective: 入力イベント配列が変更されないことを検証する（副作用なし）。
+     */
+    const events = [
+      { event_type: 'speech', agent: 'Ren', claimed_role: 'Seer' },
+    ];
+    attachCoSnapshot(events);
+    expect(events[0]._coSnapshot).toBeUndefined();
+  });
+
+  it('shows CO badge on events with no claimed_role when initialCoMap carries prior CO', () => {
+    /*
+     * SUT: attachCoSnapshot
+     * Mock: なし
+     * Level: unit
+     * Objective: claimed_role がない発言でも initialCoMap に CO 済みエントリがあれば _coSnapshot に反映されることを検証する（day跨ぎ継続表示の contract テスト）。
+     */
+    const events = [
+      { event_type: 'speech', agent: 'Mira', claimed_role: null },
+      { event_type: 'speech', agent: 'Ren',  claimed_role: null },
+    ];
+    const result = attachCoSnapshot(events, { Nox: 'Hunter' });
+    expect(result[0]._coSnapshot).toEqual({ Nox: 'Hunter' });
+    expect(result[1]._coSnapshot).toEqual({ Nox: 'Hunter' });
+  });
+
+  it('initialCoMap is overridden by later CO speech in the feed', () => {
+    /*
+     * SUT: attachCoSnapshot
+     * Mock: なし
+     * Level: unit
+     * Objective: initialCoMap のエントリが同エージェントの新たな CO 発言で上書きされることを検証する。
+     */
+    const events = [
+      { event_type: 'speech', agent: 'Ren', claimed_role: 'Seer' },
+    ];
+    const result = attachCoSnapshot(events, { Ren: 'Hunter' });
+    expect(result[0]._coSnapshot).toEqual({ Ren: 'Seer' });
   });
 });

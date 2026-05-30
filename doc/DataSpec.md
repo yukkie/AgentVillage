@@ -103,7 +103,7 @@ CO の告知文は consumer 側が `claimed_role` から生成する。
 | 要素 | spectator | public |
 |---|---|---|
 | 役職タグ | 真の役職を常時表示 | 未CO は「役職不明」 |
-| 偽CO バッジ | 赤＋「偽」マーク | 中立色 |
+| CO バッジ | 公言役職の役職色で表示。真の役職タグと見比えることで偽CO と判別可能 | 公言役職の役職色で表示（同一） |
 | 思考ログ（`reasoning`） | 展開可 | ロックバッジ（存在のみ示す） |
 | 文面択一（`spectator_content`） | `spectator_content` を表示 | `content` を表示 |
 
