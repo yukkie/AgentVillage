@@ -114,24 +114,9 @@ spectator.py がログを書き出す  →  state_archive/{session}/
 
 #### EventType 一覧
 
-| event_type | 概要 | is_public 既定 | reasoning | spectator_content |
-|---|---|---|---|---|
-| `speech` | 昼の発言。`claimed_role` 付きなら CO を兼ねる | true | ✅ 思考 | — |
-| `wolf_chat` | 夜の狼チーム会話 | false | ✅ 思考 | — |
-| `vote` | 投票 | true | ✅ 理由 | — |
-| `judgment` | 占い師の判定 | true | ✅ 理由 | — |
-| `inspection` | 占い結果 | false | ✅ 理由 | — |
-| `guard` | 騎士の護衛 | false | ✅ 理由 | — |
-| `guard_block` | 護衛成功の通知（観戦者は守護者を明示、公開版は伏せる） | — | — | ✅ 文面択一 |
-| `night_attack` | 狼の襲撃 | 通知=true / 実行=false | ✅ 理由 | — |
-| `pre_night_decision` | 夜前の判断 | false | ✅ 理由 | — |
-| `elimination` | 処刑・死亡 | true | — | — |
-| `medium_result` | 霊媒結果 | false | — | — |
-| `co_announcement` | （廃止予定）CO 告知。`speech` の `claimed_role` に統合する | true | — | — |
-| `suspicion_update` | 疑念スコア更新 | false | — | — |
-| `threat_update` | 脅威スコア更新 | false | — | — |
-| `game_over` | 決着 | true | — | — |
-| `phase_start` | フェーズ開始マーカー | true | — | — |
+EventType の一覧（現行 emit イベント / 後方互換 read 専用イベントの2層）と各イベントの
+`is_public` 既定・`reasoning` / `spectator_content` の有無は [DataSpec.md §1](DataSpec.md) を参照。
+本節は表示制御の設計判断（なぜ3軸か）を扱う。
 
 #### 表示制御の3軸
 

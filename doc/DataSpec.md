@@ -25,7 +25,6 @@ replay 用に read 側だけが解釈する。新規 emit はしない）の2層
 | `speech` | true | ✅ 思考 | — | 昼の発言。`claimed_role` 付きなら CO を兼ねる |
 | `wolf_chat` | false | ✅ 思考 | — | 夜の狼チーム会話 |
 | `vote` | true | ✅ 理由 | — | 投票 |
-| `judgment` | true | ✅ 理由 | — | 占い師の判定 |
 | `inspection` | false | ✅ 理由 | — | 占い結果 |
 | `guard` | false | ✅ 理由 | — | 騎士の護衛 |
 | `guard_block` | — | — | ✅ 文面択一 | 護衛成功の通知（観戦者は守護者を明示、公開版は伏せる） |
@@ -44,6 +43,7 @@ replay 用に read 側だけが解釈する。新規 emit はしない）の2層
 
 | event_type | 旧用途 | 現在の置き換え先 |
 |---|---|---|
+| `judgment` | 昼DISCUSSION 判断フェーズの行動選択（`decision` を表示） | 廃止（現行エンジンは emit しない。renderer が read 互換で残す） |
 | `co_announcement` | 役職公言を別イベントとして emit | `speech` の `claimed_role` フィールド |
 | `pre_night_decision` | 夜前の CO 判断イベント | 廃止（DISCUSSION の `co` ツールに統合） |
 | `reasoning` | 思考を別行として emit | 各イベントの `reasoning` フィールド |
@@ -53,9 +53,10 @@ replay 用に read 側だけが解釈する。新規 emit はしない）の2層
 > 出力するが、read 側は旧形式を解釈できる**読み取りフォールバック**を残す。
 > 詳細は [Architecture.md §2.4](Architecture.md) の後方互換ノートを参照。
 
-> **⚠️ 既知の食い違い（#431 で追跡中）**: `VOTE_CANDIDATES`（DetailDesign.md にのみ記載・実装なし）と
-> `REASONING`（enum とレンダラーにあるが producer から emit されない）の扱いは未確定。
-> 本一覧は実コード `event.py` を正としている。
+> **⚠️ 未整理イベント（#431 で追跡中）**: `VOTE_CANDIDATES` は実装 enum（`event.py`）には無いが、
+> docs（`Spec.md §5` の CLI 色仕様・`DetailDesign.md`）に記述が残存している。
+> `REASONING` は enum とレンダラーにあるが producer から emit されない。
+> 本一覧は実コード `event.py` を正としているため、これらは上表に含めていない。扱いの確定は #431 で行う。
 
 ---
 
