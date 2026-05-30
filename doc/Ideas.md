@@ -19,7 +19,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#421 | tech-debt | 🔴 | — | refactor(cli): migrate renderer.py to new LogEvent schema | renderer.py を reasoning / spectator_content / claimed_role 参照に移行。旧ログフォールバック維持。依存: #420 |
 | yukkie/AgentVillage#422 | tech-debt | 🔴 | — | refactor(frontend): migrate parseGameData.js off [THINK]/co_announcement hacks | parseGameData の legacy-adapter 削除・文面択一・CO 別処理削除。旧ログフォールバック維持。依存: #420 |
 | yukkie/AgentVillage#417 | bug | ❌ | — | CO badge style ignores viewerMode; false-CO detection not implemented | CO バッジのスタイルが viewerMode を無視、偽CO判定未実装。両モードでスタイル統一し spectator モードのみ偽COマークを付ける|
 | yukkie/AgentVillage#415 | tech-debt | ❌ | — | docs: introduce DataSpec.md | UI非依存のデータ定義（EventType・可視性ルール・ログスキーマ）を DataSpec.md に集約し、Spec.md §5・DetailDesign.md・flow-js.md から参照する。依存: #344|
