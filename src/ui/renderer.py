@@ -51,10 +51,6 @@ class Renderer:
         elif event.event_type == EventType.SPEECH:
             self._render_speech(event, text)
 
-        elif event.event_type == EventType.REASONING:
-            text.append(f"[REASON] {event.agent}: ", style="bold magenta")
-            text.append(content, style="magenta")
-
         elif event.event_type == EventType.VOTE:
             text.append(f"[VOTE] {event.agent} → {event.target}", style="white")
             if self.spectator_mode and event.decision:
