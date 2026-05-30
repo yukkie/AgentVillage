@@ -8,7 +8,6 @@ from src.domain.schema import RoleField
 
 class EventType(Enum):
     SPEECH = "speech"
-    REASONING = "reasoning"
     VOTE = "vote"
     JUDGMENT = "judgment"
     ELIMINATION = "elimination"

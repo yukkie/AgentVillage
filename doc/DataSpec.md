@@ -46,17 +46,19 @@ replay 用に read 側だけが解釈する。新規 emit はしない）の2層
 | `judgment` | 昼DISCUSSION 判断フェーズの行動選択（`decision` を表示） | 廃止（現行エンジンは emit しない。renderer が read 互換で残す） |
 | `co_announcement` | 役職公言を別イベントとして emit | `speech` の `claimed_role` フィールド |
 | `pre_night_decision` | 夜前の CO 判断イベント | 廃止（DISCUSSION の `co` ツールに統合） |
-| `reasoning` | 思考を別行として emit | 各イベントの `reasoning` フィールド |
 
 > **後方互換**: 旧ログには CO が `co_announcement` 別行、思考が `[THINK]` プレフィックス付きの
-> 非公開行（または `reasoning` 別イベント）として記録されている。emit 側は新スキーマのみを
-> 出力するが、read 側は旧形式を解釈できる**読み取りフォールバック**を残す。
+> 非公開行として記録されている。emit 側は新スキーマのみを出力するが、read 側は旧形式を
+> 解釈できる**読み取りフォールバック**を残す。
 > 詳細は [Architecture.md §2.4](Architecture.md) の後方互換ノートを参照。
 
-> **⚠️ 未整理イベント（#431 で追跡中）**: `VOTE_CANDIDATES` は実装 enum（`event.py`）には無いが、
-> docs（`Spec.md §5` の CLI 色仕様・`DetailDesign.md`）に記述が残存している。
-> `REASONING` は enum とレンダラーにあるが producer から emit されない。
-> 本一覧は実コード `event.py` を正としているため、これらは上表に含めていない。扱いの確定は #431 で行う。
+> **整理済み（#431）**: かつて drift していた3イベントを以下のとおり確定した。
+> - `vote_candidates`: 過去 emit され（#219）後に `suspicion_update` へ置換（#36）。旧アーカイブの
+>   146 行はワンショット移行で `suspicion_update` に書き換え済み（`event_type` のみ変更・`content` は据え置き）。
+>   enum・renderer に分岐は追加しない。
+> - `reasoning`（旧 `REASONING` enum）: 過去ログに1行も存在せず emit もされないデッドコードのため、
+>   enum と renderer 分岐を削除した。
+> - `judgment`: 過去ログに実在する後方互換 read 専用イベント。上表のとおり維持する。
 
 ---
 
