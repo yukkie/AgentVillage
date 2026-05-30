@@ -814,6 +814,7 @@ describe('SpeechCard: viewerMode public (AC2 / #314)', () => {
       speech_id: 1,
       reply_to: null,
       claimed_role: 'Seer',
+      _coSnapshot: { Alice: 'Seer' },
       reasoning: null,
       is_public: true,
     };

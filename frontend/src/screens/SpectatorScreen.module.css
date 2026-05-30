@@ -169,9 +169,9 @@
 .spHead .coBadge {
   font-family: var(--serif);
   font-size: 10px;
-  background: color-mix(in oklab, var(--acc) 18%, transparent);
-  border: 1px solid color-mix(in oklab, var(--acc) 50%, transparent);
-  color: var(--acc);
+  background: color-mix(in oklab, var(--co-color, var(--acc)) 18%, transparent);
+  border: 1px solid color-mix(in oklab, var(--co-color, var(--acc)) 50%, transparent);
+  color: var(--co-color, var(--acc));
   padding: 1px 5px;
   border-radius: 2px;
   letter-spacing: 0.04em;
@@ -430,9 +430,9 @@
 .ts     { font-size: 10px; color: var(--tx-3); margin-left: auto; font-family: var(--mono); }
 .coBadge {
   font-family: var(--serif); font-size: 10px;
-  background: color-mix(in oklab, var(--acc) 18%, transparent);
-  border: 1px solid color-mix(in oklab, var(--acc) 50%, transparent);
-  color: var(--acc); padding: 1px 5px; border-radius: 2px; letter-spacing: 0.04em;
+  background: color-mix(in oklab, var(--co-color, var(--acc)) 18%, transparent);
+  border: 1px solid color-mix(in oklab, var(--co-color, var(--acc)) 50%, transparent);
+  color: var(--co-color, var(--acc)); padding: 1px 5px; border-radius: 2px; letter-spacing: 0.04em;
 }
 .qhead { font-size: 10px; color: var(--tx-4); margin-bottom: 2px; font-family: var(--mono); }
 .mention { color: var(--info); font-weight: 500; }
