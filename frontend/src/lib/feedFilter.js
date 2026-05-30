@@ -1,3 +1,6 @@
+// Legacy-Adapter: new logs use speech.claimed_role for CO; old logs emit a
+// separate co_announcement event. Keep co_announcement here so archived replays
+// continue to appear in the discuss feed.
 const DISCUSS_TYPES = new Set(['speech', 'co_announcement']);
 const VOTE_TYPES = new Set(['vote', 'elimination', 'medium_result']);
 const NIGHT_TYPES = new Set(['wolf_chat', 'inspection', 'guard', 'guard_block', 'night_attack']);

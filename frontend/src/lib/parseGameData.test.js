@@ -397,6 +397,85 @@ describe('aggregateDaySummary', () => {
   });
 });
 
+describe('aggregateCoStatus: new schema (speech.claimed_role)', () => {
+  it('reads claimed_role from speech events (new log path)', () => {
+    /*
+     * SUT: aggregateCoStatus
+     * Mock: なし
+     * Level: unit
+     * Objective: 新スキーマでは speech.claimed_role から CO を集計できることを検証する（新経路 contract テスト）。
+     */
+    const events = [
+      { day: 2, event_type: 'speech', agent: 'Jonas', claimed_role: 'Seer', is_public: true, content: '占い師COします' },
+      { day: 3, event_type: 'speech', agent: 'SQ',    claimed_role: 'Medium', is_public: true, content: '霊媒師COします' },
+      { day: 3, event_type: 'speech', agent: 'Nox',   claimed_role: null, is_public: true, content: 'ただの発言' },
+    ];
+    expect(aggregateCoStatus(events)).toEqual({ Jonas: 'Seer', SQ: 'Medium' });
+  });
+
+  it('new-path CO obeys upToDay filter', () => {
+    /*
+     * SUT: aggregateCoStatus
+     * Mock: なし
+     * Level: unit
+     * Objective: speech.claimed_role の新経路も upToDay フィルタが効くことを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'speech', agent: 'Jonas', claimed_role: 'Seer',   is_public: true, content: 'CO' },
+      { day: 3, event_type: 'speech', agent: 'SQ',    claimed_role: 'Medium', is_public: true, content: 'CO' },
+    ];
+    expect(aggregateCoStatus(events, 2)).toEqual({ Jonas: 'Seer' });
+  });
+
+  it('speech.claimed_role and co_announcement coexist: both paths contribute', () => {
+    /*
+     * SUT: aggregateCoStatus
+     * Mock: なし
+     * Level: unit
+     * Objective: 新ログ（speech.claimed_role）と旧ログ（co_announcement）が混在しても両方の CO が集計されることを検証する（後方互換）。
+     */
+    const events = [
+      { day: 2, event_type: 'speech',         agent: 'Jonas', claimed_role: 'Seer',   is_public: true },
+      { day: 3, event_type: 'co_announcement', agent: 'SQ',    claimed_role: 'Medium', is_public: true },
+    ];
+    expect(aggregateCoStatus(events)).toEqual({ Jonas: 'Seer', SQ: 'Medium' });
+  });
+});
+
+describe('normalizeEvents: new schema reasoning passthrough', () => {
+  it('speech with reasoning field passes through without THINK merge', () => {
+    /*
+     * SUT: normalizeEvents
+     * Mock: なし
+     * Level: unit
+     * Objective: 新スキーマで reasoning フィールドが直接セットされた speech イベントは、
+     *            [THINK] マージ処理なしで reasoning がそのまま保持されることを検証する（新経路 contract テスト）。
+     */
+    const events = normalizeEvents([
+      { day: 1, event_type: 'speech', agent: 'Mira', speech_id: 1, is_public: true, content: 'おはよう', reasoning: '内心の思考' },
+    ]);
+    expect(events).toHaveLength(1);
+    expect(events[0].content).toBe('おはよう');
+    expect(events[0].reasoning).toBe('内心の思考');
+  });
+
+  it('wolf_chat with reasoning field passes through without THINK merge', () => {
+    /*
+     * SUT: normalizeEvents
+     * Mock: なし
+     * Level: unit
+     * Objective: 新スキーマで reasoning フィールドが直接セットされた wolf_chat は、
+     *            [THINK] 別行なしで reasoning が保持されることを検証する（新経路 contract テスト）。
+     */
+    const events = normalizeEvents([
+      { day: 1, event_type: 'wolf_chat', agent: 'Nox', is_public: false, content: 'Renを噛もう', reasoning: '騎士ではなさそう' },
+    ]);
+    expect(events).toHaveLength(1);
+    expect(events[0].content).toBe('Renを噛もう');
+    expect(events[0].reasoning).toBe('騎士ではなさそう');
+  });
+});
+
 describe('aggregateCoStatus', () => {
   it('returns agent→claimed_role map from co_announcement events', () => {
     /*
