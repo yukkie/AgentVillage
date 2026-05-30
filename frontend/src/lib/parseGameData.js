@@ -40,9 +40,9 @@ function isVisibleThoughtTarget(event) {
   return false;
 }
 
-// Legacy-adapter: archived logs store private thoughts as sibling "[THINK]"
-// events. Keep this bridge searchable until LogEvent can carry mixed
-// public/private fields directly.
+// Legacy-Adapter: archived logs store private thoughts as sibling "[THINK]"
+// events. New logs carry reasoning directly on the event (event.reasoning).
+// Keep this bridge until all archived logs are regenerated with the new schema.
 function isPrivateThinkEvent(event) {
   return (
     mergeableThoughtEventType(event) &&
@@ -237,7 +237,11 @@ export function aggregateDaySummary(events) {
 }
 
 /**
- * Aggregate CO (coming-out) status from co_announcement events.
+ * Aggregate CO (coming-out) status from events.
+ *
+ * New logs: reads claimed_role directly from speech events.
+ * Legacy-Adapter: old logs emit a separate co_announcement event; both paths
+ * are handled so archived replays continue to work.
  *
  * @param {object[]} events
  * @returns {Record<string, string>} agent name → claimed_role
@@ -246,7 +250,10 @@ export function aggregateCoStatus(events, upToDay) {
   const result = {};
   for (const ev of events) {
     if (upToDay !== undefined && ev.day > upToDay) continue;
-    if (ev.event_type === 'co_announcement' && ev.agent && ev.claimed_role) {
+    if (ev.event_type === 'speech' && ev.agent && ev.claimed_role) {
+      result[ev.agent] = ev.claimed_role;
+    } else if (ev.event_type === 'co_announcement' && ev.agent && ev.claimed_role) {
+      // Legacy-Adapter: pre-#420 logs emitted CO as a separate event
       result[ev.agent] = ev.claimed_role;
     }
   }
