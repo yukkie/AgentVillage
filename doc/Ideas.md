@@ -19,7 +19,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#420 | tech-debt | 🔴 | — | refactor(backend): adopt new LogEvent schema for mixed public/private fields | spectator_content 追加・思考の reasoning 化・guard_block 統合・CO の speech 統合（emit 側）。#344 の設計に基づく |
 | yukkie/AgentVillage#421 | tech-debt | 🔴 | — | refactor(cli): migrate renderer.py to new LogEvent schema | renderer.py を reasoning / spectator_content / claimed_role 参照に移行。旧ログフォールバック維持。依存: #420 |
 | yukkie/AgentVillage#422 | tech-debt | 🔴 | — | refactor(frontend): migrate parseGameData.js off [THINK]/co_announcement hacks | parseGameData の legacy-adapter 削除・文面択一・CO 別処理削除。旧ログフォールバック維持。依存: #420 |
 | yukkie/AgentVillage#417 | bug | ❌ | — | CO badge style ignores viewerMode; false-CO detection not implemented | CO バッジのスタイルが viewerMode を無視、偽CO判定未実装。両モードでスタイル統一し spectator モードのみ偽COマークを付ける|
