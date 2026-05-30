@@ -286,34 +286,3 @@ class TestWolfChatContract:
         wolf_chat_events = [e for e in emitted if e.event_type == EventType.WOLF_CHAT]
         assert len(wolf_chat_events) == 2  # one per wolf, no extra [THINK] events
         assert all(e.reasoning == "secret plan" for e in wolf_chat_events)
-
-    def test_wolf_chat_does_not_emit_think_hack_events(self, make_test_actor, make_test_engine):
-        """
-        SUT: _run_wolf_chat()
-        Mock: call_wolf_chat returns WolfChatOutput with a thought string
-        Level: contract
-        Objective: [THINK] プレフィックスの別 WOLF_CHAT イベントが emit されない契約を検証する（ハック廃止）。
-        """
-        from src.domain.schema import WolfChatOutput
-        from src.engine.phase_night import _run_wolf_chat
-
-        wolf1 = make_test_actor("Wolf1", "Werewolf")
-        wolf2 = make_test_actor("Wolf2", "Werewolf")
-        villager = make_test_actor("Alice")
-        engine, emitted = make_test_engine([wolf1, wolf2, villager])
-        engine._wolf_chat_rounds = 1
-
-        engine._llm_client.call_wolf_chat.return_value = WolfChatOutput(
-            thought="secret plan",
-            speech="let's attack Alice",
-            attack_candidates={"Alice": 0.9},
-        )
-
-        with patch("src.engine.phase_night.store.save"):
-            _run_wolf_chat(engine)
-
-        think_events = [
-            e for e in emitted
-            if e.event_type == EventType.WOLF_CHAT and "[THINK]" in e.content
-        ]
-        assert len(think_events) == 0
