@@ -354,10 +354,10 @@ LLMの提案をゲームエンジンに渡す橋渡し役。
 | `INSPECTION` | False | 占い師の占い結果（観戦者のみ）。`reasoning` フィールドに占い対象を選んだ理由 |
 | `MEDIUM_RESULT` | False | 霊媒師が受け取った処刑者の役職（観戦者のみ・黄色表示） |
 | `GUARD` | False | 騎士の護衛行動（観戦者のみ）。`reasoning` フィールドに護衛対象を選んだ理由 |
-| `GUARD_BLOCK` | False / True | 護衛成功の詳細（観戦者）/ 全体通知（村人全員） |
+| `GUARD_BLOCK` | True | 護衛成功通知。`content` に公開文面、`spectator_content` に観戦者向け詳細文面を格納 |
 | `WOLF_CHAT` | False | 狼チャット（観戦者のみ） |
 | `PRE_NIGHT_DECISION` | False | 旧アーカイブ replay 互換のためだけに残る前夜CO判断イベント |
-| `CO_ANNOUNCEMENT` | True | 役職公言。`claimed_role` フィールドに公言した役職名を格納 |
+| `CO_ANNOUNCEMENT` | True | 旧アーカイブ replay 互換のためだけに残る役職公言イベント。新規 emit は `SPEECH.claimed_role` を使う |
 | `VOTE_CANDIDATES` | False | 発言フェーズ（DISCUSSION）での vote_candidates スナップショット（観戦者のみ）。発言後に emit される |
 | `SUSPICION_UPDATE` | False | 発言フェーズで村人視点の疑惑スコアが更新されたとき（観戦者のみ・dim cyan） |
 | `THREAT_UPDATE` | False | 発言フェーズで人狼視点の脅威スコアが更新されたとき（観戦者のみ・dim red） |
@@ -366,15 +366,15 @@ LLMの提案をゲームエンジンに渡す橋渡し役。
 
 #### event.py — LogEvent フィールド
 
-`CO_ANNOUNCEMENT` イベントには `claimed_role: str | None` フィールドを使う。
-`content` の文字列フォーマット（`"{name} claims to be {role}"`）に依存せず、型安全に公言役職名を参照できる。
-既存アーカイブとの後方互換は `default=None` で対応する。
+CO 表示は `SPEECH` イベントの `claimed_role: str | None` フィールドから consumer 側で生成する。
+`content` の文字列フォーマット（`"{name} claims to be {role}"`）や `CO_ANNOUNCEMENT` 別イベントには依存しない。
+既存アーカイブとの後方互換のため、旧 `CO_ANNOUNCEMENT` イベントも `claimed_role` を読んで従来表示を維持する。
 
 `INSPECTION` イベントには `inspection_role: str | None` フィールドを使う。
 占い師が確認した役職名（`"Werewolf"` または `"Villager"`）を格納し、レンダラーが文字列パースなしに役職情報を参照できる。
 既存アーカイブとの後方互換は `default=None` で対応し、`None` の場合は `content` フォールバックで表示する。
 
-`VOTE` / `GUARD` / `INSPECTION` / `JUDGMENT` イベントには `reasoning: str` フィールドを使う。
+`SPEECH` / `WOLF_CHAT` / `VOTE` / `GUARD` / `INSPECTION` / `JUDGMENT` イベントには `reasoning: str` フィールドを使う。
 エージェントが行動を選んだ理由を格納し、観戦者モードで表示する。他エージェントのゲーム状態には含めない（`is_public=False` または表示フィルタで制御）。
 既存アーカイブとの後方互換は `default=""` で対応する。
 

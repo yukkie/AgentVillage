@@ -150,7 +150,11 @@ class ReplayPager:
 
         for event in events:
             # Use event.claimed_role (structured field) rather than parsing content text.
-            if event.event_type == EventType.CO_ANNOUNCEMENT and event.agent and event.claimed_role:
+            if (
+                event.event_type in (EventType.SPEECH, EventType.CO_ANNOUNCEMENT)
+                and event.agent
+                and event.claimed_role
+            ):
                 if event.agent in dynamic_actors:
                     dynamic_actors[event.agent].state.claimed_role = event.claimed_role
 

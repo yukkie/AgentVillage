@@ -93,6 +93,45 @@ def test_pager_builds_lines(tmp_archive: Path) -> None:
     assert len(pager._lines) >= 1
 
 
+def test_pager_updates_claimed_role_from_speech_event(tmp_archive: Path) -> None:
+    """
+    SUT: ReplayPager._build_lines
+    Mock: なし
+    Level: unit
+    Objective: replay が新ログの SPEECH.claimed_role から CO 表示と以後の claimed_role 追跡を行うこと。
+    """
+    from src.domain.roles import get_role
+
+    first_speech = LogEvent.make(
+        day=1,
+        phase="day",
+        event_type=EventType.SPEECH,
+        agent="Alice",
+        content="Good morning.",
+        is_public=True,
+    )
+    co_speech = LogEvent.make(
+        day=1,
+        phase="day",
+        event_type=EventType.SPEECH,
+        agent="Alice",
+        content="I am the seer.",
+        claimed_role=get_role("Seer"),
+        is_public=True,
+    )
+    (tmp_archive / "spectator_log.jsonl").write_text(
+        _make_event_jsonl(first_speech, co_speech),
+        encoding="utf-8",
+    )
+
+    pager = ReplayPager(tmp_archive, spectator_mode=False)
+    rendered = "\n".join(pager._lines)
+
+    assert "Good morning." in rendered
+    assert "[CO] Alice claims to be Seer" in rendered
+    assert "I am the seer." in rendered
+
+
 def test_pager_spectator_shows_more_lines(tmp_archive: Path) -> None:
     """spectatorモードはpublicモード以上の行数を持つこと（同じログなら同数以上）。"""
     public_pager = ReplayPager(tmp_archive, spectator_mode=False)
