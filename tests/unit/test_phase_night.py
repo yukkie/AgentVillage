@@ -61,7 +61,7 @@ class TestRunWolfChat:
 
         assert result == "Alice"
         wolf_chat_events = [e for e in events if e.event_type == EventType.WOLF_CHAT]
-        assert len(wolf_chat_events) == 4  # speech + thought per wolf per round
+        assert len(wolf_chat_events) == 2  # one per wolf per round
 
     def test_multi_wolf_chat_empty_candidates_returns_none(self, make_test_actor, make_test_engine):
         """
@@ -201,12 +201,13 @@ class TestResolveNightOutcomes:
 
 
 class TestPublishNightResults:
-    def test_guard_block_emits_private_and_public_events(self, make_test_actor, make_test_engine):
+    def test_guard_block_emits_single_public_event_with_spectator_content(self, make_test_actor, make_test_engine):
         """
         SUT: _publish_night_results
         Mock: memory_mod.update_memory — メモリ更新のファイルI/Oを回避
         Level: unit
-        Objective: ガードブロック成功時に非公開と公開の GUARD_BLOCK イベントが各1件 emit されること。
+        Objective: ガードブロック成功時に is_public=True の GUARD_BLOCK イベントが1件 emit され、
+                   spectator_content に観戦者向け詳細が含まれること（新スキーマ）。
         """
         wolf = make_test_actor("Wolf1", "Werewolf")
         knight = make_test_actor("Knight1", "Knight")
@@ -221,11 +222,11 @@ class TestPublishNightResults:
             _publish_night_results(engine, resolution)
 
         guard_block_events = [e for e in events if e.event_type == EventType.GUARD_BLOCK]
-        assert len(guard_block_events) == 2
-        private_events = [e for e in guard_block_events if not e.is_public]
-        public_events = [e for e in guard_block_events if e.is_public]
-        assert len(private_events) == 1
-        assert len(public_events) == 1
+        assert len(guard_block_events) == 1
+        ev = guard_block_events[0]
+        assert ev.is_public is True
+        assert "Alice" in ev.spectator_content
+        assert "Knight" in ev.spectator_content
 
     def test_guard_block_updates_knight_memory(self, make_test_actor, make_test_engine):
         """
@@ -344,7 +345,7 @@ class TestPublishNightResults:
         SUT: _publish_night_results
         Mock: memory_mod.update_memory — メモリ更新のファイルI/Oを回避
         Level: unit
-        Objective: 護衛成功時は private attack → private guard_block → public guard_block の順で emit されること。
+        Objective: 護衛成功時は private attack → public guard_block（1イベント）の順で emit されること（新スキーマ）。
         """
         wolf = make_test_actor("Wolf1", "Werewolf")
         knight = make_test_actor("Knight1", "Knight")
@@ -365,7 +366,6 @@ class TestPublishNightResults:
         ]
         assert night_events == [
             (EventType.NIGHT_ATTACK, False),
-            (EventType.GUARD_BLOCK, False),
             (EventType.GUARD_BLOCK, True),
         ]
 

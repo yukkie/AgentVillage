@@ -257,12 +257,13 @@ class TestWolfChatContract:
         assert wolf1.state.intended_co.name == "Seer"
         assert wolf2.state.intended_co is None
 
-    def test_wolf_chat_emits_thought_as_non_public_event(self, make_test_actor, make_test_engine):
+    def test_wolf_chat_thought_in_reasoning_field(self, make_test_actor, make_test_engine):
         """
         SUT: _run_wolf_chat()
         Mock: call_wolf_chat returns WolfChatOutput with a specific thought string
         Level: contract
-        Objective: wolf chat の thought が is_public=False の WOLF_CHAT イベントとして emit される契約を検証する。
+        Objective: wolf chat の thought が WOLF_CHAT イベントの reasoning フィールドに格納され、
+                   speech ごとに1イベントのみ emit される契約を検証する（新スキーマ）。
         """
         from src.domain.schema import WolfChatOutput
         from src.engine.phase_night import _run_wolf_chat
@@ -282,9 +283,37 @@ class TestWolfChatContract:
         with patch("src.engine.phase_night.store.save"):
             _run_wolf_chat(engine)
 
-        thought_events = [
+        wolf_chat_events = [e for e in emitted if e.event_type == EventType.WOLF_CHAT]
+        assert len(wolf_chat_events) == 2  # one per wolf, no extra [THINK] events
+        assert all(e.reasoning == "secret plan" for e in wolf_chat_events)
+
+    def test_wolf_chat_does_not_emit_think_hack_events(self, make_test_actor, make_test_engine):
+        """
+        SUT: _run_wolf_chat()
+        Mock: call_wolf_chat returns WolfChatOutput with a thought string
+        Level: contract
+        Objective: [THINK] プレフィックスの別 WOLF_CHAT イベントが emit されない契約を検証する（ハック廃止）。
+        """
+        from src.domain.schema import WolfChatOutput
+        from src.engine.phase_night import _run_wolf_chat
+
+        wolf1 = make_test_actor("Wolf1", "Werewolf")
+        wolf2 = make_test_actor("Wolf2", "Werewolf")
+        villager = make_test_actor("Alice")
+        engine, emitted = make_test_engine([wolf1, wolf2, villager])
+        engine._wolf_chat_rounds = 1
+
+        engine._llm_client.call_wolf_chat.return_value = WolfChatOutput(
+            thought="secret plan",
+            speech="let's attack Alice",
+            attack_candidates={"Alice": 0.9},
+        )
+
+        with patch("src.engine.phase_night.store.save"):
+            _run_wolf_chat(engine)
+
+        think_events = [
             e for e in emitted
-            if not e.is_public and "[THINK]" in e.content and e.event_type == EventType.WOLF_CHAT
+            if e.event_type == EventType.WOLF_CHAT and "[THINK]" in e.content
         ]
-        assert len(thought_events) == 2  # one per wolf
-        assert all("secret plan" in e.content for e in thought_events)
+        assert len(think_events) == 0

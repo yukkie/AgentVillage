@@ -52,6 +52,7 @@ class LogEvent(BaseModel):
     inspection_role: RoleField = None
     reasoning: str = ""
     decision: str = ""
+    spectator_content: str = ""
 
     @classmethod
     def make(
@@ -69,6 +70,7 @@ class LogEvent(BaseModel):
         inspection_role: RoleField = None,
         reasoning: str = "",
         decision: str = "",
+        spectator_content: str = "",
     ) -> "LogEvent":
         return cls(
             day=day,
@@ -84,4 +86,5 @@ class LogEvent(BaseModel):
             inspection_role=inspection_role,
             reasoning=reasoning,
             decision=decision,
+            spectator_content=spectator_content,
         )

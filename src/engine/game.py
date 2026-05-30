@@ -195,21 +195,11 @@ class GameEngine:
                 None,
             )
 
-        if isinstance(result, CoResult):
-            claim_role = result.claim_role
-            if actor.state.claimed_role != claim_role:
-                actor.state.claimed_role = claim_role
-                actor.state.intended_co = None
-                store.save(actor)
-                self._emit(LogEvent.make(
-                    day=self.day,
-                    phase=phase.value,
-                    event_type=EventType.CO_ANNOUNCEMENT,
-                    agent=actor.name,
-                    content=f"{actor.name} claims to be {claim_role.name}",
-                    is_public=True,
-                    claimed_role=claim_role,
-                ))
+        claim_role = result.claim_role if isinstance(result, CoResult) else None
+        if isinstance(result, CoResult) and actor.state.claimed_role != claim_role:
+            actor.state.claimed_role = claim_role
+            actor.state.intended_co = None
+            store.save(actor)
 
         speech_id = self._next_speech_id()
         entry = SpeechEntry(speech_id=speech_id, agent=actor.name, text=result.speech)
@@ -224,15 +214,8 @@ class GameEngine:
             is_public=True,
             speech_id=speech_id,
             reply_to=reply_to_entry.speech_id if reply_to_entry else None,
-        ))
-        self._emit(LogEvent.make(
-            day=self.day,
-            phase=phase.value,
-            event_type=EventType.SPEECH,
-            agent=actor.name,
-            content=f"[THINK] {result.thought}",
-            is_public=False,
-            speech_id=speech_id,
+            claimed_role=claim_role,
+            reasoning=result.thought,
         ))
 
         if result.suspicion_scores:

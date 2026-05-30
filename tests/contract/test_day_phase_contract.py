@@ -337,3 +337,57 @@ class TestIntendedCoLifecycleContract:
         assert wolf.state.intended_co is None
         assert wolf.state.claimed_role is not None
         assert wolf.state.claimed_role.name == "Seer"
+
+
+class TestSpeechThinkHackContract:
+    def test_speech_thought_in_reasoning_field(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._apply_discussion_result()
+        Mock: call_discussion_parallel returns SpeakResult with a specific thought
+        Level: contract
+        Objective: speech の thought が SPEECH イベントの reasoning フィールドに格納され、
+                   speech ごとに1つの公開イベントのみ emit される契約を検証する（新スキーマ）。
+        """
+        actor = make_test_actor("Alice")
+        other = make_test_actor("Bob")
+        engine, emitted = make_test_engine([actor, other])
+
+        engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
+            (actor, SpeakResult(thought="inner monologue", speech="Hello everyone")),
+            (other, SilentResult(reasoning="quiet")),
+        ])
+
+        with patch("src.agent.store.save"):
+            engine._run_day()
+
+        speech_events = [
+            e for e in emitted
+            if e.event_type == EventType.SPEECH and e.agent == "Alice" and e.is_public
+        ]
+        assert len(speech_events) >= 1
+        assert all(e.reasoning == "inner monologue" for e in speech_events)
+
+    def test_speech_does_not_emit_think_hack_events(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._apply_discussion_result()
+        Mock: call_discussion_parallel returns SpeakResult with a thought string
+        Level: contract
+        Objective: [THINK] プレフィックスの別 SPEECH イベントが emit されない契約を検証する（ハック廃止）。
+        """
+        actor = make_test_actor("Alice")
+        other = make_test_actor("Bob")
+        engine, emitted = make_test_engine([actor, other])
+
+        engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
+            (actor, SpeakResult(thought="inner monologue", speech="Hello everyone")),
+            (other, SilentResult(reasoning="quiet")),
+        ])
+
+        with patch("src.agent.store.save"):
+            engine._run_day()
+
+        think_events = [
+            e for e in emitted
+            if e.event_type == EventType.SPEECH and "[THINK]" in e.content
+        ]
+        assert len(think_events) == 0
