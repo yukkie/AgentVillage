@@ -123,14 +123,7 @@ def _run_wolf_chat(engine: GameEngine) -> str | None:
                 agent=wolf.name,
                 content=f"{wolf.name}: {output.speech}",
                 is_public=False,
-            ))
-            engine._emit(LogEvent.make(
-                day=engine.day,
-                phase=Phase.NIGHT_WOLF_CHAT.value,
-                event_type=EventType.WOLF_CHAT,
-                agent=wolf.name,
-                content=f"[THINK] {output.thought}",
-                is_public=False,
+                reasoning=output.thought,
             ))
 
     _apply_wolf_self_decisions(engine, wolves, last_wolf_outputs)
@@ -318,14 +311,8 @@ def _publish_night_results(engine: GameEngine, resolution: NightResolution) -> N
             phase=Phase.NIGHT.value,
             event_type=EventType.GUARD_BLOCK,
             target=resolution.attack.target,
-            content=f"{resolution.attack.target} was protected by the Knight! The attack was blocked.",
-            is_public=False,
-        ))
-        engine._emit(LogEvent.make(
-            day=engine.day,
-            phase=Phase.NIGHT.value,
-            event_type=EventType.GUARD_BLOCK,
             content="The village woke up to find everyone safe. The werewolves' attack seems to have failed.",
+            spectator_content=f"{resolution.attack.target} was protected by the Knight! The attack was blocked.",
             is_public=True,
         ))
         memory_mod.update_memory(
