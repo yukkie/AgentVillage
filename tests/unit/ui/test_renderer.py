@@ -70,6 +70,12 @@ def test_speech_uses_true_role_color_in_spectator_mode(make_test_actor) -> None:
 
 
 def test_think_prefix_renders_as_dim_spectator_line(make_test_actor) -> None:
+    """
+    SUT: Renderer._render_speech
+    Mock: なし
+    Level: unit
+    Objective: 旧ログの [THINK] speech 行が従来どおり spectator 思考行として描画されること。
+    """
     actor = make_test_actor("Alice", "Villager")
     renderer = Renderer([actor], spectator_mode=True)
     event = _make_event(
@@ -80,6 +86,78 @@ def test_think_prefix_renders_as_dim_spectator_line(make_test_actor) -> None:
 
     assert result is not None
     assert "[THINK] Alice: they look nervous" in result.plain
+
+
+def test_speech_reasoning_renders_as_think_line_in_spectator_mode(make_test_actor) -> None:
+    """
+    SUT: Renderer._render_speech
+    Mock: なし
+    Level: unit
+    Objective: 新ログの SPEECH.reasoning が spectator の思考行として描画され、content に [THINK] が出ないこと。
+    """
+    actor = make_test_actor("Alice", "Villager")
+    renderer = Renderer([actor], spectator_mode=True)
+    event = _make_event(
+        EventType.SPEECH,
+        agent="Alice",
+        content="I think Bob is suspicious.",
+        reasoning="Bob avoided voting.",
+        speech_id=3,
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert "[3] Alice: I think Bob is suspicious." in result.plain
+    assert "[THINK] Alice: Bob avoided voting." in result.plain
+    assert "[THINK] I think Bob is suspicious." not in result.plain
+
+
+def test_speech_reasoning_hidden_in_public_mode(make_test_actor) -> None:
+    """
+    SUT: Renderer._render_speech
+    Mock: なし
+    Level: unit
+    Objective: public モードでは SPEECH.reasoning が表示されないこと。
+    """
+    actor = make_test_actor("Alice", "Villager")
+    renderer = Renderer([actor], spectator_mode=False)
+    event = _make_event(
+        EventType.SPEECH,
+        agent="Alice",
+        content="I think Bob is suspicious.",
+        reasoning="Bob avoided voting.",
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert "Bob avoided voting." not in result.plain
+
+
+def test_speech_claimed_role_generates_co_line(make_test_actor) -> None:
+    """
+    SUT: Renderer._render_speech
+    Mock: なし
+    Level: unit
+    Objective: SPEECH.claimed_role から CO 表示が生成されること。
+    """
+    from src.domain.roles import get_role
+
+    actor = make_test_actor("Alice", "Villager")
+    renderer = Renderer([actor], spectator_mode=False)
+    event = _make_event(
+        EventType.SPEECH,
+        agent="Alice",
+        content="I am the seer.",
+        claimed_role=get_role("Seer"),
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert "[CO] Alice claims to be Seer" in result.plain
+    assert "Alice: I am the seer." in result.plain
 
 
 def test_vote_renders_agent_and_target(make_test_actor) -> None:
@@ -145,6 +223,62 @@ def test_simple_event_uses_mapping_prefix(make_test_actor) -> None:
 
     assert result is not None
     assert result.plain == "[GUARD] Knight guards Alice"
+
+
+def test_spectator_content_preferred_in_spectator_mode() -> None:
+    """
+    SUT: Renderer.on_event
+    Mock: なし
+    Level: unit
+    Objective: spectator モードでは spectator_content が content より優先表示されること。
+    """
+    renderer = Renderer([], spectator_mode=True)
+    event = _make_event(
+        EventType.GUARD_BLOCK,
+        content="No one died tonight.",
+        spectator_content="Alice was protected by the Knight.",
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert result.plain == "[GUARD BLOCK] Alice was protected by the Knight."
+
+
+def test_spectator_content_falls_back_to_content_when_empty() -> None:
+    """
+    SUT: Renderer.on_event
+    Mock: なし
+    Level: unit
+    Objective: spectator_content が空なら spectator モードでも content にフォールバックすること。
+    """
+    renderer = Renderer([], spectator_mode=True)
+    event = _make_event(EventType.GUARD_BLOCK, content="No one died tonight.")
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert result.plain == "[GUARD BLOCK] No one died tonight."
+
+
+def test_spectator_content_hidden_in_public_mode() -> None:
+    """
+    SUT: Renderer.on_event
+    Mock: なし
+    Level: unit
+    Objective: public モードでは spectator_content ではなく content が表示されること。
+    """
+    renderer = Renderer([], spectator_mode=False)
+    event = _make_event(
+        EventType.GUARD_BLOCK,
+        content="No one died tonight.",
+        spectator_content="Alice was protected by the Knight.",
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert result.plain == "[GUARD BLOCK] No one died tonight."
 
 
 def test_night_attack_without_agent_falls_back_to_content(make_test_actor) -> None:
@@ -438,7 +572,31 @@ def test_wolf_chat_thought_renders_dim_red(make_test_actor) -> None:
     SUT: Renderer.on_event (WOLF_CHAT thought)
     Mock: なし
     Level: unit
-    Objective: WOLF_CHAT の thought ([THINK] プレフィックス) が dim red スタイルで描画されること。
+    Objective: WOLF_CHAT.reasoning が dim red スタイルで描画されること。
+    """
+    renderer = Renderer([], spectator_mode=True)
+    event = _make_event(
+        EventType.WOLF_CHAT,
+        agent="Wolf1",
+        content="Wolf1: let's attack Alice",
+        reasoning="secret plan",
+        is_public=False,
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert "secret plan" in result.plain
+    spans = [s for s in result._spans if s.style == "dim red"]
+    assert len(spans) > 0
+
+
+def test_wolf_chat_legacy_think_prefix_renders_dim_red(make_test_actor) -> None:
+    """
+    SUT: Renderer.on_event (WOLF_CHAT legacy thought)
+    Mock: なし
+    Level: unit
+    Objective: 旧ログの WOLF_CHAT [THINK] 行が dim red スタイルで描画されること。
     """
     renderer = Renderer([], spectator_mode=True)
     event = _make_event(
