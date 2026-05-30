@@ -19,7 +19,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#417 | bug | ❌ | — | CO badge style ignores viewerMode; false-CO detection not implemented | CO バッジのスタイルが viewerMode を無視、偽CO判定未実装。両モードでスタイル統一し spectator モードのみ偽COマークを付ける|
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#351 | enhancement | 🔴 | 2 | Structured game_over event with winner field + frontend result screen | game_over に winner フィールドを追加し文字列パース依存を除去。観戦画面に勝敗サマリーを表示 |
 | yukkie/AgentVillage#352 | enhancement | 🟡 | 1 | Show prologue message on game start in SpectatorScreen feed | GAME START 時にプロローグ固定文をフォールバック表示。将来の role_assigned イベント実装時に差し替え |
