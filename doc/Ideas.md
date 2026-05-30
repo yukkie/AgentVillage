@@ -19,11 +19,13 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| yukkie/AgentVillage#420 | tech-debt | 🔴 | — | refactor(backend): adopt new LogEvent schema for mixed public/private fields | spectator_content 追加・思考の reasoning 化・guard_block 統合・CO の speech 統合（emit 側）。#344 の設計に基づく |
+| yukkie/AgentVillage#421 | tech-debt | 🔴 | — | refactor(cli): migrate renderer.py to new LogEvent schema | renderer.py を reasoning / spectator_content / claimed_role 参照に移行。旧ログフォールバック維持。依存: #420 |
+| yukkie/AgentVillage#422 | tech-debt | 🔴 | — | refactor(frontend): migrate parseGameData.js off [THINK]/co_announcement hacks | parseGameData の legacy-adapter 削除・文面択一・CO 別処理削除。旧ログフォールバック維持。依存: #420 |
 | yukkie/AgentVillage#417 | bug | ❌ | — | CO badge style ignores viewerMode; false-CO detection not implemented | CO バッジのスタイルが viewerMode を無視、偽CO判定未実装。両モードでスタイル統一し spectator モードのみ偽COマークを付ける|
 | yukkie/AgentVillage#415 | tech-debt | ❌ | — | docs: introduce DataSpec.md | UI非依存のデータ定義（EventType・可視性ルール・ログスキーマ）を DataSpec.md に集約し、Spec.md §5・DetailDesign.md・flow-js.md から参照する。依存: #344|
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#351 | enhancement | 🔴 | 2 | Structured game_over event with winner field + frontend result screen | game_over に winner フィールドを追加し文字列パース依存を除去。観戦画面に勝敗サマリーを表示 |
-| yukkie/AgentVillage#344 | tech-debt | 🔴 | 3 | Design: LogEvent cannot express mixed public/private fields in a single speech event | speech イベントの公開/非公開混在問題の設計を定め Architecture.md に記載、[THINK] ハックを廃止する設計Issueを作る |
 | yukkie/AgentVillage#352 | enhancement | 🟡 | 1 | Show prologue message on game start in SpectatorScreen feed | GAME START 時にプロローグ固定文をフォールバック表示。将来の role_assigned イベント実装時に差し替え |
 | yukkie/AgentVillage#353 | enhancement | 🟡 | 1 | Emit role_assigned events at game start for each agent | init フェーズで全エージェント分の役職割り当てイベントを spectator_log に出力。#352 のフォールバック差し替え用 |
 | yukkie/AgentVillage#347 | enhancement | 🟡 | 3 | Implement feed filters in SpectatorScreen left pane (agent / role / event type) | 参加者・役職・表示種別フィルターチップを実際に動作させる。追加データ不要でクライアントサイドのみで実装可能 |

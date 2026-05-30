@@ -106,6 +106,52 @@ spectator.py がログを書き出す  →  state_archive/{session}/
 `src/ui/api.py` を追加して WebSocket でイベントをリアルタイム配信する。
 `src/ui/cli.py` / `src/ui/renderer.py` には触れない。
 
+### 2.4 LogEvent — イベントスキーマと表示制御の3軸
+
+`LogEvent`（`src/domain/event.py`）は `GameEngine`（producer）と
+`Renderer` / `ReplayPager` / `LogWriter` / JS `parseGameData`（consumers）の間で
+やり取りされる唯一の契約型である。`spectator_log.jsonl` に1行1イベントで記録される。
+
+#### EventType 一覧
+
+| event_type | 概要 | is_public 既定 | reasoning | spectator_content |
+|---|---|---|---|---|
+| `speech` | 昼の発言。`claimed_role` 付きなら CO を兼ねる | true | ✅ 思考 | — |
+| `wolf_chat` | 夜の狼チーム会話 | false | ✅ 思考 | — |
+| `vote` | 投票 | true | ✅ 理由 | — |
+| `judgment` | 占い師の判定 | true | ✅ 理由 | — |
+| `inspection` | 占い結果 | false | ✅ 理由 | — |
+| `guard` | 騎士の護衛 | false | ✅ 理由 | — |
+| `guard_block` | 護衛成功の通知（観戦者は守護者を明示、公開版は伏せる） | — | — | ✅ 文面択一 |
+| `night_attack` | 狼の襲撃 | 通知=true / 実行=false | ✅ 理由 | — |
+| `pre_night_decision` | 夜前の判断 | false | ✅ 理由 | — |
+| `elimination` | 処刑・死亡 | true | — | — |
+| `medium_result` | 霊媒結果 | false | — | — |
+| `co_announcement` | （廃止予定）CO 告知。`speech` の `claimed_role` に統合する | true | — | — |
+| `suspicion_update` | 疑念スコア更新 | false | — | — |
+| `threat_update` | 脅威スコア更新 | false | — | — |
+| `game_over` | 決着 | true | — | — |
+| `phase_start` | フェーズ開始マーカー | true | — | — |
+
+#### 表示制御の3軸
+
+`LogEvent` の公開/非公開・viewerMode 制御は**直交する3つの軸**で表現する。
+これらを混同しないことが設計の要点である。
+
+| 軸 | フィールド | 意味 |
+|---|---|---|
+| **イベント全体の公開可否** | `is_public` | `false` のイベントは public モードで非表示。イベント単位の on/off（vote 内訳・wolf_chat・inspection 等） |
+| **viewerMode 別の文面択一** | `content` / `spectator_content` | 同一イベントを viewerMode で**文面切替**する。「非表示」ではなく「択一」。`spectator_content` が空なら両モードとも `content` を使う（guard_block 等） |
+| **思考の付帯情報** | `reasoning` | `content` とは独立した、**常に spectator 限定**の思考・理由。`is_public` とは無関係に spectator のみ表示 |
+
+加えて `claimed_role`（CO 情報）は `speech` イベントに付随させ、別イベント化しない。
+CO の告知文は consumer 側が `claimed_role` から生成する。
+
+> **後方互換**: 旧ログには CO が `co_announcement` 別行、思考が `[THINK]` プレフィックス付きの
+> 非公開行として記録されている。emit 側は新スキーマのみを出力するが、read 側（CLI renderer /
+> JS parser）は旧形式を解釈できる**読み取りフォールバック**を残し、過去ログの replay を壊さない。
+> 旧 `[THINK]` 行の reasoning は新コードでも復元されるが、復元できなくても許容する方針。
+
 ### 2.3 LLM出力は構造化して受け取る
 
 LLMの出力は自然文のパースに頼らず、常にPydanticモデルで検証する。
@@ -370,3 +416,41 @@ Contract test: `tests/contract/test_day_phase_contract.py`
 
 **結果・トレードオフ**
 発言順が実行ごとに変わる（非決定論的だが意図的）。全員silentのケースに備えてフォールバックが必要。
+
+---
+
+### ADR-005: LogEvent で公開/非公開の混在と viewerMode 別文面を表現する
+
+**状況**
+`LogEvent` は `is_public` で行単位の公開/非公開を制御するため、1イベント内に
+公開フィールドと非公開フィールドを混在させられなかった。この制約を回避するため、
+3つのハックが分散して存在していた:
+
+1. **思考の混在**: `speech` / `wolf_chat` の思考を `content="[THINK] ..."` の
+   非公開別イベントとして emit し、CLI renderer・JS parser が文字列パースで結合していた。
+2. **viewerMode 別文面**: `guard_block` を spectator 版・public 版の2イベントとして
+   別々に emit し、`is_public` フィルタで出し分けていた（本来は「択一」であり「非表示」ではない）。
+3. **CO の二重化**: `co_announcement` を `speech` と別イベントとして emit し、
+   同一の発言行動が2イベントに分裂していた。
+
+**決定**
+表示制御を直交する3軸（`is_public` / `content`+`spectator_content` / `reasoning`）に整理し、
+上記ハックを廃止する（§2.4 参照）。
+
+- 思考は `reasoning` フィールドに載せる（`[THINK]` 別イベント廃止）
+- viewerMode 別文面は `spectator_content` フィールドで表現する（`guard_block` の2イベント emit 廃止）
+- CO は `speech` の `claimed_role` に統合する（`co_announcement` 廃止、告知文は consumer 生成）
+
+**実装方法**
+スキーマ＋emit 側（Issue A）→ CLI renderer 移行（Issue B）∥ JS parser 移行（Issue C）の
+順で分割実装する。read 側に旧形式の読み取りフォールバックを残すため、A 単独マージでも
+旧 consumer はクラッシュせず劣化表示に留まり、各段階で壊れない。
+
+**理由**
+- 3軸の意味論が直交し、新イベント追加時に「どの軸で制御するか」が一意に決まる
+- consumer から `[THINK]` 文字列パース・co_announcement 別処理・guard_block の2イベント前提が消える
+- CO バッジ表示（#417）が `speech.claimed_role` を直接参照でき、別イベント追跡が不要になる
+
+**結果・トレードオフ**
+過去ログ（旧形式）の replay は読み取りフォールバックで維持するが、フォールバックコードが
+read 側に残る。旧 `[THINK]` の reasoning は復元を試みるが、復元失敗は許容する。

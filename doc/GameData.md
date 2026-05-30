@@ -77,8 +77,8 @@ Milestone 3（FastAPI / DB 導入後）に改めて対応方針を検討する�
 
 | フィールド | 用途 | 現状 | 対応方針 |
 |---|---|---|---|
-| `thought` | 発言前の思考ログ（spectator限定表示） | ✅ `spectator_log.jsonl` に `is_public=false` + `content: "[THINK] ..."` の speech 行として存在。`parseGameData.js` が同じ `day/agent/speech_id` の公開 speech に結合して `thought` プロパティを生成 | ✅ 実装済み（スタブ不要） |
-| `claimed_role` | CO（カミングアウト）フラグ | ✅ `spectator_log.jsonl` の speech 行・co_announcement 行に存在 | ✅ 実装済み（スタブ不要） |
+| `reasoning` | 発言前の思考ログ（spectator限定表示） | ✅ `spectator_log.jsonl` の speech / wolf_chat 行の `reasoning` フィールドに格納（Architecture.md §2.4）。`parseGameData.js` は `event.reasoning` を直接読む。旧ログの `[THINK]` 別行は read 側フォールバックで結合 | ✅ 実装済み（スタブ不要） |
+| `claimed_role` | CO（カミングアウト）フラグ | ✅ `spectator_log.jsonl` の speech 行に存在（CO は speech に統合。`co_announcement` 別イベントは廃止予定、旧ログのみフォールバックで対応） | ✅ 実装済み（スタブ不要） |
 | `reply_to` | 返信先 speech_id | ✅ `spectator_log.jsonl` の speech 行に存在（返信なし時は `null`） | ✅ 実装済み（スタブ不要） |
 | `speech_id` | 発言の連番ID（日内） | ✅ `spectator_log.jsonl` の speech 行に存在 | ✅ 実装済み（スタブ不要） |
 
