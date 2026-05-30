@@ -98,13 +98,9 @@ function SpeechCard({ ev, prevById, roleAssignment, viewerMode = 'spectator' }) 
   );
 }
 
-function logContent(ev) {
-  return ev.content || MISSING_CONTENT;
-}
-
 // Unified viewerMode-aware content selector for all event types.
 // spectator mode uses spectator_content when available; public mode always uses content.
-function selectContent(ev, viewerMode) {
+function contentForViewer(ev, viewerMode) {
   if (viewerMode === 'spectator' && ev.spectator_content) return ev.spectator_content;
   return ev.content || MISSING_CONTENT;
 }
@@ -164,7 +160,7 @@ function renderConfiguredSystemEvent(ev, roleAssignment, viewerMode) {
       roleAssignment={roleAssignment}
       viewerMode={viewerMode}
     >
-      {logContent(ev)}
+      {contentForViewer(ev, viewerMode)}
     </SystemRow>
   );
 }
@@ -232,14 +228,14 @@ export function FeedItem({ ev, prevById, roleAssignment, title, viewerMode = 'sp
 
   if (ev.event_type === 'guard_block') {
     return ev.is_public
-      ? <SystemRow kind="gm" icon="🛡" label="護衛" viewerMode={viewerMode}>{selectContent(ev, viewerMode)}</SystemRow>
-      : <SystemRow kind="gm" icon="🛡" label="護衛成功" rightName={ev.target} roleAssignment={roleAssignment} viewerMode={viewerMode}>{selectContent(ev, viewerMode)}</SystemRow>;
+      ? <SystemRow kind="gm" icon="🛡" label="護衛" viewerMode={viewerMode}>{contentForViewer(ev, viewerMode)}</SystemRow>
+      : <SystemRow kind="gm" icon="🛡" label="護衛成功" rightName={ev.target} roleAssignment={roleAssignment} viewerMode={viewerMode}>{contentForViewer(ev, viewerMode)}</SystemRow>;
   }
   if (ev.event_type === 'night_attack') {
     const victim = ev.target;
     return ev.is_public
-      ? <SystemRow kind="death" icon="💀" label="襲撃結果" rightName={victim} roleAssignment={roleAssignment} viewerMode={viewerMode}>{selectContent(ev, viewerMode)}</SystemRow>
-      : <SystemRow kind="exec" icon="🐺" label="人狼の襲撃" rightName={ev.target} roleAssignment={roleAssignment} viewerMode={viewerMode}>{selectContent(ev, viewerMode)}</SystemRow>;
+      ? <SystemRow kind="death" icon="💀" label="襲撃結果" rightName={victim} roleAssignment={roleAssignment} viewerMode={viewerMode}>{contentForViewer(ev, viewerMode)}</SystemRow>
+      : <SystemRow kind="exec" icon="🐺" label="人狼の襲撃" rightName={ev.target} roleAssignment={roleAssignment} viewerMode={viewerMode}>{contentForViewer(ev, viewerMode)}</SystemRow>;
   }
 
   if (ev.event_type === 'phase_start') {
