@@ -195,10 +195,10 @@ class GameEngine:
                 None,
             )
 
-        claim_role = result.claim_role if isinstance(result, CoResult) else None
-        if isinstance(result, CoResult) and actor.state.claimed_role != claim_role:
-            actor.state.claimed_role = claim_role
+        if isinstance(result, CoResult):
             actor.state.intended_co = None
+            if actor.state.claimed_role != result.claim_role:
+                actor.state.claimed_role = result.claim_role
             store.save(actor)
 
         speech_id = self._next_speech_id()
@@ -214,8 +214,9 @@ class GameEngine:
             is_public=True,
             speech_id=speech_id,
             reply_to=reply_to_entry.speech_id if reply_to_entry else None,
-            claimed_role=claim_role,
+            claimed_role=actor.state.claimed_role,
             reasoning=result.thought,
+            decision="co" if isinstance(result, CoResult) else "",
         ))
 
         if result.suspicion_scores:

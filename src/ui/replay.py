@@ -155,6 +155,17 @@ class ReplayPager:
                 and event.agent
                 and event.claimed_role
             ):
+                actor = dynamic_actors.get(event.agent)
+                # Defensive replay fallback: some archived speech events carry
+                # claimed_role but no decision="co". Treat the first role-state
+                # transition as the declaration so CO display remains intact.
+                if (
+                    event.event_type == EventType.SPEECH
+                    and event.decision == ""
+                    and actor is not None
+                    and actor.state.claimed_role != event.claimed_role
+                ):
+                    event = event.model_copy(update={"decision": "co"})
                 if event.agent in dynamic_actors:
                     dynamic_actors[event.agent].state.claimed_role = event.claimed_role
 
