@@ -149,26 +149,6 @@ class ReplayPager:
             all_lines.append(f"\n{build_roster_summary(self._agents)}\n")
 
         for event in events:
-            # Use event.claimed_role (structured field) rather than parsing content text.
-            if (
-                event.event_type in (EventType.SPEECH, EventType.CO_ANNOUNCEMENT)
-                and event.agent
-                and event.claimed_role
-            ):
-                actor = dynamic_actors.get(event.agent)
-                # Defensive replay fallback: some archived speech events carry
-                # claimed_role but no decision="co". Treat the first role-state
-                # transition as the declaration so CO display remains intact.
-                if (
-                    event.event_type == EventType.SPEECH
-                    and event.decision == ""
-                    and actor is not None
-                    and actor.state.claimed_role != event.claimed_role
-                ):
-                    event = event.model_copy(update={"decision": "co"})
-                if event.agent in dynamic_actors:
-                    dynamic_actors[event.agent].state.claimed_role = event.claimed_role
-
             rich_text = renderer.on_event(event)
             if rich_text is None:
                 continue
@@ -177,6 +157,13 @@ class ReplayPager:
             while rendered and rendered[-1] == "":
                 rendered.pop()
             all_lines.extend(rendered)
+            # Use event.claimed_role (structured field) rather than parsing content text.
+            if (
+                event.event_type in (EventType.SPEECH, EventType.CO_ANNOUNCEMENT)
+                and event.agent in dynamic_actors
+                and event.claimed_role
+            ):
+                dynamic_actors[event.agent].state.claimed_role = event.claimed_role
         return all_lines
 
     def run(self) -> None:

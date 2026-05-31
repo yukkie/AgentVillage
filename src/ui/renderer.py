@@ -18,7 +18,14 @@ from src.domain.roles import Role
 
 
 class Renderer:
-    """Convert ``LogEvent`` instances into Rich ``Text`` for console output."""
+    """Convert ``LogEvent`` instances into Rich ``Text`` for console output.
+
+    Stateful: tracks each agent's displayed ``claimed_role`` so a CO declaration
+    line is emitted only on a role-state transition. ``on_event`` therefore has a
+    side effect and assumes each event is passed exactly once, in order. A
+    re-rendering frontend (e.g. the planned web migration above) must reset or
+    rebuild this state rather than replay the same events through one instance.
+    """
 
     # Simple events where the output is ``[PREFIX] {display_content}`` in a fixed style.
     # Events needing dynamic style or extra fields (SPEECH, VOTE, JUDGMENT, PHASE_START,
@@ -33,6 +40,9 @@ class Renderer:
     def __init__(self, agents: list[Actor], spectator_mode: bool = False):
         self.agents = agents
         self.spectator_mode = spectator_mode
+        self._displayed_claimed_roles: dict[str, Role | None] = {
+            agent.name: None for agent in agents
+        }
 
     def on_event(self, event: LogEvent) -> Text | None:
         """Convert a LogEvent to a Rich Text object for display.
@@ -120,6 +130,7 @@ class Renderer:
         else:
             text.append(content)
 
+        self._track_claimed_role(event)
         return text if len(text) > 0 else None
 
     def _render_inspection(self, event: LogEvent, text: Text) -> None:
@@ -165,9 +176,27 @@ class Renderer:
             return event.content[len("[THINK]"):].lstrip()
         return None
 
-    @staticmethod
-    def _is_co_declaration(event: LogEvent) -> bool:
-        return event.claimed_role is not None and event.decision == "co"
+    def _is_co_declaration(self, event: LogEvent) -> bool:
+        if (
+            event.event_type != EventType.SPEECH
+            or event.agent is None
+            or event.claimed_role is None
+        ):
+            return False
+        previous_claim = self._displayed_claimed_roles.get(event.agent)
+        return previous_claim != event.claimed_role
+
+    def _track_claimed_role(self, event: LogEvent) -> None:
+        # Also track legacy CO_ANNOUNCEMENT events: they render their own [CO]
+        # line via _SIMPLE_EVENT_STYLES (so they are not _is_co_declaration
+        # candidates), but they still advance the displayed claim so a later
+        # SPEECH with the same role is not mistaken for a new declaration.
+        if (
+            event.event_type in (EventType.SPEECH, EventType.CO_ANNOUNCEMENT)
+            and event.agent is not None
+            and event.claimed_role is not None
+        ):
+            self._displayed_claimed_roles[event.agent] = event.claimed_role
 
     def _get_agent(self, agent_name: str | None) -> Actor | None:
         if agent_name is None:

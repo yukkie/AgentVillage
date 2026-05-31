@@ -161,12 +161,12 @@ def test_speech_claimed_role_generates_co_line(make_test_actor) -> None:
     assert "Alice: I am the seer." in result.plain
 
 
-def test_speech_claimed_role_without_co_decision_does_not_generate_co_line(make_test_actor) -> None:
+def test_speech_claimed_role_transition_generates_co_line_without_decision(make_test_actor) -> None:
     """
     SUT: Renderer._render_speech
     Mock: なし
     Level: unit
-    Objective: CO 済み後続発言に claimed_role が添付されても [CO] 宣言行を二重表示しないこと。
+    Objective: SPEECH.claimed_role が表示済み状態から変化したとき decision に依存せず [CO] 宣言行を表示すること。
     """
     from src.domain.roles import get_role
 
@@ -182,23 +182,28 @@ def test_speech_claimed_role_without_co_decision_does_not_generate_co_line(make_
     result = renderer.on_event(event)
 
     assert result is not None
-    assert "[CO] Alice claims to be Seer" not in result.plain
+    assert "[CO] Alice claims to be Seer" in result.plain
     assert "Alice: I will share my result." in result.plain
 
 
-def test_repeated_co_decision_generates_co_line(make_test_actor) -> None:
+def test_repeated_claimed_role_does_not_generate_co_line(make_test_actor) -> None:
     """
     SUT: Renderer._render_speech
     Mock: なし
     Level: unit
-    Objective: claimed_role が既にある状態でも decision="co" の発言は CO 宣言行として表示されること。
+    Objective: 表示済み claimed_role と同じ役職の後続発言では decision="co" があっても CO 宣言行を二重表示しないこと。
     """
     from src.domain.roles import get_role
 
     actor = make_test_actor("Alice", "Villager")
-    actor.state.claimed_role = get_role("Seer")
     renderer = Renderer([actor], spectator_mode=False)
-    event = _make_event(
+    first_event = _make_event(
+        EventType.SPEECH,
+        agent="Alice",
+        content="I am the seer.",
+        claimed_role=get_role("Seer"),
+    )
+    repeated_event = _make_event(
         EventType.SPEECH,
         agent="Alice",
         content="Again, I am the seer.",
@@ -206,11 +211,44 @@ def test_repeated_co_decision_generates_co_line(make_test_actor) -> None:
         decision="co",
     )
 
-    result = renderer.on_event(event)
+    first_result = renderer.on_event(first_event)
+    repeated_result = renderer.on_event(repeated_event)
+
+    assert first_result is not None
+    assert repeated_result is not None
+    assert "[CO] Alice claims to be Seer" in first_result.plain
+    assert "[CO] Alice claims to be Seer" not in repeated_result.plain
+    assert "Alice: Again, I am the seer." in repeated_result.plain
+
+
+def test_claimed_role_change_generates_new_co_line(make_test_actor) -> None:
+    """
+    SUT: Renderer._render_speech
+    Mock: なし
+    Level: unit
+    Objective: claimed_role が別役職へ変化したとき、新しい CO 宣言行を表示すること。
+    """
+    from src.domain.roles import get_role
+
+    actor = make_test_actor("Alice", "Villager")
+    renderer = Renderer([actor], spectator_mode=False)
+
+    renderer.on_event(_make_event(
+        EventType.SPEECH,
+        agent="Alice",
+        content="I am the seer.",
+        claimed_role=get_role("Seer"),
+    ))
+    result = renderer.on_event(_make_event(
+        EventType.SPEECH,
+        agent="Alice",
+        content="Actually, I am the medium.",
+        claimed_role=get_role("Medium"),
+    ))
 
     assert result is not None
-    assert "[CO] Alice claims to be Seer" in result.plain
-    assert "Alice: Again, I am the seer." in result.plain
+    assert "[CO] Alice claims to be Medium" in result.plain
+    assert "Alice: Actually, I am the medium." in result.plain
 
 
 def test_vote_renders_agent_and_target(make_test_actor) -> None:

@@ -75,7 +75,12 @@ replay 用に read 側だけが解釈する。新規 emit はしない）の2層
 | **思考の付帯情報** | `reasoning` | `content` とは独立した、**常に spectator 限定**の思考・理由。`is_public` とは無関係に spectator のみ表示 |
 
 加えて `claimed_role`（CO 情報）は `speech` イベントに付随させ、別イベント化しない。
-CO の告知文は consumer 側が `claimed_role` から生成する。
+CO の告知文は consumer 側が `claimed_role` の状態遷移から生成する。
+つまり、同一エージェントについて表示済みの `claimed_role` と `speech.claimed_role` が異なる場合、
+その `speech` を CO 宣言として補助表示してよい。これは観客向けの表示補助であり、
+`decision="co"` の文字列フラグを CO 表示の正本にはしない。
+現行 producer は CO 済みエージェントの後続 `speech` にも現在の `claimed_role` を付与するため、
+`speech.claimed_role != null` かつ `decision == ""` は正常な後続発言として発生する。
 
 ---
 
@@ -130,7 +135,7 @@ CLI の色仕様（役職別カラーなど）は [Spec.md §5](Spec.md) を参�
 | `claimed_role` | `str \| null` | `null` | CO で公言した役職（`speech` に付随） |
 | `inspection_role` | `str \| null` | `null` | 占い結果の役職名（`"Werewolf"` / `"Villager"`） |
 | `reasoning` | `str` | `""` | spectator 限定の思考・理由（§2） |
-| `decision` | `str` | `""` | DISCUSSION 判断フェーズの行動選択 |
+| `decision` | `str` | `""` | イベント種別ごとに意味が異なる互換フィールド。`speech` では旧 CO 補助フラグ、`vote` では投票戦略、`judgment` では旧 DISCUSSION 判断選択。CO 表示の正本は `claimed_role` の状態遷移 |
 | `spectator_content` | `str` | `""` | spectator 版の本文。空なら `content` を使う（§2） |
 
 ---
