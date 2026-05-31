@@ -3,7 +3,7 @@ import pytest
 from unittest.mock import patch
 
 from src.engine.phase import Phase
-from src.domain.schema import SilentResult, SpeakResult
+from src.domain.schema import CoResult, SilentResult, SpeakResult
 from src.domain.event import EventType
 from src.engine.phase_day import _resolve_post_vote
 
@@ -56,6 +56,47 @@ class TestDiscussionCoDecision:
             if e.event_type == EventType.SPEECH and e.is_public and "silently" in e.content
         ]
         assert len(silent_events) >= 1
+
+    def test_post_co_speech_keeps_claimed_role_without_co_decision(
+        self, make_test_actor, make_test_engine
+    ):
+        """
+        SUT: GameEngine._apply_discussion_result
+        Mock: patch で store.save を no-op に差し替え
+        Level: unit
+        Objective: CO 後の通常発言は claimed_role を保持するが decision="co" は再emitしないこと。
+        """
+        from src.domain.roles import get_role
+
+        seer = make_test_actor("Seer1", "Seer")
+        other = make_test_actor("V1")
+        engine, events = make_test_engine([seer, other])
+
+        with patch("src.agent.store.save"):
+            engine._apply_discussion_result(
+                seer,
+                CoResult(
+                    thought="I should claim.",
+                    speech="I am the seer.",
+                    claim_role=get_role("Seer"),
+                ),
+                Phase.DAY_DISCUSSION,
+            )
+            engine._apply_discussion_result(
+                seer,
+                SpeakResult(
+                    thought="Share result.",
+                    speech="My result is white.",
+                ),
+                Phase.DAY_DISCUSSION,
+            )
+
+        speech_events = [e for e in events if e.event_type == EventType.SPEECH]
+
+        assert speech_events[0].claimed_role == get_role("Seer")
+        assert speech_events[0].decision == "co"
+        assert speech_events[1].claimed_role == get_role("Seer")
+        assert speech_events[1].decision == ""
 
     def test_vote_crashes_when_no_other_alive_player(self, make_test_actor, make_test_engine):
         """

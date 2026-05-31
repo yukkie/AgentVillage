@@ -33,6 +33,9 @@ class Renderer:
     def __init__(self, agents: list[Actor], spectator_mode: bool = False):
         self.agents = agents
         self.spectator_mode = spectator_mode
+        self._displayed_claimed_roles: dict[str, Role | None] = {
+            agent.name: None for agent in agents
+        }
 
     def on_event(self, event: LogEvent) -> Text | None:
         """Convert a LogEvent to a Rich Text object for display.
@@ -120,6 +123,7 @@ class Renderer:
         else:
             text.append(content)
 
+        self._track_claimed_role(event)
         return text if len(text) > 0 else None
 
     def _render_inspection(self, event: LogEvent, text: Text) -> None:
@@ -165,9 +169,23 @@ class Renderer:
             return event.content[len("[THINK]"):].lstrip()
         return None
 
-    @staticmethod
-    def _is_co_declaration(event: LogEvent) -> bool:
-        return event.claimed_role is not None and event.decision == "co"
+    def _is_co_declaration(self, event: LogEvent) -> bool:
+        if (
+            event.event_type != EventType.SPEECH
+            or event.agent is None
+            or event.claimed_role is None
+        ):
+            return False
+        previous_claim = self._displayed_claimed_roles.get(event.agent)
+        return previous_claim != event.claimed_role
+
+    def _track_claimed_role(self, event: LogEvent) -> None:
+        if (
+            event.event_type in (EventType.SPEECH, EventType.CO_ANNOUNCEMENT)
+            and event.agent is not None
+            and event.claimed_role is not None
+        ):
+            self._displayed_claimed_roles[event.agent] = event.claimed_role
 
     def _get_agent(self, agent_name: str | None) -> Actor | None:
         if agent_name is None:
