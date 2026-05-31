@@ -18,7 +18,14 @@ from src.domain.roles import Role
 
 
 class Renderer:
-    """Convert ``LogEvent`` instances into Rich ``Text`` for console output."""
+    """Convert ``LogEvent`` instances into Rich ``Text`` for console output.
+
+    Stateful: tracks each agent's displayed ``claimed_role`` so a CO declaration
+    line is emitted only on a role-state transition. ``on_event`` therefore has a
+    side effect and assumes each event is passed exactly once, in order. A
+    re-rendering frontend (e.g. the planned web migration above) must reset or
+    rebuild this state rather than replay the same events through one instance.
+    """
 
     # Simple events where the output is ``[PREFIX] {display_content}`` in a fixed style.
     # Events needing dynamic style or extra fields (SPEECH, VOTE, JUDGMENT, PHASE_START,
@@ -180,6 +187,10 @@ class Renderer:
         return previous_claim != event.claimed_role
 
     def _track_claimed_role(self, event: LogEvent) -> None:
+        # Also track legacy CO_ANNOUNCEMENT events: they render their own [CO]
+        # line via _SIMPLE_EVENT_STYLES (so they are not _is_co_declaration
+        # candidates), but they still advance the displayed claim so a later
+        # SPEECH with the same role is not mistaken for a new declaration.
         if (
             event.event_type in (EventType.SPEECH, EventType.CO_ANNOUNCEMENT)
             and event.agent is not None
