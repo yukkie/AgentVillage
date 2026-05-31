@@ -156,6 +156,108 @@ class TestDiscussionCoDecisionContract:
 
         assert wolf.state.claimed_role.name == "Medium"
 
+    def test_speech_events_keep_claimed_role_after_co(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._apply_discussion_result()
+        Mock: call_discussion_parallel returns CoResult then SpeakResult for the same actor
+        Level: contract
+        Architecture ref: doc/Architecture.md §2.4, §3.2
+        Objective: CO 発言以降の SPEECH イベントすべてに actor.state.claimed_role が添付されることを検証する。
+        """
+        seer = make_test_actor("Seer1", "Seer")
+        other = make_test_actor("V1")
+        engine, events = make_test_engine([seer, other])
+        call_count = [0]
+
+        def discussion_with_followup(_actors, *_, **__):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                return iter([
+                    (seer, CoResult(thought="CO now", speech="I am the Seer!", claim_role=seer.role)),
+                    (other, SilentResult(reasoning="nothing")),
+                ])
+            return iter([
+                (seer, SpeakResult(thought="followup", speech="My result still matters.")),
+                (other, SilentResult(reasoning="nothing")),
+            ])
+
+        engine._llm_client.call_discussion_parallel.side_effect = discussion_with_followup
+
+        with (
+            patch("src.engine.phase_day.DISCUSSION_ROUNDS", 2),
+            patch("src.agent.store.save"),
+        ):
+            engine._run_day()
+
+        seer_speeches = [
+            e for e in events
+            if e.event_type == EventType.SPEECH and e.agent == "Seer1" and e.speech_id is not None
+        ]
+        assert [e.claimed_role.name for e in seer_speeches] == ["Seer", "Seer"]
+        assert [e.decision for e in seer_speeches] == ["co", ""]
+
+    def test_repeated_co_speech_keeps_co_decision(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._apply_discussion_result()
+        Mock: call_discussion_parallel returns CoResult twice for the same actor
+        Level: contract
+        Architecture ref: doc/Architecture.md §2.4, §3.2
+        Objective: 同じエージェントの二回目以降の CO 発言も decision="co" として emit されることを検証する。
+        """
+        seer = make_test_actor("Seer1", "Seer")
+        other = make_test_actor("V1")
+        engine, events = make_test_engine([seer, other])
+        call_count = [0]
+
+        def repeated_co(_actors, *_, **__):
+            call_count[0] += 1
+            return iter([
+                (seer, CoResult(thought=f"CO {call_count[0]}", speech="I am the Seer!", claim_role=seer.role)),
+                (other, SilentResult(reasoning="nothing")),
+            ])
+
+        engine._llm_client.call_discussion_parallel.side_effect = repeated_co
+
+        with (
+            patch("src.engine.phase_day.DISCUSSION_ROUNDS", 2),
+            patch("src.agent.store.save"),
+        ):
+            engine._run_day()
+
+        seer_speeches = [
+            e for e in events
+            if e.event_type == EventType.SPEECH and e.agent == "Seer1" and e.speech_id is not None
+        ]
+        assert [e.claimed_role.name for e in seer_speeches] == ["Seer", "Seer"]
+        assert [e.decision for e in seer_speeches] == ["co", "co"]
+
+    def test_unclaimed_speech_event_keeps_claimed_role_none(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._apply_discussion_result()
+        Mock: call_discussion_parallel returns SpeakResult for an unclaimed actor
+        Level: contract
+        Architecture ref: doc/Architecture.md §2.4, §3.2
+        Objective: 未COエージェントの SPEECH イベントは claimed_role=None のまま emit されることを検証する。
+        """
+        actor = make_test_actor("Alice")
+        other = make_test_actor("Bob")
+        engine, events = make_test_engine([actor, other])
+
+        engine._llm_client.call_discussion_parallel.side_effect = lambda _actors, *_, **__: iter([
+            (actor, SpeakResult(thought="t", speech="I have no claim.")),
+            (other, SilentResult(reasoning="nothing")),
+        ])
+
+        with patch("src.agent.store.save"):
+            engine._run_day()
+
+        speech_events = [
+            e for e in events
+            if e.event_type == EventType.SPEECH and e.agent == "Alice" and e.speech_id is not None
+        ]
+        assert len(speech_events) >= 1
+        assert all(e.claimed_role is None for e in speech_events)
+
 
 class TestVoteOutputFlowContract:
     def test_wolf_side_strategy_recorded_in_vote_event(self, make_test_actor, make_test_engine):

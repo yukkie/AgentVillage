@@ -143,7 +143,7 @@ class Renderer:
         style = self._speech_style(event.agent, event.claimed_role)
         prefix = f"[{event.speech_id}] " if event.speech_id is not None else ""
         reply = f" (→[{event.reply_to}])" if event.reply_to is not None else ""
-        if event.claimed_role is not None:
+        if self._is_co_declaration(event):
             text.append(
                 f"[CO] {event.agent} claims to be {event.claimed_role.name}\n",
                 style="bold white",
@@ -164,6 +164,10 @@ class Renderer:
         if event.content.startswith("[THINK]"):
             return event.content[len("[THINK]"):].lstrip()
         return None
+
+    @staticmethod
+    def _is_co_declaration(event: LogEvent) -> bool:
+        return event.claimed_role is not None and event.decision == "co"
 
     def _get_agent(self, agent_name: str | None) -> Actor | None:
         if agent_name is None:

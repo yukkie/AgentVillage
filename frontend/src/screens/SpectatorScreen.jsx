@@ -5,7 +5,7 @@ import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLES } from '../lib/constants.js';
 import { fetchReplayAgents, fetchReplayLog } from '../lib/replayLoader.js';
-import { parseGameData, aggregateCoStatus, computeDeadByDay, attachCoSnapshot } from '../lib/parseGameData.js';
+import { parseGameData, aggregateCoStatus, computeDeadByDay } from '../lib/parseGameData.js';
 import { filterFeedEvents } from '../lib/feedFilter.js';
 import styles from './SpectatorScreen.module.css';
 
@@ -63,7 +63,7 @@ function SpeechCard({ ev, prevById, roleAssignment, viewerMode = 'spectator' }) 
   const replied = ev.reply_to ? prevById[`${ev.day}-${ev.reply_to}`] : null;
   const isWolf = role === 'Werewolf';
   const isPublic = viewerMode === 'public';
-  const coedRole = ev._coSnapshot?.[ev.agent];
+  const coedRole = ev.claimed_role;
   const coColor = coedRole ? ROLES[coedRole]?.color : undefined;
 
   return (
@@ -533,7 +533,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
     if (e.speech_id != null) prevById[`${e.day}-${e.speech_id}`] = e;
   });
 
-  const feedEvents = attachCoSnapshot(filterFeedEvents(events, activeDay, activePhase), replayCoStatus);
+  const feedEvents = filterFeedEvents(events, activeDay, activePhase);
   const speechCount = events.filter(e => e.event_type === 'speech').length;
   const coCount = Object.keys(replayCoStatus).length;
 
