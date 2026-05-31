@@ -197,8 +197,7 @@ class GameEngine:
 
         if isinstance(result, CoResult):
             actor.state.intended_co = None
-            if actor.state.claimed_role != result.claim_role:
-                actor.state.claimed_role = result.claim_role
+            actor.state.claimed_role = result.claim_role
             store.save(actor)
 
         speech_id = self._next_speech_id()
