@@ -194,7 +194,7 @@ class TestDiscussionCoDecisionContract:
             if e.event_type == EventType.SPEECH and e.agent == "Seer1" and e.speech_id is not None
         ]
         assert [e.claimed_role.name for e in seer_speeches] == ["Seer", "Seer"]
-        assert [e.decision for e in seer_speeches] == ["co", ""]
+        assert [e.decision for e in seer_speeches] == ["co", "speak"]
 
     def test_repeated_co_speech_keeps_co_decision(self, make_test_actor, make_test_engine):
         """
@@ -440,6 +440,98 @@ class TestIntendedCoLifecycleContract:
         assert wolf.state.intended_co is None
         assert wolf.state.claimed_role is not None
         assert wolf.state.claimed_role.name == "Seer"
+
+
+class TestDiscussionActionDecisionContract:
+    def test_speak_result_sets_decision_speak(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._apply_discussion_result()
+        Mock: call_discussion_parallel returns SpeakResult
+        Level: contract
+        Objective: SpeakResult が返ったとき SPEECH イベントの decision="speak" が emit される契約を検証する。
+        """
+        actor = make_test_actor("Alice")
+        other = make_test_actor("Bob")
+        engine, events = make_test_engine([actor, other])
+
+        engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
+            (actor, SpeakResult(thought="t", speech="Hello")),
+            (other, SilentResult(reasoning="quiet")),
+        ])
+
+        with patch("src.agent.store.save"):
+            engine._run_day()
+
+        speech_events = [
+            e for e in events
+            if e.event_type == EventType.SPEECH and e.agent == "Alice" and e.speech_id is not None
+        ]
+        assert len(speech_events) >= 1
+        assert all(e.decision == "speak" for e in speech_events)
+
+    def test_challenge_result_sets_decision_challenge(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._apply_discussion_result()
+        Mock: call_discussion_parallel returns SpeakResult then ChallengeResult
+        Level: contract
+        Objective: ChallengeResult が返ったとき SPEECH イベントの decision="challenge" が emit される契約を検証する。
+        """
+        actors_list = [make_test_actor("A"), make_test_actor("B")]
+        engine, events = make_test_engine(actors_list)
+        call_count = [0]
+
+        def discussion_with_challenge(actors, *_, **__):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                return iter([
+                    (actors_list[0], SpeakResult(thought="t", speech="Hello")),
+                    (actors_list[1], SilentResult(reasoning="quiet")),
+                ])
+            return iter([
+                (actors_list[0], SilentResult(reasoning="quiet")),
+                (actors_list[1], ChallengeResult(thought="t", speech="I disagree!", reply_to=1)),
+            ])
+
+        engine._llm_client.call_discussion_parallel.side_effect = discussion_with_challenge
+
+        with (
+            patch("src.engine.phase_day.DISCUSSION_ROUNDS", 2),
+            patch("src.agent.store.save"),
+        ):
+            engine._run_day()
+
+        challenge_events = [
+            e for e in events
+            if e.event_type == EventType.SPEECH and e.agent == "B" and e.reply_to is not None
+        ]
+        assert len(challenge_events) == 1
+        assert challenge_events[0].decision == "challenge"
+
+    def test_silent_result_sets_decision_silent(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._apply_discussion_result()
+        Mock: call_discussion_parallel returns SilentResult
+        Level: contract
+        Objective: SilentResult が返ったとき SPEECH イベントの decision="silent" が emit される契約を検証する。
+        """
+        actor = make_test_actor("Alice")
+        other = make_test_actor("Bob")
+        engine, events = make_test_engine([actor, other])
+
+        engine._llm_client.call_discussion_parallel.side_effect = lambda actors, *_, **__: iter([
+            (actor, SilentResult(reasoning="nothing to add")),
+            (other, SpeakResult(thought="t", speech="Hi")),
+        ])
+
+        with patch("src.agent.store.save"):
+            engine._run_day()
+
+        silent_events = [
+            e for e in events
+            if e.event_type == EventType.SPEECH and e.agent == "Alice" and e.speech_id is None
+        ]
+        assert len(silent_events) >= 1
+        assert all(e.decision == "silent" for e in silent_events)
 
 
 class TestSpeechThinkHackContract:

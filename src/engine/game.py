@@ -184,6 +184,7 @@ class GameEngine:
                 agent=actor.name,
                 content=f"{actor.name} is watching the village silently...",
                 is_public=True,
+                decision=result.action,
             ))
             return None
 
@@ -215,7 +216,7 @@ class GameEngine:
             reply_to=reply_to_entry.speech_id if reply_to_entry else None,
             claimed_role=actor.state.claimed_role,
             reasoning=result.thought,
-            decision="co" if isinstance(result, CoResult) else "",
+            decision=result.action,
         ))
 
         if result.suspicion_scores:
