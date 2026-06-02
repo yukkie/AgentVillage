@@ -21,6 +21,7 @@
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#351 | enhancement | 🔴 | 2 | Structured game_over event with winner field + frontend result screen | game_over に winner フィールドを追加し文字列パース依存を除去。観戦画面に勝敗サマリーを表示 |
+| yukkie/AgentVillage#434 | bug | 🔴 | 2 | SpectatorScreen drops suspicion_update / threat_update (not displayed) | SpectatorScreen が suspicion_update / threat_update を SYSTEM_EVENT_VIEWS に持たず行ごと破棄。CLI renderer は [SUSPICION]/[THREAT] 表示可 |
 | yukkie/AgentVillage#352 | enhancement | 🟡 | 1 | Show prologue message on game start in SpectatorScreen feed | GAME START 時にプロローグ固定文をフォールバック表示。将来の role_assigned イベント実装時に差し替え |
 | yukkie/AgentVillage#353 | enhancement | 🟡 | 1 | Emit role_assigned events at game start for each agent | init フェーズで全エージェント分の役職割り当てイベントを spectator_log に出力。#352 のフォールバック差し替え用 |
 | yukkie/AgentVillage#347 | enhancement | 🟡 | 3 | Implement feed filters in SpectatorScreen left pane (agent / role / event type) | 参加者・役職・表示種別フィルターチップを実際に動作させる。追加データ不要でクライアントサイドのみで実装可能 |
@@ -28,6 +29,7 @@
 | yukkie/AgentVillage#319 | enhancement | 🟡 | 3 | LIVE spectator | state/ を tail して進行中ゲームを表示（Milestone 2 後半） |
 | yukkie/AgentVillage#364 | enhancement | 🟡 | 5 | introduce SpectatorScreen view model indexes | SpectatorScreen 用 view model/index を導入し、render 中の events 全走査を減らす |
 | yukkie/AgentVillage#411 | tech-debt | 🟡 | 5 | Replace div soup with semantic HTML elements | div/span を意味のある要素に置き換え Playwright・アクセシビリティを改善。FrontendDesign.md に方針追記 |
+| yukkie/AgentVillage#435 | bug | 🟡 | 2 | SpectatorScreen drops legacy events (judgment) on replay | 後方互換 read 専用イベント（judgment / 移行前 vote_candidates）を null 破棄し、古いアーカイブ replay で該当行が消える |
 | yukkie/AgentVillage#321 | enhancement | 🟢 | 2 | Unify config data as shared JSON (SSOT) | config/*.json を Python/JS 共有にして constants.js のハードコードを廃止 |
 | yukkie/AgentVillage#323 | enhancement | 🟢 | 3 | i18n support for frontend UI strings (ja/en) | JSX 内の日本語ハードコードを locale リソースに外出しし、ja/en 切り替えに対応 |
 | yukkie/AgentVillage#342 | enhancement | 🟢 | 3 | Introduce React Router for game and agent detail navigation | React Router 導入。AgentDetailScreen 依存 |
@@ -60,8 +62,8 @@
 | yukkie/AgentVillage#315 | enhancement | 🟢 | 8 | FastAPI + WebSocket backend | リアルタイムストリーミング（Milestone 2 完了後） |
 | yukkie/AgentVillage#316 | enhancement | 🟢 | 13 | Mobile app (React Native) | iOS/Android 対応（#315 完了後） |
 | yukkie/AgentVillage#30 | enhancement | 🟢 | 13 | State management DB migration | JSON → DB 移行 |
-| yukkie/AgentVillage#424 | enhancement | ❌ | — | Dev tool (1/2): AST-based relationship extraction for a central data type | 中心データ型を起点に producer/consumer/transform を AST で全列挙し隣接リスト出力。idd 事前調査から参照。汎用ツール（LogEvent は検証例） |
-| yukkie/AgentVillage#425 | enhancement | ❌ | — | Dev tool (2/2): smell evaluation over the extracted relationship graph | 抽出グラフ上で transform スメルを定義基準で分類・淀み度集計。依存: #424 |
+| yukkie/AgentVillage#424 | enhancement | 🟢 | 5 | Dev tool (1/2): AST-based relationship extraction for a central data type | 中心データ型を起点に producer/consumer/transform を AST で全列挙し隣接リスト出力。idd 事前調査から参照。汎用ツール（LogEvent は検証例） |
+| yukkie/AgentVillage#425 | enhancement | 🟢 | 3 | Dev tool (2/2): smell evaluation over the extracted relationship graph | 抽出グラフ上で transform スメルを定義基準で分類・淀み度集計。依存: #424 |
 
 ---
 
