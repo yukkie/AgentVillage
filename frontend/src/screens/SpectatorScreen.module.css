@@ -507,3 +507,6 @@
 
 /* viewerMode: public */
 .lockBadge { font-size: 11px; color: var(--tx-4); padding: 2px 6px; cursor: default; user-select: none; }
+
+/* vote strategy badge */
+.strategyBadge { font-size: 11px; color: var(--tx-3); font-family: var(--mono); margin-top: 2px; }

@@ -135,7 +135,8 @@ CLI の色仕様（役職別カラーなど）は [Spec.md §5](Spec.md) を参�
 | `claimed_role` | `str \| null` | `null` | CO で公言した役職（`speech` に付随） |
 | `inspection_role` | `str \| null` | `null` | 占い結果の役職名（`"Werewolf"` / `"Villager"`） |
 | `reasoning` | `str` | `""` | spectator 限定の思考・理由（§2） |
-| `decision` | `str` | `""` | イベント種別ごとに意味が異なる互換フィールド。`speech` では旧 CO 補助フラグ、`vote` では投票戦略、`judgment` では旧 DISCUSSION 判断選択。CO 表示の正本は `claimed_role` の状態遷移 |
+| `vote_strategy` | `str` | `""` | VOTE イベント専用の投票戦略。狼エージェントのみ `"wolf_side"` / `"village_side"` を設定する。旧アーカイブ（`vote_strategy` が存在しないログ）の replay では `decision` にフォールバックする |
+| `decision` | `str` | `""` | 後方互換フィールド。`speech` では旧 CO 補助フラグ、`judgment` では旧 DISCUSSION 判断選択。VOTE の投票戦略は `vote_strategy` へ移行済み（旧アーカイブの read フォールバック用に残存） |
 | `spectator_content` | `str` | `""` | spectator 版の本文。空なら `content` を使う（§2） |
 
 ---

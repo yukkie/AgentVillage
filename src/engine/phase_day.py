@@ -83,7 +83,7 @@ def _run_vote(engine: GameEngine) -> str | None:
             content=f"{actor.name} votes for {target}",
             is_public=True,
             reasoning=vote_output.reasoning,
-            decision=vote_output.strategy or "",
+            vote_strategy=vote_output.strategy or "",
         ))
 
     if not votes:

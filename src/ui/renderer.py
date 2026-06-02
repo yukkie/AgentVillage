@@ -63,8 +63,10 @@ class Renderer:
 
         elif event.event_type == EventType.VOTE:
             text.append(f"[VOTE] {event.agent} → {event.target}", style="white")
-            if self.spectator_mode and event.decision:
-                text.append(f" [strategy: {event.decision}]", style="dim red")
+            # Legacy-Adapter: old logs store vote strategy in decision; new logs use vote_strategy.
+            strategy = event.vote_strategy or event.decision
+            if self.spectator_mode and strategy:
+                text.append(f" [strategy: {strategy}]", style="dim red")
             if self.spectator_mode and event.reasoning:
                 text.append(f" — {event.reasoning}", style="dim")
 
