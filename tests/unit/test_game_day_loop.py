@@ -96,7 +96,7 @@ class TestDiscussionCoDecision:
         assert speech_events[0].claimed_role == get_role("Seer")
         assert speech_events[0].decision == "co"
         assert speech_events[1].claimed_role == get_role("Seer")
-        assert speech_events[1].decision == ""
+        assert speech_events[1].decision == "speak"
 
     def test_vote_crashes_when_no_other_alive_player(self, make_test_actor, make_test_engine):
         """

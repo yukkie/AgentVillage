@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Annotated, Literal
+from enum import Enum
+from typing import Annotated, ClassVar, Literal
 
 from pydantic import BaseModel, BeforeValidator, PlainSerializer
 
@@ -18,6 +19,13 @@ RoleField = Annotated[
 ]
 
 
+class DiscussionAction(str, Enum):
+    SPEAK = "speak"
+    CHALLENGE = "challenge"
+    SILENT = "silent"
+    CO = "co"
+
+
 class SpeechEntry(BaseModel):
     speech_id: int
     agent: str
@@ -32,6 +40,8 @@ class SpeakResult:
         DISCUSSION tool use result contract. Tests must not synthesize
         free-form replacements. See ``tests/TestStrategy.md`` §5.
     """
+
+    action: ClassVar[DiscussionAction] = DiscussionAction.SPEAK
 
     thought: str
     speech: str
@@ -49,6 +59,8 @@ class ChallengeResult:
         DISCUSSION tool use result contract. See ``tests/TestStrategy.md`` §5.
     """
 
+    action: ClassVar[DiscussionAction] = DiscussionAction.CHALLENGE
+
     thought: str
     speech: str
     reply_to: int
@@ -65,6 +77,8 @@ class CoResult:
         DISCUSSION tool use result contract. See ``tests/TestStrategy.md`` §5.
     """
 
+    action: ClassVar[DiscussionAction] = DiscussionAction.CO
+
     thought: str
     speech: str
     claim_role: Role
@@ -80,6 +94,8 @@ class SilentResult:
     Mock-Policy: Forbidden
         DISCUSSION tool use result contract. See ``tests/TestStrategy.md`` §5.
     """
+
+    action: ClassVar[DiscussionAction] = DiscussionAction.SILENT
 
     reasoning: str
 

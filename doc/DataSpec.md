@@ -136,7 +136,7 @@ CLI の色仕様（役職別カラーなど）は [Spec.md §5](Spec.md) を参�
 | `inspection_role` | `str \| null` | `null` | 占い結果の役職名（`"Werewolf"` / `"Villager"`） |
 | `reasoning` | `str` | `""` | spectator 限定の思考・理由（§2） |
 | `vote_strategy` | `str` | `""` | VOTE イベント専用の投票戦略。狼エージェントのみ `"wolf_side"` / `"village_side"` を設定する。旧アーカイブ（`vote_strategy` が存在しないログ）の replay では `decision` にフォールバックする |
-| `decision` | `str` | `""` | 後方互換フィールド。`speech` では旧 CO 補助フラグ、`judgment` では旧 DISCUSSION 判断選択。VOTE の投票戦略は `vote_strategy` へ移行済み（旧アーカイブの read フォールバック用に残存） |
+| `decision` | `str` | `""` | エージェントのツール選択結果。`speech` イベントでは DISCUSSION ツール選択（`"speak"` / `"challenge"` / `"silent"` / `"co"`）を保持する。`judgment` イベントでは旧 DISCUSSION 判断選択を保持する。旧アーカイブの `speech` イベントには空文字が入っており、VOTE の投票戦略は `vote_strategy` フィールドへ移行済み |
 | `spectator_content` | `str` | `""` | spectator 版の本文。空なら `content` を使う（§2） |
 
 ---
