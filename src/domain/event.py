@@ -51,6 +51,7 @@ class LogEvent(BaseModel):
     inspection_role: RoleField = None
     reasoning: str = ""
     decision: str = ""
+    vote_strategy: str = ""
     spectator_content: str = ""
 
     @classmethod
@@ -69,6 +70,7 @@ class LogEvent(BaseModel):
         inspection_role: RoleField = None,
         reasoning: str = "",
         decision: str = "",
+        vote_strategy: str = "",
         spectator_content: str = "",
     ) -> "LogEvent":
         return cls(
@@ -85,5 +87,6 @@ class LogEvent(BaseModel):
             inspection_role=inspection_role,
             reasoning=reasoning,
             decision=decision,
+            vote_strategy=vote_strategy,
             spectator_content=spectator_content,
         )

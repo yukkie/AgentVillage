@@ -113,6 +113,8 @@ const SYSTEM_EVENT_VIEWS = {
     label: '投票',
     leftName: ev => ev.agent,
     rightName: ev => ev.target,
+    // Legacy-Adapter: old logs store vote strategy in decision; new logs use vote_strategy.
+    strategy: ev => ev.vote_strategy || ev.decision || null,
     reasoning: ev => ev.reasoning,
   },
   elimination: {
@@ -156,6 +158,7 @@ function renderConfiguredSystemEvent(ev, roleAssignment, viewerMode) {
       kind={view.kind}
       icon={view.icon}
       label={view.label}
+      strategy={view.strategy?.(ev)}
       reasoning={view.reasoning?.(ev)}
       leftName={view.leftName?.(ev)}
       rightName={view.rightName?.(ev)}
@@ -168,7 +171,7 @@ function renderConfiguredSystemEvent(ev, roleAssignment, viewerMode) {
 }
 
 // --- システム行 ---
-function SystemRow({ kind, icon, label, children, reasoning, ts, leftName, rightName, roleAssignment = {}, viewerMode = 'spectator' }) {
+function SystemRow({ kind, icon, label, children, strategy, reasoning, ts, leftName, rightName, roleAssignment = {}, viewerMode = 'spectator' }) {
   const defaultIcon = { gm: '👁', death: '💀', exec: '⚑', phase: '☾' }[kind] || '⌘';
   return (
     <div className={`${styles.sysrow} ${styles[kind] || ''}`}>
@@ -187,6 +190,9 @@ function SystemRow({ kind, icon, label, children, reasoning, ts, leftName, right
             <Avatar name={rightName} role={roleAssignment[rightName]} size="xs" />
           )}
         </div>
+        {strategy && viewerMode === 'spectator' && (
+          <div className={styles.strategyBadge}>[strategy: {strategy}]</div>
+        )}
         <ThoughtDetails reasoning={reasoning} viewerMode={viewerMode} />
       </div>
     </div>

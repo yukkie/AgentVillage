@@ -284,7 +284,8 @@ class TestVoteOutputFlowContract:
 
         vote_events = [e for e in events if e.event_type == EventType.VOTE and e.agent == "Wolf1"]
         assert len(vote_events) == 1
-        assert vote_events[0].decision == "wolf_side"
+        assert vote_events[0].vote_strategy == "wolf_side"
+        assert vote_events[0].decision == ""
         assert vote_events[0].reasoning == "Seer1 should be eliminated."
         assert vote_events[0].target == "Seer1"
 
@@ -311,7 +312,7 @@ class TestVoteOutputFlowContract:
 
         vote_events = [e for e in events if e.event_type == EventType.VOTE and e.agent == "V1"]
         assert len(vote_events) == 1
-        assert vote_events[0].decision == ""
+        assert vote_events[0].vote_strategy == ""
 
     def test_vote_event_reasoning_comes_from_vote_output(self, make_test_actor, make_test_engine):
         """
