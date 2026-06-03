@@ -466,6 +466,10 @@ stateDiagram-v2
 | `collapsibleRight` | `boolean?` | 右ペインに折りたたみボタンを表示 |
 | `leftLabel` | `string?` | 左ペイン折りたたみ時に縦書き表示するラベル |
 | `rightLabel` | `string?` | 右ペイン折りたたみ時に縦書き表示するラベル |
+| `leftAriaLabel` | `string?` | 左 `<aside>` の `aria-label`（complementary landmark の区別用。デフォルト `'左サイドパネル'`） |
+| `rightAriaLabel` | `string?` | 右 `<aside>` の `aria-label`（デフォルト `'右サイドパネル'`） |
+
+左ペインを `<aside aria-label={leftAriaLabel}>`、中央を `<main>`、右ペインを `<aside aria-label={rightAriaLabel}>` でレンダリングする（#411）。grid シェルは純レイアウトのため `<div>` を維持。
 
 CSS Grid `grid-template-columns: var(--lcol) 1fr var(--rcol)` で 3 ペインを制御。`--lcol` / `--rcol` は open 時 256px / 360px、collapsed 時 32px に切り替わり `transition: 220ms ease` でアニメーションする。
 
@@ -556,6 +560,46 @@ CSS Grid `grid-template-columns: var(--lcol) 1fr var(--rcol)` で 3 ペインを
 | `MatrixRow` / `NightRow` | 各リストの行コンポーネント |
 
 データソース: `stub/agentDetail.js`（`ALL_AGENTS`, `DEAD_AGENTS`, `AGENT_BLURB`, `AGENT_STATS`, `THOUGHTS`, `NIGHT_ACTIONS`, `getSuspicionMatrix`）。
+
+### 6.3 セマンティック HTML 設計方針（#411）
+
+意味のあるコンテンツには `<div>`/`<span>` ではなくセマンティック要素を使い、`getByRole`・スクリーンリーダー・クローラーが構造を読み取れるようにする。一方で**装飾目的・レイアウト用の要素は意図的に `<div>`/`<span>` を維持する**。「意味があるか / 装飾か」の線引きを以下に明示する。
+
+> **進捗**: #411 で **共通コンポーネント（`TopBar` / `ThreePaneLayout`）** をセマンティック化済み。3 Screen（GameList / Spectator / AgentDetail）の本体は別 Issue で順次対応する。本セクションは全画面共通の判断基準として維持する。
+
+#### セマンティック要素を使う箇所
+
+| 要素 | 用途 | 適用箇所 |
+|---|---|---|
+| `<main>` | ページの主コンテンツ領域（landmark、1ページ1個） | `ThreePaneLayout` 中央ペイン。各画面は `ThreePaneLayout` を1個マウントするため各画面1 `<main>` |
+| `<aside>` | 補足的サイド領域（role=complementary） | `ThreePaneLayout` 左右ペイン。複数 aside を区別するため `aria-label` を必須にする（`leftAriaLabel` / `rightAriaLabel` props） |
+| `<nav>` | ナビゲーション・パンくず（role=navigation） | `TopBar` パンくず、`GameListScreen` サイドナビ |
+| `<ol>` / `<li>` | 順序のあるリスト（パンくずの階層） | `TopBar` パンくずの `nav > ol > li` 構造 |
+| `<ul>` / `<li>` | 順序を問わないリスト | ロスター・CO ボード・ランキング等（3 Screen 側で順次） |
+| `<article>` | 自己完結したカード | `GameCard`、将来 `SpeechCard` 等（3 Screen 側） |
+| `<h1>`〜`<h5>` | 見出し階層 | 各画面の見出し（適用済み多数） |
+| `<time>` | 日時 | タイムスタンプ（3 Screen 側で順次） |
+| `<strong>` / `<em>` | 強調・他要素との区別 | 本文中の強調語（適用済み多数） |
+
+#### 装飾として `<div>`/`<span>` を維持する箇所
+
+| 箇所 | 維持する理由 |
+|---|---|
+| `ThreePaneLayout` の `.shell`（grid コンテナ） | 純レイアウト。意味は内側の `<main>`/`<aside>` が担う。シェル自体に landmark を付けない |
+| `Avatar` コンポーネント | **装飾ラッパー**。意味（誰のアバターか）は内側の `<img alt={name}>` が既に担保する。`<button>`/`<article>` 化すると、遷移と無関係な装飾箇所（`SystemRow` の左右アイコン・ヒーロー・ランキング等）にまで誤った role が付く |
+| `RoleTag` / `Icon` | インラインの装飾ラベル / `<img>` の薄いラッパー。意味は alt・ラベルテキストが担保 |
+| アイコン・装飾セパレータ（パンくずの `/` 等） | 視覚装飾。`aria-hidden="true"` で読み上げ対象から外す |
+
+#### クリック遷移トリガの扱い（重要）
+
+クリックで画面遷移する要素は、**装飾ラッパー（`Avatar` 等）自体ではなく、それを内包する「行・カード」を interactive 要素（`<button>` / `<a>`(Link)）にする**。`<div onClick>` のままにしない（キーボードフォーカス・role 欠落を避ける）。
+
+- 例: ロスター行クリックで AgentDetail へ遷移する場合、`Avatar` を button 化するのではなく、行 `<a>`(Link) で包む。
+- roster/picker 行の interactive 化（遷移ロジックを伴う）は #342（React Router）で扱う。
+
+#### パンくずの呼び出し契約（`TopBar`）
+
+`crumbs` 配列の各要素は `{ label, onClick? }`。`onClick` を持つ要素のみ `<a href="#">`（link role）としてレンダリングされ、持たない中間要素は非リンクの `<span>` になる（dead link を作らない）。クリック可能にしたい中間 crumb には呼び出し側で `onClick` を渡すこと。
 
 ---
 

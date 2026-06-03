@@ -7,6 +7,8 @@ export default function ThreePaneLayout({
   collapsibleRight = false,
   leftLabel = '',
   rightLabel = '',
+  leftAriaLabel = '左サイドパネル',
+  rightAriaLabel = '右サイドパネル',
 }) {
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
@@ -16,21 +18,21 @@ export default function ThreePaneLayout({
 
   return (
     <div className={styles.shell} style={{ '--lcol': lcol, '--rcol': rcol }}>
-      <div className={`${styles.colLeft} ${!leftOpen ? styles.collapsed : ''}`}>
+      <aside className={`${styles.colLeft} ${!leftOpen ? styles.collapsed : ''}`} aria-label={leftAriaLabel}>
         <div className={styles.colContent}>{left}</div>
         {collapsibleLeft && !leftOpen && leftLabel && (
           <span className={styles.rail}>{leftLabel}</span>
         )}
-      </div>
+      </aside>
 
-      <div className={styles.colCenter}>{children}</div>
+      <main className={styles.colCenter}>{children}</main>
 
-      <div className={`${styles.colRight} ${!rightOpen ? styles.collapsed : ''}`}>
+      <aside className={`${styles.colRight} ${!rightOpen ? styles.collapsed : ''}`} aria-label={rightAriaLabel}>
         {collapsibleRight && !rightOpen && rightLabel && (
           <span className={styles.rail}>{rightLabel}</span>
         )}
         <div className={styles.colContent}>{right}</div>
-      </div>
+      </aside>
 
       {collapsibleLeft && (
         <button
