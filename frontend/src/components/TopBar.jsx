@@ -13,17 +13,24 @@ export default function TopBar({ crumbs = [], children }) {
         AGENT-WOLF
         <small>v0.13 / Spectator Hub</small>
       </div>
-      <div className={styles.crumb}>
-        {crumbs.map((c, i) => (
-          <span key={i} style={{ display: 'contents' }}>
-            <span className={styles.sep}>/</span>
-            {i < crumbs.length - 1
-              ? <a onClick={c.onClick}>{c.label}</a>
-              : <span className={styles.now}>{c.label}</span>
-            }
-          </span>
-        ))}
-      </div>
+      <nav className={styles.crumb} aria-label="パンくず">
+        <ol className={styles.crumbList}>
+          {crumbs.map((c, i) => {
+            const isCurrent = i === crumbs.length - 1;
+            return (
+              <li key={i} className={styles.crumbItem}>
+                {i > 0 && <span className={styles.sep} aria-hidden="true">/</span>}
+                {isCurrent
+                  ? <span className={styles.now} aria-current="page">{c.label}</span>
+                  : c.onClick
+                    ? <a href="#" onClick={(e) => { e.preventDefault(); c.onClick(); }}>{c.label}</a>
+                    : <span>{c.label}</span>
+                }
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
       <span className={styles.spacer} />
       {children}
     </div>
