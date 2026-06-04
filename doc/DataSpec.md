@@ -33,7 +33,7 @@ replay 用に read 側だけが解釈する。新規 emit はしない）の2層
 | `medium_result` | false | — | — | 霊媒結果（観戦者のみ・黄色表示） |
 | `suspicion_update` | false | — | — | 村人視点の疑念スコア更新（観戦者のみ） |
 | `threat_update` | false | — | — | 人狼視点の脅威スコア更新（観戦者のみ） |
-| `game_over` | true | — | — | ゲーム終了 |
+| `game_over` | true | — | — | ゲーム終了。`winner` フィールドに勝者陣営を設定する（`"Villagers"` / `"Werewolves"`） |
 | `phase_start` | true | — | — | フェーズ開始マーカー |
 
 ### 1.2 後方互換イベント（read のみ・新規 emit しない）
@@ -138,6 +138,7 @@ CLI の色仕様（役職別カラーなど）は [Spec.md §5](Spec.md) を参�
 | `vote_strategy` | `str` | `""` | VOTE イベント専用の投票戦略。狼エージェントのみ `"wolf_side"` / `"village_side"` を設定する。旧アーカイブ（`vote_strategy` が存在しないログ）の replay では `decision` にフォールバックする |
 | `decision` | `str` | `""` | エージェントのツール選択結果。`speech` イベントでは DISCUSSION ツール選択（`"speak"` / `"challenge"` / `"silent"` / `"co"`）を保持する。`judgment` イベントでは旧 DISCUSSION 判断選択を保持する。旧アーカイブの `speech` イベントには空文字が入っており、VOTE の投票戦略は `vote_strategy` フィールドへ移行済み |
 | `spectator_content` | `str` | `""` | spectator 版の本文。空なら `content` を使う（§2） |
+| `winner` | `str \| null` | `null` | `game_over` イベント専用。勝者陣営（`"Villagers"` / `"Werewolves"`）。他イベントでは `null` |
 
 ---
 

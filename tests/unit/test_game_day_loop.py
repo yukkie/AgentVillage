@@ -273,6 +273,38 @@ class TestGameOver:
         assert "Werewolves" in game_over_events[0].content
         assert game_over_events[0].is_public is True
 
+    def test_game_over_winner_field_is_set(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._game_over()
+        Mock: なし（make_test_engine の LLMClient mock）
+        Level: unit
+        Objective: _game_over() が emit する GAME_OVER イベントに winner フィールドが
+                   正しくセットされること。Villagers / Werewolves 両方を検証する。
+        """
+        villager = make_test_actor("Alice")
+        engine, events = make_test_engine([villager])
+
+        engine._game_over("Werewolves")
+        wolf_event = next(e for e in events if e.event_type == EventType.GAME_OVER)
+        assert wolf_event.winner == "Werewolves"
+
+        events.clear()
+        engine._game_over("Villagers")
+        village_event = next(e for e in events if e.event_type == EventType.GAME_OVER)
+        assert village_event.winner == "Villagers"
+
+    def test_game_over_winner_default_is_none(self):
+        """
+        SUT: LogEvent
+        Mock: なし
+        Level: unit
+        Objective: winner フィールドがない旧アーカイブ行（winner 未指定）を読んでも
+                   クラッシュせず winner=None になること。
+        """
+        from src.domain.event import LogEvent, EventType
+        ev = LogEvent(day=1, phase="game_over", event_type=EventType.GAME_OVER, content="GAME OVER")
+        assert ev.winner is None
+
 
 class TestResolvePostVote:
     def test_medium_receives_memory_update_and_medium_result_event(

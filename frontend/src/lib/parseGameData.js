@@ -336,11 +336,13 @@ export function parseGameData(jsonlText, agentJsonByName = {}) {
   });
 
   const events = normalizeEvents(rawEvents);
+  const gameOverEvent = rawEvents.find(ev => ev.event_type === 'game_over');
   return {
     events,
     agents,
     daySummary: aggregateDaySummary(rawEvents),
     nightResults: aggregateNightResults(rawEvents),
     actionsTimeline: buildActionsTimeline(rawEvents),
+    winner: gameOverEvent?.winner ?? null,
   };
 }

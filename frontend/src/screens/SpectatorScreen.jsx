@@ -246,6 +246,17 @@ export function FeedItem({ ev, prevById, roleAssignment, title, viewerMode = 'sp
       : <SystemRow kind="exec" icon="🐺" label="人狼の襲撃" rightName={ev.target} roleAssignment={roleAssignment} viewerMode={viewerMode}>{contentForViewer(ev, viewerMode)}</SystemRow>;
   }
 
+  if (ev.event_type === 'game_over') {
+    const winnerClass = ev.winner === 'Werewolves' ? styles.gameOverWolf
+      : ev.winner === 'Villagers' ? styles.gameOverVillage
+      : styles.gameOverUnknown;
+    return (
+      <SystemRow kind="phase" icon="🏁" label="勝敗結果">
+        <span className={`${styles.gameOverText} ${winnerClass}`}>{ev.content}</span>
+      </SystemRow>
+    );
+  }
+
   if (ev.event_type === 'phase_start') {
     if (ev.phase === 'init') {
       return (
@@ -262,7 +273,7 @@ export function FeedItem({ ev, prevById, roleAssignment, title, viewerMode = 'sp
 }
 
 // === 左ペイン ===
-export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agentNames, daySummary = {} }) {
+export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agentNames, daySummary = {}, gameOverDay = null }) {
   const handlePhase = (d, phase) => {
     setDay(d);
     setPhase(phase);
@@ -302,6 +313,21 @@ export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agent
             </div>
           </div>
         ))}
+        {gameOverDay != null && (
+          <div className={`${styles.dayBlock} ${activePhase === 'game_over' ? styles.dayBlockActive : ''}`}>
+            <div className={styles.phaseDay}>
+              <h3>最終日</h3>
+            </div>
+            <div className={styles.phaseList}>
+              <div
+                className={`${styles.phaseItem} ${styles.phaseGameOver} ${activePhase === 'game_over' ? styles.active : ''}`}
+                onClick={() => { setDay(gameOverDay); setPhase('game_over'); }}
+              >
+                <span className={styles.dot} /> 勝敗結果
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       <div className={styles.filt}>
         <div className={styles.sectionLabel}>参加者で絞る</div>
@@ -472,6 +498,8 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
   const [replayAgents, setReplayAgents] = useState({});
   const [replayDaySummary, setReplayDaySummary] = useState({});
   const [replayDeadByDay, setReplayDeadByDay] = useState({});
+  const [gameWinner, setGameWinner] = useState(null);
+  const [gameOverDay, setGameOverDay] = useState(null);
   const [loadingEvents, setLoadingEvents] = useState(Boolean(sessionId));
   const [loadingAgents, setLoadingAgents] = useState(Boolean(sessionId));
   const [loadError, setLoadError] = useState(null);
@@ -485,6 +513,8 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
     setReplayAgents({});
     setReplayDaySummary({});
     setReplayDeadByDay({});
+    setGameWinner(null);
+    setGameOverDay(null);
     setLoadingEvents(true);
     setLoadingAgents(true);
     setLoadError(null);
@@ -507,8 +537,10 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
         const parsed = parseGameData(jsonlText);
         setReplayEvents(parsed.events);
         setReplayDaySummary(parsed.daySummary);
-
         setReplayDeadByDay(computeDeadByDay(parsed.events));
+        setGameWinner(parsed.winner ?? null);
+        const goEvent = parsed.events.find(e => e.event_type === 'game_over');
+        if (goEvent) setGameOverDay(goEvent.day);
         const firstDay = parsed.events.find(event => event.day)?.day;
         if (firstDay) { setActiveDay(firstDay); setActivePhase('discuss'); }
       })
@@ -545,7 +577,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
 
   return (
     <div className={styles.frame}>
-      <TopBar crumbs={[{ label: '観戦' }, { label: title || sessionId || '第13回 桜霞村' }, { label: `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}` }]}>
+      <TopBar crumbs={[{ label: '観戦' }, { label: title || sessionId || '第13回 桜霞村' }, { label: activePhase === 'game_over' ? '勝敗結果' : `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}` }]}>
         {onBack && <TopBarBtn onClick={onBack}>← 一覧</TopBarBtn>}
         <TopBarBtn><span className={topBarStyles.liveDot} /> REPLAY</TopBarBtn>
         <TopBarBtn>同時観戦 142</TopBarBtn>
@@ -559,11 +591,11 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
       <ThreePaneLayout
         collapsibleLeft
         collapsibleRight
-        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} activePhase={activePhase} setPhase={setActivePhase} days={visibleDays} agentNames={agentNames} daySummary={daySummary} />}
+        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} activePhase={activePhase} setPhase={setActivePhase} days={visibleDays} agentNames={agentNames} daySummary={daySummary} gameOverDay={gameOverDay} />}
         right={<RightPane agents={agents} roleAssignment={roleAssignment} coStatus={replayCoStatus} daySummary={daySummary} activeDay={activeDay} deadByDay={replayDeadByDay} viewerMode={viewerMode} />}
       >
         <div className={styles.feedHead}>
-          <h2>Day {activeDay} {{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]} <small>{sessionId ? sessionId : '3:47 経過 / 残り 4:13'}</small></h2>
+          <h2>{activePhase === 'game_over' ? '勝敗結果' : `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}`} <small>{sessionId ? sessionId : '3:47 経過 / 残り 4:13'}</small></h2>
           <span className={styles.stat}>発言 <strong>{speechCount}</strong></span>
           <span className={styles.stat}>CO <strong>{coCount}</strong></span>
           <span className={styles.spacer} />

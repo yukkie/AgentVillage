@@ -53,6 +53,7 @@ class LogEvent(BaseModel):
     decision: str = ""
     vote_strategy: str = ""
     spectator_content: str = ""
+    winner: str | None = None
 
     @classmethod
     def make(
@@ -72,6 +73,7 @@ class LogEvent(BaseModel):
         decision: str = "",
         vote_strategy: str = "",
         spectator_content: str = "",
+        winner: str | None = None,
     ) -> "LogEvent":
         return cls(
             day=day,
@@ -89,4 +91,5 @@ class LogEvent(BaseModel):
             decision=decision,
             vote_strategy=vote_strategy,
             spectator_content=spectator_content,
+            winner=winner,
         )

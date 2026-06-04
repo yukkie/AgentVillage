@@ -510,3 +510,13 @@
 
 /* vote strategy badge */
 .strategyBadge { font-size: 11px; color: var(--tx-3); font-family: var(--mono); margin-top: 2px; }
+
+/* game_over result row in left pane */
+.phaseGameOver { color: var(--tx-2); }
+
+/* game_over result text in centre feed */
+.gameOverText { font-weight: 600; font-family: var(--serif); }
+.gameOverWolf    { color: var(--r-werewolf); }
+.gameOverVillage { color: var(--r-villager); }
+.gameOverUnknown { color: var(--tx); }
+

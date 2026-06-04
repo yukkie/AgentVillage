@@ -161,4 +161,36 @@ describe('filterFeedEvents', () => {
     const result = filterFeedEvents(events, 1, 'unknown');
     expect(result).toHaveLength(0);
   });
+
+  /*
+  SUT: filterFeedEvents
+  Mock: なし
+  Level: unit
+  Objective: game_over フェーズで game_over イベントのみ返すことを検証する
+  */
+  it('game_over: game_over イベントのみ返す', () => {
+    const events = [
+      ev({ day: 3, event_type: 'game_over', phase: 'game_over', is_public: true, content: 'GAME OVER — Werewolves win!', winner: 'Werewolves' }),
+      ev({ day: 3, event_type: 'speech', phase: 'day_discussion', content: 'hello' }),
+    ];
+    const result = filterFeedEvents(events, 3, 'game_over');
+    expect(result).toHaveLength(1);
+    expect(result[0].event_type).toBe('game_over');
+  });
+
+  /*
+  SUT: filterFeedEvents
+  Mock: なし
+  Level: unit
+  Objective: game_over フェーズで日が一致しないイベントを除外することを検証する
+  */
+  it('game_over: 日が一致しないイベントを除外する', () => {
+    const events = [
+      ev({ day: 3, event_type: 'game_over', phase: 'game_over', is_public: true }),
+      ev({ day: 2, event_type: 'game_over', phase: 'game_over', is_public: true }),
+    ];
+    const result = filterFeedEvents(events, 3, 'game_over');
+    expect(result).toHaveLength(1);
+    expect(result[0].day).toBe(3);
+  });
 });
