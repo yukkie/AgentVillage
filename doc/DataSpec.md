@@ -33,7 +33,7 @@ replay 用に read 側だけが解釈する。新規 emit はしない）の2層
 | `medium_result` | false | — | — | 霊媒結果（観戦者のみ・黄色表示） |
 | `suspicion_update` | false | — | — | 村人視点の疑念スコア更新（観戦者のみ） |
 | `threat_update` | false | — | — | 人狼視点の脅威スコア更新（観戦者のみ） |
-| `game_over` | true | — | — | ゲーム終了。`winner` フィールドに勝者陣営を設定する（`"Villagers"` / `"Werewolves"`） |
+| `game_over` | true | — | — | ゲーム終了。`winner` フィールドに勝者陣営を設定する（`"Villagers"` / `"Werewolves"`）。`day` は最終ゲーム日 + 1（`Phase.GAME_OVER` 専用フェーズとして扱うため、最終日とは別の day 値を持つ） |
 | `phase_start` | true | — | — | フェーズ開始マーカー |
 
 ### 1.2 後方互換イベント（read のみ・新規 emit しない）

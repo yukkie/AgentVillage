@@ -305,6 +305,24 @@ class TestGameOver:
         ev = LogEvent(day=1, phase="game_over", event_type=EventType.GAME_OVER, content="GAME OVER")
         assert ev.winner is None
 
+    def test_game_over_day_is_last_day_plus_one(self, make_test_actor, make_test_engine):
+        """
+        SUT: GameEngine._game_over()
+        Mock: なし（make_test_engine の LLMClient mock）
+        Level: unit
+        Objective: _game_over() が emit する GAME_OVER イベントの day が self.day + 1 であること。
+                   最終ゲーム日と game_over イベントの day が衝突しないことを保証する (#458)。
+        """
+        villager = make_test_actor("Alice")
+        engine, events = make_test_engine([villager])
+        engine.day = 3
+
+        engine._game_over("Villagers")
+
+        game_over_events = [e for e in events if e.event_type == EventType.GAME_OVER]
+        assert len(game_over_events) == 1
+        assert game_over_events[0].day == 4
+
 
 class TestResolvePostVote:
     def test_medium_receives_memory_update_and_medium_result_event(
