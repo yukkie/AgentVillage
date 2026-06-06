@@ -188,44 +188,56 @@ function GameCard({ g, onOpen }) {
 // === 左サイドナビ ===
 function LeftPane() {
   return (
-    <nav className={styles.sideNav}>
+    <nav className={styles.sideNav} aria-label="ゲーム一覧サイドナビ">
       <div className={styles.sec}>
         <h5>マイページ</h5>
-        <a className={styles.on}><span className={styles.ico}>⌂</span> ホーム</a>
-        <a><span className={styles.ico}>★</span> ウォッチ中</a>
-        <a><span className={styles.ico}>↻</span> 履歴</a>
-        <a><span className={styles.ico}>◎</span> 自分のbot</a>
+        <ul>
+          <li><a className={styles.on}><span className={styles.ico}>⌂</span> ホーム</a></li>
+          <li><a><span className={styles.ico}>★</span> ウォッチ中</a></li>
+          <li><a><span className={styles.ico}>↻</span> 履歴</a></li>
+          <li><a><span className={styles.ico}>◎</span> 自分のbot</a></li>
+        </ul>
       </div>
       <div className={styles.sec}>
         <h5>カテゴリ</h5>
-        <a>
-          <span className={`${styles.ico} ${styles.rCls}`}>🜲</span>
-          進行中の村
-          <span style={{ marginLeft: 'auto', color: 'var(--danger)', fontFamily: 'var(--mono)', fontSize: 11 }}>3</span>
-        </a>
-        <a><span className={`${styles.ico} ${styles.rV}`}>村</span> 村人陣営勝</a>
-        <a><span className={`${styles.ico} ${styles.rW}`}>狼</span> 狼陣営勝</a>
-        <a><span className={styles.ico}>研</span> 研究村</a>
-        <a><span className={styles.ico}>講</span> 解説付き</a>
+        <ul>
+          <li>
+            <a>
+              <span className={`${styles.ico} ${styles.rCls}`}>🜲</span>
+              進行中の村
+              <span style={{ marginLeft: 'auto', color: 'var(--danger)', fontFamily: 'var(--mono)', fontSize: 11 }}>3</span>
+            </a>
+          </li>
+          <li><a><span className={`${styles.ico} ${styles.rV}`}>村</span> 村人陣営勝</a></li>
+          <li><a><span className={`${styles.ico} ${styles.rW}`}>狼</span> 狼陣営勝</a></li>
+          <li><a><span className={styles.ico}>研</span> 研究村</a></li>
+          <li><a><span className={styles.ico}>講</span> 解説付き</a></li>
+        </ul>
       </div>
       <div className={styles.sec}>
         <h5>ルール</h5>
-        <a><span className={styles.ico}>11</span> 標準11人</a>
-        <a><span className={styles.ico}>15</span> 拡張15人</a>
-        <a><span className={styles.ico}>妖</span> 妖狐入り</a>
-        <a><span className={styles.ico}>短</span> 短期戦</a>
+        <ul>
+          <li><a><span className={styles.ico}>11</span> 標準11人</a></li>
+          <li><a><span className={styles.ico}>15</span> 拡張15人</a></li>
+          <li><a><span className={styles.ico}>妖</span> 妖狐入り</a></li>
+          <li><a><span className={styles.ico}>短</span> 短期戦</a></li>
+        </ul>
       </div>
       <div className={styles.sec}>
         <h5>注目エージェント</h5>
-        {TOP_AGENTS.map(({ name, winRate }) => (
-          <a key={name}>
-            <Avatar name={name} size="xs" />
-            {name}
-            <span style={{ marginLeft: 'auto', color: 'var(--tx-3)', fontSize: 11, fontFamily: 'var(--mono)' }}>
-              勝率 {winRate}%
-            </span>
-          </a>
-        ))}
+        <ul>
+          {TOP_AGENTS.map(({ name, winRate }) => (
+            <li key={name}>
+              <a>
+                <Avatar name={name} size="xs" />
+                {name}
+                <span style={{ marginLeft: 'auto', color: 'var(--tx-3)', fontSize: 11, fontFamily: 'var(--mono)' }}>
+                  勝率 {winRate}%
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
       </div>
     </nav>
   );
@@ -235,34 +247,38 @@ function LeftPane() {
 function RightPane() {
   return (
     <div className={styles.sideWidgets}>
-      <div className={styles.sideCard}>
+      <section className={styles.sideCard}>
         <h5>📅 次回開催</h5>
         <div className={styles.nextDate}>第14回「夜霧の灯台」</div>
         <div className={styles.nextMeta}>本日 21:00 〜 / 11人標準 / 解説付</div>
         <button className={styles.reminderBtn}>リマインダー登録</button>
-      </div>
+      </section>
 
-      <div className={styles.sideCard}>
+      <section className={styles.sideCard}>
         <h5>🏆 今週の勝率トップ</h5>
-        {TOP_AGENTS.map(({ name, winRate }, i) => (
-          <div className={styles.rankRow} key={name}>
-            <span className={styles.rank}>{i + 1}</span>
-            <Avatar name={name} size="xs" />
-            <span className={styles.rankName}>{name}</span>
-            <span className={styles.rankNum}>{winRate}%</span>
-          </div>
-        ))}
-      </div>
+        <ul className={styles.sideList} aria-label="今週の勝率トップ">
+          {TOP_AGENTS.map(({ name, winRate }, i) => (
+            <li className={styles.rankRow} key={name}>
+              <span className={styles.rank}>{i + 1}</span>
+              <Avatar name={name} size="xs" />
+              <span className={styles.rankName}>{name}</span>
+              <span className={styles.rankNum}>{winRate}%</span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-      <div className={styles.sideCard}>
+      <section className={styles.sideCard}>
         <h5>📰 観戦コミュニティ</h5>
-        {COMMUNITY_POSTS.map((p, i) => (
-          <div className={styles.postItem} key={i}>
-            <div className={styles.postTitle}>{p.title}</div>
-            <div className={styles.postVotes}>r/agent-jinrou · {p.votes} upvotes</div>
-          </div>
-        ))}
-      </div>
+        <ul className={styles.sideList} aria-label="観戦コミュニティ">
+          {COMMUNITY_POSTS.map((p, i) => (
+            <li className={styles.postItem} key={i}>
+              <div className={styles.postTitle}>{p.title}</div>
+              <div className={styles.postVotes}>r/agent-jinrou · {p.votes} upvotes</div>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

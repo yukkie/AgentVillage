@@ -32,6 +32,12 @@
   text-transform: uppercase;
   margin: 8px 0 6px;
 }
+.sec ul,
+.sideList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 .sec a {
   display: flex;
   align-items: center;
@@ -321,6 +327,10 @@
   color: var(--tx-2);
   margin: 0 0 10px;
   letter-spacing: 0.02em;
+}
+
+.sideList {
+  display: block;
 }
 
 .rankRow {

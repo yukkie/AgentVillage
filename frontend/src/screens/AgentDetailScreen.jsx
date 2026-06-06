@@ -24,12 +24,13 @@ function LeftPane({ current, onPick }) {
         <span className={styles.pickerCount}>{alive.length} alive · {dead.length} dead</span>
       </div>
       <div className={styles.agentPicker}>
+        <ul className={styles.pickerList} aria-label="エージェント一覧">
         {ALL_AGENTS.map(n => {
           const role  = ROLE_ASSIGNMENT[n];
           const r     = ROLES[role];
           const isDead = DEAD_AGENTS.has(n);
           return (
-            <div
+            <li
               key={n}
               className={`${styles.pick} ${current === n ? styles.pickOn : ''} ${isDead ? styles.pickDead : ''}`}
               style={{ '--r-color': r?.color }}
@@ -41,9 +42,10 @@ function LeftPane({ current, onPick }) {
                 <span className={styles.pickRole}>{r?.ja}</span>
               </div>
               <span className={styles.statusDot} />
-            </div>
+            </li>
           );
         })}
+        </ul>
         <div className={styles.sectionLabel} style={{ marginTop: 12 }}>並べ替え</div>
         <div style={{ padding: '0 6px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           <button className={styles.sortBtn}>発言数 ↓</button>
@@ -63,7 +65,7 @@ function AgentHero({ agent }) {
   const winPct = stats.games ? Math.round(stats.wins / stats.games * 100) : 0;
 
   return (
-    <div className={styles.agentHero} style={{ '--r-color': r?.color }}>
+    <header className={styles.agentHero} style={{ '--r-color': r?.color }}>
       <Avatar name={agent} role={role} highlight />
       <div className={styles.heroInfo}>
         <h1>{agent}</h1>
@@ -91,7 +93,7 @@ function AgentHero({ agent }) {
           <div className={styles.statLabel}>応援スコア</div>
         </div>
       </div>
-    </div>
+    </header>
   );
 }
 
@@ -109,15 +111,17 @@ function TabOverview({ agent }) {
       {thoughts.length > 0 && (
         <div className={styles.panel}>
           <h3>直近の推論 <small>{thoughts.length} 件 · spectator限定</small></h3>
-          {thoughts.map((t, i) => (
-            <div className={styles.thought} key={i}>
-              <div className={styles.thoughtHead}>
-                <strong>D{t.day} #{t.speechId} 発言前の思考</strong>
-                <span className={styles.thoughtTs}>{(8 + t.speechId * 2) % 24}:{String((t.speechId * 13) % 60).padStart(2, '0')}</span>
-              </div>
-              <div className={styles.thoughtBody}>{t.text.slice(0, 180)}{t.text.length > 180 ? '…' : ''}</div>
-            </div>
-          ))}
+          <ul className={styles.thoughtList} aria-label="直近の推論">
+            {thoughts.map((t, i) => (
+              <li className={styles.thought} key={i}>
+                <div className={styles.thoughtHead}>
+                  <strong>D{t.day} #{t.speechId} 発言前の思考</strong>
+                  <time className={styles.thoughtTs}>{(8 + t.speechId * 2) % 24}:{String((t.speechId * 13) % 60).padStart(2, '0')}</time>
+                </div>
+                <div className={styles.thoughtBody}>{t.text.slice(0, 180)}{t.text.length > 180 ? '…' : ''}</div>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </>
@@ -133,15 +137,17 @@ function TabThoughts({ agent }) {
   return (
     <div className={styles.panel}>
       <h3>推論ログ <small>{thoughts.length} 件 · spectator限定</small></h3>
-      {thoughts.map((t, i) => (
-        <div className={styles.thought} key={i}>
-          <div className={styles.thoughtHead}>
-            <strong>D{t.day} #{t.speechId} 発言前の思考</strong>
-            <span className={styles.thoughtTs}>{(8 + t.speechId * 2) % 24}:{String((t.speechId * 13) % 60).padStart(2, '0')}</span>
-          </div>
-          <div className={styles.thoughtBody}>{t.text}</div>
-        </div>
-      ))}
+      <ul className={styles.thoughtList} aria-label="推論ログ">
+        {thoughts.map((t, i) => (
+          <li className={styles.thought} key={i}>
+            <div className={styles.thoughtHead}>
+              <strong>D{t.day} #{t.speechId} 発言前の思考</strong>
+              <time className={styles.thoughtTs}>{(8 + t.speechId * 2) % 24}:{String((t.speechId * 13) % 60).padStart(2, '0')}</time>
+            </div>
+            <div className={styles.thoughtBody}>{t.text}</div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -152,15 +158,17 @@ function TabSuspicion({ agent }) {
   return (
     <div className={styles.panel}>
       <h3>疑い度マトリクス <small>{agent} 視点</small></h3>
-      <div className={styles.matrix}>
+      <div className={styles.matrixHeader} aria-hidden="true">
         <div className={styles.matrixHead}>対象</div>
         <div className={styles.matrixHead}>疑い ←→ 信頼</div>
         <div className={styles.matrixHead}>疑</div>
         <div className={styles.matrixHead}>信</div>
+      </div>
+      <ul className={styles.matrix} aria-label="疑い度マトリクス">
         {matrix.map(m => (
           <MatrixRow key={m.name} m={m} />
         ))}
-      </div>
+      </ul>
     </div>
   );
 }
@@ -174,7 +182,9 @@ function TabNightActions({ agent }) {
   return (
     <div className={styles.panel}>
       <h3>夜の行動</h3>
-      {actions.map((a, i) => <NightRow key={i} a={a} />)}
+      <ul className={styles.nightList} aria-label="夜の行動">
+        {actions.map((a, i) => <NightRow key={i} a={a} />)}
+      </ul>
     </div>
   );
 }
@@ -192,19 +202,21 @@ function TabHistory({ agent }) {
   return (
     <div className={styles.panel}>
       <h3>過去の戦績 <small>通算 {stats.games} 戦 {stats.wins} 勝</small></h3>
-      {records.map((rec, i) => {
-        const r = ROLES[rec.role];
-        return (
-          <div key={i} className={styles.recordRow} style={{ '--r-color': r?.color }}>
-            <span className={styles.recordNum}>#{rec.game}</span>
-            <span style={{ color: 'var(--tx-3)', fontSize: 11 }}>{rec.village}</span>
-            <span className={styles.recordRole}>{r?.ja}</span>
-            <span className={`${styles.recordResult} ${rec.result ? styles.win : styles.lose}`}>
-              {rec.result ? '勝利' : '敗北'}
-            </span>
-          </div>
-        );
-      })}
+      <ul className={styles.recordList} aria-label="過去の戦績">
+        {records.map((rec, i) => {
+          const r = ROLES[rec.role];
+          return (
+            <li key={i} className={styles.recordRow} style={{ '--r-color': r?.color }}>
+              <span className={styles.recordNum}>#{rec.game}</span>
+              <span style={{ color: 'var(--tx-3)', fontSize: 11 }}>{rec.village}</span>
+              <span className={styles.recordRole}>{r?.ja}</span>
+              <span className={`${styles.recordResult} ${rec.result ? styles.win : styles.lose}`}>
+                {rec.result ? '勝利' : '敗北'}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
@@ -220,7 +232,7 @@ function NightRow({ a }) {
     : '—';
 
   return (
-    <div className={styles.nightRow}>
+    <li className={styles.nightRow}>
       <div className={styles.nightDay}>D{a.day}{a.phase}</div>
       <div>
         <div className={styles.nightAction}>{a.action}</div>
@@ -230,14 +242,14 @@ function NightRow({ a }) {
         </div>
       </div>
       <div className={`${styles.nightResult} ${resultClass}`}>{resultLabel}</div>
-    </div>
+    </li>
   );
 }
 
 // --- 共通パーツ: マトリクス行 ---
 function MatrixRow({ m }) {
   return (
-    <>
+    <li className={styles.matrixRow}>
       <div className={styles.matrixName}>
         <Avatar name={m.name} size="xs" />
         {m.name}
@@ -252,7 +264,7 @@ function MatrixRow({ m }) {
       </div>
       <div className={styles.matrixNum} style={{ color: 'var(--danger)' }}>{m.suspicion}</div>
       <div className={styles.matrixNum} style={{ color: 'var(--info)' }}>{m.trust}</div>
-    </>
+    </li>
   );
 }
 
@@ -265,18 +277,22 @@ function RightPane({ agent }) {
     <div className={styles.rightInner}>
       <div className={styles.panel}>
         <h3>疑い度マトリクス</h3>
-        <div className={styles.matrix}>
+        <div className={styles.matrixHeader} aria-hidden="true">
           <div className={styles.matrixHead}>対象</div>
           <div className={styles.matrixHead}>疑い ←→ 信頼</div>
           <div className={styles.matrixHead}>疑</div>
           <div className={styles.matrixHead}>信</div>
-          {matrix.map(m => <MatrixRow key={m.name} m={m} />)}
         </div>
+        <ul className={styles.matrix} aria-label="疑い度マトリクス">
+          {matrix.map(m => <MatrixRow key={m.name} m={m} />)}
+        </ul>
       </div>
       {actions.length > 0 && (
         <div className={styles.panel}>
           <h3>夜の行動</h3>
-          {actions.map((a, i) => <NightRow key={i} a={a} />)}
+          <ul className={styles.nightList} aria-label="夜の行動">
+            {actions.map((a, i) => <NightRow key={i} a={a} />)}
+          </ul>
         </div>
       )}
     </div>

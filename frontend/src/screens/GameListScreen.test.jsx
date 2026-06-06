@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import GameListScreen from './GameListScreen.jsx';
 import * as archiveLoader from '../lib/archiveLoader.js';
@@ -70,5 +70,30 @@ describe('GameListScreen GameCard semantics', () => {
     await waitFor(() => {
       expect(onOpenGame).toHaveBeenCalledWith(game);
     });
+  });
+});
+
+describe('GameListScreen list semantics', () => {
+  it('exposes side navigation and right widgets as semantic lists', async () => {
+    /*
+     * SUT: GameListScreen / LeftPane / RightPane
+     * Mock: fetchGameList（state_archive index の取得を固定）
+     * Level: component
+     * Objective: 左サイドナビと右ウィジェットの項目群が list/listitem role で特定できることを検証する。
+     */
+    mockGameList();
+
+    render(<GameListScreen />);
+    await screen.findByRole('article', { name: '20260510_102927' });
+
+    const sideNav = screen.getByRole('navigation', { name: 'ゲーム一覧サイドナビ' });
+    expect(within(sideNav).getAllByRole('list').length).toBeGreaterThanOrEqual(4);
+    expect(within(sideNav).getAllByRole('listitem').length).toBeGreaterThanOrEqual(10);
+
+    const ranking = screen.getByRole('list', { name: '今週の勝率トップ' });
+    expect(within(ranking).getAllByRole('listitem')).toHaveLength(5);
+
+    const posts = screen.getByRole('list', { name: '観戦コミュニティ' });
+    expect(within(posts).getAllByRole('listitem').length).toBeGreaterThan(0);
   });
 });
