@@ -441,8 +441,8 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
         <span style={{ float: 'right', color: 'var(--tx-4)' }}>{alive.length} / {order.length} 生存</span>
       </div>
 
-      <section className={styles.rosterSection}>
-        <h4>生存 <span className={styles.count}>{alive.length}</span></h4>
+      <section className={styles.rosterSection} aria-labelledby="roster-alive-heading">
+        <h4 id="roster-alive-heading">生存 <span className={styles.count}>{alive.length}</span></h4>
         <ul className={styles.rosterList} aria-label="生存エージェント">
           {alive.map(n => {
             const role = roleAssignment[n];
@@ -466,8 +466,8 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
         </ul>
       </section>
 
-      <section className={styles.rosterSection}>
-        <h4>死亡者 <span className={styles.count}>{deadNames.length}</span></h4>
+      <section className={styles.rosterSection} aria-labelledby="roster-dead-heading">
+        <h4 id="roster-dead-heading">死亡者 <span className={styles.count}>{deadNames.length}</span></h4>
         <ul className={styles.rosterList} aria-label="死亡者">
           {deadNames.map(n => {
             const role = roleAssignment[n];

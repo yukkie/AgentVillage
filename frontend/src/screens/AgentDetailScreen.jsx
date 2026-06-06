@@ -158,13 +158,13 @@ function TabSuspicion({ agent }) {
   return (
     <div className={styles.panel}>
       <h3>疑い度マトリクス <small>{agent} 視点</small></h3>
+      <div className={styles.matrixHeader} aria-hidden="true">
+        <div className={styles.matrixHead}>対象</div>
+        <div className={styles.matrixHead}>疑い ←→ 信頼</div>
+        <div className={styles.matrixHead}>疑</div>
+        <div className={styles.matrixHead}>信</div>
+      </div>
       <ul className={styles.matrix} aria-label="疑い度マトリクス">
-        <li className={styles.matrixHeader}>
-          <div className={styles.matrixHead}>対象</div>
-          <div className={styles.matrixHead}>疑い ←→ 信頼</div>
-          <div className={styles.matrixHead}>疑</div>
-          <div className={styles.matrixHead}>信</div>
-        </li>
         {matrix.map(m => (
           <MatrixRow key={m.name} m={m} />
         ))}
@@ -277,13 +277,13 @@ function RightPane({ agent }) {
     <div className={styles.rightInner}>
       <div className={styles.panel}>
         <h3>疑い度マトリクス</h3>
+        <div className={styles.matrixHeader} aria-hidden="true">
+          <div className={styles.matrixHead}>対象</div>
+          <div className={styles.matrixHead}>疑い ←→ 信頼</div>
+          <div className={styles.matrixHead}>疑</div>
+          <div className={styles.matrixHead}>信</div>
+        </div>
         <ul className={styles.matrix} aria-label="疑い度マトリクス">
-          <li className={styles.matrixHeader}>
-            <div className={styles.matrixHead}>対象</div>
-            <div className={styles.matrixHead}>疑い ←→ 信頼</div>
-            <div className={styles.matrixHead}>疑</div>
-            <div className={styles.matrixHead}>信</div>
-          </li>
           {matrix.map(m => <MatrixRow key={m.name} m={m} />)}
         </ul>
       </div>

@@ -249,12 +249,8 @@ function RightPane() {
     <div className={styles.sideWidgets}>
       <section className={styles.sideCard}>
         <h5>📅 次回開催</h5>
-        <ul className={styles.sideList} aria-label="次回開催">
-          <li>
-            <div className={styles.nextDate}>第14回「夜霧の灯台」</div>
-            <div className={styles.nextMeta}>本日 21:00 〜 / 11人標準 / 解説付</div>
-          </li>
-        </ul>
+        <div className={styles.nextDate}>第14回「夜霧の灯台」</div>
+        <div className={styles.nextMeta}>本日 21:00 〜 / 11人標準 / 解説付</div>
         <button className={styles.reminderBtn}>リマインダー登録</button>
       </section>
 

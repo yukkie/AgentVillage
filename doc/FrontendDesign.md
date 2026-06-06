@@ -216,7 +216,7 @@ stateDiagram-v2
     {+
       == SideWidgets (280px)
       {+
-        == 次回開催 (<section><ul><li>)
+        == 次回開催 (<section>)
         第14回「夜霧の灯台」
         本日 21:00 〜 / 11人標準
         [リマインダー登録]
@@ -488,7 +488,7 @@ CSS Grid `grid-template-columns: var(--lcol) 1fr var(--rcol)` で 3 ペインを
 
 データソース: `stub/gameList.js`（`GAMES`, `TOP_AGENTS`, `COMMUNITY_POSTS`, `VILLAGE_NAME_PRESETS`）。
 
-Semantic HTML: `GameCard` は自己完結したゲーム項目として `<article>`、サイドナビと右ウィジェットの項目群は `<ul><li>` で表現する。リンク風の装飾・投票列・Avatar は従来どおり装飾または操作部品として扱う。
+Semantic HTML: `GameCard` は自己完結したゲーム項目として `<article>`、サイドナビと複数項目を持つ右ウィジェットの項目群は `<ul><li>` で表現する。単独項目の「次回開催」は `<section>` 内の通常コンテンツとして扱う。リンク風の装飾・投票列・Avatar は従来どおり装飾または操作部品として扱う。
 
 #### `SpectatorScreen`
 
