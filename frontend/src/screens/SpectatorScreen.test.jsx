@@ -183,6 +183,41 @@ describe('FeedItem event routing', () => {
   });
 });
 
+describe('FeedItem semantic cards', () => {
+  it.each([
+    ['speech', { event_type: 'speech', agent: 'Alice', content: 'こんにちは', speech_id: 1, is_public: true }, 'Alice D1-01 10:03'],
+    ['wolf_chat', { event_type: 'wolf_chat', agent: 'Bob', content: 'Attack Alice tonight.', is_public: false }, 'Bob wolf chat'],
+  ])('renders %s as an article', (_type, event, name) => {
+    /*
+     * SUT: FeedItem → SpeechCard / WolfChatCard
+     * Mock: なし（LogEvent 形状の plain object を入力）
+     * Level: component
+     * Objective: 発言カード相当が article role で特定できることを検証する。
+     */
+    renderFeedItem(event);
+
+    expect(screen.getByRole('article', { name })).toBeTruthy();
+  });
+
+  it('renders speech timestamp as a time element', () => {
+    /*
+     * SUT: FeedItem → SpeechCard
+     * Mock: なし（LogEvent 形状の plain object を入力）
+     * Level: component
+     * Objective: 発言タイムスタンプが <time> 要素としてレンダリングされることを検証する。
+     */
+    const { container } = renderFeedItem({
+      event_type: 'speech',
+      agent: 'Alice',
+      content: 'こんにちは',
+      speech_id: 1,
+      is_public: true,
+    });
+
+    expect(container.querySelector('time')?.textContent).toBe('10:03');
+  });
+});
+
 describe('FeedItem: phase_start visibility', () => {
   it('hides day_vote phase_start', () => {
     /**
@@ -448,6 +483,38 @@ describe('RightPane: death reason display (#391)', () => {
       activeDay: 1,
     });
     expect(container.querySelector('[class*="deathReason"]')).toBeNull();
+  });
+});
+
+describe('RightPane semantic lists', () => {
+  it('exposes CO board, night actions, and roster groups as semantic lists', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし（agents / daySummary plain object を入力）
+     * Level: component
+     * Objective: COボード・夜行動・生存/死亡ロスターが list/listitem role で特定できることを検証する。
+     */
+    const daySummary = {
+      1: {
+        nightActions: [
+          { day: 1, event_type: 'inspection', agent: 'Alice', target: 'Bob', content: 'Alice inspects Bob: Werewolf', is_public: false },
+        ],
+        execResult: null,
+        speechCount: 0,
+        nightDone: false,
+      },
+    };
+
+    renderRightPane({
+      daySummary,
+      activeDay: 1,
+      coStatus: { Alice: 'Seer' },
+    });
+
+    expect(within(screen.getByRole('list', { name: 'カミングアウト状況' })).getAllByRole('listitem').length).toBeGreaterThan(0);
+    expect(within(screen.getByRole('list', { name: 'Day 1 夜の行動' })).getAllByRole('listitem')).toHaveLength(1);
+    expect(within(screen.getByRole('list', { name: '生存エージェント' })).getAllByRole('listitem')).toHaveLength(2);
+    expect(within(screen.getByRole('list', { name: '死亡者' })).getAllByRole('listitem')).toHaveLength(1);
   });
 });
 
