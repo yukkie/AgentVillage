@@ -265,4 +265,5 @@ class GameEngine:
             event_type=EventType.GAME_OVER,
             content=f"GAME OVER — {winner} win!",
             is_public=True,
+            winner=winner,
         ))

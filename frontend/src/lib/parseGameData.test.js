@@ -812,3 +812,42 @@ describe('aggregateDaySummary action fields', () => {
     expect(result[1]).toBeUndefined();
   });
 });
+
+describe('parseGameData winner extraction', () => {
+  it('extracts winner from game_over event', () => {
+    /*
+     * SUT: parseGameData
+     * Mock: なし
+     * Level: unit
+     * Objective: spectator_log.jsonl に game_over イベントがあるとき winner フィールドが
+     *            parseGameData の戻り値に含まれることを検証する。
+     */
+    const jsonl = JSON.stringify({ day: 3, phase: 'game_over', event_type: 'game_over', content: 'GAME OVER — Werewolves win!', winner: 'Werewolves', is_public: true });
+    const result = parseGameData(jsonl);
+    expect(result.winner).toBe('Werewolves');
+  });
+
+  it('returns null winner when game_over has no winner field (legacy log)', () => {
+    /*
+     * SUT: parseGameData
+     * Mock: なし
+     * Level: unit
+     * Objective: winner フィールドのない旧アーカイブを読んでもクラッシュせず winner=null になることを検証する。
+     */
+    const jsonl = JSON.stringify({ day: 3, phase: 'game_over', event_type: 'game_over', content: 'GAME OVER — Villagers win!', is_public: true });
+    const result = parseGameData(jsonl);
+    expect(result.winner).toBeNull();
+  });
+
+  it('returns null winner when no game_over event exists', () => {
+    /*
+     * SUT: parseGameData
+     * Mock: なし
+     * Level: unit
+     * Objective: game_over イベントがない場合 winner=null になることを検証する。
+     */
+    const jsonl = JSON.stringify({ day: 1, phase: 'day_discussion', event_type: 'speech', agent: 'Alice', content: 'hello', is_public: true });
+    const result = parseGameData(jsonl);
+    expect(result.winner).toBeNull();
+  });
+});

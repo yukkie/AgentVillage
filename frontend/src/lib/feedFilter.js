@@ -36,6 +36,10 @@ export function filterFeedEvents(events, day, phase) {
       return false;
     }
 
+    if (phase === 'game_over') {
+      return ev.event_type === 'game_over';
+    }
+
     return false;
   });
 }
