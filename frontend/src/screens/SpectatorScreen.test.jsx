@@ -577,6 +577,59 @@ describe('RightPane: night actions for activeDay', () => {
   });
 });
 
+describe('LeftPane night phase visibility', () => {
+  it('hides the night phase row when nightActions is empty and nightDone is false', () => {
+    /**
+     * SUT: LeftPane
+     * Mock: なし
+     * Level: unit
+     * Objective: nightActions が空かつ nightDone=false のとき（昼処刑終了など夜フェーズ未実行の日）
+     *            夜フェーズ行が左ペインに表示されないことを検証する (#459)。
+     */
+    renderLeftPane({
+      daySummary: {
+        1: { nightActions: [], execResult: null, speechCount: 0, nightDone: false },
+      },
+    });
+    expect(screen.queryByText(/夜フェーズ/)).toBeNull();
+  });
+
+  it('shows the night phase row when nightActions has entries', () => {
+    /**
+     * SUT: LeftPane
+     * Mock: なし
+     * Level: unit
+     * Objective: nightActions にエントリがある日は夜フェーズ行が表示されることを検証する (#459)。
+     */
+    renderLeftPane({
+      daySummary: {
+        1: {
+          nightActions: [{ event_type: 'inspection', agent: 'Alice', target: 'Bob', is_public: false }],
+          execResult: null,
+          speechCount: 0,
+          nightDone: false,
+        },
+      },
+    });
+    expect(screen.getByText(/夜フェーズ/)).toBeTruthy();
+  });
+
+  it('shows the night phase row when nightDone is true', () => {
+    /**
+     * SUT: LeftPane
+     * Mock: なし
+     * Level: unit
+     * Objective: nightDone=true（公開 night_attack が存在する）日は夜フェーズ行が表示されることを検証する (#459)。
+     */
+    renderLeftPane({
+      daySummary: {
+        1: { nightActions: [], execResult: null, speechCount: 0, nightDone: true },
+      },
+    });
+    expect(screen.getByText(/夜フェーズ/)).toBeTruthy();
+  });
+});
+
 describe('LeftPane phase interaction', () => {
   it.each([
     ['議論フェーズ', 'discuss'],

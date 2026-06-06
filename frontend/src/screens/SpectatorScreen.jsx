@@ -304,12 +304,14 @@ export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agent
               >
                 <span className={styles.dot} /> 投票・処刑 <span className={styles.phaseTurn}>{daySummary[d]?.execResult?.target || '—'}</span>
               </div>
-              <div
-                className={`${styles.phaseItem} ${styles.phaseNight} ${activeDay === d && activePhase === 'night' ? styles.active : ''}`}
-                onClick={() => handlePhase(d, 'night')}
-              >
-                <span className={styles.dot} /> 夜フェーズ <span className={styles.phaseTurn}>{daySummary[d]?.nightActions?.find(a => a.event_type === 'night_attack')?.target ?? ''}</span>
-              </div>
+              {(daySummary[d]?.nightActions?.length > 0 || daySummary[d]?.nightDone) && (
+                <div
+                  className={`${styles.phaseItem} ${styles.phaseNight} ${activeDay === d && activePhase === 'night' ? styles.active : ''}`}
+                  onClick={() => handlePhase(d, 'night')}
+                >
+                  <span className={styles.dot} /> 夜フェーズ <span className={styles.phaseTurn}>{daySummary[d]?.nightActions?.find(a => a.event_type === 'night_attack')?.target ?? ''}</span>
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -564,7 +566,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
   ), [agents]);
   const replayCoStatus = useMemo(() => aggregateCoStatus(events, activeDay), [events, activeDay]);
   const agentNames = Object.keys(agents);
-  const visibleDays = [...new Set(events.map(event => event.day).filter(Boolean))].sort((a, b) => a - b);
+  const visibleDays = [...new Set(events.filter(e => e.event_type !== 'game_over').map(e => e.day).filter(Boolean))].sort((a, b) => a - b);
 
   const prevById = {};
   events.forEach(e => {

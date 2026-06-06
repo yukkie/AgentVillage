@@ -260,7 +260,7 @@ class GameEngine:
 
     def _game_over(self, winner: str) -> None:
         self._emit(LogEvent.make(
-            day=self.day,
+            day=self.day + 1,
             phase=Phase.GAME_OVER.value,
             event_type=EventType.GAME_OVER,
             content=f"GAME OVER — {winner} win!",
