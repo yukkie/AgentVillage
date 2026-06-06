@@ -21,13 +21,14 @@
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#434 | bug | 🔴 | 2 | SpectatorScreen drops suspicion_update / threat_update (not displayed) | SpectatorScreen が suspicion_update / threat_update を SYSTEM_EVENT_VIEWS に持たず行ごと破棄。CLI renderer は [SUSPICION]/[THREAT] 表示可 |
+| yukkie/AgentVillage#451 | bug | 🔴 | 3 | Persist accumulated suspicion/threat snapshots for replay | suspicion_update/threat_update イベントに accumulated snapshot を extra_data として付与し、リプレイ消費者が単一イベントから状態を復元できるようにする。#434 の前提 |
 | yukkie/AgentVillage#352 | enhancement | 🟡 | 1 | Show prologue message on game start in SpectatorScreen feed | GAME START 時にプロローグ固定文をフォールバック表示。将来の role_assigned イベント実装時に差し替え |
 | yukkie/AgentVillage#353 | enhancement | 🟡 | 1 | Emit role_assigned events at game start for each agent | init フェーズで全エージェント分の役職割り当てイベントを spectator_log に出力。#352 のフォールバック差し替え用 |
 | yukkie/AgentVillage#347 | enhancement | 🟡 | 3 | Implement feed filters in SpectatorScreen left pane (agent / role / event type) | 参加者・役職・表示種別フィルターチップを実際に動作させる。追加データ不要でクライアントサイドのみで実装可能 |
 | yukkie/AgentVillage#337 | enhancement | 🟡 | 2 | Top agents real stats | stub/gameList.js の TOP_AGENTS を実ゲーム結果の集計データに置き換え |
 | yukkie/AgentVillage#319 | enhancement | 🟡 | 3 | LIVE spectator | state/ を tail して進行中ゲームを表示（Milestone 2 後半） |
 | yukkie/AgentVillage#364 | enhancement | 🟡 | 5 | introduce SpectatorScreen view model indexes | SpectatorScreen 用 view model/index を導入し、render 中の events 全走査を減らす |
-| yukkie/AgentVillage#455 | tech-debt | 🟡 | - | semantic HTML for the three screens | 3画面（GameList/Spectator/AgentDetail）本体の div soup を FrontendDesign.md §6.3 方針に沿って ul/li・article・time へ置換。#411 の follow-up |
+| yukkie/AgentVillage#453 | tech-debt | 🟡 | 3 | semantic HTML for the three screens | 3画面（GameList/Spectator/AgentDetail）本体の div soup を FrontendDesign.md §6.3 方針に沿って ul/li・article・time へ置換。#411 の follow-up |
 | yukkie/AgentVillage#321 | enhancement | 🟢 | 2 | Unify config data as shared JSON (SSOT) | config/*.json を Python/JS 共有にして constants.js のハードコードを廃止 |
 | yukkie/AgentVillage#323 | enhancement | 🟢 | 3 | i18n support for frontend UI strings (ja/en) | JSX 内の日本語ハードコードを locale リソースに外出しし、ja/en 切り替えに対応 |
 | yukkie/AgentVillage#342 | enhancement | 🟢 | 3 | Introduce React Router for game and agent detail navigation | React Router 導入。AgentDetailScreen 依存 |
