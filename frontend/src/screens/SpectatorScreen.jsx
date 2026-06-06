@@ -67,9 +67,10 @@ function SpeechCard({ ev, prevById, roleAssignment, viewerMode = 'spectator' }) 
   const coColor = coedRole ? ROLES[coedRole]?.color : undefined;
 
   return (
-    <div
+    <article
       className={`${styles.speech} ${isWolf ? styles.speechWolf : ''}`}
       style={{ '--r-color': r?.color }}
+      aria-label={`${ev.agent} ${fmtTurn(ev.day, ev.speech_id || 0)} ${fmtTime(ev.day, ev.speech_id || 0)}`}
     >
       <Avatar name={ev.agent} role={isPublic ? undefined : role} />
       <div className={styles.vert} />
@@ -83,7 +84,7 @@ function SpeechCard({ ev, prevById, roleAssignment, viewerMode = 'spectator' }) 
               ▶ {ROLES[coedRole]?.ja || coedRole} CO
             </span>
           )}
-          <span className={styles.ts}>{fmtTime(ev.day, ev.speech_id || 0)}</span>
+          <time className={styles.ts}>{fmtTime(ev.day, ev.speech_id || 0)}</time>
         </div>
         {replied && (
           <div className={styles.spQuote}>
@@ -96,7 +97,7 @@ function SpeechCard({ ev, prevById, roleAssignment, viewerMode = 'spectator' }) 
         </div>
         <ThoughtDetails reasoning={ev.reasoning} viewerMode={viewerMode} />
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -202,7 +203,7 @@ function SystemRow({ kind, icon, label, children, strategy, reasoning, ts, leftN
 // --- 人狼会話カード ---
 function WolfChatCard({ ev, viewerMode = 'spectator' }) {
   return (
-    <div className={`${styles.speech} ${styles.wolfChat}`}>
+    <article className={`${styles.speech} ${styles.wolfChat}`} aria-label={`${ev.agent} wolf chat`}>
       <Avatar name={ev.agent} />
       <div className={styles.vert} />
       <div>
@@ -212,7 +213,7 @@ function WolfChatCard({ ev, viewerMode = 'spectator' }) {
         <div className={styles.spBody}>{ev.content}</div>
         <ThoughtDetails reasoning={ev.reasoning} viewerMode={viewerMode} />
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -379,7 +380,7 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
   return (
     <div className={styles.roster}>
       <div className={styles.sectionLabel}>カミングアウト状況</div>
-      <div className={styles.coBoard}>
+      <ul className={styles.coBoard} aria-label="カミングアウト状況">
         {Object.entries(ROLES)
           .filter(([k]) => k !== 'Villager' && k !== 'Werewolf' && k !== 'Madman')
           .map(([roleKey, roleDef]) => {
@@ -387,32 +388,32 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
               .filter(([, cr]) => cr === roleKey)
               .map(([name]) => name);
             return (
-              <div key={roleKey} className={styles.coRow} style={{ '--r-color': roleDef.color }}>
+              <li key={roleKey} className={styles.coRow} style={{ '--r-color': roleDef.color }}>
                 <span className={styles.coRole}>{roleDef.ja}</span>
                 <span className={styles.coName} style={{ color: coAgents.length ? 'var(--tx)' : 'var(--tx-3)' }}>
                   {coAgents.length ? coAgents.join(', ') : '未CO'}
                 </span>
-              </div>
+              </li>
             );
           })}
-      </div>
+      </ul>
 
       <div className={styles.sectionLabel}>Day {activeDay} 夜の行動</div>
-      <div className={styles.actionList}>
+      <ul className={styles.actionList} aria-label={`Day ${activeDay} 夜の行動`}>
         {nightActions.map((a, i) => (
-          <div key={i} className={`${styles.action} ${styles[a.event_type] || ''}`}>
+          <li key={i} className={`${styles.action} ${styles[a.event_type] || ''}`}>
             <div className={styles.actionIco}>{NIGHT_ACTION_ICON[a.event_type] || '・'}</div>
             <div className={styles.what}>
               <strong>{a.agent}</strong>
               {a.target && <> → <em style={{ '--r-color': ROLES[roleAssignment[a.target]]?.color }}>{a.target}</em></>}
               <span style={{ color: 'var(--tx-4)', marginLeft: 6 }}>{NIGHT_ACTION_LABEL[a.event_type]}</span>
             </div>
-          </div>
+          </li>
         ))}
         {nightActions.length === 0 && (
-          <div className={styles.action} style={{ color: 'var(--tx-3)' }}>夜の行動ログなし</div>
+          <li className={styles.action} style={{ color: 'var(--tx-3)' }}>夜の行動ログなし</li>
         )}
-      </div>
+      </ul>
 
       {execResult && (
         <>
@@ -440,53 +441,57 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
         <span style={{ float: 'right', color: 'var(--tx-4)' }}>{alive.length} / {order.length} 生存</span>
       </div>
 
-      <div className={styles.rosterSection}>
+      <section className={styles.rosterSection}>
         <h4>生存 <span className={styles.count}>{alive.length}</span></h4>
-        {alive.map(n => {
-          const role = roleAssignment[n];
-          const r = ROLES[role];
-          const coRole = coStatus[n];
-          return (
-            <div key={n} className={styles.rosterRow} style={{ '--r-color': r?.color }}>
-              <Avatar name={n} role={viewerMode === 'spectator' ? role : undefined} size="sm" />
-              <div className={styles.who}>
-                <span className={styles.rosterName}>
-                  {n}
-                  {viewerMode === 'spectator' && <RoleTag role={role} />}
-                  {coRole && (
-                    <span className={styles.coBadge} style={{ '--co-color': ROLES[coRole]?.color }}>▶ {ROLES[coRole]?.ja || coRole} CO</span>
-                  )}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className={styles.rosterSection}>
-        <h4>死亡者 <span className={styles.count}>{deadNames.length}</span></h4>
-        {deadNames.map(n => {
-          const role = roleAssignment[n];
-          const r = ROLES[role];
-          const meta = activeDead.get(n);
-          return (
-            <div key={n} className={`${styles.rosterRow} ${styles.dead}`} style={{ '--r-color': r?.color }}>
-              <Avatar name={n} role={role} size="sm" dead />
-              <div className={styles.whoMeta}>
-                <div className={styles.whoBlock}>
-                  <span className={styles.rosterName}>{n}</span>
-                  <span className={styles.sub}>
-                    <RoleTag role={role} />
+        <ul className={styles.rosterList} aria-label="生存エージェント">
+          {alive.map(n => {
+            const role = roleAssignment[n];
+            const r = ROLES[role];
+            const coRole = coStatus[n];
+            return (
+              <li key={n} className={styles.rosterRow} style={{ '--r-color': r?.color }}>
+                <Avatar name={n} role={viewerMode === 'spectator' ? role : undefined} size="sm" />
+                <div className={styles.who}>
+                  <span className={styles.rosterName}>
+                    {n}
+                    {viewerMode === 'spectator' && <RoleTag role={role} />}
+                    {coRole && (
+                      <span className={styles.coBadge} style={{ '--co-color': ROLES[coRole]?.color }}>▶ {ROLES[coRole]?.ja || coRole} CO</span>
+                    )}
                   </span>
                 </div>
-                {meta && (
-                  <span className={styles.deathReason}>Day {meta.day} · {meta.content}</span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      <section className={styles.rosterSection}>
+        <h4>死亡者 <span className={styles.count}>{deadNames.length}</span></h4>
+        <ul className={styles.rosterList} aria-label="死亡者">
+          {deadNames.map(n => {
+            const role = roleAssignment[n];
+            const r = ROLES[role];
+            const meta = activeDead.get(n);
+            return (
+              <li key={n} className={`${styles.rosterRow} ${styles.dead}`} style={{ '--r-color': r?.color }}>
+                <Avatar name={n} role={role} size="sm" dead />
+                <div className={styles.whoMeta}>
+                  <div className={styles.whoBlock}>
+                    <span className={styles.rosterName}>{n}</span>
+                    <span className={styles.sub}>
+                      <RoleTag role={role} />
+                    </span>
+                  </div>
+                  {meta && (
+                    <span className={styles.deathReason}>Day {meta.day} · {meta.content}</span>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
     </div>
   );
 }

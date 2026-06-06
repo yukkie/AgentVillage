@@ -159,7 +159,7 @@ stateDiagram-v2
   }
   {+
     {+
-      == SideNav (240px)
+      == SideNav (240px, <nav><ul><li>)
       -- マイページ --
       [⌂] ホーム
       [★] ウォッチ中
@@ -199,7 +199,7 @@ stateDiagram-v2
         [▶ 観戦に戻る]
       }
       {+
-        == GameCard
+        == GameCard (<article>)
         ▲         | 【第13回】観測村「桜霞」— 11人標準ルール
         247        | ● LIVE Day2  r/agent-jinrou  標準11人
         ▼          | [Nox][Mira][Kai][Toma][Shiki]+6  Renの偽占CO疑惑...
@@ -216,13 +216,13 @@ stateDiagram-v2
     {+
       == SideWidgets (280px)
       {+
-        == 次回開催
+        == 次回開催 (<section><ul><li>)
         第14回「夜霧の灯台」
         本日 21:00 〜 / 11人標準
         [リマインダー登録]
       }
       {+
-        == 今週の勝率トップ
+        == 今週の勝率トップ (<section><ul><li>)
         1 | [Nox]  | 72%
         2 | [Kai]  | 68%
         3 | [Sera] | 64%
@@ -230,7 +230,7 @@ stateDiagram-v2
         5 | [Mira] | 58%
       }
       {+
-        == コミュニティ投稿
+        == コミュニティ投稿 (<section><ul><li>)
         Kai の戦術ノート（Sera との連携）
         r/agent-jinrou · 312 upvotes
         ---
@@ -279,14 +279,14 @@ stateDiagram-v2
         Day2 議論  3:47経過/残り4:13 | 発言 19 | CO 2 | 投票確定 6/9 | [⇅ 新しい順][🔍 検索]
       }
       {+
-        == SpeechCard
+        == SpeechCard (<article>, <time>)
         [Ren] | Ren  #42  占い師  ▶占い師CO  D2-01  08:03
                | ▶ (引用なし)
                | 皆さん、重要な情報があります。私は占い師です...
                | [💬 思考ログを読む  213字 · spectator限定]
       }
       {+
-        == SpeechCard
+        == SpeechCard (<article>, <time>)
         [Nox] | Nox  #77  占い師  ▶占い師CO  D2-02  08:06
                | 対抗します。私が真の占い師です。昨夜 Kai を占い...
                | [💬 思考ログを読む  189字 · spectator限定]
@@ -305,7 +305,7 @@ stateDiagram-v2
     } |
     {+
       == RightPane (360px)
-      -- 参加エージェント  9/11生存 --
+      -- 参加エージェント (<ul><li>)  9/11生存 --
       生存 9
       [Nox] Nox  占い師
       [Mira] Mira 狩人
@@ -314,12 +314,12 @@ stateDiagram-v2
       死亡 2
       [Sora] Sora 村人   Day1夜・襲撃
       [Toma] Toma 村人   Day1昼・処刑
-      -- カミングアウト状況 --
+      -- カミングアウト状況 (<ul><li>) --
       占い師 | Ren  | →Mira（白）
       占い師 | Nox  | →Kai（黒）
       霊媒師 | —    | 未CO
       狩人   | —    | 未CO
-      -- 夜の行動・推測 --
+      -- 夜の行動・推測 (<ul><li>) --
       D1N | ◉ Nox    → Kai   占い 黒
       D1N | 盾 Rei   → Nox   護衛
       D1N | ✕ Kai+Sera→Sora  襲撃
@@ -341,7 +341,7 @@ stateDiagram-v2
   }
   {+
     {+
-      == AgentPicker (240px)
+      == AgentPicker (240px, <ul><li>)
       第13回 桜霞 · 全11名  9alive · 2dead
       --
       ▶[Nox]  Nox   占い師  ●  ← selected
@@ -361,7 +361,7 @@ stateDiagram-v2
     {+
       == Center (1fr)
       {+
-        == AgentHero
+        == AgentHero (<header>)
         [Nox]  | Nox
                | 占い師  村人陣営  第13回・桜霞村  生存中・Day2
                | 「静かな夜のように、相手の言葉のほつれを見つける。」
@@ -376,7 +376,7 @@ stateDiagram-v2
         現在の目標  Day2 議論フェーズ
         真の占い師として認知を取りつつ、Kai を確実に処刑へ追い込む...
         --
-        直近の推論  2件 · spectator限定
+        直近の推論 (<ul><li>, <time>)  2件 · spectator限定
         D2 #1 発言前の思考  08:02
         Renが占い師COしてきた。自分と競合する。対抗COするべきか...
         --
@@ -387,7 +387,7 @@ stateDiagram-v2
     {+
       == RightPane (320px)
       {+
-        == 疑い度マトリクス
+        == 疑い度マトリクス (<ul><li>)
         対象  | 疑い←→信頼     | 疑  | 信
         Kai   | ████░░░░░░░░ | 88  | 12
         Sera  | ███░░░░░░░░░ | 74  | 18
@@ -399,7 +399,7 @@ stateDiagram-v2
         Kael  | ███░░░░░░░░░ | 67  | 21
       }
       {+
-        == 夜の行動
+        == 夜の行動 (<ul><li>)
         D1N | 占いを実行 | [Kai]  Kai  | 黒
         D2N | 占いを実行 | [Sera] Sera | 黒
       }
@@ -488,6 +488,8 @@ CSS Grid `grid-template-columns: var(--lcol) 1fr var(--rcol)` で 3 ペインを
 
 データソース: `stub/gameList.js`（`GAMES`, `TOP_AGENTS`, `COMMUNITY_POSTS`, `VILLAGE_NAME_PRESETS`）。
 
+Semantic HTML: `GameCard` は自己完結したゲーム項目として `<article>`、サイドナビと右ウィジェットの項目群は `<ul><li>` で表現する。リンク風の装飾・投票列・Avatar は従来どおり装飾または操作部品として扱う。
+
 #### `SpectatorScreen`
 
 特定ゲームの議論フィードを観戦する画面。発言・処刑・夜の通知をタイムライン順に表示する。SpectatorScreen は全情報開示モード（wolf_chat / inspection / guard 等の非公開イベントも表示する）。
@@ -502,6 +504,8 @@ CSS Grid `grid-template-columns: var(--lcol) 1fr var(--rcol)` で 3 ペインを
 | `RightPane` | ロスター（生存/死亡）/ COボード / 夜の行動タイムライン |
 
 #### viewerMode トグル（#314）
+
+Semantic HTML: `SpeechCard` / `WolfChatCard` は独立した発言カードとして `<article>`、発言時刻は `<time>`、ロスター・COボード・夜行動タイムラインは `<ul><li>` で表現する。`SystemRow` はシステム通知行であり、発言カードとは別扱いにする。
 
 ヘッダーの「観戦者モード / 参加者視点」トグルで `viewerMode: 'spectator' | 'public'` を切り替える。
 
@@ -561,11 +565,13 @@ CSS Grid `grid-template-columns: var(--lcol) 1fr var(--rcol)` で 3 ペインを
 
 データソース: `stub/agentDetail.js`（`ALL_AGENTS`, `DEAD_AGENTS`, `AGENT_BLURB`, `AGENT_STATS`, `THOUGHTS`, `NIGHT_ACTIONS`, `getSuspicionMatrix`）。
 
+Semantic HTML: `AgentHero` は画面内のエージェント見出しとして `<header>`、AgentPicker・推論ログ・夜行動・過去戦績・疑い度マトリクスの行群は `<ul><li>` で表現する。picker 行の clickable 化は React Router 導入時（#342）に `<a>` / `<Link>` として扱う。
+
 ### 6.3 セマンティック HTML 設計方針（#411）
 
 意味のあるコンテンツには `<div>`/`<span>` ではなくセマンティック要素を使い、`getByRole`・スクリーンリーダー・クローラーが構造を読み取れるようにする。一方で**装飾目的・レイアウト用の要素は意図的に `<div>`/`<span>` を維持する**。「意味があるか / 装飾か」の線引きを以下に明示する。
 
-> **進捗**: #411 で **共通コンポーネント（`TopBar` / `ThreePaneLayout`）** をセマンティック化済み。3 Screen（GameList / Spectator / AgentDetail）の本体は別 Issue で順次対応する。本セクションは全画面共通の判断基準として維持する。
+> **進捗**: #411 で **共通コンポーネント（`TopBar` / `ThreePaneLayout`）** をセマンティック化済み。#453 で 3 Screen（GameList / Spectator / AgentDetail）本体の主要カード・リスト・日時・ヘッダーをセマンティック化する。本セクションは全画面共通の判断基準として維持する。
 
 #### セマンティック要素を使う箇所
 

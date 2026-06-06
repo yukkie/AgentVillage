@@ -37,6 +37,15 @@
   flex: 1;
 }
 
+.pickerList,
+.thoughtList,
+.nightList,
+.recordList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 .pick {
   display: grid;
   grid-template-columns: 32px 1fr 8px;
@@ -373,10 +382,17 @@
 }
 
 .matrix {
+  font-size: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.matrixHeader,
+.matrixRow {
   display: grid;
   grid-template-columns: 80px 1fr 38px 38px;
   gap: 4px 8px;
-  font-size: 12px;
   align-items: center;
 }
 
