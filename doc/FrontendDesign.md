@@ -428,7 +428,7 @@ stateDiagram-v2
 | `highlight` | `boolean?` | true でエージェント個人カラーのアウトラインを表示 |
 | `label` | `string?` | 渡すとエージェント名テキストを表示。`label` あり時は `<img alt="">` に変更（accessible name 重複を避ける） |
 | `layout` | `'vertical'｜'horizontal'` | `label` あり時のレイアウト。`vertical`: アイコン上・名前下、`horizontal`: アイコン左・名前右（デフォルト `'vertical'`） |
-| `variant` | `'plain'｜'muted'｜'selected'｜'dead'` | 外観状態（デフォルト `'plain'`）。`dead` はチップ全体の muted スタイル（`dead` prop のアイコン内オーバーレイとは別概念） |
+| `variant` | `'plain'｜'muted'｜'selected'｜'dead'｜'danger'` | 外観状態（デフォルト `'plain'`）。`dead` はチップ全体の muted スタイル（`dead` prop のアイコン内オーバーレイとは別概念）。`danger` はラベルテキストを `var(--danger)` 色で強調（処刑対象の投票グリッド等） |
 
 `label` あり時は identity wrapper 要素（新クラス）がアイコン frame（`.av`）を内包する構造になる。`.av` のスタイルは変更しないため、`label` なしの既存呼び出しは挙動変更なし。
 
