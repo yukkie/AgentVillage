@@ -503,33 +503,6 @@
   margin-bottom: 16px;
 }
 
-.agentChip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 4px 5px;
-  border: 1px solid var(--bd);
-  border-radius: var(--r1);
-  background: var(--bg-2);
-  cursor: pointer;
-  opacity: 0.35;
-  transition: opacity 120ms, border-color 120ms, box-shadow 120ms;
-}
-.agentChip:hover { opacity: 0.65; }
-.agentChipOn {
-  opacity: 1;
-  border-color: var(--chip-c);
-  box-shadow: 0 0 0 1px var(--chip-c);
-}
-
-.chipName {
-  font-size: 10px;
-  color: var(--tx-2);
-  font-family: var(--sans);
-  text-align: center;
-  line-height: 1;
-}
 
 .formFooter {
   display: flex;

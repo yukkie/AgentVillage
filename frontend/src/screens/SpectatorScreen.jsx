@@ -153,12 +153,7 @@ function RelationshipMeterList({ snapshot, metric }) {
 }
 
 function ScoreOwnerChip({ name, role }) {
-  return (
-    <span className={styles.scoreOwnerChip}>
-      <Avatar name={name} role={role} size="xs" />
-      <span className={styles.scoreOwnerName}>{name}</span>
-    </span>
-  );
+  return <Avatar name={name} role={role} size="xs" label={name} layout="vertical" />;
 }
 
 function RelationshipUpdateRow({ ev, roleAssignment, viewerMode }) {
@@ -526,10 +521,9 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
             <div className={styles.voteGrid}>
               {execResult.voteTable.map((v, i) => (
                 <div className={styles.voteCell} key={i}>
-                  <Avatar name={v.from} size="xs" />
-                  <span className={styles.voteFrom}>{v.from}</span>
+                  <Avatar name={v.from} size="xs" label={v.from} layout="horizontal" />
                   <span className={styles.voteArrow}>▶</span>
-                  <span className={v.to === execResult.target ? styles.targetBad : styles.voteTo}>{v.to}</span>
+                  <Avatar name={v.to} size="xs" label={v.to} layout="horizontal" variant={v.to === execResult.target ? 'danger' : 'plain'} />
                 </div>
               ))}
             </div>
@@ -551,10 +545,9 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
             const coRole = coStatus[n];
             return (
               <li key={n} className={styles.rosterRow} style={{ '--r-color': r?.color }}>
-                <Avatar name={n} role={viewerMode === 'spectator' ? role : undefined} size="sm" />
+                <Avatar name={n} role={viewerMode === 'spectator' ? role : undefined} size="sm" label={n} layout="vertical" />
                 <div className={styles.who}>
                   <span className={styles.rosterName}>
-                    {n}
                     {viewerMode === 'spectator' && <RoleTag role={role} />}
                     {coRole && (
                       <span className={styles.coBadge} style={{ '--co-color': ROLES[coRole]?.color }}>▶ {ROLES[coRole]?.ja || coRole} CO</span>
@@ -576,10 +569,9 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
             const meta = activeDead.get(n);
             return (
               <li key={n} className={`${styles.rosterRow} ${styles.dead}`} style={{ '--r-color': r?.color }}>
-                <Avatar name={n} role={role} size="sm" dead />
+                <Avatar name={n} role={role} size="sm" dead label={n} layout="vertical" />
                 <div className={styles.whoMeta}>
                   <div className={styles.whoBlock}>
-                    <span className={styles.rosterName}>{n}</span>
                     <span className={styles.sub}>
                       <RoleTag role={role} />
                     </span>

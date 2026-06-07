@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Avatar from '../components/Avatar.jsx';
+import Avatar, { AvatarButton } from '../components/Avatar.jsx';
 import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { TOP_AGENTS, COMMUNITY_POSTS, VILLAGE_NAME_PRESETS } from '../../stub/gameList.js';
@@ -76,22 +76,17 @@ function NewVillageForm() {
           </div>
 
           <div className={styles.agentGrid}>
-            {ALL_AGENTS.map(name => {
-              const isSelected = selected.has(name);
-              const color = AGENT_PALETTE[name];
-              return (
-                <button
-                  key={name}
-                  className={`${styles.agentChip} ${isSelected ? styles.agentChipOn : ''}`}
-                  style={{ '--chip-c': color }}
-                  onClick={() => toggleAgent(name)}
-                  title={name}
-                >
-                  <Avatar name={name} size="sm" />
-                  <span className={styles.chipName}>{name}</span>
-                </button>
-              );
-            })}
+            {ALL_AGENTS.map(name => (
+              <AvatarButton
+                key={name}
+                name={name}
+                size="sm"
+                label={name}
+                layout="vertical"
+                selected={selected.has(name)}
+                onClick={() => toggleAgent(name)}
+              />
+            ))}
           </div>
 
           <div className={styles.formFooter}>
