@@ -91,3 +91,81 @@
 }
 .xs .mono { font-size: 10px; }
 .xs .roleTag { display: none; }
+
+/* === Identity wrapper（label あり時のみ） === */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--bd);
+  border-radius: var(--r1);
+  background: var(--bg-2);
+  padding: 6px 4px 5px;
+  transition: border-color 120ms, box-shadow 120ms, opacity 120ms;
+}
+
+.chipV {
+  flex-direction: column;
+}
+
+.chipH {
+  flex-direction: row;
+  padding: 3px 8px 3px 4px;
+}
+
+.chipLabel {
+  font-size: 10px;
+  font-family: var(--sans);
+  color: var(--tx-2);
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60px;
+}
+
+.chipH .chipLabel {
+  font-size: 11px;
+  text-align: left;
+  max-width: none;
+}
+
+/* variant: plain (default) — no extra style */
+
+/* variant: muted */
+.chip_muted {
+  opacity: 0.4;
+}
+
+/* variant: selected — personal color border + shadow */
+.chip_selected {
+  opacity: 1;
+  border-color: var(--av-c, var(--acc));
+  box-shadow: 0 0 0 1px var(--av-c, var(--acc));
+}
+
+/* variant: dead — muted whole chip */
+.chip_dead {
+  opacity: 0.35;
+}
+
+/* variant: danger — execution target highlight */
+.chip_danger .chipLabel {
+  color: var(--danger);
+}
+
+/* === AvatarButton === */
+.avatarBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: var(--r1);
+  display: inline-flex;
+}
+
+.avatarBtn .chip_plain { opacity: 0.35; }
+.avatarBtn:hover .chip_plain { opacity: 0.9; }
+.avatarBtn:hover .chip_selected { opacity: 1; }
+.avatarBtn:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }

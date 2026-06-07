@@ -415,17 +415,42 @@ stateDiagram-v2
 
 ### 6.1 共通コンポーネント（`src/components/`）
 
-#### `Avatar`
+#### `Avatar`（default export）
+
+表示専用のエージェントアイデンティティコンポーネント。`label` なしではアイコン単体、`label` ありではアイコン＋名前テキストを表示する。
 
 | prop | 型 | 説明 |
 |---|---|---|
 | `name` | `string` | エージェント名。`/icons/{name}.png` を src に使用、失敗時は頭文字フォールバック |
 | `role` | `string?` | 役職キー（例: `"Werewolf"`）。spectator モードのみ渡す。渡すと役職刻印（日本語短縮名）を表示 |
-| `dead` | `boolean?` | true で「死亡」マークを表示 |
+| `dead` | `boolean?` | true でアイコン内に「死亡」オーバーレイを表示 |
 | `size` | `'md'｜'sm'｜'xs'` | アバターサイズ（デフォルト `'md'`） |
 | `highlight` | `boolean?` | true でエージェント個人カラーのアウトラインを表示 |
+| `label` | `string?` | 渡すとエージェント名テキストを表示。`label` あり時は `<img alt="">` に変更（accessible name 重複を避ける） |
+| `layout` | `'vertical'｜'horizontal'` | `label` あり時のレイアウト。`vertical`: アイコン上・名前下、`horizontal`: アイコン左・名前右（デフォルト `'vertical'`） |
+| `variant` | `'plain'｜'muted'｜'selected'｜'dead'｜'danger'` | 外観状態（デフォルト `'plain'`）。`dead` はチップ全体の muted スタイル（`dead` prop のアイコン内オーバーレイとは別概念）。`danger` はラベルテキストを `var(--danger)` 色で強調（処刑対象の投票グリッド等） |
 
-データソース: `AGENT_PALETTE`（`lib/constants.js`）でエージェント名 → 個人カラーを解決。
+`label` あり時は identity wrapper 要素（新クラス）がアイコン frame（`.av`）を内包する構造になる。`.av` のスタイルは変更しないため、`label` なしの既存呼び出しは挙動変更なし。
+
+データソース: `AGENT_PALETTE`（`lib/constants.js`）でエージェント名 → 個人カラー（`--av-c`）を解決。
+
+#### `AvatarButton`（named export）
+
+インタラクティブ用途専用。`Avatar` を `<button type="button">` で包む。
+
+| prop | 型 | 説明 |
+|---|---|---|
+| `onClick` | `function` | クリックハンドラ（必須） |
+| `selected` | `boolean?` | true で `variant="selected"` を適用。個人カラー（`--av-c`）でボーダー＋シャドウを表示（持続的な選択済み状態） |
+| `...avatarProps` | — | `Avatar` の全 props をそのまま受け付ける |
+
+hover / focus スタイルは CSS `:hover` / `:focus-visible` で付与（`variant` prop には含まない）。
+将来の画面遷移対応は `AvatarLink`（`<a>` / React Router `<Link>` 版）として別途追加予定（#342）。
+
+**使い分け:**
+- icon-only（名前テキスト不要）→ bare `Avatar`（`label` なし）
+- 名前表示・display-only → `Avatar` with `label`
+- 名前表示・クリック可能 → `AvatarButton` with `label`
 
 #### `RoleTag`
 
