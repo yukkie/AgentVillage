@@ -29,6 +29,7 @@ LLMエージェント同士が自律的に人狼ゲームをプレイする「�
 - インポートは**絶対インポート** `from src.xxx` を使用（相対インポート不可）
 - **実装前に必ず設計を説明する**: 変更ファイル・変更内容・設計上の判断ポイントを提示し、ユーザーの承認を得てから実装に入ること
 - 開発フロー詳細（アイデア→Issue→実装→PR）は `/idd` スキル（`~/.claude/skills/idd/SKILL.md`）を参照
+- スキルファイルは `~/.claude/skills/` が git リポジトリで管理されている。スキルを編集したらここでコミット・push する
 - テスト方針・Mock 使用ポリシー（Required / Forbidden）は [`tests/TestStrategy.md`](tests/TestStrategy.md) を参照。境界クラスの docstring には `Mock-Policy:` マーカーが付いている
 
 ---
