@@ -108,6 +108,103 @@ function contentForViewer(ev, viewerMode) {
   return ev.content || MISSING_CONTENT;
 }
 
+function scoreEntries(snapshot) {
+  if (!snapshot || typeof snapshot !== 'object') return [];
+  return Object.entries(snapshot)
+    .filter(([, value]) => Number.isFinite(value))
+    .sort(([, a], [, b]) => b - a);
+}
+
+function scorePercent(value) {
+  return Math.round(Math.max(0, Math.min(1, value)) * 100);
+}
+
+function scoreSeverity(value) {
+  if (value >= 0.7) return 'high';
+  if (value >= 0.4) return 'medium';
+  return 'low';
+}
+
+function RelationshipMeterList({ snapshot, metric }) {
+  const entries = scoreEntries(snapshot);
+
+  return (
+    <ul className={`${styles.scoreList} ${styles[metric]}`} aria-label={`${metric} snapshot`}>
+      {entries.map(([name, value]) => {
+        const percent = scorePercent(value);
+        const severity = scoreSeverity(value);
+        return (
+          <li
+            key={name}
+            className={`${styles.scoreItem} ${styles[severity]}`}
+            aria-label={`${name} ${metric} ${percent}%`}
+            title={`${name}: ${value.toFixed(2)}`}
+          >
+            <span className={styles.scoreName}>{name}</span>
+            <span className={styles.scoreTrack} aria-hidden="true">
+              <span className={styles.scoreFill} style={{ width: `${percent}%` }} />
+            </span>
+            <span className={styles.scoreSeverity}>{severity}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function ScoreOwnerChip({ name, role }) {
+  return (
+    <span className={styles.scoreOwnerChip}>
+      <Avatar name={name} role={role} size="xs" />
+      <span className={styles.scoreOwnerName}>{name}</span>
+    </span>
+  );
+}
+
+function RelationshipUpdateRow({ ev, roleAssignment, viewerMode }) {
+  const isThreat = ev.event_type === 'threat_update';
+  const metric = isThreat ? 'threat' : 'suspicion';
+  const snapshot = isThreat ? ev.threat_snapshot : ev.suspicion_snapshot;
+  const label = isThreat ? '脅威' : '疑念';
+  const entries = scoreEntries(snapshot);
+  const displayContent = contentForViewer(ev, viewerMode);
+
+  if (entries.length === 0) {
+    return (
+      <SystemRow
+        kind={isThreat ? 'exec' : 'gm'}
+        icon={isThreat ? '!' : '?'}
+        label={label}
+        roleAssignment={roleAssignment}
+        viewerMode={viewerMode}
+      >
+        <div className={styles.scoreFallback}>
+          <ScoreOwnerChip name={ev.agent} role={roleAssignment[ev.agent]} />
+          <span>{displayContent}</span>
+        </div>
+      </SystemRow>
+    );
+  }
+
+  return (
+    <SystemRow
+      kind={isThreat ? 'exec' : 'gm'}
+      icon={isThreat ? '!' : '?'}
+      label={label}
+      roleAssignment={roleAssignment}
+      viewerMode={viewerMode}
+    >
+      <div className={styles.scoreSnapshot}>
+        <ScoreOwnerChip name={ev.agent} role={roleAssignment[ev.agent]} />
+        <div className={styles.scoreBody}>
+          <RelationshipMeterList snapshot={snapshot} metric={metric} />
+          {ev.content && <div className={styles.deltaTrace}>{displayContent}</div>}
+        </div>
+      </div>
+    </SystemRow>
+  );
+}
+
 const SYSTEM_EVENT_VIEWS = {
   vote: {
     kind: 'exec',
@@ -231,6 +328,10 @@ export function FeedItem({ ev, prevById, roleAssignment, title, viewerMode = 'sp
   if (isPublic && !ev.is_public) return null;
 
   if (ev.event_type === 'wolf_chat') return <WolfChatCard ev={ev} viewerMode={viewerMode} />;
+
+  if (ev.event_type === 'suspicion_update' || ev.event_type === 'threat_update') {
+    return <RelationshipUpdateRow ev={ev} roleAssignment={roleAssignment} viewerMode={viewerMode} />;
+  }
 
   const configuredSystemEvent = renderConfiguredSystemEvent(ev, roleAssignment, viewerMode);
   if (configuredSystemEvent) return configuredSystemEvent;

@@ -526,7 +526,7 @@ Semantic HTML: `SpeechCard` / `WolfChatCard` は独立した発言カードと�
 
 | activePhase | 表示するイベント種別 |
 |---|---|
-| `'discuss'` | `speech`（public、`claimed_role` 付きは CO を兼ねる）, `phase_start`（TURN系）。旧ログの `co_announcement` 別行はフォールバックで表示 |
+| `'discuss'` | `speech`（public、`claimed_role` 付きは CO を兼ねる）, `suspicion_update`, `threat_update`, `phase_start`（TURN系）。旧ログの `co_announcement` 別行はフォールバックで表示 |
 | `'vote'` | `vote`, `elimination`, `medium_result`, `phase_start`（VOTE系） |
 | `'night'` | `wolf_chat`, `inspection`, `guard`, `guard_block`, `night_attack`, `phase_start`（NIGHT / NIGHT_WOLF_CHAT 系） |
 
@@ -544,6 +544,8 @@ Semantic HTML: `SpeechCard` / `WolfChatCard` は独立した発言カードと�
 | `guard_block`（public） | `{content}`（SystemRow kind="gm"） |
 | `night_attack`（private） | `{content}`（SystemRow kind="exec"、右に target アバター） |
 | `night_attack`（public） | `{content}`（SystemRow kind="death"、右に target アバター） |
+| `suspicion_update` | `suspicion_snapshot` があれば SystemRow 内で疑念メーターを表示（高いほど長いバー、green → yellow → red）。snapshot 欠如時は `{content}` にフォールバック |
+| `threat_update` | `threat_snapshot` があれば SystemRow 内で脅威メーターを表示（高いほど長いバー、赤系の濃淡）。snapshot 欠如時は `{content}` にフォールバック |
 
 データソース: `stub/spectator.js`（`EVENTS`, `ROLE_ASSIGNMENT`, `NIGHT_RESULTS`, `EXEC_RESULTS`, `VOTE_TABLE_D1`, `ACTIONS_TIMELINE`）。
 

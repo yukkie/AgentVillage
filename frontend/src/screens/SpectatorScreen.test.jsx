@@ -22,7 +22,7 @@ afterEach(() => {
   cleanup();
 });
 
-function renderFeedItem(overrides) {
+function renderFeedItem(overrides, options = {}) {
   const ev = {
     day: 1,
     event_type: 'vote',
@@ -39,6 +39,7 @@ function renderFeedItem(overrides) {
       prevById={{}}
       roleAssignment={roleAssignment}
       title="Test Village"
+      viewerMode={options.viewerMode}
     />
   );
 }
@@ -161,6 +162,115 @@ describe('FeedItem event routing', () => {
 
     expect(screen.getByText('[missing content]')).toBeTruthy();
     expect(screen.queryByText(/Alice senses|Bob was|村人陣営|人狼陣営/)).toBeNull();
+  });
+
+  it('renders suspicion_update snapshots as spectator meter rows', () => {
+    /**
+     * SUT: FeedItem
+     * Mock: なし（LogEvent 形状の plain object を入力）
+     * Level: component
+     * Objective: suspicion_snapshot を持つ suspicion_update が、content 文字列主体ではなく
+     *            バー主体の疑念メーターとして表示されることを検証する。
+     */
+    const { container } = renderFeedItem({
+      event_type: 'suspicion_update',
+      agent: 'Alice',
+      content: 'Alice suspicion update: Bob=0.82, Carol=0.45, Dave=0.31',
+      is_public: false,
+      suspicion_snapshot: { Bob: 0.82, Carol: 0.45, Dave: 0.31 },
+    });
+
+    expect(screen.getByText('疑念')).toBeTruthy();
+    expect(screen.getByText('Bob')).toBeTruthy();
+    expect(screen.getByText('Carol')).toBeTruthy();
+    expect(screen.getByText('Dave')).toBeTruthy();
+    expect(screen.getByAltText('Alice')).toBeTruthy();
+    expect(screen.queryByText('疑念メーター')).toBeNull();
+    expect(container.querySelector('[aria-label="Bob suspicion 82%"]')).toBeTruthy();
+    expect(container.querySelector('[aria-label="Carol suspicion 45%"]')).toBeTruthy();
+    expect(container.querySelector('[aria-label="Dave suspicion 31%"]')).toBeTruthy();
+    expect(screen.queryByText('delta trace')).toBeNull();
+    expect(screen.getByText('Alice suspicion update: Bob=0.82, Carol=0.45, Dave=0.31')).toBeTruthy();
+  });
+
+  it('renders threat_update snapshots as spectator meter rows', () => {
+    /**
+     * SUT: FeedItem
+     * Mock: なし（LogEvent 形状の plain object を入力）
+     * Level: component
+     * Objective: threat_snapshot を持つ threat_update が、脅威メーターとして表示されることを検証する。
+     */
+    const { container } = renderFeedItem({
+      event_type: 'threat_update',
+      agent: 'Bob',
+      content: 'Bob threat update: Alice=0.74, Carol=0.25',
+      is_public: false,
+      threat_snapshot: { Alice: 0.74, Carol: 0.25 },
+    });
+
+    expect(screen.getByText('脅威')).toBeTruthy();
+    expect(screen.getByText('Alice')).toBeTruthy();
+    expect(screen.getByText('Carol')).toBeTruthy();
+    expect(screen.getByAltText('Bob')).toBeTruthy();
+    expect(screen.queryByText('脅威メーター')).toBeNull();
+    expect(container.querySelector('[aria-label="Alice threat 74%"]')).toBeTruthy();
+    expect(container.querySelector('[aria-label="Carol threat 25%"]')).toBeTruthy();
+  });
+
+  it('uses spectator_content for suspicion/threat trace text in spectator mode', () => {
+    /**
+     * SUT: FeedItem → RelationshipUpdateRow
+     * Mock: なし（LogEvent 形状の plain object を入力）
+     * Level: component
+     * Objective: snapshot 分岐の trace 表示も contentForViewer 経由で spectator_content を優先することを検証する。
+     */
+    renderFeedItem({
+      event_type: 'suspicion_update',
+      agent: 'Alice',
+      content: 'public trace should not be used',
+      spectator_content: 'Alice suspicion update: Bob=0.82',
+      is_public: false,
+      suspicion_snapshot: { Bob: 0.82 },
+    });
+
+    expect(screen.getByText('Alice suspicion update: Bob=0.82')).toBeTruthy();
+    expect(screen.queryByText('public trace should not be used')).toBeNull();
+  });
+
+  it('falls back to content when suspicion/threat snapshots are missing', () => {
+    /**
+     * SUT: FeedItem
+     * Mock: なし（旧アーカイブ相当の LogEvent plain object を入力）
+     * Level: component
+     * Objective: snapshot が欠如した旧ログでも suspicion_update を破棄せず content を表示することを検証する。
+     */
+    renderFeedItem({
+      event_type: 'suspicion_update',
+      agent: 'Alice',
+      content: 'Alice suspicion update: Bob=0.82',
+      is_public: false,
+      suspicion_snapshot: null,
+    });
+
+    expect(screen.getByText('Alice suspicion update: Bob=0.82')).toBeTruthy();
+  });
+
+  it('hides suspicion/threat updates in public mode', () => {
+    /**
+     * SUT: FeedItem
+     * Mock: なし（LogEvent 形状の plain object を入力）
+     * Level: component
+     * Objective: is_public=false の suspicion_update が public モードではマウントされないことを検証する。
+     */
+    const { container } = renderFeedItem({
+      event_type: 'suspicion_update',
+      agent: 'Alice',
+      content: 'Alice suspicion update: Bob=0.82',
+      is_public: false,
+      suspicion_snapshot: { Bob: 0.82 },
+    }, { viewerMode: 'public' });
+
+    expect(container.firstChild).toBeNull();
   });
 
   it('renders the only actor avatar on the right side for single-actor system logs', () => {

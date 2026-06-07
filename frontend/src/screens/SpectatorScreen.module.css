@@ -300,6 +300,129 @@
 .sysrow.phase .icon { background: rgba(125,108,255,0.18); color: #b6abff; }
 .sysrow .sysText strong { font-family: var(--serif); font-weight: 600; }
 
+.scoreSnapshot {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.scoreFallback {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.scoreOwnerChip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 54px;
+  padding: 6px 4px 5px;
+  border: 1px solid var(--bd);
+  border-radius: var(--r1);
+  background: var(--bg-2);
+  flex: 0 0 auto;
+}
+
+.scoreBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.scoreOwnerName {
+  color: var(--tx-2);
+  font-family: var(--sans);
+  font-size: 10px;
+  line-height: 1;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scoreList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+
+.scoreItem {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 5px;
+  flex: 0 0 100px;
+  min-height: 50px;
+  padding: 6px 7px;
+  border: 1px solid var(--bd);
+  border-radius: var(--r1);
+  background: var(--bg-2);
+  min-width: 0;
+}
+
+.scoreName {
+  color: var(--tx);
+  font-family: var(--serif);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.scoreTrack {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-3);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.scoreFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.scoreSeverity {
+  color: var(--tx-4);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.scoreItem.low .scoreFill { background: #5fbd7a; }
+.scoreItem.medium .scoreFill { background: var(--acc); }
+.scoreItem.high .scoreFill { background: var(--danger); }
+.scoreList.threat .scoreItem.low .scoreFill { background: rgba(226,107,107,0.45); }
+.scoreList.threat .scoreItem.medium .scoreFill { background: rgba(226,107,107,0.72); }
+.scoreList.threat .scoreItem.high .scoreFill { background: var(--danger); }
+
+.deltaTrace {
+  color: var(--tx-3);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
 /* Vote breakdown */
 .voteDetail {
   padding: 14px 24px 16px;
@@ -456,7 +579,7 @@
 /* sysrow inner */
 .sysIconCol { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 0 0 64px; width: 64px; }
 .sysLabel { font-family: var(--serif); font-size: 10px; color: var(--tx-3); letter-spacing: 0.08em; text-align: center; }
-.sysText { font-size: 13px; color: var(--tx); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.sysText { font-size: 13px; color: var(--tx); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; flex: 1; min-width: 0; }
 .sysTs { font-family: var(--mono); font-size: 10px; color: var(--tx-4); }
 .sysIcon {
   width: 28px; height: 28px; border-radius: 50%;
