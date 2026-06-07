@@ -194,17 +194,11 @@ function RelationshipUpdateRow({ ev, roleAssignment, viewerMode }) {
       viewerMode={viewerMode}
     >
       <div className={styles.scoreSnapshot}>
-        <div className={styles.scoreHeader}>
-          <ScoreOwnerChip name={ev.agent} role={roleAssignment[ev.agent]} />
-          <span className={styles.scoreHeaderText}>{label}メーター</span>
+        <ScoreOwnerChip name={ev.agent} role={roleAssignment[ev.agent]} />
+        <div className={styles.scoreBody}>
+          <RelationshipMeterList snapshot={snapshot} metric={metric} />
+          {ev.content && <div className={styles.deltaTrace}>{ev.content}</div>}
         </div>
-        <RelationshipMeterList snapshot={snapshot} metric={metric} />
-        {ev.content && (
-          <details className={styles.deltaTrace}>
-            <summary>delta trace</summary>
-            <div>{ev.content}</div>
-          </details>
-        )}
       </div>
     </SystemRow>
   );
