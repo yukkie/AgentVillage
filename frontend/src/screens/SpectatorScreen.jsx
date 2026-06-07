@@ -167,6 +167,7 @@ function RelationshipUpdateRow({ ev, roleAssignment, viewerMode }) {
   const snapshot = isThreat ? ev.threat_snapshot : ev.suspicion_snapshot;
   const label = isThreat ? '脅威' : '疑念';
   const entries = scoreEntries(snapshot);
+  const displayContent = contentForViewer(ev, viewerMode);
 
   if (entries.length === 0) {
     return (
@@ -179,7 +180,7 @@ function RelationshipUpdateRow({ ev, roleAssignment, viewerMode }) {
       >
         <div className={styles.scoreFallback}>
           <ScoreOwnerChip name={ev.agent} role={roleAssignment[ev.agent]} />
-          <span>{contentForViewer(ev, viewerMode)}</span>
+          <span>{displayContent}</span>
         </div>
       </SystemRow>
     );
@@ -197,7 +198,7 @@ function RelationshipUpdateRow({ ev, roleAssignment, viewerMode }) {
         <ScoreOwnerChip name={ev.agent} role={roleAssignment[ev.agent]} />
         <div className={styles.scoreBody}>
           <RelationshipMeterList snapshot={snapshot} metric={metric} />
-          {ev.content && <div className={styles.deltaTrace}>{ev.content}</div>}
+          {ev.content && <div className={styles.deltaTrace}>{displayContent}</div>}
         </div>
       </div>
     </SystemRow>

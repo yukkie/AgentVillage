@@ -217,6 +217,26 @@ describe('FeedItem event routing', () => {
     expect(container.querySelector('[aria-label="Carol threat 25%"]')).toBeTruthy();
   });
 
+  it('uses spectator_content for suspicion/threat trace text in spectator mode', () => {
+    /**
+     * SUT: FeedItem → RelationshipUpdateRow
+     * Mock: なし（LogEvent 形状の plain object を入力）
+     * Level: component
+     * Objective: snapshot 分岐の trace 表示も contentForViewer 経由で spectator_content を優先することを検証する。
+     */
+    renderFeedItem({
+      event_type: 'suspicion_update',
+      agent: 'Alice',
+      content: 'public trace should not be used',
+      spectator_content: 'Alice suspicion update: Bob=0.82',
+      is_public: false,
+      suspicion_snapshot: { Bob: 0.82 },
+    });
+
+    expect(screen.getByText('Alice suspicion update: Bob=0.82')).toBeTruthy();
+    expect(screen.queryByText('public trace should not be used')).toBeNull();
+  });
+
   it('falls back to content when suspicion/threat snapshots are missing', () => {
     /**
      * SUT: FeedItem
