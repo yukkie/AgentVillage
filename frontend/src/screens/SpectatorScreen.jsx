@@ -125,7 +125,7 @@ function scoreSeverity(value) {
   return 'low';
 }
 
-function RelationshipMeterList({ snapshot, metric, roleAssignment = {} }) {
+function RelationshipMeterList({ snapshot, metric }) {
   const entries = scoreEntries(snapshot);
 
   return (
@@ -140,10 +140,7 @@ function RelationshipMeterList({ snapshot, metric, roleAssignment = {} }) {
             aria-label={`${name} ${metric} ${percent}%`}
             title={`${name}: ${value.toFixed(2)}`}
           >
-            <span className={styles.scoreAgentChip}>
-              <Avatar name={name} role={roleAssignment[name]} size="xs" />
-              <span className={styles.scoreName}>{name}</span>
-            </span>
+            <span className={styles.scoreName}>{name}</span>
             <span className={styles.scoreTrack} aria-hidden="true">
               <span className={styles.scoreFill} style={{ width: `${percent}%` }} />
             </span>
@@ -152,6 +149,15 @@ function RelationshipMeterList({ snapshot, metric, roleAssignment = {} }) {
         );
       })}
     </ul>
+  );
+}
+
+function ScoreOwnerChip({ name, role }) {
+  return (
+    <span className={styles.scoreOwnerChip}>
+      <Avatar name={name} role={role} size="xs" />
+      <span className={styles.scoreOwnerName}>{name}</span>
+    </span>
   );
 }
 
@@ -168,11 +174,13 @@ function RelationshipUpdateRow({ ev, roleAssignment, viewerMode }) {
         kind={isThreat ? 'exec' : 'gm'}
         icon={isThreat ? '!' : '?'}
         label={label}
-        leftName={ev.agent}
         roleAssignment={roleAssignment}
         viewerMode={viewerMode}
       >
-        {contentForViewer(ev, viewerMode)}
+        <div className={styles.scoreFallback}>
+          <ScoreOwnerChip name={ev.agent} role={roleAssignment[ev.agent]} />
+          <span>{contentForViewer(ev, viewerMode)}</span>
+        </div>
       </SystemRow>
     );
   }
@@ -182,12 +190,15 @@ function RelationshipUpdateRow({ ev, roleAssignment, viewerMode }) {
       kind={isThreat ? 'exec' : 'gm'}
       icon={isThreat ? '!' : '?'}
       label={label}
-      leftName={ev.agent}
       roleAssignment={roleAssignment}
       viewerMode={viewerMode}
     >
       <div className={styles.scoreSnapshot}>
-        <RelationshipMeterList snapshot={snapshot} metric={metric} roleAssignment={roleAssignment} />
+        <div className={styles.scoreHeader}>
+          <ScoreOwnerChip name={ev.agent} role={roleAssignment[ev.agent]} />
+          <span className={styles.scoreHeaderText}>{label}メーター</span>
+        </div>
+        <RelationshipMeterList snapshot={snapshot} metric={metric} />
         {ev.content && (
           <details className={styles.deltaTrace}>
             <summary>delta trace</summary>

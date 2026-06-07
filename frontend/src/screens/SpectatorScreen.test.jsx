@@ -184,8 +184,8 @@ describe('FeedItem event routing', () => {
     expect(screen.getByText('Bob')).toBeTruthy();
     expect(screen.getByText('Carol')).toBeTruthy();
     expect(screen.getByText('Dave')).toBeTruthy();
-    expect(screen.getByAltText('Bob')).toBeTruthy();
-    expect(screen.getByAltText('Carol')).toBeTruthy();
+    expect(screen.getByAltText('Alice')).toBeTruthy();
+    expect(screen.getByText('疑念メーター')).toBeTruthy();
     expect(container.querySelector('[aria-label="Bob suspicion 82%"]')).toBeTruthy();
     expect(container.querySelector('[aria-label="Carol suspicion 45%"]')).toBeTruthy();
     expect(container.querySelector('[aria-label="Dave suspicion 31%"]')).toBeTruthy();
@@ -211,8 +211,8 @@ describe('FeedItem event routing', () => {
     expect(screen.getByText('脅威')).toBeTruthy();
     expect(screen.getByText('Alice')).toBeTruthy();
     expect(screen.getByText('Carol')).toBeTruthy();
-    expect(screen.getByAltText('Alice')).toBeTruthy();
-    expect(screen.getByAltText('Carol')).toBeTruthy();
+    expect(screen.getByAltText('Bob')).toBeTruthy();
+    expect(screen.getByText('脅威メーター')).toBeTruthy();
     expect(container.querySelector('[aria-label="Alice threat 74%"]')).toBeTruthy();
     expect(container.querySelector('[aria-label="Carol threat 25%"]')).toBeTruthy();
   });

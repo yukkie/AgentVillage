@@ -304,7 +304,47 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+}
+
+.scoreHeader,
+.scoreFallback {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.scoreHeaderText {
+  color: var(--tx-3);
+  font-family: var(--serif);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.scoreOwnerChip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 54px;
+  padding: 6px 4px 5px;
+  border: 1px solid var(--bd);
+  border-radius: var(--r1);
+  background: var(--bg-2);
+  flex: 0 0 auto;
+}
+
+.scoreOwnerName {
+  color: var(--tx-2);
+  font-family: var(--sans);
+  font-size: 10px;
+  line-height: 1;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .scoreList {
@@ -323,8 +363,8 @@
   flex-direction: column;
   justify-content: space-between;
   gap: 5px;
-  flex: 0 1 112px;
-  min-height: 76px;
+  flex: 0 1 118px;
+  min-height: 50px;
   padding: 6px 7px;
   border: 1px solid var(--bd);
   border-radius: var(--r1);
@@ -332,20 +372,12 @@
   min-width: 0;
 }
 
-.scoreAgentChip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-}
-
 .scoreName {
-  color: var(--tx-2);
-  font-family: var(--sans);
-  font-size: 10px;
-  line-height: 1;
-  text-align: center;
+  color: var(--tx);
+  font-family: var(--serif);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
