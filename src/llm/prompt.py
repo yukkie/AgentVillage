@@ -175,6 +175,12 @@ def build_personal_info_prompt(actor: Actor) -> str:
             if belief.reason:
                 lines.append(f"    Reasons: {'; '.join(belief.reason)}")
 
+    if actor.state.threat_scores:
+        lines.append("\nYour current threat assessments (0.0=safe to ignore, 1.0=must eliminate soon):")
+        lines.append("Use these to guide your speech and deception strategy.")
+        for name, score in actor.state.threat_scores.items():
+            lines.append(f"  {name}: threat={score:.2f}")
+
     return "\n".join(lines)
 
 

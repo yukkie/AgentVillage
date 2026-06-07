@@ -185,3 +185,32 @@ class TestRoleNightChatPrompt:
         prompt = role.night_chat_prompt(actor, ["OtherWolf"], ["Alice", "Wolf", "OtherWolf"], log)
         assert "Wolf team conversation so far" in prompt
         assert "Let's attack Alice." in prompt
+
+
+def test_personal_info_prompt_shows_threat_scores_for_werewolf(make_test_actor):
+    """
+    SUT: build_personal_info_prompt
+    Mock: なし
+    Level: unit
+    Objective: Werewolf の actor.state.threat_scores が非空のとき脅威スコアとガイダンスが昼会話プロンプトに含まれること（AC: wolf's daytime discussion prompt includes threat_scores when non-empty）。
+    """
+    actor = make_test_actor("Wolf", "Werewolf")
+    actor.state.threat_scores = {"Seer": 0.9, "Knight": 0.6}
+    prompt = build_personal_info_prompt(actor)
+    assert "threat" in prompt.lower()
+    assert "Seer" in prompt
+    assert "0.90" in prompt
+    assert "Knight" in prompt
+    assert "0.60" in prompt
+
+
+def test_personal_info_prompt_omits_threat_section_for_villager(make_test_actor):
+    """
+    SUT: build_personal_info_prompt
+    Mock: なし
+    Level: unit
+    Objective: Villager（threat_scores が空）の場合は脅威スコアセクションが含まれないこと（AC: non-werewolf actors' discussion prompt unchanged）。
+    """
+    actor = make_test_actor("Alice", "Villager")
+    prompt = build_personal_info_prompt(actor)
+    assert "threat assessments" not in prompt
