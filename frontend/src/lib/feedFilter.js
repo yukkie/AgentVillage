@@ -42,6 +42,10 @@ export function filterFeedEvents(events, day, phase) {
       return ev.event_type === 'game_over';
     }
 
+    if (phase === 'eve') {
+      return ev.event_type === 'game_start_narrative';
+    }
+
     return false;
   });
 }

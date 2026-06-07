@@ -351,15 +351,15 @@ describe('FeedItem: phase_start visibility', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('shows GAME START phase_start', () => {
+  it('renders game_start_narrative as a gm system row', () => {
     /**
      * SUT: FeedItem
      * Mock: なし
      * Level: unit
-     * Objective: init の phase_start（GAME START）が表示されることを検証する。
+     * Objective: game_start_narrative イベントがナラティブ本文を含む gm システム行としてレンダリングされることを検証する
      */
-    renderFeedItem({ event_type: 'phase_start', phase: 'init', content: '=== GAME START ===' });
-    expect(screen.getByText(/が開始されました/)).toBeTruthy();
+    renderFeedItem({ event_type: 'game_start_narrative', phase: 'init', day: 0, content: 'A werewolf lurks among the villagers.' });
+    expect(screen.getByText(/A werewolf lurks/)).toBeTruthy();
   });
 });
 

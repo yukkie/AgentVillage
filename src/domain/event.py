@@ -22,6 +22,7 @@ class EventType(Enum):
     SUSPICION_UPDATE = "suspicion_update"
     THREAT_UPDATE = "threat_update"
     GAME_OVER = "game_over"
+    GAME_START_NARRATIVE = "game_start_narrative"
     PHASE_START = "phase_start"
 
 
