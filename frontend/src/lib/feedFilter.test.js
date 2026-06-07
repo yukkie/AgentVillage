@@ -209,4 +209,35 @@ describe('filterFeedEvents', () => {
     expect(result).toHaveLength(1);
     expect(result[0].day).toBe(3);
   });
+
+  /*
+  SUT: filterFeedEvents
+  Mock: なし
+  Level: unit
+  Objective: eve フェーズで game_start_narrative イベントのみ返すことを検証する
+  */
+  it('eve: game_start_narrative イベントのみ返す', () => {
+    const events = [
+      ev({ day: 0, event_type: 'game_start_narrative', phase: 'init', is_public: true, content: 'A werewolf lurks...' }),
+      ev({ day: 1, event_type: 'speech', phase: 'day_discussion' }),
+    ];
+    const result = filterFeedEvents(events, 0, 'eve');
+    expect(result).toHaveLength(1);
+    expect(result[0].event_type).toBe('game_start_narrative');
+  });
+
+  /*
+  SUT: filterFeedEvents
+  Mock: なし
+  Level: unit
+  Objective: eve フェーズで game_start_narrative 以外のイベントを除外することを検証する
+  */
+  it('eve: game_start_narrative 以外は除外する', () => {
+    const events = [
+      ev({ day: 0, event_type: 'phase_start', phase: 'init', is_public: true }),
+      ev({ day: 0, event_type: 'speech', phase: 'init', is_public: true }),
+    ];
+    const result = filterFeedEvents(events, 0, 'eve');
+    expect(result).toHaveLength(0);
+  });
 });

@@ -110,10 +110,22 @@ class GameEngine:
     def run(self) -> str:
         """Run the full game and return the winning faction."""
         self._emit(LogEvent.make(
-            day=self.day,
+            day=0,
             phase="init",
             event_type=EventType.PHASE_START,
             content="=== GAME START ===",
+            is_public=True,
+        ))
+        self._emit(LogEvent.make(
+            day=0,
+            phase="init",
+            event_type=EventType.GAME_START_NARRATIVE,
+            content=(
+                "A werewolf lurks among the villagers — hiding in plain sight by day, "
+                "revealing its true nature only at night.\n"
+                "Rumors spread through the hamlet. The villagers, half in disbelief, "
+                "were called together at the inn on the edge of the village."
+            ),
             is_public=True,
         ))
 

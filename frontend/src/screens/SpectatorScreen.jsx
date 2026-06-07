@@ -322,6 +322,10 @@ export function FeedItem({ ev, prevById, roleAssignment, title, viewerMode = 'sp
   if (isPublic && SPECTATOR_ONLY_EVENTS.has(ev.event_type)) return null;
   if (isPublic && !ev.is_public) return null;
 
+  if (ev.event_type === 'game_start_narrative') {
+    return <SystemRow kind="gm" label="ゲームマスター">{ev.content}</SystemRow>;
+  }
+
   if (ev.event_type === 'wolf_chat') return <WolfChatCard ev={ev} viewerMode={viewerMode} />;
 
   if (ev.event_type === 'suspicion_update' || ev.event_type === 'threat_update') {
@@ -355,13 +359,7 @@ export function FeedItem({ ev, prevById, roleAssignment, title, viewerMode = 'sp
   }
 
   if (ev.event_type === 'phase_start') {
-    if (ev.phase === 'init') {
-      return (
-        <SystemRow kind="gm" label="ゲームマスター" ts="10:00">
-          <strong>{title || 'Archived Game'}</strong> が開始されました。
-        </SystemRow>
-      );
-    }
+    if (ev.phase === 'init') return null;
     if (ev.phase === 'day_vote' || ev.phase === 'night' || ev.phase === 'night_wolf_chat' || ev.phase === 'pre_night') return null;
     if (ev.phase === 'day_opening' || ev.phase === 'day_discussion') return null;
     return <SystemRow kind="phase" label="フェーズ">{ev.content}</SystemRow>;
@@ -380,6 +378,19 @@ export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agent
     <div className={styles.leftPaneInner}>
       <div className={styles.phaseNav}>
         <div className={styles.sectionLabel}>タイムライン</div>
+        <div className={`${styles.dayBlock} ${activePhase === 'eve' ? styles.dayBlockActive : ''}`}>
+          <div className={styles.phaseDay}>
+            <h3>前夜</h3>
+          </div>
+          <div className={styles.phaseList}>
+            <div
+              className={`${styles.phaseItem} ${styles.phaseGameOver} ${activePhase === 'eve' ? styles.active : ''}`}
+              onClick={() => { setDay(0); setPhase('eve'); }}
+            >
+              <span className={styles.dot} /> プロローグ
+            </div>
+          </div>
+        </div>
         {days.map(d => (
           <div key={d} className={`${styles.dayBlock} ${activeDay === d ? styles.dayBlockActive : ''}`}>
             <div className={styles.phaseDay}>
@@ -677,7 +688,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
 
   return (
     <div className={styles.frame}>
-      <TopBar crumbs={[{ label: '観戦' }, { label: title || sessionId || '第13回 桜霞村' }, { label: activePhase === 'game_over' ? '勝敗結果' : `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}` }]}>
+      <TopBar crumbs={[{ label: '観戦' }, { label: title || sessionId || '第13回 桜霞村' }, { label: activePhase === 'game_over' ? '勝敗結果' : activePhase === 'eve' ? '前夜 プロローグ' : `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}` }]}>
         {onBack && <TopBarBtn onClick={onBack}>← 一覧</TopBarBtn>}
         <TopBarBtn><span className={topBarStyles.liveDot} /> REPLAY</TopBarBtn>
         <TopBarBtn>同時観戦 142</TopBarBtn>
@@ -695,7 +706,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
         right={<RightPane agents={agents} roleAssignment={roleAssignment} coStatus={replayCoStatus} daySummary={daySummary} activeDay={activeDay} deadByDay={replayDeadByDay} viewerMode={viewerMode} />}
       >
         <div className={styles.feedHead}>
-          <h2>{activePhase === 'game_over' ? '勝敗結果' : `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}`} <small>{sessionId ? sessionId : '3:47 経過 / 残り 4:13'}</small></h2>
+          <h2>{activePhase === 'game_over' ? '勝敗結果' : activePhase === 'eve' ? '前夜 プロローグ' : `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}`} <small>{sessionId ? sessionId : '3:47 経過 / 残り 4:13'}</small></h2>
           <span className={styles.stat}>発言 <strong>{speechCount}</strong></span>
           <span className={styles.stat}>CO <strong>{coCount}</strong></span>
           <span className={styles.spacer} />
