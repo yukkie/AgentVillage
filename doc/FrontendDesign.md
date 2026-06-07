@@ -611,8 +611,19 @@ Semantic HTML: `AgentHero` は画面内のエージェント見出しとして `
 | `<ul>` / `<li>` | 順序を問わないリスト | ロスター・CO ボード・ランキング等（3 Screen 側で順次） |
 | `<article>` | 自己完結したカード | `GameCard`、将来 `SpeechCard` 等（3 Screen 側） |
 | `<h1>`〜`<h5>` | 見出し階層 | 各画面の見出し（適用済み多数） |
-| `<time>` | 日時 | タイムスタンプ（3 Screen 側で順次） |
+| `<time>` | 日時 | タイムスタンプ（`SpectatorScreen` / `AgentDetailScreen` 適用済み）。`datetime` 属性の付与方針は下記参照 |
 | `<strong>` / `<em>` | 強調・他要素との区別 | 本文中の強調語（適用済み多数） |
+
+#### `<time>` 要素の `datetime` 属性方針（#464）
+
+`datetime` 属性はブラウザ・スクリーンリーダー・検索エンジンが**機械可読な実日時**として解釈する。そのため、値の種類によって以下のように扱いを分ける。
+
+| 値の種類 | 例 | `datetime` 付与 |
+|---|---|---|
+| ゲーム内模擬時刻（`day` / `speechId` から計算した HH:MM 文字列） | `fmtTime(day, speechId)` の返り値 | **付けない** — 実日時ではないため機械処理に誤った意味を与える |
+| 実世界日時・ログ由来の UNIX timestamp | ゲームの開始時刻・完了時刻など | **付ける** — `datetime="YYYY-MM-DDTHH:MM:SSZ"` 形式で記述する |
+
+現行実装（`SpectatorScreen.jsx` / `AgentDetailScreen.jsx`）はゲーム内模擬時刻を表示しているため `datetime` なしが正しい。実世界日時が利用可能になった時点で、対象の `<time>` に `datetime` を追加する。
 
 #### 装飾として `<div>`/`<span>` を維持する箇所
 
