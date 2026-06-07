@@ -351,17 +351,6 @@ describe('FeedItem: phase_start visibility', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('hides init phase_start (GAME START row removed)', () => {
-    /**
-     * SUT: FeedItem
-     * Mock: なし
-     * Level: unit
-     * Objective: init の phase_start が null を返し「が開始されました」行が表示されないことを検証する
-     */
-    const { container } = renderFeedItem({ event_type: 'phase_start', phase: 'init', content: '=== GAME START ===' });
-    expect(container.firstChild).toBeNull();
-  });
-
   it('renders game_start_narrative as a gm system row', () => {
     /**
      * SUT: FeedItem

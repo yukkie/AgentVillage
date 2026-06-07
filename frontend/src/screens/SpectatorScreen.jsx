@@ -359,7 +359,6 @@ export function FeedItem({ ev, prevById, roleAssignment, title, viewerMode = 'sp
   }
 
   if (ev.event_type === 'phase_start') {
-    if (ev.phase === 'init') return null;
     if (ev.phase === 'day_vote' || ev.phase === 'night' || ev.phase === 'night_wolf_chat' || ev.phase === 'pre_night') return null;
     if (ev.phase === 'day_opening' || ev.phase === 'day_discussion') return null;
     return <SystemRow kind="phase" label="フェーズ">{ev.content}</SystemRow>;
