@@ -139,6 +139,10 @@ CLI の色仕様（役職別カラーなど）は [Spec.md §5](Spec.md) を参�
 | `decision` | `str` | `""` | エージェントのツール選択結果。`speech` イベントでは DISCUSSION ツール選択（`"speak"` / `"challenge"` / `"silent"` / `"co"`）を保持する。`judgment` イベントでは旧 DISCUSSION 判断選択を保持する。旧アーカイブの `speech` イベントには空文字が入っており、VOTE の投票戦略は `vote_strategy` フィールドへ移行済み |
 | `spectator_content` | `str` | `""` | spectator 版の本文。空なら `content` を使う（§2） |
 | `winner` | `str \| null` | `null` | `game_over` イベント専用。勝者陣営（`"Villagers"` / `"Werewolves"`）。他イベントでは `null` |
+| `suspicion_snapshot` | `dict[str, float] \| null` | `null` | `suspicion_update` イベント専用。デルタ適用**後**の累積疑念スコア（`agent.json` に永続化されるメモリと同一ソース）。`content` が LLM 由来のデルタトレースなのに対し、これは各時点の全体状態スナップショット。旧アーカイブには存在せず `null`。consumer は欠如時に snapshot 依存の表示をフォールバックし、`content` のデルタトレースは従来どおり表示する |
+| `threat_snapshot` | `dict[str, float] \| null` | `null` | `threat_update` イベント専用。デルタ適用**後**の累積脅威スコア（狼のみ）。`suspicion_snapshot` と同様、旧アーカイブには無く `null`・consumer は欠如時フォールバック |
+
+> **snapshot フィールドの後方互換**: `suspicion_snapshot` / `threat_snapshot` は追加フィールドであり、これらを持たない旧アーカイブも読み込み・replay 可能でなければならない（欠如＝`null` として扱う）。replay/Web consumer は `content` を累積状態の正本としてパースしてはならない。累積状態が必要なときは snapshot を読み、無ければ従来挙動にフォールバックする。
 
 ---
 

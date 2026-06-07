@@ -54,6 +54,8 @@ class LogEvent(BaseModel):
     vote_strategy: str = ""
     spectator_content: str = ""
     winner: str | None = None
+    suspicion_snapshot: dict[str, float] | None = None
+    threat_snapshot: dict[str, float] | None = None
 
     @classmethod
     def make(
@@ -74,6 +76,8 @@ class LogEvent(BaseModel):
         vote_strategy: str = "",
         spectator_content: str = "",
         winner: str | None = None,
+        suspicion_snapshot: dict[str, float] | None = None,
+        threat_snapshot: dict[str, float] | None = None,
     ) -> "LogEvent":
         return cls(
             day=day,
@@ -92,4 +96,6 @@ class LogEvent(BaseModel):
             vote_strategy=vote_strategy,
             spectator_content=spectator_content,
             winner=winner,
+            suspicion_snapshot=suspicion_snapshot,
+            threat_snapshot=threat_snapshot,
         )

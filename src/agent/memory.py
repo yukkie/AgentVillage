@@ -43,3 +43,23 @@ def update_threat_scores(actor: Actor, threat_scores: dict[str, float]) -> Actor
     except OSError as e:
         raise OSError(f"Failed to persist threat scores for {actor.name}: {e}") from e
     return actor
+
+
+def suspicion_snapshot(actor: Actor) -> dict[str, float]:
+    """Return the actor's post-update accumulated suspicion state.
+
+    Derived from the same in-memory ``beliefs`` that ``update_beliefs`` writes
+    and ``store.save`` persists to ``agent.json``. No separate replay-only
+    accumulator is maintained.
+    """
+    return {name: belief.suspicion for name, belief in actor.state.beliefs.items()}
+
+
+def threat_snapshot(actor: Actor) -> dict[str, float]:
+    """Return the actor's post-update accumulated threat state.
+
+    Derived from the same in-memory ``threat_scores`` that
+    ``update_threat_scores`` writes and ``store.save`` persists to
+    ``agent.json``. Intended for Werewolf actors only.
+    """
+    return dict(actor.state.threat_scores)
