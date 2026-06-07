@@ -364,6 +364,11 @@ CO 表示は `SPEECH` イベントの `claimed_role: str | None` フィールド
 エージェントが行動を選んだ理由を格納し、観戦者モードで表示する。他エージェントのゲーム状態には含めない（`is_public=False` または表示フィルタで制御）。
 既存アーカイブとの後方互換は `default=""` で対応する。
 
+`SUSPICION_UPDATE` / `THREAT_UPDATE` イベントには `suspicion_snapshot` / `threat_snapshot: dict[str, float] | None` フィールドを使う。
+`content` は LLM が返したデルタのテキストトレース（デバッグ用）として据え置き、snapshot にはデルタ適用**後**の累積スコアを格納する。replay consumer は1イベントだけで各時点の全体状態を復元でき、過去イベントの再生や `content` パースや `agent.json` 読み込みを要しない。
+snapshot の導出は `game.py` にインラインせず `agent/memory.py` の純粋ヘルパ（`suspicion_snapshot()` / `threat_snapshot()`）に置く。更新（`update_beliefs()` / `update_threat_scores()`）と同じ場所に導出を並べ、producer 側のイベント生成にメモリ状態のフラット化が散らばらないようにする。スナップショットと `agent.json` は同一の post-update メモリから導出され、replay 専用アキュムレータは持たない。
+既存アーカイブとの後方互換は `default=None` で対応し、`None` の場合は snapshot 依存表示をフォールバックする。
+
 ---
 
 ## src/ui/ — UIレイヤー

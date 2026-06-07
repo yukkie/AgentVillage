@@ -1,7 +1,13 @@
 """src/agent/memory.py のテスト。"""
 import pytest
 
-from src.agent.memory import update_beliefs, update_memory, update_threat_scores
+from src.agent.memory import (
+    suspicion_snapshot,
+    threat_snapshot,
+    update_beliefs,
+    update_memory,
+    update_threat_scores,
+)
 
 def test_update_memory_appends_new_items(monkeypatch, make_test_actor) -> None:
     """
@@ -174,3 +180,60 @@ def test_update_threat_scores_raises_on_io_error(monkeypatch, make_test_actor) -
     actor = make_test_actor("Wolf")
     with pytest.raises(OSError, match="Failed to persist threat scores for Wolf"):
         update_threat_scores(actor, {"Seer": 0.7})
+
+
+def test_suspicion_snapshot_reflects_accumulated_beliefs(monkeypatch, make_test_actor) -> None:
+    """
+    SUT: suspicion_snapshot()
+    Mock: monkeypatch で store.save を no-op に差し替え
+    Level: unit
+    Objective: 複数回の部分更新後、snapshot が累積した全 belief の suspicion を返すこと。
+    """
+    from src.agent import memory as mem_mod
+    monkeypatch.setattr(mem_mod.store, "save", lambda _: None)
+    actor = make_test_actor("Alice")
+    update_beliefs(actor, {"Bob": 0.8})
+    update_beliefs(actor, {"Carol": 0.3})
+    assert suspicion_snapshot(actor) == {"Bob": pytest.approx(0.8), "Carol": pytest.approx(0.3)}
+
+
+def test_suspicion_snapshot_empty_when_no_beliefs(make_test_actor) -> None:
+    """
+    SUT: suspicion_snapshot()
+    Mock: なし
+    Level: unit
+    Objective: belief が無い actor では空 dict を返すこと。
+    """
+    actor = make_test_actor("Alice")
+    assert suspicion_snapshot(actor) == {}
+
+
+def test_threat_snapshot_reflects_accumulated_scores(monkeypatch, make_test_actor) -> None:
+    """
+    SUT: threat_snapshot()
+    Mock: monkeypatch で store.save を no-op に差し替え
+    Level: unit
+    Objective: 複数回の部分更新後、snapshot が累積した全 threat_scores を返すこと。
+    """
+    from src.agent import memory as mem_mod
+    monkeypatch.setattr(mem_mod.store, "save", lambda _: None)
+    actor = make_test_actor("Wolf")
+    update_threat_scores(actor, {"Seer": 0.9})
+    update_threat_scores(actor, {"Knight": 0.4})
+    assert threat_snapshot(actor) == {"Seer": pytest.approx(0.9), "Knight": pytest.approx(0.4)}
+
+
+def test_threat_snapshot_is_a_copy(monkeypatch, make_test_actor) -> None:
+    """
+    SUT: threat_snapshot()
+    Mock: monkeypatch で store.save を no-op に差し替え
+    Level: unit
+    Objective: 返す dict が actor.state.threat_scores と別オブジェクトで、後続更新の影響を受けないこと。
+    """
+    from src.agent import memory as mem_mod
+    monkeypatch.setattr(mem_mod.store, "save", lambda _: None)
+    actor = make_test_actor("Wolf")
+    update_threat_scores(actor, {"Seer": 0.9})
+    snap = threat_snapshot(actor)
+    update_threat_scores(actor, {"Seer": 0.1})
+    assert snap["Seer"] == pytest.approx(0.9)

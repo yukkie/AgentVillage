@@ -230,6 +230,7 @@ class GameEngine:
                 event_type=EventType.SUSPICION_UPDATE,
                 agent=actor.name,
                 content=f"{actor.name} suspicion update: {scores_str}",
+                suspicion_snapshot=memory_mod.suspicion_snapshot(actor),
                 is_public=False,
             ))
 
@@ -244,6 +245,7 @@ class GameEngine:
                 event_type=EventType.THREAT_UPDATE,
                 agent=actor.name,
                 content=f"{actor.name} threat update: {scores_str}",
+                threat_snapshot=memory_mod.threat_snapshot(actor),
                 is_public=False,
             ))
 

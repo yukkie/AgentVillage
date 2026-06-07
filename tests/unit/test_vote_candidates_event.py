@@ -138,3 +138,51 @@ class TestSuspicionUpdateRenderer:
         result = renderer.on_event(event)
 
         assert result is None
+
+
+# ── backward compatibility ────────────────────────────────────────────────────
+
+
+class TestSnapshotBackwardCompat:
+    def test_legacy_event_without_snapshot_defaults_to_none(self):
+        """
+        SUT: LogEvent (model validation)
+        Mock: なし
+        Level: unit
+        Objective: snapshot フィールドを持たない旧アーカイブ相当の dict を
+                   LogEvent として検証でき、suspicion_snapshot/threat_snapshot が None になること。
+        """
+        legacy = {
+            "day": 1,
+            "phase": "day_discussion",
+            "event_type": "suspicion_update",
+            "agent": "Alice",
+            "content": "Alice suspicion update: Bob=0.70",
+            "is_public": False,
+        }
+
+        event = LogEvent.model_validate(legacy)
+
+        assert event.suspicion_snapshot is None
+        assert event.threat_snapshot is None
+
+    def test_renderer_handles_event_without_snapshot(self):
+        """
+        SUT: Renderer.on_event (SUSPICION_UPDATE)
+        Mock: なし
+        Level: unit
+        Objective: snapshot を持たない旧イベントでも renderer が content デルタトレースを
+                   従来どおり表示すること（snapshot 欠如時フォールバック）。
+        """
+        renderer = Renderer([], spectator_mode=True)
+        event = _make_event(
+            EventType.SUSPICION_UPDATE,
+            agent="Alice",
+            content="Alice suspicion update: Bob=0.70",
+            is_public=False,
+        )
+
+        result = renderer.on_event(event)
+
+        assert result is not None
+        assert "Alice suspicion update" in result.plain

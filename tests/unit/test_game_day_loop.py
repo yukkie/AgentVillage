@@ -232,6 +232,81 @@ class TestApplyDiscussionResult:
         assert "Alice=0.90" in threat_events[0].content
         assert threat_events[0].is_public is False
 
+    def test_suspicion_update_event_carries_post_update_snapshot(
+        self, make_test_actor, make_test_engine
+    ):
+        """
+        SUT: GameEngine._apply_discussion_result with SpeakResult
+        Mock: patch で store.save を no-op に差し替え
+        Level: unit
+        Objective: 複数回の部分 suspicion 更新で、2回目の SUSPICION_UPDATE イベントの
+                   suspicion_snapshot が累積状態（Bob と Carol 両方）を含み、content は
+                   その回のデルタのみを反映すること。
+        """
+        actor = make_test_actor("Alice")
+        engine, events = make_test_engine([actor, make_test_actor("Bob"), make_test_actor("Carol")])
+
+        with patch("src.agent.store.save"):
+            engine._apply_discussion_result(
+                actor,
+                SpeakResult(thought="t", speech="s", suspicion_scores={"Bob": 0.8}),
+                Phase.DAY_DISCUSSION,
+            )
+            engine._apply_discussion_result(
+                actor,
+                SpeakResult(thought="t", speech="s", suspicion_scores={"Carol": 0.3}),
+                Phase.DAY_DISCUSSION,
+            )
+
+        suspicion_events = [e for e in events if e.event_type == EventType.SUSPICION_UPDATE]
+        assert len(suspicion_events) == 2
+        # 1回目: snapshot は Bob のみ、content も Bob のデルタ
+        assert suspicion_events[0].suspicion_snapshot == {"Bob": pytest.approx(0.8)}
+        assert "Bob=0.80" in suspicion_events[0].content
+        assert "Carol" not in suspicion_events[0].content
+        # 2回目: snapshot は累積（Bob と Carol）、content は Carol のデルタのみ
+        assert suspicion_events[1].suspicion_snapshot == {
+            "Bob": pytest.approx(0.8),
+            "Carol": pytest.approx(0.3),
+        }
+        assert "Carol=0.30" in suspicion_events[1].content
+        assert "Bob" not in suspicion_events[1].content
+
+    def test_threat_update_event_carries_post_update_snapshot(
+        self, make_test_actor, make_test_engine
+    ):
+        """
+        SUT: GameEngine._apply_discussion_result with SpeakResult
+        Mock: patch で store.save を no-op に差し替え
+        Level: unit
+        Objective: 複数回の部分 threat 更新で、2回目の THREAT_UPDATE イベントの threat_snapshot
+                   が累積状態（Seer と Knight 両方）を含み、content はその回のデルタのみを反映すること。
+        """
+        wolf = make_test_actor("Wolf", "Werewolf")
+        engine, events = make_test_engine([wolf, make_test_actor("Seer"), make_test_actor("Knight")])
+
+        with patch("src.agent.store.save"):
+            engine._apply_discussion_result(
+                wolf,
+                SpeakResult(thought="t", speech="s", threat_scores={"Seer": 0.9}),
+                Phase.DAY_DISCUSSION,
+            )
+            engine._apply_discussion_result(
+                wolf,
+                SpeakResult(thought="t", speech="s", threat_scores={"Knight": 0.4}),
+                Phase.DAY_DISCUSSION,
+            )
+
+        threat_events = [e for e in events if e.event_type == EventType.THREAT_UPDATE]
+        assert len(threat_events) == 2
+        assert threat_events[0].threat_snapshot == {"Seer": pytest.approx(0.9)}
+        assert threat_events[1].threat_snapshot == {
+            "Seer": pytest.approx(0.9),
+            "Knight": pytest.approx(0.4),
+        }
+        assert "Knight=0.40" in threat_events[1].content
+        assert "Seer" not in threat_events[1].content
+
     def test_memory_update_is_applied(self, make_test_actor, make_test_engine):
         """
         SUT: GameEngine._apply_discussion_result with SpeakResult
