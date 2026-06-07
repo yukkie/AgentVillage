@@ -136,6 +136,22 @@ describe('filterFeedEvents', () => {
   SUT: filterFeedEvents
   Mock: なし
   Level: unit
+  Objective: spectator 専用の suspicion_update / threat_update は discuss フェーズの中央フィードに渡すことを検証する
+  */
+  it('discuss: suspicion_update / threat_update を返す', () => {
+    const events = [
+      ev({ event_type: 'suspicion_update', is_public: false, suspicion_snapshot: { Bob: 0.82 } }),
+      ev({ event_type: 'threat_update', is_public: false, threat_snapshot: { Alice: 0.74 } }),
+      ev({ event_type: 'speech', is_public: false, content: '[THINK] thinking...' }),
+    ];
+    const result = filterFeedEvents(events, 1, 'discuss');
+    expect(result.map(e => e.event_type)).toEqual(['suspicion_update', 'threat_update']);
+  });
+
+  /*
+  SUT: filterFeedEvents
+  Mock: なし
+  Level: unit
   Objective: GAME START phase_start が discuss フェーズで含まれることを検証する
   */
   it('discuss: GAME START phase_start を含む', () => {

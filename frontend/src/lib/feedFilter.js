@@ -2,6 +2,7 @@
 // separate co_announcement event. Keep co_announcement here so archived replays
 // continue to appear in the discuss feed.
 const DISCUSS_TYPES = new Set(['speech', 'co_announcement']);
+const DISCUSS_SPECTATOR_TYPES = new Set(['suspicion_update', 'threat_update']);
 const VOTE_TYPES = new Set(['vote', 'elimination', 'medium_result']);
 const NIGHT_TYPES = new Set(['wolf_chat', 'inspection', 'guard', 'guard_block', 'night_attack']);
 const NIGHT_PHASES = new Set(['night', 'night_wolf_chat']);
@@ -20,6 +21,7 @@ export function filterFeedEvents(events, day, phase) {
 
     if (phase === 'discuss') {
       if (DISCUSS_TYPES.has(ev.event_type)) return ev.is_public !== false;
+      if (DISCUSS_SPECTATOR_TYPES.has(ev.event_type)) return true;
       if (ev.event_type === 'phase_start') return !NIGHT_PHASES.has(ev.phase) && ev.phase !== 'day_vote';
       return false;
     }
