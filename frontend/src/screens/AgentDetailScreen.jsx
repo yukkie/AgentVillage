@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
 import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
@@ -13,7 +14,7 @@ import styles from './AgentDetailScreen.module.css';
 const TABS = ['概要', '推論ログ', '疑い・信頼', '夜の行動', '過去の戦績'];
 
 // --- 左ペイン ---
-function LeftPane({ current, onPick }) {
+function LeftPane({ current, sessionId }) {
   const alive = ALL_AGENTS.filter(n => !DEAD_AGENTS.has(n));
   const dead  = ALL_AGENTS.filter(n =>  DEAD_AGENTS.has(n));
 
@@ -29,19 +30,23 @@ function LeftPane({ current, onPick }) {
           const role  = ROLE_ASSIGNMENT[n];
           const r     = ROLES[role];
           const isDead = DEAD_AGENTS.has(n);
+          const to = sessionId
+            ? `/game/${sessionId}/agent/${encodeURIComponent(n)}`
+            : `/agent/${encodeURIComponent(n)}`;
           return (
             <li
               key={n}
               className={`${styles.pick} ${current === n ? styles.pickOn : ''} ${isDead ? styles.pickDead : ''}`}
               style={{ '--r-color': r?.color }}
-              onClick={() => onPick(n)}
             >
-              <Avatar name={n} role={role} size="sm" dead={isDead} />
-              <div className={styles.who}>
-                <span className={styles.pickName}>{n}</span>
-                <span className={styles.pickRole}>{r?.ja}</span>
-              </div>
-              <span className={styles.statusDot} />
+              <Link to={to} className={styles.pickLink}>
+                <Avatar name={n} role={role} size="sm" dead={isDead} />
+                <div className={styles.who}>
+                  <span className={styles.pickName}>{n}</span>
+                  <span className={styles.pickRole}>{r?.ja}</span>
+                </div>
+                <span className={styles.statusDot} />
+              </Link>
             </li>
           );
         })}
@@ -301,8 +306,9 @@ function RightPane({ agent }) {
 
 // === メイン画面 ===
 export default function AgentDetailScreen() {
-  const [agent, setAgent] = useState('Nox');
-  const [tab, setTab]     = useState(0);
+  const { sessionId, agentName } = useParams();
+  const agent = agentName || 'Nox';
+  const [tab, setTab] = useState(0);
 
   const role = ROLE_ASSIGNMENT[agent];
   const r    = ROLES[role];
@@ -315,13 +321,13 @@ export default function AgentDetailScreen() {
     <TabHistory      agent={agent} />,
   ];
 
+  const topCrumbs = sessionId
+    ? [{ label: 'r/agent-jinrou', to: '/' }, { label: sessionId, to: `/game/${sessionId}` }, { label: agent }]
+    : [{ label: 'r/agent-jinrou', to: '/' }, { label: agent }];
+
   return (
     <div className={styles.frame}>
-      <TopBar crumbs={[
-        { label: 'r/agent-jinrou' },
-        { label: '第13回 桜霞' },
-        { label: agent },
-      ]}>
+      <TopBar crumbs={topCrumbs}>
         <TopBarBtn><span className={topBarStyles.liveDot} /> LIVE観戦中</TopBarBtn>
         <TopBarBtn>⤓ プロファイルJSON</TopBarBtn>
         <TopBarBtn primary>★ ウォッチ</TopBarBtn>
@@ -330,7 +336,7 @@ export default function AgentDetailScreen() {
       <ThreePaneLayout
         collapsibleLeft
         collapsibleRight
-        left={<LeftPane current={agent} onPick={setAgent} />}
+        left={<LeftPane current={agent} sessionId={sessionId} />}
         right={<RightPane agent={agent} />}
       >
         <div className={styles.mainPane}>

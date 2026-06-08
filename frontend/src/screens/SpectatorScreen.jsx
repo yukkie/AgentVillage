@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
 import RoleTag from '../components/RoleTag.jsx';
 import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLES } from '../lib/constants.js';
 import { fetchReplayAgents, fetchReplayLog } from '../lib/replayLoader.js';
+import { fetchGameBySessionId } from '../lib/archiveLoader.js';
 import { parseGameData, aggregateCoStatus, computeDeadByDay } from '../lib/parseGameData.js';
 import { filterFeedEvents } from '../lib/feedFilter.js';
 import styles from './SpectatorScreen.module.css';
@@ -601,7 +603,9 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
 
 // === メイン観戦画面 ===
 // TODO(#314): viewerMode の切り替えUI（spectator/public トグル）を追加する
-export default function SpectatorScreen({ sessionId, cast = [], title, onBack }) {
+export default function SpectatorScreen() {
+  const { sessionId } = useParams();
+  const navigate = useNavigate();
   const [activeDay, setActiveDay] = useState(2);
   const [activePhase, setActivePhase] = useState('discuss');
   const [replayEvents, setReplayEvents] = useState(null);
@@ -629,7 +633,8 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
     setLoadingAgents(true);
     setLoadError(null);
 
-    fetchReplayAgents({ sessionId, cast })
+    fetchGameBySessionId(sessionId)
+      .then(entry => fetchReplayAgents({ sessionId, cast: entry.cast ?? [] }))
       .then(agentJsonByName => {
         if (cancelled) return;
         setReplayAgents(parseGameData('', agentJsonByName).agents);
@@ -664,7 +669,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
     return () => {
       cancelled = true;
     };
-  }, [sessionId, cast]);
+  }, [sessionId]);
 
   const events = replayEvents ?? [];
   const agents = replayAgents;
@@ -687,8 +692,8 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
 
   return (
     <div className={styles.frame}>
-      <TopBar crumbs={[{ label: '観戦' }, { label: title || sessionId || '第13回 桜霞村' }, { label: activePhase === 'game_over' ? '勝敗結果' : activePhase === 'eve' ? '前夜 プロローグ' : `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}` }]}>
-        {onBack && <TopBarBtn onClick={onBack}>← 一覧</TopBarBtn>}
+      <TopBar crumbs={[{ label: 'r/agent-jinrou', to: '/' }, { label: sessionId || '第13回 桜霞村' }, { label: activePhase === 'game_over' ? '勝敗結果' : activePhase === 'eve' ? '前夜 プロローグ' : `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}` }]}>
+        <TopBarBtn onClick={() => navigate('/')}>← 一覧</TopBarBtn>
         <TopBarBtn><span className={topBarStyles.liveDot} /> REPLAY</TopBarBtn>
         <TopBarBtn>同時観戦 142</TopBarBtn>
         <TopBarBtn onClick={() => setViewerMode(v => v === 'spectator' ? 'public' : 'spectator')}>
@@ -705,7 +710,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
         right={<RightPane agents={agents} roleAssignment={roleAssignment} coStatus={replayCoStatus} daySummary={daySummary} activeDay={activeDay} deadByDay={replayDeadByDay} viewerMode={viewerMode} />}
       >
         <div className={styles.feedHead}>
-          <h2>{activePhase === 'game_over' ? '勝敗結果' : activePhase === 'eve' ? '前夜 プロローグ' : `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}`} <small>{sessionId ? sessionId : '3:47 経過 / 残り 4:13'}</small></h2>
+          <h2>{activePhase === 'game_over' ? '勝敗結果' : activePhase === 'eve' ? '前夜 プロローグ' : `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}`} <small>{sessionId || '3:47 経過 / 残り 4:13'}</small></h2>
           <span className={styles.stat}>発言 <strong>{speechCount}</strong></span>
           <span className={styles.stat}>CO <strong>{coCount}</strong></span>
           <span className={styles.spacer} />
@@ -730,7 +735,7 @@ export default function SpectatorScreen({ sessionId, cast = [], title, onBack })
               ev={e}
               prevById={prevById}
               roleAssignment={roleAssignment}
-              title={title || sessionId}
+              title={sessionId}
               viewerMode={viewerMode}
             />
           ))}

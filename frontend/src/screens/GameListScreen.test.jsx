@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import GameListScreen from './GameListScreen.jsx';
 import * as archiveLoader from '../lib/archiveLoader.js';
@@ -34,6 +35,14 @@ function mockGameList(games = [game]) {
   archiveLoader.fetchGameList.mockResolvedValue(games);
 }
 
+function renderGameList() {
+  return render(
+    <MemoryRouter>
+      <GameListScreen />
+    </MemoryRouter>
+  );
+}
+
 describe('GameListScreen GameCard semantics', () => {
   it('exposes each game card as an article named by session id', async () => {
     /**
@@ -44,7 +53,7 @@ describe('GameListScreen GameCard semantics', () => {
      */
     mockGameList();
 
-    render(<GameListScreen />);
+    renderGameList();
 
     const card = await screen.findByRole('article', { name: '20260510_102927' });
 
@@ -52,24 +61,20 @@ describe('GameListScreen GameCard semantics', () => {
     expect(screen.getByRole('heading', { level: 3, name: game.title })).toBeTruthy();
   });
 
-  it('opens the selected game when the card body button is clicked', async () => {
+  it('renders a link to /game/:sessionId for each game card', async () => {
     /**
      * SUT: GameListScreen / GameCard
      * Mock: fetchGameList（state_archive index の取得を固定）
      * Level: component
-     * Objective: semantic button 化後もカード選択で onOpenGame に選択 game が渡ることを検証する。
+     * Objective: Router 化後、GameCard が /game/:id へのリンクを持つことを検証する。
      */
-    const onOpenGame = vi.fn();
-    const user = userEvent.setup();
     mockGameList();
 
-    render(<GameListScreen onOpenGame={onOpenGame} />);
+    renderGameList();
 
-    await user.click(await screen.findByRole('button', { name: new RegExp(game.title) }));
-
-    await waitFor(() => {
-      expect(onOpenGame).toHaveBeenCalledWith(game);
-    });
+    await screen.findByRole('article', { name: '20260510_102927' });
+    const link = screen.getByRole('link', { name: new RegExp(game.title) });
+    expect(link.getAttribute('href')).toBe('/game/20260510_102927');
   });
 });
 
@@ -83,7 +88,7 @@ describe('GameListScreen list semantics', () => {
      */
     mockGameList();
 
-    render(<GameListScreen />);
+    renderGameList();
     await screen.findByRole('article', { name: '20260510_102927' });
 
     const sideNav = screen.getByRole('navigation', { name: 'ゲーム一覧サイドナビ' });
@@ -95,5 +100,23 @@ describe('GameListScreen list semantics', () => {
 
     const posts = screen.getByRole('list', { name: '観戦コミュニティ' });
     expect(within(posts).getAllByRole('listitem').length).toBeGreaterThan(0);
+  });
+
+  it('renders agent links to /agent/:agentName in top agents and ranking', async () => {
+    /*
+     * SUT: GameListScreen / LeftPane / RightPane
+     * Mock: fetchGameList
+     * Level: component
+     * Objective: 左ペイン「注目エージェント」と右ペイン「勝率トップ」が /agent/:name へのリンクを持つことを検証する。
+     */
+    mockGameList();
+
+    renderGameList();
+    await screen.findByRole('article', { name: '20260510_102927' });
+
+    const agentLinks = screen.getAllByRole('link').filter(
+      l => l.getAttribute('href')?.startsWith('/agent/')
+    );
+    expect(agentLinks.length).toBeGreaterThan(0);
   });
 });

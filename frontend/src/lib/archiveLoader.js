@@ -71,3 +71,20 @@ export async function fetchGameList() {
   const index = await res.json();
   return parseIndexToGameList(index);
 }
+
+/**
+ * Fetch a single game entry by sessionId from state_archive/index.json.
+ * Returns the raw index entry (including cast) for use by SpectatorScreen.
+ * Throws if the session is not found.
+ *
+ * @param {string} sessionId
+ * @returns {Promise<object>}
+ */
+export async function fetchGameBySessionId(sessionId) {
+  const res = await fetch(INDEX_URL);
+  if (!res.ok) throw new Error(`Failed to fetch game list: ${res.status}`);
+  const index = await res.json();
+  const entry = index.find(e => e.session_id === sessionId);
+  if (!entry) throw new Error(`Session not found: ${sessionId}`);
+  return entry;
+}
