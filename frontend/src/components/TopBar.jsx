@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import styles from './TopBar.module.css';
 
 /**
@@ -22,9 +23,11 @@ export default function TopBar({ crumbs = [], children }) {
                 {i > 0 && <span className={styles.sep} aria-hidden="true">/</span>}
                 {isCurrent
                   ? <span className={styles.now} aria-current="page">{c.label}</span>
-                  : c.onClick
-                    ? <a href="#" onClick={(e) => { e.preventDefault(); c.onClick(); }}>{c.label}</a>
-                    : <span>{c.label}</span>
+                  : c.to
+                    ? <Link to={c.to}>{c.label}</Link>
+                    : c.onClick
+                      ? <a href="#" onClick={(e) => { e.preventDefault(); c.onClick(); }}>{c.label}</a>
+                      : <span>{c.label}</span>
                 }
               </li>
             );

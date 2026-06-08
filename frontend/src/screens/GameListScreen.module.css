@@ -203,6 +203,7 @@
   display: block;
   font: inherit;
   text-align: left;
+  text-decoration: none;
 }
 .cardBody:focus-visible {
   outline: 2px solid var(--acc);
@@ -527,3 +528,25 @@
   cursor: default;
 }
 .createBtn:not(:disabled):hover { opacity: 0.85; }
+
+.agentLink {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+  text-decoration: none;
+  width: 100%;
+  padding: 4px 6px;
+  border-radius: var(--r1);
+}
+.agentLink:hover { background: var(--bg-2); color: var(--tx); }
+
+.rankLink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+.rankLink:hover { background: var(--bg-2); border-radius: var(--r1); }

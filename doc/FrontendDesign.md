@@ -25,7 +25,7 @@
 | ビルドツール | Vite 6 | 高速 HMR、設定が軽量 |
 | UI ライブラリ | React 18 | `design/proposal/` の JSX プロトタイプを低コストで移植できる |
 | スタイリング | CSS Modules | `design/proposal/prototypes/styles.css` の CSS Variables をそのまま流用可能 |
-| ルーティング | （未導入）useState 切り替え | Milestone 2 で react-router を導入する |
+| ルーティング | React Router v7（`react-router-dom`） | URL ベース遷移・ブラウザ履歴対応（#342） |
 | 将来移行先 | Next.js | React 資産を保持したまま SSR / API Routes を追加可能 |
 
 ---
@@ -77,15 +77,23 @@ frontend/
 | 観戦メイン | `SpectatorScreen` | 特定ゲームの発言フィードを 3 ペインで表示 |
 | エージェント詳細 | `AgentDetailScreen` | 特定エージェントのプロフィール・推論ログ・疑い度マトリクス |
 
-### 4.2 現状の遷移実装（Milestone 1）
+### 4.2 現状の遷移実装（#342 完了後）
 
-`App.jsx` が `useState('list')` で現在の画面キーを管理し、`SCREENS` マップからコンポーネントを選択する。画面間のデータ受け渡し（どのゲーム・どのエージェントを見るか）は **未実装**（スタブデータがハードコード）。
+React Router v7 を導入済み。`App.jsx` は `Routes`/`Route` でルートを定義し、`useState` による画面切り替えは廃止。
 
 ```js
-// App.jsx（現状）
-const SCREENS = { list: GameListScreen, spectator: SpectatorScreen, agent: AgentDetailScreen };
-const [screen, setScreen] = useState('list');
+// App.jsx
+<Routes>
+  <Route path="/"                               element={<GameListScreen />} />
+  <Route path="/agent/:agentName"               element={<AgentDetailScreen />} />
+  <Route path="/game/:sessionId"                element={<SpectatorScreen />} />
+  <Route path="/game/:sessionId/agent/:agentName" element={<AgentDetailScreen />} />
+</Routes>
 ```
+
+`AgentDetailScreen` は `useParams()` の `sessionId` の有無でモードを切り替える:
+- **game-scoped mode** (`sessionId` あり): 特定ゲームの推論ログ・疑念マトリクス等を表示
+- **global profile mode** (`sessionId` なし): エージェントのグローバルプロフィール・過去戦績を表示（スタブ、#318 対応待ち）
 
 ### 4.2.1 Replay viewer（#318）
 
@@ -119,17 +127,27 @@ const [screen, setScreen] = useState('list');
 
 `daySummary` は `SpectatorScreen` の左右ペインで共有する日別データ名とする。`nightActions` や `execResult` のような行動系フィールドも `daySummary` 配下に置き、左ペインと右ペインが別々の集計結果を参照して表示ずれを起こさないようにする。
 
-### 4.3 ルーティング方針（Milestone 2）
+### 4.3 ルーティング（#342 実装済み）
 
-react-router を導入し、URL ベースの遷移に移行する。
+React Router v7 を導入。URL ベースの遷移に移行済み。
 
 ```
-/                          → GameListScreen
-/game/:sessionId           → SpectatorScreen（ゲームID 指定）
-/game/:sessionId/agent/:name → AgentDetailScreen（エージェント指定）
+/                              → GameListScreen
+/agent/:agentName              → AgentDetailScreen（global profile mode）
+/game/:sessionId               → SpectatorScreen（ゲームID 指定）
+/game/:sessionId/agent/:agentName → AgentDetailScreen（game-scoped mode）
 ```
 
-画面間のナビゲーションは `TopBar` のパンくず（`crumbs` prop）を `<Link>` に差し替えることで対応する。
+画面間のナビゲーションは `TopBar` のパンくず（`crumbs` prop に `to` を渡す）と各画面内の `<Link>` で対応する。
+
+#### SPA フォールバックと静的ファイルの境界
+
+SPA ルート（`/game/...`、`/agent/...` 等）はすべて `index.html` にフォールバックする必要がある。静的アーカイブファイルのパス（`/state_archive/...`）は SPA ルートとは別扱いにする。
+
+| 環境 | 対応 |
+|---|---|
+| ローカル Vite dev | `vite.config.js` の `server.historyApiFallback: true`（または同等設定）で対応済み |
+| production/static hosting（nginx / GitHub Pages 等） | すべての未マッチリクエストを `index.html` に rewrite するよう設定が必要。ただし `/state_archive/` プレフィックスのリクエストは静的ファイルとして先に serve し、フォールバックさせない |
 
 ### 4.4 状態遷移図
 
@@ -643,7 +661,14 @@ Semantic HTML: `AgentHero` は画面内のエージェント見出しとして `
 
 #### パンくずの呼び出し契約（`TopBar`）
 
-`crumbs` 配列の各要素は `{ label, onClick? }`。`onClick` を持つ要素のみ `<a href="#">`（link role）としてレンダリングされ、持たない中間要素は非リンクの `<span>` になる（dead link を作らない）。クリック可能にしたい中間 crumb には呼び出し側で `onClick` を渡すこと。
+`crumbs` 配列の各要素は `{ label, to?, onClick? }`。レンダリングルールは以下の通り:
+
+| 条件 | レンダリング |
+|---|---|
+| 最後の要素（現在地） | `<span aria-current="page">`（`to`/`onClick` があってもリンク化しない） |
+| `to` あり | `<Link to={c.to}>`（`onClick` より優先） |
+| `onClick` あり | `<a href="#" onClick>`（後方互換） |
+| どちらもなし | `<span>` |
 
 ---
 
@@ -721,7 +746,7 @@ fetch('../state_archive/20260510_102927/spectator_log.jsonl')
 
 `state_archive/index.json`（`tools/generate_archive_index.py` で事前生成）を fetch して `GameListScreen` に渡す。`stub/gameList.js` の `GAMES` 配列を削除済み。
 
-- `src/lib/archiveLoader.js` — `fetchGameList()` / `parseIndexToGameList()` でデータ取得・変換
+- `src/lib/archiveLoader.js` — `fetchGameList()` / `parseIndexToGameList()` / `fetchGameBySessionId(sessionId)` でデータ取得・変換
 - `src/legacy/normalizeAgentJson.js` — pre-#52 flat 形式エージェント JSON を正規化（Legacy-Adapter）
 - fetch 先 URL は `archiveLoader.js` に集約。#315 FastAPI 導入時は URL 差し替えのみで対応可能
 - `votes` / `desc` 等ログにないフィールドのギャップは `doc/GameData.md` に記録済み

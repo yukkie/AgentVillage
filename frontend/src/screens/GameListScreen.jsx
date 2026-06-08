@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Avatar, { AvatarButton } from '../components/Avatar.jsx';
 import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
@@ -117,7 +118,7 @@ function winnerClass(winner) {
   return '';
 }
 
-function GameCard({ g, onOpen }) {
+function GameCard({ g }) {
   return (
     <article
       className={`${styles.gcard} ${g.hot ? styles.featured : ''}`}
@@ -128,10 +129,9 @@ function GameCard({ g, onOpen }) {
         <span className={styles.voteNum}>{g.votes}</span>
         <button>▼</button>
       </div>
-      <button
-        type="button"
+      <Link
+        to={`/game/${g.id}`}
         className={styles.cardBody}
-        onClick={() => onOpen(g)}
       >
         <div className={styles.gmeta}>
           {g.live
@@ -175,7 +175,7 @@ function GameCard({ g, onOpen }) {
           <span>★ 保存</span>
           <span>↗ 共有</span>
         </div>
-      </button>
+      </Link>
     </article>
   );
 }
@@ -223,13 +223,13 @@ function LeftPane() {
         <ul>
           {TOP_AGENTS.map(({ name, winRate }) => (
             <li key={name}>
-              <a>
+              <Link to={`/agent/${encodeURIComponent(name)}`} className={styles.agentLink}>
                 <Avatar name={name} size="xs" />
                 {name}
                 <span style={{ marginLeft: 'auto', color: 'var(--tx-3)', fontSize: 11, fontFamily: 'var(--mono)' }}>
                   勝率 {winRate}%
                 </span>
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
@@ -254,10 +254,12 @@ function RightPane() {
         <ul className={styles.sideList} aria-label="今週の勝率トップ">
           {TOP_AGENTS.map(({ name, winRate }, i) => (
             <li className={styles.rankRow} key={name}>
-              <span className={styles.rank}>{i + 1}</span>
-              <Avatar name={name} size="xs" />
-              <span className={styles.rankName}>{name}</span>
-              <span className={styles.rankNum}>{winRate}%</span>
+              <Link to={`/agent/${encodeURIComponent(name)}`} className={styles.rankLink}>
+                <span className={styles.rank}>{i + 1}</span>
+                <Avatar name={name} size="xs" />
+                <span className={styles.rankName}>{name}</span>
+                <span className={styles.rankNum}>{winRate}%</span>
+              </Link>
             </li>
           ))}
         </ul>
@@ -279,7 +281,7 @@ function RightPane() {
 }
 
 // === メインゲーム一覧画面 ===
-export default function GameListScreen({ onOpenGame = () => {} }) {
+export default function GameListScreen() {
   const [activeTab, setActiveTab] = useState('完了');
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -350,7 +352,7 @@ export default function GameListScreen({ onOpenGame = () => {} }) {
             </div>
           )}
 
-          {visibleGames.map(g => <GameCard key={g.id} g={g} onOpen={onOpenGame} />)}
+          {visibleGames.map(g => <GameCard key={g.id} g={g} />)}
         </div>
       </ThreePaneLayout>
     </div>

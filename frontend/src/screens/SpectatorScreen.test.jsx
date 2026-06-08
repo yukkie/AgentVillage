@@ -1,16 +1,33 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, within, waitFor } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { FeedItem, LeftPane, RightPane } from './SpectatorScreen.jsx';
 import SpectatorScreen from './SpectatorScreen.jsx';
 import styles from './SpectatorScreen.module.css';
 import * as replayLoader from '../lib/replayLoader.js';
+import * as archiveLoader from '../lib/archiveLoader.js';
 
 vi.mock('../lib/replayLoader.js', () => ({
   fetchReplayLog: vi.fn(),
   fetchReplayAgents: vi.fn(),
   fetchReplayGame: vi.fn(),
 }));
+
+vi.mock('../lib/archiveLoader.js', () => ({
+  fetchGameList: vi.fn(),
+  fetchGameBySessionId: vi.fn(),
+}));
+
+function renderSpectator(sessionId) {
+  return render(
+    <MemoryRouter initialEntries={[`/game/${sessionId}`]}>
+      <Routes>
+        <Route path="/game/:sessionId" element={<SpectatorScreen />} />
+      </Routes>
+    </MemoryRouter>
+  );
+}
 
 const roleAssignment = {
   Alice: 'Seer',
@@ -864,8 +881,6 @@ describe('SpectatorScreen: sessionId integration', () => {
     vi.resetAllMocks();
   });
 
-  const CAST = [];
-
   async function waitForReplayLoadToSettle() {
     await waitFor(() => {
       expect(replayLoader.fetchReplayLog).toHaveBeenCalledOnce();
@@ -878,14 +893,15 @@ describe('SpectatorScreen: sessionId integration', () => {
   it('renders feed events from fetchReplayLog after load', async () => {
     /*
      * SUT: SpectatorScreen (default export)
-     * Mock: fetchReplayLog / fetchReplayAgents を vi.fn() でモック
+     * Mock: fetchGameBySessionId / fetchReplayLog / fetchReplayAgents を vi.fn() でモック
      * Level: integration
-     * Objective: sessionId が渡されると fetchReplayLog の結果がフィードに表示されることを検証する。
+     * Objective: sessionId が URL params で渡されると fetchReplayLog の結果がフィードに表示されることを検証する。
      */
+    archiveLoader.fetchGameBySessionId.mockResolvedValue({ cast: [] });
     replayLoader.fetchReplayLog.mockResolvedValue(MINIMAL_JSONL);
     replayLoader.fetchReplayAgents.mockResolvedValue(MINIMAL_AGENT_JSON);
 
-    render(<SpectatorScreen sessionId="test-session-001" cast={CAST} />);
+    renderSpectator('test-session-001');
 
     await waitFor(() => expect(screen.getByText('こんにちは')).toBeTruthy(), { timeout: 3000 });
     await waitForReplayLoadToSettle();
@@ -894,14 +910,15 @@ describe('SpectatorScreen: sessionId integration', () => {
   it('shows CO count from real log events', async () => {
     /*
      * SUT: SpectatorScreen (default export)
-     * Mock: fetchReplayLog / fetchReplayAgents を vi.fn() でモック
+     * Mock: fetchGameBySessionId / fetchReplayLog / fetchReplayAgents を vi.fn() でモック
      * Level: integration
      * Objective: co_announcement イベントの数が TopBar の CO 表示に反映されることを検証する。
      */
+    archiveLoader.fetchGameBySessionId.mockResolvedValue({ cast: [] });
     replayLoader.fetchReplayLog.mockResolvedValue(MINIMAL_JSONL);
     replayLoader.fetchReplayAgents.mockResolvedValue(MINIMAL_AGENT_JSON);
 
-    render(<SpectatorScreen sessionId="test-session-001" cast={CAST} />);
+    renderSpectator('test-session-001');
 
     await waitFor(() => {
       const coSpan = [...document.querySelectorAll('span')].find(el => el.textContent.includes('CO'));
@@ -913,36 +930,18 @@ describe('SpectatorScreen: sessionId integration', () => {
   it('shows load error when fetchReplayLog rejects', async () => {
     /*
      * SUT: SpectatorScreen (default export)
-     * Mock: fetchReplayLog を reject するモック
+     * Mock: fetchGameBySessionId / fetchReplayLog を reject するモック
      * Level: integration
      * Objective: fetch 失敗時にエラーメッセージが表示されることを検証する。
      */
+    archiveLoader.fetchGameBySessionId.mockResolvedValue({ cast: [] });
     replayLoader.fetchReplayLog.mockRejectedValue(new Error('network error'));
     replayLoader.fetchReplayAgents.mockResolvedValue({});
 
-    render(<SpectatorScreen sessionId="bad-session" cast={CAST} />);
+    renderSpectator('bad-session');
 
     await waitFor(() => expect(screen.getByText(/network error/)).toBeTruthy(), { timeout: 3000 });
     await waitForReplayLoadToSettle();
-  });
-
-  it('calls onBack when back button is clicked', async () => {
-    /*
-     * SUT: SpectatorScreen (default export)
-     * Mock: fetchReplayLog / fetchReplayAgents / onBack を vi.fn()
-     * Level: integration
-     * Objective: onBack prop が渡されていれば「← 一覧」ボタンが表示されクリックで呼ばれることを検証する。
-     */
-    replayLoader.fetchReplayLog.mockResolvedValue('');
-    replayLoader.fetchReplayAgents.mockResolvedValue({});
-    const onBack = vi.fn();
-
-    const user = userEvent.setup();
-    render(<SpectatorScreen sessionId="test-session-001" cast={CAST} onBack={onBack} />);
-
-    await waitForReplayLoadToSettle();
-    await user.click(screen.getByText('← 一覧'));
-    expect(onBack).toHaveBeenCalledOnce();
   });
 });
 
@@ -1105,6 +1104,36 @@ describe('ThoughtDetails: viewerMode public (AC4 / #314)', () => {
   });
 });
 
+describe('SpectatorScreen: back button', () => {
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('renders a back button that navigates to /', async () => {
+    /*
+     * SUT: SpectatorScreen (default export)
+     * Mock: fetchGameBySessionId / fetchReplayLog / fetchReplayAgents を vi.fn()
+     * Level: integration
+     * Objective: 「← 一覧」ボタンが存在し、クリックするとルートに戻ることを検証する。
+     */
+    archiveLoader.fetchGameBySessionId.mockResolvedValue({ cast: [] });
+    replayLoader.fetchReplayLog.mockResolvedValue('');
+    replayLoader.fetchReplayAgents.mockResolvedValue({});
+    const user = userEvent.setup();
+
+    renderSpectator('test-session-001');
+
+    await waitFor(() => {
+      expect(screen.queryByText(/読み込み中/)).toBeNull();
+    }, { timeout: 3000 });
+
+    expect(screen.getByText('← 一覧')).toBeTruthy();
+    await user.click(screen.getByText('← 一覧'));
+    // MemoryRouter 上で / に遷移すると SpectatorScreen がアンマウントされる
+    expect(screen.queryByText('← 一覧')).toBeNull();
+  });
+});
+
 describe('SpectatorScreen: viewerMode toggle (AC1 / #314)', () => {
   afterEach(() => {
     vi.resetAllMocks();
@@ -1117,11 +1146,12 @@ describe('SpectatorScreen: viewerMode toggle (AC1 / #314)', () => {
      * Level: integration
      * Objective: ヘッダーのトグルボタンクリックで spectator / public が切り替わることを検証する（AC1 / #314）。
      */
+    archiveLoader.fetchGameBySessionId.mockResolvedValue({ cast: [] });
     replayLoader.fetchReplayLog.mockResolvedValue('');
     replayLoader.fetchReplayAgents.mockResolvedValue({});
     const user = userEvent.setup();
 
-    render(<SpectatorScreen sessionId="test-session-001" cast={[]} />);
+    renderSpectator('test-session-001');
 
     await waitFor(() => {
       expect(screen.queryByText(/読み込み中/)).toBeNull();

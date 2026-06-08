@@ -29,5 +29,8 @@ export default defineConfig({
     fs: {
       allow: [path.resolve(__dirname, '..')],
     },
+    // SPA fallback: serve index.html for unknown routes so React Router handles them.
+    // /state_archive/ is served by the custom middleware above and never falls through.
+    historyApiFallback: true,
   },
 });

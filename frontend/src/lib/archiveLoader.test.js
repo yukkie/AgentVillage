@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { parseIndexToGameList, parseEntryToGame } from './archiveLoader.js';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { parseIndexToGameList, parseEntryToGame, fetchGameBySessionId } from './archiveLoader.js';
 import { normalizeAgentJson } from '../legacy/normalizeAgentJson.js';
 
 // --- fixture data ---
@@ -131,6 +131,46 @@ describe('parseIndexToGameList', () => {
     Objective: 空の index に対して空配列を返すことを検証する
     */
     expect(parseIndexToGameList([])).toEqual([]);
+  });
+});
+
+// --- fetchGameBySessionId ---
+
+describe('fetchGameBySessionId', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('returns the matching index entry by sessionId', async () => {
+    /*
+     * SUT: fetchGameBySessionId
+     * Mock: global fetch（index.json のレスポンスを固定）
+     * Level: unit
+     * Objective: sessionId に一致する index エントリが返ることを検証する。
+     */
+    const index = [ENTRY_WOLF, ENTRY_VILLAGE];
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(index),
+    }));
+
+    const result = await fetchGameBySessionId('20260510_102927');
+    expect(result).toBe(index[0]);
+  });
+
+  it('throws when sessionId is not found', async () => {
+    /*
+     * SUT: fetchGameBySessionId
+     * Mock: global fetch（index.json のレスポンスを固定）
+     * Level: unit
+     * Objective: sessionId に一致するエントリがない場合に Error をスローすることを検証する。
+     */
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve([ENTRY_WOLF]),
+    }));
+
+    await expect(fetchGameBySessionId('not-exist')).rejects.toThrow('Session not found: not-exist');
   });
 });
 

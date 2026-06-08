@@ -63,6 +63,12 @@
 .pickOn { background: var(--bg-2); border-left-color: var(--acc); }
 .pickDead { opacity: 0.55; }
 
+.pickLink {
+  display: contents;
+  color: inherit;
+  text-decoration: none;
+}
+
 .who {
   display: flex;
   flex-direction: column;
