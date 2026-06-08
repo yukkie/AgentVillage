@@ -17,6 +17,8 @@
 
 ### Milestone 2（実データ観戦）— 現 Sprint
 
+❌ #483 fix(frontend): remove hardcoded stub fallbacks in SpectatorScreen（tech-debt）
+
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
 | ❌ yukkie/AgentVillage#485 | enhancement | （なし） | — | Make agent avatars in SpectatorScreen navigable to AgentDetailScreen | SpectatorScreen 内の Avatar・名前表示をクリックして /game/:sessionId/agent/:agentName に遷移する |
