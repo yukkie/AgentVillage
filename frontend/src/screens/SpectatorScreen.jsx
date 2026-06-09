@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
 import RoleTag from '../components/RoleTag.jsx';
 import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
@@ -60,6 +60,7 @@ function ThoughtDetails({ reasoning, viewerMode = 'spectator' }) {
 
 // --- 発言カード ---
 function SpeechCard({ ev, prevById, roleAssignment, viewerMode = 'spectator' }) {
+  const { sessionId } = useParams();
   const role = roleAssignment[ev.agent];
   const r = ROLES[role];
   const replied = ev.reply_to ? prevById[`${ev.day}-${ev.reply_to}`] : null;
@@ -67,6 +68,7 @@ function SpeechCard({ ev, prevById, roleAssignment, viewerMode = 'spectator' }) 
   const isPublic = viewerMode === 'public';
   const coedRole = ev.claimed_role;
   const coColor = coedRole ? ROLES[coedRole]?.color : undefined;
+  const agentTo = `/game/${sessionId}/agent/${ev.agent}`;
 
   return (
     <article
@@ -74,11 +76,13 @@ function SpeechCard({ ev, prevById, roleAssignment, viewerMode = 'spectator' }) 
       style={{ '--r-color': r?.color }}
       aria-label={`${ev.agent} ${fmtTurn(ev.day, ev.speech_id || 0)} ${fmtTime(ev.day, ev.speech_id || 0)}`}
     >
-      <Avatar name={ev.agent} role={isPublic ? undefined : role} />
+      <Link to={agentTo} className={styles.agentLink}>
+        <Avatar name={ev.agent} role={isPublic ? undefined : role} />
+      </Link>
       <div className={styles.vert} />
       <div>
         <div className={styles.spHead}>
-          <span className={styles.name}>{ev.agent}</span>
+          <Link to={agentTo} className={styles.agentLink}><span className={styles.name}>{ev.agent}</span></Link>
           <span className={styles.turn}>{fmtTurn(ev.day, ev.speech_id || 0)}</span>
           {!isPublic && <RoleTag role={role} />}
           {coedRole && (
@@ -267,6 +271,7 @@ function renderConfiguredSystemEvent(ev, roleAssignment, viewerMode) {
 
 // --- システム行 ---
 function SystemRow({ kind, icon, label, children, strategy, reasoning, ts, leftName, rightName, roleAssignment = {}, viewerMode = 'spectator' }) {
+  const { sessionId } = useParams();
   const defaultIcon = { gm: '👁', death: '💀', exec: '⚑', phase: '☾' }[kind] || '⌘';
   return (
     <div className={`${styles.sysrow} ${styles[kind] || ''}`}>
@@ -277,12 +282,16 @@ function SystemRow({ kind, icon, label, children, strategy, reasoning, ts, leftN
       <div className={styles.sysContent}>
         <div className={styles.sysMain}>
           {leftName && (
-            <Avatar name={leftName} role={roleAssignment[leftName]} size="xs" />
+            <Link to={`/game/${sessionId}/agent/${leftName}`} className={styles.agentLink}>
+              <Avatar name={leftName} role={roleAssignment[leftName]} size="xs" />
+            </Link>
           )}
           <div className={styles.sysText}>{children}</div>
           {ts && <div className={styles.sysTs}>{ts}</div>}
           {rightName && (
-            <Avatar name={rightName} role={roleAssignment[rightName]} size="xs" />
+            <Link to={`/game/${sessionId}/agent/${rightName}`} className={styles.agentLink}>
+              <Avatar name={rightName} role={roleAssignment[rightName]} size="xs" />
+            </Link>
           )}
         </div>
         {strategy && viewerMode === 'spectator' && (
@@ -296,13 +305,17 @@ function SystemRow({ kind, icon, label, children, strategy, reasoning, ts, leftN
 
 // --- 人狼会話カード ---
 function WolfChatCard({ ev, viewerMode = 'spectator' }) {
+  const { sessionId } = useParams();
+  const agentTo = `/game/${sessionId}/agent/${ev.agent}`;
   return (
     <article className={`${styles.speech} ${styles.wolfChat}`} aria-label={`${ev.agent} wolf chat`}>
-      <Avatar name={ev.agent} />
+      <Link to={agentTo} className={styles.agentLink}>
+        <Avatar name={ev.agent} />
+      </Link>
       <div className={styles.vert} />
       <div>
         <div className={styles.spHead}>
-          <span className={styles.name}>{ev.agent}</span>
+          <Link to={agentTo} className={styles.agentLink}><span className={styles.name}>{ev.agent}</span></Link>
         </div>
         <div className={styles.spBody}>{ev.content}</div>
         <ThoughtDetails reasoning={ev.reasoning} viewerMode={viewerMode} />
@@ -475,6 +488,7 @@ const NIGHT_ACTION_LABEL = { inspection: '占い', guard: '護衛', night_attack
 
 // === 右ペイン ===
 export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = {}, activeDay, deadByDay = {}, viewerMode = 'spectator' }) {
+  const { sessionId } = useParams();
   const order = Object.keys(agents);
   const activeDead = deadByDay[activeDay] ?? new Map();
   const deadNames = order.filter(n => activeDead.has(n))
@@ -499,7 +513,9 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
               <li key={roleKey} className={styles.coRow} style={{ '--r-color': roleDef.color }}>
                 <span className={styles.coRole}>{roleDef.ja}</span>
                 <span className={styles.coName} style={{ color: coAgents.length ? 'var(--tx)' : 'var(--tx-3)' }}>
-                  {coAgents.length ? coAgents.join(', ') : '未CO'}
+                  {coAgents.length ? coAgents.map((name, i) => (
+                    <span key={name}>{i > 0 && ', '}<Link to={`/game/${sessionId}/agent/${name}`} className={styles.agentLink}>{name}</Link></span>
+                  )) : '未CO'}
                 </span>
               </li>
             );
@@ -512,8 +528,8 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
           <li key={i} className={`${styles.action} ${styles[a.event_type] || ''}`}>
             <div className={styles.actionIco}>{NIGHT_ACTION_ICON[a.event_type] || '・'}</div>
             <div className={styles.what}>
-              <strong>{a.agent}</strong>
-              {a.target && <> → <em style={{ '--r-color': ROLES[roleAssignment[a.target]]?.color }}>{a.target}</em></>}
+              <Link to={`/game/${sessionId}/agent/${a.agent}`} className={styles.agentLink}><strong>{a.agent}</strong></Link>
+              {a.target && <> → <Link to={`/game/${sessionId}/agent/${a.target}`} className={styles.agentLink}><em style={{ '--r-color': ROLES[roleAssignment[a.target]]?.color }}>{a.target}</em></Link></>}
               <span style={{ color: 'var(--tx-4)', marginLeft: 6 }}>{NIGHT_ACTION_LABEL[a.event_type]}</span>
             </div>
           </li>
@@ -557,7 +573,9 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
             const coRole = coStatus[n];
             return (
               <li key={n} className={styles.rosterRow} style={{ '--r-color': r?.color }}>
-                <Avatar name={n} role={viewerMode === 'spectator' ? role : undefined} size="sm" label={n} layout="vertical" />
+                <Link to={`/game/${sessionId}/agent/${n}`} className={styles.agentLink}>
+                  <Avatar name={n} role={viewerMode === 'spectator' ? role : undefined} size="sm" label={n} layout="vertical" />
+                </Link>
                 <div className={styles.who}>
                   <span className={styles.rosterName}>
                     {viewerMode === 'spectator' && <RoleTag role={role} />}
@@ -581,7 +599,9 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
             const meta = activeDead.get(n);
             return (
               <li key={n} className={`${styles.rosterRow} ${styles.dead}`} style={{ '--r-color': r?.color }}>
-                <Avatar name={n} role={role} size="sm" dead label={n} layout="vertical" />
+                <Link to={`/game/${sessionId}/agent/${n}`} className={styles.agentLink}>
+                  <Avatar name={n} role={role} size="sm" dead label={n} layout="vertical" />
+                </Link>
                 <div className={styles.whoMeta}>
                   <div className={styles.whoBlock}>
                     <span className={styles.sub}>
