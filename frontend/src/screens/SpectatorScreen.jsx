@@ -549,9 +549,13 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
             <div className={styles.voteGrid}>
               {execResult.voteTable.map((v, i) => (
                 <div className={styles.voteCell} key={i}>
-                  <Avatar name={v.from} size="xs" label={v.from} layout="horizontal" />
+                  <Link to={`/game/${sessionId}/agent/${v.from}`} className={styles.agentLink}>
+                    <Avatar name={v.from} size="xs" label={v.from} layout="horizontal" />
+                  </Link>
                   <span className={styles.voteArrow}>▶</span>
-                  <Avatar name={v.to} size="xs" label={v.to} layout="horizontal" variant={v.to === execResult.target ? 'danger' : 'plain'} />
+                  <Link to={`/game/${sessionId}/agent/${v.to}`} className={styles.agentLink}>
+                    <Avatar name={v.to} size="xs" label={v.to} layout="horizontal" variant={v.to === execResult.target ? 'danger' : 'plain'} />
+                  </Link>
                 </div>
               ))}
             </div>

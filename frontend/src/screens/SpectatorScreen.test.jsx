@@ -1274,6 +1274,36 @@ describe('avatar navigation links (#485)', () => {
     expect(container.querySelector(`a[href="/game/${sessionId}/agent/Bob"]`)).toBeTruthy();
   });
 
+  it('RightPane vote grid from/to avatars link to agent detail page', () => {
+    /*
+     * SUT: RightPane (vote grid)
+     * Mock: なし
+     * Level: unit
+     * Objective: 投票グリッドの from / to Avatar が AgentDetailScreen への Link を持つことを検証する。
+     */
+    const daySummary = {
+      1: {
+        nightActions: [],
+        execResult: { target: 'Bob', votes: 1, voteTable: [{ from: 'Alice', to: 'Bob' }] },
+        speechCount: 0,
+        nightDone: false,
+      },
+    };
+    const { container } = renderWithSession(
+      <RightPane
+        agents={baseAgents}
+        roleAssignment={{ Alice: 'Seer', Bob: 'Werewolf', Carol: 'Knight' }}
+        coStatus={{}}
+        daySummary={daySummary}
+        activeDay={1}
+        deadByDay={baseDeadByDay}
+        viewerMode="spectator"
+      />
+    );
+    expect(container.querySelector(`a[href="/game/${sessionId}/agent/Alice"]`)).toBeTruthy();
+    expect(container.querySelector(`a[href="/game/${sessionId}/agent/Bob"]`)).toBeTruthy();
+  });
+
   it('LeftPane filter chip does NOT link to agent detail (AC: 左ペインフィルターは対象外)', () => {
     /*
      * SUT: LeftPane
