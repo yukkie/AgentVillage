@@ -21,6 +21,11 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| yukkie/AgentVillage#491 | bug | （なし） | — | Add catch-all route for unknown URLs | no-match URL（/foo, /game, /game/ 等）で白画面になるのを解消。App.jsx に path="*" を追加し 404 or リダイレクト |
+| yukkie/AgentVillage#492 | enhancement | （なし） | — | Connect AgentDetailScreen to real game data with viewerMode support | AgentDetailScreen のスタブ固定を実データ接続に。同時に viewerMode 対応で public 時に役職・推論ログ等を秘匿。規模次第で実データ接続/viewerMode に分割可 |
+| yukkie/AgentVillage#493 | enhancement | （なし） | — | Lift viewerMode into routing/URL state | viewerMode を SpectatorScreen の useState から URL/横断 state へ引き上げ。直打ち・リロード・画面遷移で視点を保持 |
+| yukkie/AgentVillage#494 | documentation | （なし） | — | Declare replay mode ships full log data to client | replay は全情報クライアント配信・public はフロント表示フィルタ（秘匿保証なし）を Spec/DataSpec に明記 |
+| yukkie/AgentVillage#495 | enhancement | （なし） | — | Log visibility classes and recipient-based authorization model | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#353 | enhancement | 🟡 | 1 | Emit role_assigned events at game start for each agent | init フェーズで全エージェント分の役職割り当てイベントを spectator_log に出力 |
 | yukkie/AgentVillage#347 | enhancement | 🟡 | 3 | Implement feed filters in SpectatorScreen left pane (agent / role / event type) | 参加者・役職・表示種別フィルターチップを実際に動作させる。追加データ不要でクライアントサイドのみで実装可能 |
