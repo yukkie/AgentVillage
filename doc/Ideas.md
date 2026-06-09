@@ -17,8 +17,6 @@
 
 ### Milestone 2（実データ観戦）— 現 Sprint
 
-❌ #483 fix(frontend): remove hardcoded stub fallbacks in SpectatorScreen（tech-debt）
-
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |

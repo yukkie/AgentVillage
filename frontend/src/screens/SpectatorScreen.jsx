@@ -716,7 +716,7 @@ export default function SpectatorScreen() {
 
   return (
     <div className={styles.frame}>
-      <TopBar crumbs={[{ label: 'r/agent-jinrou', to: '/' }, { label: sessionId || '第13回 桜霞村' }, { label: activePhase === 'game_over' ? '勝敗結果' : activePhase === 'eve' ? '前夜 プロローグ' : `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}` }]}>
+      <TopBar crumbs={[{ label: 'r/agent-jinrou', to: '/' }, { label: sessionId }, { label: activePhase === 'game_over' ? '勝敗結果' : activePhase === 'eve' ? '前夜 プロローグ' : `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}` }]}>
         <TopBarBtn onClick={() => navigate('/')}>← 一覧</TopBarBtn>
         <TopBarBtn><span className={topBarStyles.liveDot} /> REPLAY</TopBarBtn>
         <TopBarBtn>同時観戦 142</TopBarBtn>
@@ -734,7 +734,7 @@ export default function SpectatorScreen() {
         right={<RightPane agents={agents} roleAssignment={roleAssignment} coStatus={replayCoStatus} daySummary={daySummary} activeDay={activeDay} deadByDay={replayDeadByDay} viewerMode={viewerMode} />}
       >
         <div className={styles.feedHead}>
-          <h2>{activePhase === 'game_over' ? '勝敗結果' : activePhase === 'eve' ? '前夜 プロローグ' : `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}`} <small>{sessionId || '3:47 経過 / 残り 4:13'}</small></h2>
+          <h2>{activePhase === 'game_over' ? '勝敗結果' : activePhase === 'eve' ? '前夜 プロローグ' : `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}`} <small>{sessionId}</small></h2>
           <span className={styles.stat}>発言 <strong>{speechCount}</strong></span>
           <span className={styles.stat}>CO <strong>{coCount}</strong></span>
           <span className={styles.spacer} />
