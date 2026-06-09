@@ -51,13 +51,19 @@ function renderFeedItem(overrides, options = {}) {
   };
 
   return render(
-    <FeedItem
-      ev={ev}
-      prevById={{}}
-      roleAssignment={roleAssignment}
-      title="Test Village"
-      viewerMode={options.viewerMode}
-    />
+    <MemoryRouter initialEntries={['/game/test-session']}>
+      <Routes>
+        <Route path="/game/:sessionId" element={
+          <FeedItem
+            ev={ev}
+            prevById={{}}
+            roleAssignment={roleAssignment}
+            title="Test Village"
+            viewerMode={options.viewerMode}
+          />
+        } />
+      </Routes>
+    </MemoryRouter>
   );
 }
 
@@ -566,7 +572,13 @@ function renderRightPane(overrides = {}) {
     viewerMode: 'spectator',
     ...overrides,
   };
-  return render(<RightPane {...props} />);
+  return render(
+    <MemoryRouter initialEntries={['/game/test-session']}>
+      <Routes>
+        <Route path="/game/:sessionId" element={<RightPane {...props} />} />
+      </Routes>
+    </MemoryRouter>
+  );
 }
 
 describe('RightPane: death reason display (#391)', () => {
@@ -972,10 +984,16 @@ describe('FeedItem: public mode hides spectator-only events (AC3 / #314)', () =>
      * Objective: spectator モードでは inspection が表示されることを検証する（対比用）。
      */
     render(
-      <FeedItem
-        ev={{ event_type: 'inspection', agent: 'Alice', target: 'Bob', content: 'Alice inspects Bob: Werewolf', is_public: false }}
-        prevById={{}} roleAssignment={roleAssignment} title="Test" viewerMode="spectator"
-      />
+      <MemoryRouter initialEntries={['/game/test-session']}>
+        <Routes>
+          <Route path="/game/:sessionId" element={
+            <FeedItem
+              ev={{ event_type: 'inspection', agent: 'Alice', target: 'Bob', content: 'Alice inspects Bob: Werewolf', is_public: false }}
+              prevById={{}} roleAssignment={roleAssignment} title="Test" viewerMode="spectator"
+            />
+          } />
+        </Routes>
+      </MemoryRouter>
     );
     expect(screen.getByText(/Alice inspects Bob: Werewolf/)).toBeTruthy();
   });
@@ -996,13 +1014,13 @@ describe('SpeechCard: viewerMode public (AC2 / #314)', () => {
       is_public: true,
     };
     return render(
-      <FeedItem
-        ev={ev}
-        prevById={{}}
-        roleAssignment={roleAssignment}
-        title="Test Village"
-        viewerMode={viewerMode}
-      />
+      <MemoryRouter initialEntries={['/game/test-session']}>
+        <Routes>
+          <Route path="/game/:sessionId" element={
+            <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} title="Test Village" viewerMode={viewerMode} />
+          } />
+        </Routes>
+      </MemoryRouter>
     );
   }
 
@@ -1047,7 +1065,13 @@ describe('SpeechCard: viewerMode public (AC2 / #314)', () => {
       is_public: true,
     };
     const { container } = render(
-      <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} title="Test" viewerMode={mode} />
+      <MemoryRouter initialEntries={['/game/test-session']}>
+        <Routes>
+          <Route path="/game/:sessionId" element={
+            <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} title="Test" viewerMode={mode} />
+          } />
+        </Routes>
+      </MemoryRouter>
     );
     const badge = container.querySelector('[class*="coBadge"]');
     expect(badge).toBeTruthy();
@@ -1069,13 +1093,13 @@ describe('ThoughtDetails: viewerMode public (AC4 / #314)', () => {
       is_public: true,
     };
     return render(
-      <FeedItem
-        ev={ev}
-        prevById={{}}
-        roleAssignment={roleAssignment}
-        title="Test Village"
-        viewerMode={viewerMode}
-      />
+      <MemoryRouter initialEntries={['/game/test-session']}>
+        <Routes>
+          <Route path="/game/:sessionId" element={
+            <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} title="Test Village" viewerMode={viewerMode} />
+          } />
+        </Routes>
+      </MemoryRouter>
     );
   }
 
@@ -1131,6 +1155,144 @@ describe('SpectatorScreen: back button', () => {
     await user.click(screen.getByText('← 一覧'));
     // MemoryRouter 上で / に遷移すると SpectatorScreen がアンマウントされる
     expect(screen.queryByText('← 一覧')).toBeNull();
+  });
+});
+
+describe('avatar navigation links (#485)', () => {
+  const sessionId = 'test-session-nav';
+
+  function renderWithSession(component) {
+    return render(
+      <MemoryRouter initialEntries={[`/game/${sessionId}`]}>
+        <Routes>
+          <Route path="/game/:sessionId" element={component} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+
+  it('SpeechCard avatar links to agent detail page (AC: フィード発言カード Avatar)', () => {
+    /*
+     * SUT: FeedItem → SpeechCard
+     * Mock: なし
+     * Level: unit
+     * Objective: speech イベントの Avatar がゲーム内エージェント詳細ページへの Link を持つことを検証する（AC / #485）。
+     */
+    const ev = {
+      day: 1, event_type: 'speech', agent: 'Alice', content: 'hello',
+      speech_id: 1, reply_to: null, claimed_role: null, reasoning: null, is_public: true,
+    };
+    const { container } = renderWithSession(
+      <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} viewerMode="spectator" />
+    );
+    const link = container.querySelector(`a[href="/game/${sessionId}/agent/Alice"]`);
+    expect(link).toBeTruthy();
+  });
+
+  it('SystemRow leftName Avatar links to agent detail page (AC: フィード SystemRow leftName)', () => {
+    /*
+     * SUT: FeedItem → SystemRow
+     * Mock: なし
+     * Level: unit
+     * Objective: SystemRow の leftName Avatar がエージェント詳細ページへの Link を持つことを検証する（AC / #485）。
+     */
+    const ev = { day: 1, event_type: 'vote', agent: 'Alice', target: 'Bob', content: 'vote', is_public: true };
+    const { container } = renderWithSession(
+      <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} viewerMode="spectator" />
+    );
+    expect(container.querySelector(`a[href="/game/${sessionId}/agent/Alice"]`)).toBeTruthy();
+    expect(container.querySelector(`a[href="/game/${sessionId}/agent/Bob"]`)).toBeTruthy();
+  });
+
+  it('RightPane alive roster Avatar links to agent detail page (AC: 右ペイン生存エージェント)', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし
+     * Level: unit
+     * Objective: 右ペイン生存ロスターの Avatar が AgentDetailScreen への Link を持つことを検証する（AC / #485）。
+     */
+    const { container } = renderWithSession(
+      <RightPane
+        agents={baseAgents}
+        roleAssignment={{ Alice: 'Seer', Bob: 'Werewolf', Carol: 'Knight' }}
+        coStatus={{}}
+        daySummary={{}}
+        activeDay={1}
+        deadByDay={baseDeadByDay}
+        viewerMode="spectator"
+      />
+    );
+    expect(container.querySelector(`a[href="/game/${sessionId}/agent/Alice"]`)).toBeTruthy();
+  });
+
+  it('RightPane CO board agent name links to agent detail page (AC: 右ペイン CO ボード)', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし
+     * Level: unit
+     * Objective: CO ボードに表示されているエージェント名が Link を持つことを検証する（AC / #485）。
+     */
+    const { container } = renderWithSession(
+      <RightPane
+        agents={baseAgents}
+        roleAssignment={{ Alice: 'Seer', Bob: 'Werewolf', Carol: 'Knight' }}
+        coStatus={{ Alice: 'Seer' }}
+        daySummary={{}}
+        activeDay={1}
+        deadByDay={baseDeadByDay}
+        viewerMode="spectator"
+      />
+    );
+    expect(container.querySelector(`a[href="/game/${sessionId}/agent/Alice"]`)).toBeTruthy();
+  });
+
+  it('RightPane night action agent/target links to agent detail page (AC: 右ペイン夜の行動)', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし
+     * Level: unit
+     * Objective: 夜の行動の agent / target 名が Link を持つことを検証する（AC / #485）。
+     */
+    const daySummary = {
+      1: {
+        nightActions: [{ event_type: 'inspection', agent: 'Alice', target: 'Bob', is_public: false }],
+        execResult: null, speechCount: 0, nightDone: false,
+      },
+    };
+    const { container } = renderWithSession(
+      <RightPane
+        agents={baseAgents}
+        roleAssignment={{ Alice: 'Seer', Bob: 'Werewolf', Carol: 'Knight' }}
+        coStatus={{}}
+        daySummary={daySummary}
+        activeDay={1}
+        deadByDay={baseDeadByDay}
+        viewerMode="spectator"
+      />
+    );
+    expect(container.querySelector(`a[href="/game/${sessionId}/agent/Alice"]`)).toBeTruthy();
+    expect(container.querySelector(`a[href="/game/${sessionId}/agent/Bob"]`)).toBeTruthy();
+  });
+
+  it('LeftPane filter chip does NOT link to agent detail (AC: 左ペインフィルターは対象外)', () => {
+    /*
+     * SUT: LeftPane
+     * Mock: なし
+     * Level: unit
+     * Objective: 左ペインの「参加者で絞る」フィルターチップが Link を持たないことを検証する（AC / #485）。
+     */
+    const { container } = renderWithSession(
+      <LeftPane
+        activeDay={1} activePhase="discuss" setDay={vi.fn()} setPhase={vi.fn()}
+        days={[1]} agentNames={['Alice', 'Bob']}
+        daySummary={{ 1: { execResult: null, nightDone: false, nightActions: [], speechCount: 0 } }}
+      />
+    );
+    const filterChips = container.querySelectorAll('[class*="filtRow"] button');
+    filterChips.forEach(chip => {
+      expect(chip.tagName).toBe('BUTTON');
+      expect(chip.closest('a')).toBeNull();
+    });
   });
 });
 

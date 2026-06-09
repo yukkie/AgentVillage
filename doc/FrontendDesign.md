@@ -156,7 +156,7 @@ stateDiagram-v2
     [*] --> GameList : 起動
     GameList --> Spectator : ゲームカードをクリック
     Spectator --> GameList : パンくず「r/agent-jinrou」クリック
-    Spectator --> AgentDetail : ロスターのエージェント名クリック（予定）
+    Spectator --> AgentDetail : ロスターのエージェント名クリック（#485 実装済み）
     AgentDetail --> Spectator : パンくず「第NN回 桜霞」クリック
     AgentDetail --> AgentDetail : 左ペインで別エージェント選択
     AgentDetail --> GameList : パンくず「r/agent-jinrou」クリック
@@ -463,7 +463,7 @@ stateDiagram-v2
 | `...avatarProps` | — | `Avatar` の全 props をそのまま受け付ける |
 
 hover / focus スタイルは CSS `:hover` / `:focus-visible` で付与（`variant` prop には含まない）。
-将来の画面遷移対応は `AvatarLink`（`<a>` / React Router `<Link>` 版）として別途追加予定（#342）。
+画面遷移用途では Avatar を React Router `<Link>` で直接包む方式を採用（#485）。`AvatarLink` コンポーネントの追加は不要と判断。
 
 **使い分け:**
 - icon-only（名前テキスト不要）→ bare `Avatar`（`label` なし）
