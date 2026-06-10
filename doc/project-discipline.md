@@ -40,6 +40,13 @@
   工数を上回るため、他 Issue の優先度に関わらず high 扱いにする。
 - 工数が大きい (SP 5+) tech-debt は他 Issue との依存・影響範囲を考慮して medium 以下で調整する。
 
+### 中心契約型の設計負債 vs 優先度
+- **中心契約型（LogEvent / EventType など、複数の producer / consumer が依存するデータ契約型）の
+  設計負債は、Sprint Goal 直結でなくても low に沈めず medium 以上に保つ**。
+  low に置くと放置され、契約変更時に producer/consumer 全体へ波及するコスト（schema drift・
+  後方互換対応）が将来一括で顕在化する。可視な位置（medium 以上）に置き、計画的に返す。
+  例: #466 LogEvent payload 設計の再整理は Goal 直結ではないが medium。
+
 ### 依存関係 vs 優先度
 - **他 Issue の前提となる Issue（ブロッカー）は、自身の工数・種別に関わらず優先度を上げる**。
   例: SP1 でも他の medium Issue を unlock するなら high にする。

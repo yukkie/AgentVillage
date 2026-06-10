@@ -356,6 +356,15 @@ Select an archive to replay:
 - **public モード**: `is_public=True` のイベントのみ表示（非COエージェントは白）
 - **spectator モード**: 全イベントを表示（真の役職で色付け）
 
+### 6.5 配信モデル（replay）
+
+replay モードでは `spectator_log.jsonl` の**全イベント**と**エージェント JSON** をクライアントに配信する。
+public / spectator の切り替えはフロントエンドの表示フィルタにすぎず、配信レイヤでの秘匿保証はない
+（DevTools / Network タブで生データを参照すれば、public モードで非表示のイベントも閲覧可能）。
+
+この割り切りはゲームが終了済みであることを前提とする。LIVE モード・プレイヤー参加に向けた
+「配信レイヤで秘匿する」設計は別 Issue（#495）で扱う。
+
 ---
 
 ## 7. 勝敗以外の評価指標
