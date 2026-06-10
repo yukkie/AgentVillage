@@ -12,7 +12,6 @@ function NotFoundScreen() {
         src="/icons/not-found-wolf.png"
         alt="銀色の狼の404アイコン"
       />
-      <p className={styles.notFoundCode}>404</p>
       <h1 id="not-found-title" className={styles.notFoundTitle}>404 - Not Found</h1>
       <p className={styles.notFoundText}>その村への道は見つかりませんでした。</p>
       <Link className={styles.notFoundLink} to="/">村の一覧へ戻る</Link>
