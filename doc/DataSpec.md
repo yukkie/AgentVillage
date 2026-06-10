@@ -113,6 +113,12 @@ CO の告知文は consumer 側が `claimed_role` の状態遷移から生成す
 | 思考ログ（`reasoning`） | 展開可 | ロックバッジ（存在のみ示す） |
 | 文面択一（`spectator_content`） | `spectator_content` を表示 | `content` を表示 |
 
+> **replay モードの配信**: replay モードは全イベント（`is_public` の値にかかわらず）と
+> エージェント JSON をクライアントに配信する。本節の表示フィルタは**表示制御**であり、
+> 配信レイヤでの秘匿ではない（DevTools で生データは閲覧可能）。これはゲームが終了済みで
+> あることを前提とした意図的な割り切り。LIVE/プレイヤー参加向けの秘匿配信設計は
+> [Spec.md §6.5](Spec.md) および [#495] を参照。
+
 CLI の色仕様（役職別カラーなど）は [Spec.md §5](Spec.md) を参照。
 
 ---
