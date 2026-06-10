@@ -15,22 +15,22 @@
 同一区分内では優先度（🔴 → 🟡 → 🟢）で並べる。
 
 
-### Milestone 2（実データ観戦）— 現 Sprint
+### Milestone 3（3画面完成 — AgentDetailScreen 含む）— 現 Sprint
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#491 | bug | （なし） | — | Add catch-all route for unknown URLs | no-match URL（/foo, /game, /game/ 等）で白画面になるのを解消。App.jsx に path="*" を追加し 404 or リダイレクト |
-| yukkie/AgentVillage#492 | enhancement | （なし） | — | Connect AgentDetailScreen to real game data with viewerMode support | AgentDetailScreen のスタブ固定を実データ接続に。同時に viewerMode 対応で public 時に役職・推論ログ等を秘匿。規模次第で実データ接続/viewerMode に分割可 |
-| yukkie/AgentVillage#493 | enhancement | （なし） | — | Lift viewerMode into routing/URL state | viewerMode を SpectatorScreen の useState から URL/横断 state へ引き上げ。直打ち・リロード・画面遷移で視点を保持 |
-| yukkie/AgentVillage#494 | documentation | （なし） | — | Declare replay mode ships full log data to client | replay は全情報クライアント配信・public はフロント表示フィルタ（秘匿保証なし）を Spec/DataSpec に明記 |
-| yukkie/AgentVillage#495 | enhancement | （なし） | — | Log visibility classes and recipient-based authorization model | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
+| yukkie/AgentVillage#491 | bug | 🔴 | 1 | Add catch-all route for unknown URLs | no-match URL（/foo, /game, /game/ 等）で白画面になるのを解消。App.jsx に path="*" を追加し 404 or リダイレクト |
+| yukkie/AgentVillage#492 | enhancement | 🔴 | 5 | Connect AgentDetailScreen to real game data with viewerMode support | AgentDetailScreen のスタブ固定を実データ接続に。同時に viewerMode 対応で public 時に役職・推論ログ等を秘匿。規模次第で実データ接続/viewerMode に分割可 |
+| yukkie/AgentVillage#493 | enhancement | 🔴 | 3 | Lift viewerMode into routing/URL state | viewerMode を SpectatorScreen の useState から URL/横断 state へ引き上げ。直打ち・リロード・画面遷移で視点を保持 |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
-| yukkie/AgentVillage#353 | enhancement | 🟡 | 1 | Emit role_assigned events at game start for each agent | init フェーズで全エージェント分の役職割り当てイベントを spectator_log に出力 |
-| yukkie/AgentVillage#347 | enhancement | 🟡 | 3 | Implement feed filters in SpectatorScreen left pane (agent / role / event type) | 参加者・役職・表示種別フィルターチップを実際に動作させる。追加データ不要でクライアントサイドのみで実装可能 |
+| yukkie/AgentVillage#353 | enhancement | 🔴 | 1 | Emit role_assigned events at game start for each agent | init フェーズで全エージェント分の役職割り当てイベントを spectator_log に出力 |
+| yukkie/AgentVillage#347 | enhancement | 🔴 | 3 | Implement feed filters in SpectatorScreen left pane (agent / role / event type) | 参加者・役職・表示種別フィルターチップを実際に動作させる。追加データ不要でクライアントサイドのみで実装可能 |
+| yukkie/AgentVillage#494 | documentation | 🟡 | 1 | Declare replay mode ships full log data to client | replay は全情報クライアント配信・public はフロント表示フィルタ（秘匿保証なし）を Spec/DataSpec に明記 |
 | yukkie/AgentVillage#337 | enhancement | 🟡 | 2 | Top agents real stats | stub/gameList.js の TOP_AGENTS を実ゲーム結果の集計データに置き換え |
-| yukkie/AgentVillage#319 | enhancement | 🟡 | 3 | LIVE spectator | state/ を tail して進行中ゲームを表示（Milestone 2 後半） |
-| yukkie/AgentVillage#364 | enhancement | 🟡 | 5 | introduce SpectatorScreen view model indexes | SpectatorScreen 用 view model/index を導入し、render 中の events 全走査を減らす |
-| yukkie/AgentVillage#466 | tech-debt | （なし） | — | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
+| yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
+| yukkie/AgentVillage#495 | enhancement | 🟢 | 3 | Log visibility classes and recipient-based authorization model | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
+| yukkie/AgentVillage#319 | enhancement | 🟢 | 3 | LIVE spectator | state/ を tail して進行中ゲームを表示（将来フェーズ） |
+| yukkie/AgentVillage#364 | enhancement | 🟢 | 5 | introduce SpectatorScreen view model indexes | SpectatorScreen 用 view model/index を導入し、render 中の events 全走査を減らす |
 | yukkie/AgentVillage#321 | enhancement | 🟢 | 2 | Unify config data as shared JSON (SSOT) | config/*.json を Python/JS 共有にして constants.js のハードコードを廃止 |
 | yukkie/AgentVillage#323 | enhancement | 🟢 | 3 | i18n support for frontend UI strings (ja/en) | JSX 内の日本語ハードコードを locale リソースに外出しし、ja/en 切り替えに対応 |
 | yukkie/AgentVillage#403 | enhancement | 🟢 | 2 | Add avatars to CO status and night action sections | CO状況・夜の行動セクションにアバターアイコンを追加しコンポーネント化 |
@@ -41,12 +41,12 @@
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#207 | tech-debt | 🔴 | 1 | Add 'Why' rationale to project-discipline.md for key development process decisions | 主要プロセス決定の Why を project-discipline.md に記載し SKILL.md から参照する |
-| yukkie/AgentVillage#468 | tech-debt | （なし） | — | Improve IDD smell detection for schema drift | #451/#466 から派生。中心契約型への field 追加時に schema drift を検知する IDD スキル定義を再検討する |
 | yukkie/AgentVillage#305 | bug | 🔴 | 1 | fix: include claimed_role in wolf prompts to prevent role-flip CO | claimed_role がプロンプトに渡されず、狼が自分の偽CO済み役職を忘れて別役職にCOしてしまう |
 | yukkie/AgentVillage#248 | enhancement | 🟡 | 2 | Feat: pass wolf CO reasoning to discussion phase prompt | 夜の偽CO決定時の reasoning を翌日 DISCUSSION フェーズのプロンプトに含め、狼の発言一貫性を高める |
 | yukkie/AgentVillage#266 | tech-debt | 🟡 | 5 | Replace intended_co flag with a typed scheduled-event model | intended_co をフラグから timing 付きスケジュール済みイベント型に置き換え、ライフサイクルを型で表現する |
 | yukkie/AgentVillage#23 | enhancement | 🟡 | 3 | Auto-summarize memory_summary | 記憶が長くなったら LLM で自動要約 |
 | yukkie/AgentVillage#227 | enhancement | 🟡 | 2 | Add early exit for wolf night chat consensus | 全狼の最新攻撃候補が一致したら夜会話を早期終了し、未合意時は既存ラウンド継続を維持する |
+| yukkie/AgentVillage#468 | tech-debt | 🟢 | 2 | Improve IDD smell detection for schema drift | #451/#466 から派生。中心契約型への field 追加時に schema drift を検知する IDD スキル定義を再検討する |
 | yukkie/AgentVillage#26 | enhancement | 🟢 | 2 | Thought log display mode switching | 思考ログの表示モード切り替え |
 | yukkie/AgentVillage#79 | enhancement | 🟢 | 5 | Log analysis agent skill for post-game review | ゲームログをAgentに委譲して解析・サマリーを返すスキル |
 | yukkie/AgentVillage#45 | enhancement | 🟢 | 5 | LLM output testing with promptfoo | speech/thought/intent の品質を CI で自動検証 |
