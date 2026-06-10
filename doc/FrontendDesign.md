@@ -88,12 +88,15 @@ React Router v7 を導入済み。`App.jsx` は `Routes`/`Route` でルートを
   <Route path="/agent/:agentName"               element={<AgentDetailScreen />} />
   <Route path="/game/:sessionId"                element={<SpectatorScreen />} />
   <Route path="/game/:sessionId/agent/:agentName" element={<AgentDetailScreen />} />
+  <Route path="*"                               element={<NotFoundScreen />} />
 </Routes>
 ```
 
 `AgentDetailScreen` は `useParams()` の `sessionId` の有無でモードを切り替える:
 - **game-scoped mode** (`sessionId` あり): 特定ゲームの推論ログ・疑念マトリクス等を表示
 - **global profile mode** (`sessionId` なし): エージェントのグローバルプロフィール・過去戦績を表示（スタブ、#318 対応待ち）
+
+`NotFoundScreen` は no-match URL 用の 404 fallback。`/foo`、`/game`、`/game/` のように上記4ルートへマッチしない URL では白画面にせず、404 表示と `/` への戻り導線を出す。404 用の狼アイコンは `frontend/public/icons/not-found-wolf.png`、favicon は `frontend/public/favicon.ico` と PNG sizes を `index.html` から参照する。
 
 ### 4.2.1 Replay viewer（#318）
 
@@ -136,9 +139,11 @@ React Router v7 を導入。URL ベースの遷移に移行済み。
 /agent/:agentName              → AgentDetailScreen（global profile mode）
 /game/:sessionId               → SpectatorScreen（ゲームID 指定）
 /game/:sessionId/agent/:agentName → AgentDetailScreen（game-scoped mode）
+*                              → NotFoundScreen（404 fallback）
 ```
 
 画面間のナビゲーションは `TopBar` のパンくず（`crumbs` prop に `to` を渡す）と各画面内の `<Link>` で対応する。
+どのルートにもマッチしない URL は `path="*"` で捕捉し、404 画面からゲーム一覧へ戻せるようにする。存在しない session ID でも `/game/:sessionId` にマッチする URL は `SpectatorScreen` 側の load error 表示に委ねる。
 
 #### SPA フォールバックと静的ファイルの境界
 

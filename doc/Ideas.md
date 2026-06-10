@@ -19,7 +19,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#491 | bug | 🔴 | 1 | Add catch-all route for unknown URLs | no-match URL（/foo, /game, /game/ 等）で白画面になるのを解消。App.jsx に path="*" を追加し 404 or リダイレクト |
 | yukkie/AgentVillage#492 | enhancement | 🔴 | 5 | Connect AgentDetailScreen to real game data with viewerMode support | AgentDetailScreen のスタブ固定を実データ接続に。同時に viewerMode 対応で public 時に役職・推論ログ等を秘匿。規模次第で実データ接続/viewerMode に分割可 |
 | yukkie/AgentVillage#493 | enhancement | 🔴 | 3 | Lift viewerMode into routing/URL state | viewerMode を SpectatorScreen の useState から URL/横断 state へ引き上げ。直打ち・リロード・画面遷移で視点を保持 |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |

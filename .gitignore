@@ -21,5 +21,7 @@ coverage.json
 frontend/.vite/
 frontend/coverage/
 frontend/dist/
+playwright-screenshots/
+test-results/
+playwright-report/
 design/proposal/prototypes/_sample_events.json
-*.png

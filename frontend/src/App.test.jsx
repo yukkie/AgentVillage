@@ -87,4 +87,18 @@ describe('App routing contract', () => {
     expect(screen.queryByText('test-session-001')).toBeNull();
     expect(screen.getAllByText('Nox').length).toBeGreaterThan(0);
   });
+
+  it.each(['/foo', '/game', '/game/'])('renders the 404 fallback at %s', (path) => {
+    /*
+     * SUT: App (Routes)
+     * Mock: なし
+     * Level: integration
+     * Objective: no-match URL が白画面ではなく 404 fallback をレンダリングすることを検証する。
+     */
+    renderAt(path);
+
+    expect(screen.getByRole('heading', { name: '404 - Not Found' })).toBeTruthy();
+    expect(screen.getByRole('img', { name: '銀色の狼の404アイコン' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: '村の一覧へ戻る' }).getAttribute('href')).toBe('/');
+  });
 });
