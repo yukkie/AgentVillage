@@ -1,23 +1,20 @@
 # Project Discipline
 
 ## Sprint Goal
-ゴール: Web UI Milestone 2 達成（spectator_log.jsonl の実データで GameListScreen / SpectatorScreen が動く状態）
+ゴール: Web UI Milestone 3 達成（AgentDetailScreen を含む3画面 = GameListScreen / SpectatorScreen / AgentDetailScreen が実データで完成した状態）
 
-- AgentDetailScreen は低優先度に落とし、2画面の完成度を優先する
-- スタブ依存の解消・実ログ接続・表示上の不具合修正を中心に進める
+- 3画面すべてをスタブ依存から実ログ接続へ。AgentDetailScreen の実データ化・viewerMode 対応を含める
+- URL 直打ち・視点切替などの導線・秘匿の穴を塞ぐ
 
-### Milestone 2 の構成 Issue（優先）
+### Milestone 3 の構成 Issue（優先）
 | Issue | 内容 |
 |---|---|
-| #312 | GameData レジストリ（データギャップ管理） |
-| #318 | Replay viewer（state_archive/ から過去ゲームを表示）✅ 完了 |
-| #314 | spectator / public モード切替 |
-| #346 | 左ペイン 処刑対象・夜フェーズラベル実ログ接続 |
-| #348 | SpectatorScreen フィード overflow バグ修正 |
-| #349 | public_log.jsonl 廃止・spectator_log.jsonl に一本化 |
-| #350 | 右ペイン改修（容疑度削除・役職表示・夜行動実ログ接続）#314/#346 依存 |
-| #351 | game_over 構造化・勝敗サマリー表示 |
-| #352 | ゲーム開始時プロローグ表示 |
+| #312 | GameData レジストリ（データギャップ管理）— 3画面完成まで横串で追う |
+| #492 | AgentDetailScreen 実データ接続 + viewerMode 対応（規模次第で分割可） |
+| #493 | viewerMode を URL/routing に引き上げ（#492 の前提になりうる） |
+| #491 | catch-all route（no-match URL の白画面解消） |
+| #494 | replay は全配信で割り切る明記（doc） |
+| #495 | 可視性クラス×受信者権限の認可モデル先行設計（LIVE/プレイヤー参加前に） |
 
 ### 将来フェーズ
 - #319: LIVE spectator（state/ を tail してリアルタイム表示）
