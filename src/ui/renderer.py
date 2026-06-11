@@ -120,6 +120,14 @@ class Renderer:
             style = actor.role.color if actor else "cyan"
             text.append(f"[PRE-NIGHT] {content}", style=style)
 
+        elif event.event_type == EventType.ROLE_ASSIGNED:
+            if event.agent is None:
+                text.append(f"[ROLE] {content}", style="cyan")
+            else:
+                actor = self._get_agent(event.agent)
+                style = actor.role.color if actor else "white"
+                text.append(f"[ROLE] {content}", style=style)
+
         elif event.event_type == EventType.GAME_OVER:
             text.append(f"\n{'=' * 50}\n", style="bold yellow")
             text.append(content, style="bold green")

@@ -1,3 +1,4 @@
+from collections import Counter
 from typing import Callable
 
 from src.config import WOLF_CHAT_ROUNDS
@@ -82,6 +83,31 @@ class GameEngine:
             )
             self._emit(event)
 
+    def _emit_role_assigned(self) -> None:
+        counts: Counter[str] = Counter(a.role.name for a in self.agents)
+        role_map = {a.role.name: a.role for a in self.agents}
+        parts = [
+            f"{cnt} {role_map[n].plural if cnt > 1 else n}"
+            for n, cnt in sorted(counts.items())
+        ]
+        self._emit(LogEvent.make(
+            day=0,
+            phase="init",
+            event_type=EventType.ROLE_ASSIGNED,
+            agent=None,
+            content="This village has " + " · ".join(parts),
+            is_public=True,
+        ))
+        for actor in self.agents:
+            self._emit(LogEvent.make(
+                day=0,
+                phase="init",
+                event_type=EventType.ROLE_ASSIGNED,
+                agent=actor.name,
+                content=f"{actor.name} came to realize they were the {actor.role.name}.",
+                is_public=False,
+            ))
+
     def _phase_start(self, phase: Phase) -> None:
         if phase == Phase.DAY_DISCUSSION:
             self._day_turn += 1
@@ -128,6 +154,7 @@ class GameEngine:
             ),
             is_public=True,
         ))
+        self._emit_role_assigned()
 
         while True:
             winner = self._run_day()

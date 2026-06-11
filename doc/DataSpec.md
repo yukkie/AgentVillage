@@ -35,6 +35,7 @@ replay 用に read 側だけが解釈する。新規 emit はしない）の2層
 | `threat_update` | false | — | — | 人狼視点の脅威スコア更新（観戦者のみ） |
 | `game_over` | true | — | — | ゲーム終了。`winner` フィールドに勝者陣営を設定する（`"Villagers"` / `"Werewolves"`）。`day` は最終ゲーム日 + 1（`Phase.GAME_OVER` 専用フェーズとして扱うため、最終日とは別の day 値を持つ） |
 | `game_start_narrative` | true | — | — | ゲーム開始時の雰囲気ナラティブ。`day=0`, `phase="init"`。consumer は `day=0` が `.filter(Boolean)` で除外されるため `visibleDays` には含まれない。`game_start_narrative` が存在する場合のみ「前夜」ブロックをタイムラインに表示する |
+| `role_assigned` | summary=true / per-agent=false | — | — | ゲーム開始時の役職割り当て。`day=0`, `phase="init"`。**2形態**が存在する: ① summary row（`agent=null`, `is_public=true`）役職数の概要を `content` に持つ（例: `"This village has 3 Villagers · 1 Seer · 1 Werewolf"`）; ② per-agent row（`agent={name}`, `is_public=false`）エージェントごとの真役職を `content` に持つ（例: `"Alice came to realize they were the Seer."`）。public モードでは summary のみ表示し個別役職は隠される |
 | `phase_start` | true | — | — | フェーズ開始マーカー |
 
 ### 1.2 後方互換イベント（read のみ・新規 emit しない）

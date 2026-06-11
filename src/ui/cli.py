@@ -4,7 +4,6 @@ from rich.panel import Panel
 from src.domain.event import LogEvent
 from src.domain.actor import Actor
 from src.ui.renderer import Renderer
-from src.ui.roster import build_roster_full, build_roster_summary
 
 console = Console()
 
@@ -51,13 +50,3 @@ class CLI:
             )
         )
 
-    def show_agent_roles(self) -> None:
-        """Display agent roles: full list in spectator mode, count summary in public mode."""
-        if self.spectator_mode:
-            console.print("\n[bold cyan]Agent Roster:[/bold cyan]")
-            for name, role_name, style in build_roster_full(self.agents):
-                role_style = next(a.role.color for a in self.agents if a.name == name)
-                console.print(f"  [{role_style}]{name}[/{role_style}] — {role_name} ({style})")
-            console.print()
-        else:
-            console.print(f"\n[bold cyan]{build_roster_summary(self.agents)}[/bold cyan]\n")

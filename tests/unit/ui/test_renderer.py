@@ -705,3 +705,83 @@ def test_wolf_chat_legacy_think_prefix_renders_dim_red(make_test_actor) -> None:
     spans = [s for s in result._spans if s.style == "dim red"]
     assert len(spans) > 0
 
+
+# ── ROLE_ASSIGNED ─────────────────────────────────────────────────────────────
+
+
+def test_role_assigned_summary_renders_cyan(make_test_actor) -> None:
+    """
+    SUT: Renderer.on_event (ROLE_ASSIGNED summary)
+    Mock: なし
+    Level: unit
+    Objective: summary イベント（agent=None）が [ROLE] プレフィックス付きで cyan スタイルで描画されること
+    """
+    renderer = Renderer([], spectator_mode=False)
+    event = LogEvent.make(
+        day=0,
+        phase="init",
+        event_type=EventType.ROLE_ASSIGNED,
+        agent=None,
+        content="This village has 3 Villagers · 1 Seer · 1 Werewolf",
+        is_public=True,
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert "[ROLE]" in result.plain
+    assert "This village has" in result.plain
+    spans = [s for s in result._spans if s.style == "cyan"]
+    assert len(spans) > 0
+
+
+def test_role_assigned_per_agent_renders_role_color_in_spectator(make_test_actor) -> None:
+    """
+    SUT: Renderer.on_event (ROLE_ASSIGNED per-agent, spectator mode)
+    Mock: なし
+    Level: unit
+    Objective: per-agent イベントが spectator mode でエージェントの role.color で描画されること
+    """
+    actor = make_test_actor("Alice", "Seer")
+    renderer = Renderer([actor], spectator_mode=True)
+    event = LogEvent.make(
+        day=0,
+        phase="init",
+        event_type=EventType.ROLE_ASSIGNED,
+        agent="Alice",
+        content="Alice came to realize they were the Seer.",
+        is_public=False,
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is not None
+    assert "[ROLE]" in result.plain
+    assert "Alice" in result.plain
+    seer_color = actor.role.color
+    spans = [s for s in result._spans if s.style == seer_color]
+    assert len(spans) > 0
+
+
+def test_role_assigned_per_agent_hidden_in_public_mode(make_test_actor) -> None:
+    """
+    SUT: Renderer.on_event (ROLE_ASSIGNED per-agent, public mode)
+    Mock: なし
+    Level: unit
+    Objective: per-agent イベント（is_public=False）が public mode で非表示になること
+    """
+    actor = make_test_actor("Alice", "Seer")
+    renderer = Renderer([actor], spectator_mode=False)
+    event = LogEvent.make(
+        day=0,
+        phase="init",
+        event_type=EventType.ROLE_ASSIGNED,
+        agent="Alice",
+        content="Alice came to realize they were the Seer.",
+        is_public=False,
+    )
+
+    result = renderer.on_event(event)
+
+    assert result is None
+
