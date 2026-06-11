@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
 import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
@@ -13,10 +13,19 @@ import styles from './AgentDetailScreen.module.css';
 
 const TABS = ['概要', '推論ログ', '疑い・信頼', '夜の行動', '過去の戦績'];
 
+function viewerModeFromSearchParams(searchParams) {
+  return searchParams.get('view') === 'public' ? 'public' : 'spectator';
+}
+
+function searchForViewerMode(viewerMode) {
+  return viewerMode === 'public' ? '?view=public' : '';
+}
+
 // --- 左ペイン ---
-function LeftPane({ current, sessionId }) {
+function LeftPane({ current, sessionId, viewerMode = 'spectator' }) {
   const alive = ALL_AGENTS.filter(n => !DEAD_AGENTS.has(n));
   const dead  = ALL_AGENTS.filter(n =>  DEAD_AGENTS.has(n));
+  const viewerSearch = searchForViewerMode(viewerMode);
 
   return (
     <>
@@ -31,7 +40,7 @@ function LeftPane({ current, sessionId }) {
           const r     = ROLES[role];
           const isDead = DEAD_AGENTS.has(n);
           const to = sessionId
-            ? `/game/${sessionId}/agent/${encodeURIComponent(n)}`
+            ? `/game/${sessionId}/agent/${encodeURIComponent(n)}${viewerSearch}`
             : `/agent/${encodeURIComponent(n)}`;
           return (
             <li
@@ -307,6 +316,9 @@ function RightPane({ agent }) {
 // === メイン画面 ===
 export default function AgentDetailScreen() {
   const { sessionId, agentName } = useParams();
+  const [searchParams] = useSearchParams();
+  const viewerMode = viewerModeFromSearchParams(searchParams);
+  const viewerSearch = searchForViewerMode(viewerMode);
   const agent = agentName || 'Nox';
   const [tab, setTab] = useState(0);
 
@@ -322,7 +334,7 @@ export default function AgentDetailScreen() {
   ];
 
   const topCrumbs = sessionId
-    ? [{ label: 'r/agent-jinrou', to: '/' }, { label: sessionId, to: `/game/${sessionId}` }, { label: agent }]
+    ? [{ label: 'r/agent-jinrou', to: '/' }, { label: sessionId, to: `/game/${sessionId}${viewerSearch}` }, { label: agent }]
     : [{ label: 'r/agent-jinrou', to: '/' }, { label: agent }];
 
   return (
@@ -336,7 +348,7 @@ export default function AgentDetailScreen() {
       <ThreePaneLayout
         collapsibleLeft
         collapsibleRight
-        left={<LeftPane current={agent} sessionId={sessionId} />}
+        left={<LeftPane current={agent} sessionId={sessionId} viewerMode={viewerMode} />}
         right={<RightPane agent={agent} />}
       >
         <div className={styles.mainPane}>

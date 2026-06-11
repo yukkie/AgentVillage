@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
 import RoleTag from '../components/RoleTag.jsx';
 import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
@@ -12,6 +12,18 @@ import { filterFeedEvents } from '../lib/feedFilter.js';
 import styles from './SpectatorScreen.module.css';
 
 const MISSING_CONTENT = '[missing content]';
+
+function viewerModeFromSearchParams(searchParams) {
+  return searchParams.get('view') === 'public' ? 'public' : 'spectator';
+}
+
+function searchForViewerMode(viewerMode) {
+  return viewerMode === 'public' ? '?view=public' : '';
+}
+
+function agentDetailPath(sessionId, agentName, viewerMode) {
+  return `/game/${sessionId}/agent/${agentName}${searchForViewerMode(viewerMode)}`;
+}
 
 // --- ユーティリティ ---
 function fmtTurn(day, speechId) {
@@ -68,7 +80,7 @@ function SpeechCard({ ev, prevById, roleAssignment, viewerMode = 'spectator' }) 
   const isPublic = viewerMode === 'public';
   const coedRole = ev.claimed_role;
   const coColor = coedRole ? ROLES[coedRole]?.color : undefined;
-  const agentTo = `/game/${sessionId}/agent/${ev.agent}`;
+  const agentTo = agentDetailPath(sessionId, ev.agent, viewerMode);
 
   return (
     <article
@@ -112,7 +124,7 @@ function AgentEpisodeCard({ ev, roleAssignment, viewerMode = 'spectator', label 
   const role = roleAssignment[ev.agent];
   const r = ROLES[role];
   const isPublic = viewerMode === 'public';
-  const agentTo = `/game/${sessionId}/agent/${ev.agent}`;
+  const agentTo = agentDetailPath(sessionId, ev.agent, viewerMode);
 
   return (
     <article
@@ -313,14 +325,14 @@ function SystemRow({ kind, icon, label, children, strategy, reasoning, ts, leftN
       <div className={styles.sysContent}>
         <div className={styles.sysMain}>
           {leftName && (
-            <Link to={`/game/${sessionId}/agent/${leftName}`} className={styles.agentLink}>
+            <Link to={agentDetailPath(sessionId, leftName, viewerMode)} className={styles.agentLink}>
               <Avatar name={leftName} role={roleAssignment[leftName]} size="xs" />
             </Link>
           )}
           <div className={styles.sysText}>{children}</div>
           {ts && <div className={styles.sysTs}>{ts}</div>}
           {rightName && (
-            <Link to={`/game/${sessionId}/agent/${rightName}`} className={styles.agentLink}>
+            <Link to={agentDetailPath(sessionId, rightName, viewerMode)} className={styles.agentLink}>
               <Avatar name={rightName} role={roleAssignment[rightName]} size="xs" />
             </Link>
           )}
@@ -337,7 +349,7 @@ function SystemRow({ kind, icon, label, children, strategy, reasoning, ts, leftN
 // --- 人狼会話カード ---
 function WolfChatCard({ ev, viewerMode = 'spectator' }) {
   const { sessionId } = useParams();
-  const agentTo = `/game/${sessionId}/agent/${ev.agent}`;
+  const agentTo = agentDetailPath(sessionId, ev.agent, viewerMode);
   return (
     <article className={`${styles.speech} ${styles.wolfChat}`} aria-label={`${ev.agent} wolf chat`}>
       <Link to={agentTo} className={styles.agentLink}>
@@ -553,7 +565,7 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
                 <span className={styles.coRole}>{roleDef.ja}</span>
                 <span className={styles.coName} style={{ color: coAgents.length ? 'var(--tx)' : 'var(--tx-3)' }}>
                   {coAgents.length ? coAgents.map((name, i) => (
-                    <span key={name}>{i > 0 && ', '}<Link to={`/game/${sessionId}/agent/${name}`} className={styles.agentLink}>{name}</Link></span>
+                    <span key={name}>{i > 0 && ', '}<Link to={agentDetailPath(sessionId, name, viewerMode)} className={styles.agentLink}>{name}</Link></span>
                   )) : '未CO'}
                 </span>
               </li>
@@ -567,8 +579,8 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
           <li key={i} className={`${styles.action} ${styles[a.event_type] || ''}`}>
             <div className={styles.actionIco}>{NIGHT_ACTION_ICON[a.event_type] || '・'}</div>
             <div className={styles.what}>
-              <Link to={`/game/${sessionId}/agent/${a.agent}`} className={styles.agentLink}><strong>{a.agent}</strong></Link>
-              {a.target && <> → <Link to={`/game/${sessionId}/agent/${a.target}`} className={styles.agentLink}><em style={{ '--r-color': ROLES[roleAssignment[a.target]]?.color }}>{a.target}</em></Link></>}
+              <Link to={agentDetailPath(sessionId, a.agent, viewerMode)} className={styles.agentLink}><strong>{a.agent}</strong></Link>
+              {a.target && <> → <Link to={agentDetailPath(sessionId, a.target, viewerMode)} className={styles.agentLink}><em style={{ '--r-color': ROLES[roleAssignment[a.target]]?.color }}>{a.target}</em></Link></>}
               <span style={{ color: 'var(--tx-4)', marginLeft: 6 }}>{NIGHT_ACTION_LABEL[a.event_type]}</span>
             </div>
           </li>
@@ -588,11 +600,11 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
             <div className={styles.voteGrid}>
               {execResult.voteTable.map((v, i) => (
                 <div className={styles.voteCell} key={i}>
-                  <Link to={`/game/${sessionId}/agent/${v.from}`} className={styles.agentLink}>
+                  <Link to={agentDetailPath(sessionId, v.from, viewerMode)} className={styles.agentLink}>
                     <Avatar name={v.from} size="xs" label={v.from} layout="horizontal" />
                   </Link>
                   <span className={styles.voteArrow}>▶</span>
-                  <Link to={`/game/${sessionId}/agent/${v.to}`} className={styles.agentLink}>
+                  <Link to={agentDetailPath(sessionId, v.to, viewerMode)} className={styles.agentLink}>
                     <Avatar name={v.to} size="xs" label={v.to} layout="horizontal" variant={v.to === execResult.target ? 'danger' : 'plain'} />
                   </Link>
                 </div>
@@ -616,7 +628,7 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
             const coRole = coStatus[n];
             return (
               <li key={n} className={styles.rosterRow} style={{ '--r-color': r?.color }}>
-                <Link to={`/game/${sessionId}/agent/${n}`} className={styles.agentLink}>
+                <Link to={agentDetailPath(sessionId, n, viewerMode)} className={styles.agentLink}>
                   <Avatar name={n} role={viewerMode === 'spectator' ? role : undefined} size="sm" label={n} layout="vertical" />
                 </Link>
                 <div className={styles.who}>
@@ -642,7 +654,7 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
             const meta = activeDead.get(n);
             return (
               <li key={n} className={`${styles.rosterRow} ${styles.dead}`} style={{ '--r-color': r?.color }}>
-                <Link to={`/game/${sessionId}/agent/${n}`} className={styles.agentLink}>
+                <Link to={agentDetailPath(sessionId, n, viewerMode)} className={styles.agentLink}>
                   <Avatar name={n} role={role} size="sm" dead label={n} layout="vertical" />
                 </Link>
                 <div className={styles.whoMeta}>
@@ -669,6 +681,7 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
 export default function SpectatorScreen() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeDay, setActiveDay] = useState(2);
   const [activePhase, setActivePhase] = useState('discuss');
   const [replayEvents, setReplayEvents] = useState(null);
@@ -680,7 +693,11 @@ export default function SpectatorScreen() {
   const [loadingEvents, setLoadingEvents] = useState(Boolean(sessionId));
   const [loadingAgents, setLoadingAgents] = useState(Boolean(sessionId));
   const [loadError, setLoadError] = useState(null);
-  const [viewerMode, setViewerMode] = useState('spectator');
+  const viewerMode = viewerModeFromSearchParams(searchParams);
+
+  const toggleViewerMode = () => {
+    setSearchParams(viewerMode === 'spectator' ? { view: 'public' } : {});
+  };
 
   useEffect(() => {
     if (!sessionId) return undefined;
@@ -759,7 +776,7 @@ export default function SpectatorScreen() {
         <TopBarBtn onClick={() => navigate('/')}>← 一覧</TopBarBtn>
         <TopBarBtn><span className={topBarStyles.liveDot} /> REPLAY</TopBarBtn>
         <TopBarBtn>同時観戦 142</TopBarBtn>
-        <TopBarBtn onClick={() => setViewerMode(v => v === 'spectator' ? 'public' : 'spectator')}>
+        <TopBarBtn onClick={toggleViewerMode}>
           {viewerMode === 'spectator' ? '🔍 観戦者モード' : '👤 参加者視点'}
         </TopBarBtn>
         <TopBarBtn>⤓ 全ログDL</TopBarBtn>
