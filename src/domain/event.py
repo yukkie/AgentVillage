@@ -23,6 +23,7 @@ class EventType(Enum):
     THREAT_UPDATE = "threat_update"
     GAME_OVER = "game_over"
     GAME_START_NARRATIVE = "game_start_narrative"
+    ROLE_ASSIGNED = "role_assigned"
     PHASE_START = "phase_start"
 
 

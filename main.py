@@ -88,7 +88,6 @@ def main() -> None:
 
         cli = CLI(agents=agents, spectator_mode=spectator_mode)
         cli.show_intro()
-        cli.show_agent_roles()
 
         engine = GameEngine(
             agents=agents,
