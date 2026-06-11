@@ -384,6 +384,107 @@ describe('FeedItem: phase_start visibility', () => {
     renderFeedItem({ event_type: 'game_start_narrative', phase: 'init', day: 0, content: 'A werewolf lurks among the villagers.' });
     expect(screen.getByText(/A werewolf lurks/)).toBeTruthy();
   });
+
+  it('renders role_assigned summary as a gm system row in public mode', () => {
+    /**
+     * SUT: FeedItem
+     * Mock: なし
+     * Level: unit
+     * Objective: public mode の role_assigned summary row が前夜の役職構成テキストとして表示されることを検証する。
+     */
+    renderFeedItem({
+      event_type: 'role_assigned',
+      phase: 'init',
+      day: 0,
+      agent: null,
+      is_public: true,
+      content: 'This village has 3 Villagers · 1 Seer · 1 Werewolf',
+    }, { viewerMode: 'public' });
+
+    expect(screen.getByText('役職構成')).toBeTruthy();
+    expect(screen.getByText(/This village has 3 Villagers/)).toBeTruthy();
+  });
+
+  it('hides role_assigned summary row in spectator mode', () => {
+    /**
+     * SUT: FeedItem
+     * Mock: なし
+     * Level: unit
+     * Objective: spectator mode では role_assigned summary row を非表示にし、個別役職カードだけを表示対象にすることを検証する。
+     */
+    const { container } = renderFeedItem({
+      event_type: 'role_assigned',
+      phase: 'init',
+      day: 0,
+      agent: null,
+      is_public: true,
+      content: 'This village has 3 Villagers · 1 Seer · 1 Werewolf',
+    }, { viewerMode: 'spectator' });
+
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('renders role_assigned per-agent row as an agent episode card in spectator mode', () => {
+    /**
+     * SUT: FeedItem → AgentEpisodeCard
+     * Mock: なし
+     * Level: component
+     * Objective: spectator mode の role_assigned per-agent row が大きな Avatar と真役職タグ付きのエピソードカードとして表示されることを検証する。
+     */
+    const { container } = renderFeedItem({
+      event_type: 'role_assigned',
+      phase: 'init',
+      day: 0,
+      agent: 'Alice',
+      is_public: false,
+      content: 'Alice came to realize they were the Seer.',
+    }, { viewerMode: 'spectator' });
+
+    expect(screen.getByRole('article', { name: 'Alice 役職割り当て' })).toBeTruthy();
+    expect(screen.getByAltText('Alice')).toBeTruthy();
+    expect(screen.getByText('Alice')).toBeTruthy();
+    expect(screen.getByText('Alice came to realize they were the Seer.')).toBeTruthy();
+    expect(container.querySelector('[class*="agentEpisode"]')).toBeTruthy();
+    expect(container.querySelector('[class*="roleTag"]')).toBeTruthy();
+  });
+
+  it('hides role_assigned per-agent row in public mode', () => {
+    /**
+     * SUT: FeedItem
+     * Mock: なし
+     * Level: unit
+     * Objective: public mode では is_public=false の role_assigned per-agent row がマウントされないことを検証する。
+     */
+    const { container } = renderFeedItem({
+      event_type: 'role_assigned',
+      phase: 'init',
+      day: 0,
+      agent: 'Alice',
+      is_public: false,
+      content: 'Alice came to realize they were the Seer.',
+    }, { viewerMode: 'public' });
+
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('falls back for archived role_assigned rows with missing content', () => {
+    /**
+     * SUT: FeedItem → AgentEpisodeCard
+     * Mock: なし
+     * Level: unit
+     * Objective: role_assigned を含まない/本文欠損に近い旧アーカイブ互換ケースでもカード表示が壊れず欠損マーカーを表示することを検証する。
+     */
+    renderFeedItem({
+      event_type: 'role_assigned',
+      phase: 'init',
+      day: 0,
+      agent: 'Alice',
+      is_public: false,
+      content: '',
+    }, { viewerMode: 'spectator' });
+
+    expect(screen.getByText('[missing content]')).toBeTruthy();
+  });
 });
 
 describe('FeedItem: vote card', () => {

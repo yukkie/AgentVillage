@@ -22,7 +22,6 @@
 | yukkie/AgentVillage#492 | enhancement | 🔴 | 5 | Connect AgentDetailScreen to real game data with viewerMode support | AgentDetailScreen のスタブ固定を実データ接続に。同時に viewerMode 対応で public 時に役職・推論ログ等を秘匿。規模次第で実データ接続/viewerMode に分割可 |
 | yukkie/AgentVillage#493 | enhancement | 🔴 | 3 | Lift viewerMode into routing/URL state | viewerMode を SpectatorScreen の useState から URL/横断 state へ引き上げ。直打ち・リロード・画面遷移で視点を保持 |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
-| yukkie/AgentVillage#501 | enhancement | ❌ | - | feat(frontend): show role_assigned events in eve feed | 前夜フィードに role_assigned イベントを表示。feedFilter + FeedItem に render case 追加。spectator は個別、public は summary のみ |
 | yukkie/AgentVillage#347 | enhancement | 🔴 | 3 | Implement feed filters in SpectatorScreen left pane (agent / role / event type) | 参加者・役職・表示種別フィルターチップを実際に動作させる。追加データ不要でクライアントサイドのみで実装可能 |
 | yukkie/AgentVillage#337 | enhancement | 🟡 | 2 | Top agents real stats | stub/gameList.js の TOP_AGENTS を実ゲーム結果の集計データに置き換え |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |

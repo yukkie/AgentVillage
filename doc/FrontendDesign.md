@@ -594,6 +594,7 @@ Semantic HTML: `SpeechCard` / `WolfChatCard` は独立した発言カードと�
 | `night_attack`（public） | `{content}`（SystemRow kind="death"、右に target アバター） |
 | `suspicion_update` | `suspicion_snapshot` があれば SystemRow 内で疑念メーターを表示（高いほど長いバー、green → yellow → red）。snapshot 欠如時は `{content}` にフォールバック |
 | `threat_update` | `threat_snapshot` があれば SystemRow 内で脅威メーターを表示（高いほど長いバー、赤系の濃淡）。snapshot 欠如時は `{content}` にフォールバック |
+| `role_assigned` | 前夜フィードに表示。summary row（`agent=null`, `is_public=true`）は public mode のみ SystemRow の役職構成として表示し、spectator mode では個別役職カードと重複するため表示しない。per-agent row（`agent={name}`, `is_public=false`）は spectator mode のみ AgentEpisodeCard で表示し、真役職 Avatar / RoleTag と本文を表示する。public mode では既存の `is_public=false` 非表示ルールでマウントしない |
 
 データソース: `stub/spectator.js`（`EVENTS`, `ROLE_ASSIGNMENT`, `NIGHT_RESULTS`, `EXEC_RESULTS`, `VOTE_TABLE_D1`, `ACTIONS_TIMELINE`）。
 
