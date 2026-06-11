@@ -214,16 +214,17 @@ describe('filterFeedEvents', () => {
   SUT: filterFeedEvents
   Mock: なし
   Level: unit
-  Objective: eve フェーズで game_start_narrative イベントのみ返すことを検証する
+  Objective: eve フェーズで game_start_narrative / role_assigned イベントを返すことを検証する
   */
-  it('eve: game_start_narrative イベントのみ返す', () => {
+  it('eve: game_start_narrative / role_assigned イベントを返す', () => {
     const events = [
       ev({ day: 0, event_type: 'game_start_narrative', phase: 'init', is_public: true, content: 'A werewolf lurks...' }),
+      ev({ day: 0, event_type: 'role_assigned', phase: 'init', agent: null, is_public: true, content: 'This village has 3 Villagers · 1 Seer · 1 Werewolf' }),
+      ev({ day: 0, event_type: 'role_assigned', phase: 'init', agent: 'Alice', is_public: false, content: 'Alice came to realize they were the Seer.' }),
       ev({ day: 1, event_type: 'speech', phase: 'day_discussion' }),
     ];
     const result = filterFeedEvents(events, 0, 'eve');
-    expect(result).toHaveLength(1);
-    expect(result[0].event_type).toBe('game_start_narrative');
+    expect(result.map(e => e.event_type)).toEqual(['game_start_narrative', 'role_assigned', 'role_assigned']);
   });
 
   /*

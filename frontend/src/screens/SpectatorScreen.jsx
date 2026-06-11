@@ -107,6 +107,37 @@ function SpeechCard({ ev, prevById, roleAssignment, viewerMode = 'spectator' }) 
   );
 }
 
+function AgentEpisodeCard({ ev, roleAssignment, viewerMode = 'spectator', label = '役職割り当て' }) {
+  const { sessionId } = useParams();
+  const role = roleAssignment[ev.agent];
+  const r = ROLES[role];
+  const isPublic = viewerMode === 'public';
+  const agentTo = `/game/${sessionId}/agent/${ev.agent}`;
+
+  return (
+    <article
+      className={styles.agentEpisode}
+      style={{ '--r-color': r?.color }}
+      aria-label={`${ev.agent} ${label}`}
+    >
+      <Link to={agentTo} className={styles.agentLink}>
+        <Avatar name={ev.agent} role={isPublic ? undefined : role} />
+      </Link>
+      <div className={styles.vert} />
+      <div>
+        <div className={styles.spHead}>
+          <Link to={agentTo} className={styles.agentLink}><span className={styles.name}>{ev.agent}</span></Link>
+          <span className={styles.turn}>{label}</span>
+          {!isPublic && <RoleTag role={role} />}
+        </div>
+        <div className={styles.spBody}>
+          <Mentioned text={contentForViewer(ev, viewerMode)} />
+        </div>
+      </div>
+    </article>
+  );
+}
+
 // Unified viewerMode-aware content selector for all event types.
 // spectator mode uses spectator_content when available; public mode always uses content.
 function contentForViewer(ev, viewerMode) {
@@ -339,6 +370,14 @@ export function FeedItem({ ev, prevById, roleAssignment, title, viewerMode = 'sp
 
   if (ev.event_type === 'game_start_narrative') {
     return <SystemRow kind="gm" label="ゲームマスター">{ev.content}</SystemRow>;
+  }
+
+  if (ev.event_type === 'role_assigned') {
+    if (ev.agent) {
+      return <AgentEpisodeCard ev={ev} roleAssignment={roleAssignment} viewerMode={viewerMode} />;
+    }
+    if (!isPublic) return null;
+    return <SystemRow kind="gm" label="役職構成" viewerMode={viewerMode}>{contentForViewer(ev, viewerMode)}</SystemRow>;
   }
 
   if (ev.event_type === 'wolf_chat') return <WolfChatCard ev={ev} viewerMode={viewerMode} />;

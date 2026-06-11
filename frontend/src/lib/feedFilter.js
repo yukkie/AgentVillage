@@ -43,7 +43,7 @@ export function filterFeedEvents(events, day, phase) {
     }
 
     if (phase === 'eve') {
-      return ev.event_type === 'game_start_narrative';
+      return ev.event_type === 'game_start_narrative' || ev.event_type === 'role_assigned';
     }
 
     return false;
