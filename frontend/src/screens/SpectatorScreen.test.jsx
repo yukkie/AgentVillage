@@ -89,6 +89,8 @@ function renderLeftPane(overrides = {}) {
         speechCount: 0,
       },
     },
+    selectedAgents: new Set(),
+    onToggleAgent: vi.fn(),
     ...overrides,
   };
 
@@ -983,6 +985,54 @@ describe('LeftPane phase interaction', () => {
   });
 });
 
+describe('LeftPane agent filter chips', () => {
+  it('LeftPane: 9人以上でも全参加者のチップを表示する', () => {
+    /*
+     * SUT: LeftPane
+     * Mock: vi.fn() で state setter / toggle callback を提供
+     * Level: unit
+     * Objective: 参加者フィルタが先頭8人に制限されず、agentNames の全参加者を AvatarButton として表示することを検証する。
+     */
+    const agentNames = ['Alice', 'Bob', 'Carol', 'Dave', 'Eve', 'Frank', 'Grace', 'Heidi', 'Ivan', 'Judy', 'Mallory'];
+
+    renderLeftPane({ agentNames });
+
+    agentNames.forEach(name => {
+      expect(screen.getByRole('button', { name })).toBeTruthy();
+    });
+  });
+
+  it('LeftPane: 選択中の参加者チップが selected variant で描画される', () => {
+    /*
+     * SUT: LeftPane
+     * Mock: vi.fn() で state setter / toggle callback を提供
+     * Level: unit
+     * Objective: selectedAgents に含まれる参加者チップが aria-pressed と selected variant で選択状態を表すことを検証する。
+     */
+    const { container } = renderLeftPane({ selectedAgents: new Set(['Alice']) });
+
+    const button = screen.getByRole('button', { name: 'Alice' });
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+    expect(container.querySelector('[data-variant="selected"]')?.textContent).toContain('Alice');
+  });
+
+  it('LeftPane: 参加者チップのクリックで onToggleAgent を呼ぶ', async () => {
+    /*
+     * SUT: LeftPane
+     * Mock: vi.fn() で onToggleAgent callback を観測
+     * Level: unit
+     * Objective: 参加者 AvatarButton のクリックが該当エージェント名で toggle callback を呼ぶことを検証する。
+     */
+    const user = userEvent.setup();
+    const onToggleAgent = vi.fn();
+    renderLeftPane({ onToggleAgent });
+
+    await user.click(screen.getByRole('button', { name: 'Bob' }));
+
+    expect(onToggleAgent).toHaveBeenCalledWith('Bob');
+  });
+});
+
 const MINIMAL_JSONL = [
   '{"id":"e1","day":1,"phase":"init","event_type":"phase_start","agent":null,"target":null,"content":"=== GAME START ===","is_public":true,"speech_id":null,"reply_to":null}',
   '{"id":"e2","day":1,"phase":"day_discussion","event_type":"speech","agent":"Alice","target":null,"content":"こんにちは","is_public":true,"speech_id":1,"reply_to":null}',
@@ -991,8 +1041,20 @@ const MINIMAL_JSONL = [
   '{"id":"e5","day":1,"phase":"day_discussion","event_type":"co_announcement","agent":"Alice","target":null,"content":"Alice claims to be Seer","is_public":true,"speech_id":null,"reply_to":null,"claimed_role":"Seer"}',
 ].join('\n');
 
+const AGENT_FILTER_JSONL = [
+  '{"id":"af1","day":1,"phase":"day_discussion","event_type":"speech","agent":"Alice","target":null,"content":"alice-only speech","is_public":true,"speech_id":1,"reply_to":null}',
+  '{"id":"af2","day":1,"phase":"day_discussion","event_type":"speech","agent":"Bob","target":null,"content":"bob-only speech","is_public":true,"speech_id":2,"reply_to":null}',
+  '{"id":"af3","day":1,"phase":"day_discussion","event_type":"speech","agent":"Carol","target":null,"content":"carol-only speech","is_public":true,"speech_id":3,"reply_to":null}',
+].join('\n');
+
 const MINIMAL_AGENT_JSON = {
   Alice: { name: 'Alice', role: 'Seer', state: { is_alive: true }, profile: { name: 'Alice' } },
+};
+
+const AGENT_FILTER_AGENT_JSON = {
+  Alice: { name: 'Alice', role: 'Seer', state: { is_alive: true }, profile: { name: 'Alice' } },
+  Bob: { name: 'Bob', role: 'Werewolf', state: { is_alive: true }, profile: { name: 'Bob' } },
+  Carol: { name: 'Carol', role: 'Knight', state: { is_alive: true }, profile: { name: 'Carol' } },
 };
 
 describe('SpectatorScreen: sessionId integration', () => {
@@ -1024,6 +1086,40 @@ describe('SpectatorScreen: sessionId integration', () => {
 
     await waitFor(() => expect(screen.getByText('こんにちは')).toBeTruthy(), { timeout: 3000 });
     await waitForReplayLoadToSettle();
+  });
+
+  it('SpectatorScreen: 参加者チップ2つを選択するとフィードが2人の発言に絞られ、再クリックで解除される', async () => {
+    /*
+     * SUT: SpectatorScreen
+     * Mock: fetchGameBySessionId / fetchReplayLog / fetchReplayAgents を vi.fn() でモック
+     * Level: integration
+     * Objective: 参加者フィルタの複数選択 state が中央フィードへ反映され、再クリックで解除されることを検証する。
+     */
+    archiveLoader.fetchGameBySessionId.mockResolvedValue({ cast: [] });
+    replayLoader.fetchReplayLog.mockResolvedValue(AGENT_FILTER_JSONL);
+    replayLoader.fetchReplayAgents.mockResolvedValue(AGENT_FILTER_AGENT_JSON);
+    const user = userEvent.setup();
+
+    renderSpectator('agent-filter-session');
+
+    await waitFor(() => expect(screen.getByText('alice-only speech')).toBeTruthy(), { timeout: 3000 });
+    expect(screen.getByText('bob-only speech')).toBeTruthy();
+    expect(screen.getByText('carol-only speech')).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Alice' }));
+    expect(screen.getByText('alice-only speech')).toBeTruthy();
+    expect(screen.queryByText('bob-only speech')).toBeNull();
+    expect(screen.queryByText('carol-only speech')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Bob' }));
+    expect(screen.getByText('alice-only speech')).toBeTruthy();
+    expect(screen.getByText('bob-only speech')).toBeTruthy();
+    expect(screen.queryByText('carol-only speech')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Alice' }));
+    expect(screen.queryByText('alice-only speech')).toBeNull();
+    expect(screen.getByText('bob-only speech')).toBeTruthy();
+    expect(screen.queryByText('carol-only speech')).toBeNull();
   });
 
   it('shows CO count from real log events', async () => {

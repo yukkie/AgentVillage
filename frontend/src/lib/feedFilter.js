@@ -7,6 +7,12 @@ const VOTE_TYPES = new Set(['vote', 'elimination', 'medium_result']);
 const NIGHT_TYPES = new Set(['wolf_chat', 'inspection', 'guard', 'guard_block', 'night_attack']);
 const NIGHT_PHASES = new Set(['night', 'night_wolf_chat']);
 
+export function filterByAgents(events, selectedAgents) {
+  if (!selectedAgents || selectedAgents.size === 0) return events;
+
+  return events.filter(ev => ev.agent == null || selectedAgents.has(ev.agent));
+}
+
 /**
  * Filter events for the centre feed by day and active phase tab.
  *

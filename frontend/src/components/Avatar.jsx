@@ -85,12 +85,14 @@ export default function Avatar({ name, role, dead, size = 'md', highlight, label
  */
 export function AvatarButton({ onClick, selected, label, variant, ...avatarProps }) {
   const resolvedVariant = selected ? 'selected' : (variant || 'plain');
+  const pressed = selected == null ? undefined : !!selected;
   return (
     <button
       type="button"
       className={styles.avatarBtn}
       onClick={onClick}
       aria-label={label}
+      aria-pressed={pressed}
     >
       <Avatar {...avatarProps} label={label} variant={resolvedVariant} />
     </button>
