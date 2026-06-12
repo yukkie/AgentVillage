@@ -612,7 +612,7 @@ SpectatorScreen から AgentDetailScreen への遷移、および AgentDetailScr
 | `LeftPane` | エージェント選択リスト（クリックで中央コンテンツを切り替え） |
 | `RightPane` | 疑い度マトリクス + 夜の行動履歴のサイドパネル |
 | `TabOverview` | 現在の目標・直近推論サマリ |
-| `TabThoughts` | 推論ログ全件（spectator 限定の `thought` フィールド） |
+| `TabThoughts` | 推論ログ全件（spectator 限定の `reasoning` フィールド） |
 | `TabSuspicion` | 疑い度マトリクス（選択エージェント視点の双方向バー） |
 | `TabNightActions` | 夜行動履歴（役職が夜行動を持つ場合のみ） |
 | `TabHistory` | 過去戦績（ゲーム番号・役職・勝敗） |
@@ -737,7 +737,7 @@ Semantic HTML: `AgentHero` は画面内のエージェント見出しとして `
 |---|---|---|
 | `stub/spectator.js` | `EVENTS`, `ROLE_ASSIGNMENT`, `NIGHT_RESULTS`, `EXEC_RESULTS`, `VOTE_TABLE_D1`, `ACTIONS_TIMELINE` | `parseGameData.js` 経由で `state_archive/{sessionId}/spectator_log.jsonl` をパース |
 | `stub/gameList.js` | `GAMES`, `TOP_AGENTS`, `COMMUNITY_POSTS`, `VILLAGE_NAME_PRESETS` | ゲーム一覧は `state_archive/` のディレクトリ一覧を fetch（または FastAPI エンドポイント） |
-| `stub/agentDetail.js` | `ALL_AGENTS`, `DEAD_AGENTS`, `AGENT_BLURB`, `AGENT_STATS`, `THOUGHTS`, `NIGHT_ACTIONS` | `state_archive/{sessionId}/agents/*.json` + `spectator_log.jsonl` の thought フィールド |
+| `stub/agentDetail.js` | `ALL_AGENTS`, `DEAD_AGENTS`, `AGENT_BLURB`, `AGENT_STATS`, `THOUGHTS`, `NIGHT_ACTIONS` | `state_archive/{sessionId}/agents/*.json` + `spectator_log.jsonl` の `reasoning` フィールド |
 
 ### 8.2 Milestone 2 移行計画
 
@@ -771,7 +771,7 @@ FastAPI + WebSocket でイベントをストリーミング配信する。`fetch
 |---|---|
 | `AGENT_BLURB` | `config/agents.json` の `persona_short` フィールドを追加して fetch（#321 参照） |
 | `AGENT_STATS` | `state/stats/game_stats.json` を集計して提供 |
-| `THOUGHTS` | `spectator_log.jsonl` の `thought` フィールドをエージェント別に集約 |
+| `THOUGHTS` | `spectator_log.jsonl` の `reasoning` フィールドをエージェント別に集約 |
 | `NIGHT_ACTIONS` | `spectator_log.jsonl` の `INSPECTION` / `GUARD` / `NIGHT_ATTACK` イベントを集約 |
 
 ---

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, within, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { FeedItem, LeftPane, RightPane } from './SpectatorScreen.jsx';
@@ -66,6 +66,7 @@ function renderFeedItem(overrides, options = {}) {
             roleAssignment={roleAssignment}
             title="Test Village"
             viewerMode={options.viewerMode}
+            bulkThoughtsOpen={options.bulkThoughtsOpen}
           />
         } />
       </Routes>
@@ -94,6 +95,8 @@ function renderLeftPane(overrides = {}) {
     presentRoles: ['Villager', 'Seer', 'Werewolf', 'Knight'],
     selectedRoles: new Set(),
     onToggleRole: vi.fn(),
+    thoughtsOpen: false,
+    onToggleThoughts: vi.fn(),
     viewerMode: 'spectator',
     ...overrides,
   };
@@ -1099,6 +1102,52 @@ describe('LeftPane role filter chips', () => {
   });
 });
 
+describe('LeftPane thought log display toggle', () => {
+  it('LeftPane: 表示行は思考ログトグルだけを表示する', () => {
+    /*
+     * SUT: LeftPane
+     * Mock: vi.fn() で state setter / toggle callback を提供
+     * Level: unit
+     * Objective: 表示フィルタ行から発言/投票/CO/夜の行動チップが削除され、思考ログトグルのみ残ることを検証する。
+     */
+    renderLeftPane();
+
+    expect(screen.queryByRole('button', { name: '発言' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '投票' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'CO' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '夜の行動' })).toBeNull();
+    expect(screen.getByRole('button', { name: '思考ログ' })).toBeTruthy();
+  });
+
+  it('LeftPane: 思考ログトグルのクリックで onToggleThoughts を呼ぶ', async () => {
+    /*
+     * SUT: LeftPane
+     * Mock: vi.fn() で onToggleThoughts callback を観測
+     * Level: unit
+     * Objective: 思考ログトグルのクリックが一括開閉 callback を呼ぶことを検証する。
+     */
+    const user = userEvent.setup();
+    const onToggleThoughts = vi.fn();
+    renderLeftPane({ onToggleThoughts });
+
+    await user.click(screen.getByRole('button', { name: '思考ログ' }));
+
+    expect(onToggleThoughts).toHaveBeenCalledOnce();
+  });
+
+  it('LeftPane: public モードでは思考ログトグルを表示しない', () => {
+    /*
+     * SUT: LeftPane
+     * Mock: vi.fn() で state setter / toggle callback を提供
+     * Level: unit
+     * Objective: public viewerMode では思考ログトグルを表示しないことを検証する。
+     */
+    renderLeftPane({ viewerMode: 'public' });
+
+    expect(screen.queryByRole('button', { name: '思考ログ' })).toBeNull();
+  });
+});
+
 const MINIMAL_JSONL = [
   '{"id":"e1","day":1,"phase":"init","event_type":"phase_start","agent":null,"target":null,"content":"=== GAME START ===","is_public":true,"speech_id":null,"reply_to":null}',
   '{"id":"e2","day":1,"phase":"day_discussion","event_type":"speech","agent":"Alice","target":null,"content":"こんにちは","is_public":true,"speech_id":1,"reply_to":null}',
@@ -1111,6 +1160,11 @@ const AGENT_FILTER_JSONL = [
   '{"id":"af1","day":1,"phase":"day_discussion","event_type":"speech","agent":"Alice","target":null,"content":"alice-only speech","is_public":true,"speech_id":1,"reply_to":null}',
   '{"id":"af2","day":1,"phase":"day_discussion","event_type":"speech","agent":"Bob","target":null,"content":"bob-only speech","is_public":true,"speech_id":2,"reply_to":null}',
   '{"id":"af3","day":1,"phase":"day_discussion","event_type":"speech","agent":"Carol","target":null,"content":"carol-only speech","is_public":true,"speech_id":3,"reply_to":null}',
+].join('\n');
+
+const THOUGHT_TOGGLE_JSONL = [
+  '{"id":"tt1","day":1,"phase":"day_discussion","event_type":"speech","agent":"Alice","target":null,"content":"alice reasoning speech","is_public":true,"speech_id":1,"reply_to":null,"reasoning":"Alice reasoning"}',
+  '{"id":"tt2","day":1,"phase":"day_discussion","event_type":"speech","agent":"Bob","target":null,"content":"bob reasoning speech","is_public":true,"speech_id":2,"reply_to":null,"reasoning":"Bob reasoning"}',
 ].join('\n');
 
 const MINIMAL_AGENT_JSON = {
@@ -1239,6 +1293,90 @@ describe('SpectatorScreen: sessionId integration', () => {
     expect(screen.getByText('bob-only speech')).toBeTruthy();
     expect(screen.getByText('carol-only speech')).toBeTruthy();
     expect(screen.queryByText('役職フィルタ')).toBeNull();
+  });
+
+  it('SpectatorScreen: 初期表示で全 details が閉じている', async () => {
+    /*
+     * SUT: SpectatorScreen
+     * Mock: fetchGameBySessionId / fetchReplayLog / fetchReplayAgents を vi.fn() でモック
+     * Level: integration
+     * Objective: 思考ログ一括トグルの既定状態が OFF で、全 details が閉じていることを検証する。
+     */
+    archiveLoader.fetchGameBySessionId.mockResolvedValue({ cast: [] });
+    replayLoader.fetchReplayLog.mockResolvedValue(THOUGHT_TOGGLE_JSONL);
+    replayLoader.fetchReplayAgents.mockResolvedValue(AGENT_FILTER_AGENT_JSON);
+
+    const { container } = renderSpectator('thought-toggle-default-session');
+
+    await waitFor(() => expect(screen.getByText('alice reasoning speech')).toBeTruthy(), { timeout: 3000 });
+    const details = [...container.querySelectorAll('details')];
+
+    expect(details).toHaveLength(2);
+    expect(details.every(detail => detail.open === false)).toBe(true);
+  });
+
+  it('SpectatorScreen: 思考ログトグル ON で全 details が開き、OFF で全て閉じる', async () => {
+    /*
+     * SUT: SpectatorScreen
+     * Mock: fetchGameBySessionId / fetchReplayLog / fetchReplayAgents を vi.fn() でモック
+     * Level: integration
+     * Objective: 思考ログ一括トグル ON/OFF がフィード内の全 ThoughtDetails の open 状態へ反映されることを検証する。
+     */
+    archiveLoader.fetchGameBySessionId.mockResolvedValue({ cast: [] });
+    replayLoader.fetchReplayLog.mockResolvedValue(THOUGHT_TOGGLE_JSONL);
+    replayLoader.fetchReplayAgents.mockResolvedValue(AGENT_FILTER_AGENT_JSON);
+    const user = userEvent.setup();
+
+    const { container } = renderSpectator('thought-toggle-session');
+
+    await waitFor(() => expect(screen.getByText('alice reasoning speech')).toBeTruthy(), { timeout: 3000 });
+    await user.click(screen.getByRole('button', { name: '思考ログ' }));
+    expect([...container.querySelectorAll('details')].every(detail => detail.open === true)).toBe(true);
+
+    await user.click(screen.getByRole('button', { name: '思考ログ' }));
+    expect([...container.querySelectorAll('details')].every(detail => detail.open === false)).toBe(true);
+  });
+
+  it('SpectatorScreen: 一括 ON 後に個別の details を閉じても他は開いたまま', async () => {
+    /*
+     * SUT: SpectatorScreen
+     * Mock: fetchGameBySessionId / fetchReplayLog / fetchReplayAgents を vi.fn() でモック
+     * Level: integration
+     * Objective: 一括トグル後も個別の思考ログを手動開閉でき、他の details 状態に影響しないことを検証する。
+     */
+    archiveLoader.fetchGameBySessionId.mockResolvedValue({ cast: [] });
+    replayLoader.fetchReplayLog.mockResolvedValue(THOUGHT_TOGGLE_JSONL);
+    replayLoader.fetchReplayAgents.mockResolvedValue(AGENT_FILTER_AGENT_JSON);
+    const user = userEvent.setup();
+
+    const { container } = renderSpectator('thought-toggle-manual-session');
+
+    await waitFor(() => expect(screen.getByText('alice reasoning speech')).toBeTruthy(), { timeout: 3000 });
+    await user.click(screen.getByRole('button', { name: '思考ログ' }));
+
+    const details = [...container.querySelectorAll('details')];
+    details[0].open = false;
+    fireEvent(details[0], new Event('toggle'));
+
+    expect(details[0].open).toBe(false);
+    expect(details[1].open).toBe(true);
+  });
+
+  it('SpectatorScreen: public モードでは思考ログトグルが表示されない', async () => {
+    /*
+     * SUT: SpectatorScreen
+     * Mock: fetchGameBySessionId / fetchReplayLog / fetchReplayAgents を vi.fn() でモック
+     * Level: integration
+     * Objective: public viewerMode では思考ログ一括トグルが表示されないことを検証する。
+     */
+    archiveLoader.fetchGameBySessionId.mockResolvedValue({ cast: [] });
+    replayLoader.fetchReplayLog.mockResolvedValue(THOUGHT_TOGGLE_JSONL);
+    replayLoader.fetchReplayAgents.mockResolvedValue(AGENT_FILTER_AGENT_JSON);
+
+    renderSpectator('thought-toggle-public-session', '?view=public');
+
+    await waitFor(() => expect(screen.getByText('alice reasoning speech')).toBeTruthy(), { timeout: 3000 });
+    expect(screen.queryByRole('button', { name: '思考ログ' })).toBeNull();
   });
 
   it('shows CO count from real log events', async () => {
