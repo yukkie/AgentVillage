@@ -21,7 +21,9 @@
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#492 | enhancement | 🔴 | 5 | Connect AgentDetailScreen to real game data with viewerMode support | AgentDetailScreen のスタブ固定を実データ接続に。同時に viewerMode 対応で public 時に役職・推論ログ等を秘匿。規模次第で実データ接続/viewerMode に分割可 |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
-| yukkie/AgentVillage#347 | enhancement | 🔴 | 3 | Implement feed filters in SpectatorScreen left pane (agent / role / event type) | 参加者・役職・表示種別フィルターチップを実際に動作させる。追加データ不要でクライアントサイドのみで実装可能 |
+| yukkie/AgentVillage#347 | enhancement | 🔴 | 3 | feat: agent filter chips in SpectatorScreen left pane | 参加者チップを AvatarButton 化して発言者フィルタを実装（複数選択可・8人制限撤廃）。#505/#506 と3分割 |
+| yukkie/AgentVillage#505 | enhancement | — | — | feat: role filter chips in SpectatorScreen left pane | 役職フィルタを実装（村の構成役職のみ表示・複数選択可・public モードでは非表示）。#347 から分割 |
+| yukkie/AgentVillage#506 | enhancement | — | — | feat: thought log bulk toggle in SpectatorScreen left pane | 表示種別チップ（発言/投票/CO/夜の行動）を削除し、思考ログの一括開閉トグルを実装。thought→reasoning 表記統一も含む。#347 から分割 |
 | yukkie/AgentVillage#337 | enhancement | 🟡 | 2 | Top agents real stats | stub/gameList.js の TOP_AGENTS を実ゲーム結果の集計データに置き換え |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
 | yukkie/AgentVillage#495 | enhancement | 🟢 | 3 | Log visibility classes and recipient-based authorization model | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
