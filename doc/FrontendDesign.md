@@ -94,7 +94,7 @@ React Router v7 を導入済み。`App.jsx` は `Routes`/`Route` でルートを
 
 `AgentDetailScreen` は `useParams()` の `sessionId` の有無でモードを切り替える:
 - **game-scoped mode** (`sessionId` あり): 特定ゲームの推論ログ・疑念マトリクス等を表示
-- **global profile mode** (`sessionId` なし): エージェントのグローバルプロフィール・過去戦績を表示（スタブ、#318 対応待ち）
+- **global profile mode** (`sessionId` なし): エージェントのグローバルプロフィール・過去戦績を表示。出所は `state/stats/game_stats.json`（横断戦績、`doc/DataSpec.md` §6 のスキーマ）を集計する。`game-scoped mode` が1ゲーム内の役職・推論を見せるのに対し、こちらは勝率・通算成績などゲーム横断の数字を見せる
 
 `NotFoundScreen` は no-match URL 用の 404 fallback。`/foo`、`/game`、`/game/` のように上記4ルートへマッチしない URL では白画面にせず、404 表示と `/` への戻り導線を出す。404 用の狼アイコンは `frontend/public/icons/not-found-wolf.png`、favicon は `frontend/public/favicon.ico` と PNG sizes を `index.html` から参照する。
 
@@ -567,6 +567,22 @@ SpectatorScreen から AgentDetailScreen への遷移、および AgentDetailScr
 | `ThoughtDetails` / `WolfChatCard` 思考ログ | `<details>` で展開可 | `🔒 思考ログ` ロックバッジ（クリック不可） |
 | `RightPane` 生存ロスター役職タグ・Avatar 役職刻印 | 真の役職を表示 | 非表示 |
 | spectator 限定システムログ（`wolf_chat` / `inspection` / `guard` / `medium_result` および `is_public=false` のイベント） | 表示 | **完全非表示**（カード自体をマウントしない） |
+
+#### AgentDetailScreen の viewerMode 可視性（game-scoped mode）
+
+`game-scoped mode`（特定ゲームのエージェント詳細）は spectator 限定情報を含むため、`SpectatorScreen` と
+**同じ基準**で public フィルタを適用する。隠す対象の正本は `doc/DataSpec.md` の可視性ルール（§3）であり、
+本表はそれを AgentDetailScreen の表示要素に写したもの。
+
+| 要素 | spectator | public |
+|---|---|---|
+| 役職タグ・Avatar 役職刻印 | 真の役職を表示 | 非表示 |
+| 推論ログ（`reasoning`） | 表示 | `🔒` ロックバッジ（閲覧不可） |
+| 夜の行動（占い・護衛・襲撃） | 表示 | 非表示（spectator 限定イベント由来） |
+| 疑い度マトリクス | 表示 | 非表示 |
+
+`global profile mode`（横断プロフィール）は `game_stats.json` 由来の集計戦績のみを扱い、特定ゲームの
+役職・推論を露出しないため、viewerMode による出し分けは行わない。
 
 #### フェーズクリックの仕様（#358）
 

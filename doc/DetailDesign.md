@@ -556,10 +556,9 @@ LLM を呼ばない。ゲーム終了時の記録と CLI 表示のみを担当�
         {
           "name": "Sora",
           "role": "Seer",
-          "faction": "village_side",
+          "faction": "village",
           "model": "claude-haiku-4-5-20251001",
           "survived": true,
-          "days_survived": 3,
           "won": true
         }
       ]
@@ -569,8 +568,9 @@ LLM を呼ばない。ゲーム終了時の記録と CLI 表示のみを担当�
 ```
 
 - `game_id` は ISO 8601 形式（`datetime.now().isoformat(timespec="seconds")`）
-- `faction` は `actor.role.faction` をそのまま格納
+- `faction` は `actor.role.faction`（`"village"` / `"werewolf"`）をそのまま格納
 - `survived` は `actor.state.is_alive`、`won` は `actor.role.faction == winner_faction` で判定
+- データ契約（consumer 向けスキーマ）は `doc/DataSpec.md` §6 が正本
 
 ### collector.py — 関数
 
