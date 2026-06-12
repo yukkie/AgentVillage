@@ -13,6 +13,12 @@ export function filterByAgents(events, selectedAgents) {
   return events.filter(ev => ev.agent == null || selectedAgents.has(ev.agent));
 }
 
+export function filterByRoles(events, selectedRoles, roleAssignment) {
+  if (!selectedRoles || selectedRoles.size === 0) return events;
+
+  return events.filter(ev => ev.agent == null || selectedRoles.has(roleAssignment[ev.agent]));
+}
+
 /**
  * Filter events for the centre feed by day and active phase tab.
  *

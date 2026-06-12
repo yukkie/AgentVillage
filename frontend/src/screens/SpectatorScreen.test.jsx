@@ -91,6 +91,10 @@ function renderLeftPane(overrides = {}) {
     },
     selectedAgents: new Set(),
     onToggleAgent: vi.fn(),
+    presentRoles: ['Villager', 'Seer', 'Werewolf', 'Knight'],
+    selectedRoles: new Set(),
+    onToggleRole: vi.fn(),
+    viewerMode: 'spectator',
     ...overrides,
   };
 
@@ -1033,6 +1037,68 @@ describe('LeftPane agent filter chips', () => {
   });
 });
 
+describe('LeftPane role filter chips', () => {
+  it('LeftPane: presentRoles にない役職チップを表示しない', () => {
+    /*
+     * SUT: LeftPane
+     * Mock: vi.fn() で state setter / toggle callback を提供
+     * Level: unit
+     * Objective: 役職フィルタが村に存在する役職だけを表示し、不参加役職を表示しないことを検証する。
+     */
+    renderLeftPane({ presentRoles: ['Villager', 'Seer', 'Werewolf'] });
+
+    expect(screen.getByRole('button', { name: '村人' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '占い師' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '人狼' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '霊媒師' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '狩人' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '狂人' })).toBeNull();
+  });
+
+  it('LeftPane: 選択中の役職チップに aria-pressed と on クラスが付く', () => {
+    /*
+     * SUT: LeftPane
+     * Mock: vi.fn() で state setter / toggle callback を提供
+     * Level: unit
+     * Objective: selectedRoles に含まれる役職チップが aria-pressed と on class で選択状態を表すことを検証する。
+     */
+    renderLeftPane({ selectedRoles: new Set(['Seer']) });
+
+    const button = screen.getByRole('button', { name: '占い師' });
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+    expect(button.classList.contains(styles.on)).toBe(true);
+  });
+
+  it('LeftPane: 役職チップのクリックで onToggleRole を呼ぶ', async () => {
+    /*
+     * SUT: LeftPane
+     * Mock: vi.fn() で onToggleRole callback を観測
+     * Level: unit
+     * Objective: 役職チップのクリックが該当 role key で toggle callback を呼ぶことを検証する。
+     */
+    const user = userEvent.setup();
+    const onToggleRole = vi.fn();
+    renderLeftPane({ onToggleRole });
+
+    await user.click(screen.getByRole('button', { name: '占い師' }));
+
+    expect(onToggleRole).toHaveBeenCalledWith('Seer');
+  });
+
+  it('LeftPane: public モードでは役職フィルタを表示しない', () => {
+    /*
+     * SUT: LeftPane
+     * Mock: vi.fn() で state setter / toggle callback を提供
+     * Level: unit
+     * Objective: public viewerMode では真役職リークを避けるため役職フィルタ UI を表示しないことを検証する。
+     */
+    renderLeftPane({ viewerMode: 'public' });
+
+    expect(screen.queryByText('役職フィルタ')).toBeNull();
+    expect(screen.queryByRole('button', { name: '占い師' })).toBeNull();
+  });
+});
+
 const MINIMAL_JSONL = [
   '{"id":"e1","day":1,"phase":"init","event_type":"phase_start","agent":null,"target":null,"content":"=== GAME START ===","is_public":true,"speech_id":null,"reply_to":null}',
   '{"id":"e2","day":1,"phase":"day_discussion","event_type":"speech","agent":"Alice","target":null,"content":"こんにちは","is_public":true,"speech_id":1,"reply_to":null}',
@@ -1120,6 +1186,59 @@ describe('SpectatorScreen: sessionId integration', () => {
     expect(screen.queryByText('alice-only speech')).toBeNull();
     expect(screen.getByText('bob-only speech')).toBeTruthy();
     expect(screen.queryByText('carol-only speech')).toBeNull();
+  });
+
+  it('SpectatorScreen: 役職チップ選択でフィードが該当役職の発言に絞られる', async () => {
+    /*
+     * SUT: SpectatorScreen
+     * Mock: fetchGameBySessionId / fetchReplayLog / fetchReplayAgents を vi.fn() でモック
+     * Level: integration
+     * Objective: 役職フィルタの選択 state が中央フィードへ反映されることを検証する。
+     */
+    archiveLoader.fetchGameBySessionId.mockResolvedValue({ cast: [] });
+    replayLoader.fetchReplayLog.mockResolvedValue(AGENT_FILTER_JSONL);
+    replayLoader.fetchReplayAgents.mockResolvedValue(AGENT_FILTER_AGENT_JSON);
+    const user = userEvent.setup();
+
+    renderSpectator('role-filter-session');
+
+    await waitFor(() => expect(screen.getByText('alice-only speech')).toBeTruthy(), { timeout: 3000 });
+    await user.click(screen.getByRole('button', { name: '占い師' }));
+
+    expect(screen.getByText('alice-only speech')).toBeTruthy();
+    expect(screen.queryByText('bob-only speech')).toBeNull();
+    expect(screen.queryByText('carol-only speech')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: '狩人' }));
+    expect(screen.getByText('alice-only speech')).toBeTruthy();
+    expect(screen.queryByText('bob-only speech')).toBeNull();
+    expect(screen.getByText('carol-only speech')).toBeTruthy();
+  });
+
+  it('SpectatorScreen: spectator で役職選択後に public へ切り替えると絞り込みが解除される', async () => {
+    /*
+     * SUT: SpectatorScreen
+     * Mock: fetchGameBySessionId / fetchReplayLog / fetchReplayAgents を vi.fn() でモック
+     * Level: integration
+     * Objective: public viewerMode では役職フィルタ状態が残っていてもフィード絞り込みが適用されないことを検証する。
+     */
+    archiveLoader.fetchGameBySessionId.mockResolvedValue({ cast: [] });
+    replayLoader.fetchReplayLog.mockResolvedValue(AGENT_FILTER_JSONL);
+    replayLoader.fetchReplayAgents.mockResolvedValue(AGENT_FILTER_AGENT_JSON);
+    const user = userEvent.setup();
+
+    renderSpectator('role-filter-public-session');
+
+    await waitFor(() => expect(screen.getByText('alice-only speech')).toBeTruthy(), { timeout: 3000 });
+    await user.click(screen.getByRole('button', { name: '占い師' }));
+    expect(screen.queryByText('bob-only speech')).toBeNull();
+
+    await user.click(screen.getByText(/観戦者モード/));
+
+    expect(screen.getByText('alice-only speech')).toBeTruthy();
+    expect(screen.getByText('bob-only speech')).toBeTruthy();
+    expect(screen.getByText('carol-only speech')).toBeTruthy();
+    expect(screen.queryByText('役職フィルタ')).toBeNull();
   });
 
   it('shows CO count from real log events', async () => {

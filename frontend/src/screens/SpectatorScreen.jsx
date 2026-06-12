@@ -8,7 +8,7 @@ import { ROLES } from '../lib/constants.js';
 import { fetchReplayAgents, fetchReplayLog } from '../lib/replayLoader.js';
 import { fetchGameBySessionId } from '../lib/archiveLoader.js';
 import { parseGameData, aggregateCoStatus, computeDeadByDay } from '../lib/parseGameData.js';
-import { filterByAgents, filterFeedEvents } from '../lib/feedFilter.js';
+import { filterByAgents, filterByRoles, filterFeedEvents } from '../lib/feedFilter.js';
 import styles from './SpectatorScreen.module.css';
 
 const MISSING_CONTENT = '[missing content]';
@@ -444,6 +444,10 @@ export function LeftPane({
   gameOverDay = null,
   selectedAgents = new Set(),
   onToggleAgent = () => {},
+  presentRoles = Object.keys(ROLES),
+  selectedRoles = new Set(),
+  onToggleRole = () => {},
+  viewerMode = 'spectator',
 }) {
   const handlePhase = (d, phase) => {
     setDay(d);
@@ -530,14 +534,30 @@ export function LeftPane({
             />
           ))}
         </div>
-        <div className={styles.sectionLabel}>役職フィルタ</div>
-        <div className={styles.filtRow}>
-          {Object.entries(ROLES).map(([k, v]) => (
-            <button key={k} className={styles.chip} style={{ '--r-color': v.color }}>
-              <span className={styles.swatch} style={{ background: v.color }} /> {v.ja}
-            </button>
-          ))}
-        </div>
+        {viewerMode === 'spectator' && (
+          <>
+            <div className={styles.sectionLabel}>役職フィルタ</div>
+            <div className={styles.filtRow}>
+              {presentRoles.map(roleKey => {
+                const roleDef = ROLES[roleKey];
+                if (!roleDef) return null;
+                const selected = selectedRoles.has(roleKey);
+                return (
+                  <button
+                    key={roleKey}
+                    type="button"
+                    className={`${styles.chip} ${selected ? styles.on : ''}`}
+                    style={{ '--r-color': roleDef.color }}
+                    aria-pressed={selected}
+                    onClick={() => onToggleRole(roleKey)}
+                  >
+                    <span className={styles.swatch} style={{ background: roleDef.color }} /> {roleDef.ja}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
         <div className={styles.sectionLabel}>表示</div>
         <div className={styles.filtRow}>
           <button className={`${styles.chip} ${styles.on}`}>発言</button>
@@ -711,6 +731,7 @@ export default function SpectatorScreen() {
   const [loadingAgents, setLoadingAgents] = useState(Boolean(sessionId));
   const [loadError, setLoadError] = useState(null);
   const [selectedAgents, setSelectedAgents] = useState(() => new Set());
+  const [selectedRoles, setSelectedRoles] = useState(() => new Set());
   const viewerMode = viewerModeFromSearchParams(searchParams);
 
   const toggleViewerMode = () => {
@@ -724,6 +745,18 @@ export default function SpectatorScreen() {
         next.delete(agentName);
       } else {
         next.add(agentName);
+      }
+      return next;
+    });
+  };
+
+  const toggleRoleFilter = (roleKey) => {
+    setSelectedRoles(current => {
+      const next = new Set(current);
+      if (next.has(roleKey)) {
+        next.delete(roleKey);
+      } else {
+        next.add(roleKey);
       }
       return next;
     });
@@ -787,6 +820,10 @@ export default function SpectatorScreen() {
   const roleAssignment = useMemo(() => Object.fromEntries(
     Object.entries(agents).map(([name, agent]) => [name, agent.role])
   ), [agents]);
+  const presentRoles = useMemo(() => {
+    const presentRoleSet = new Set(Object.values(roleAssignment));
+    return Object.keys(ROLES).filter(roleKey => presentRoleSet.has(roleKey));
+  }, [roleAssignment]);
   const replayCoStatus = useMemo(() => aggregateCoStatus(events, activeDay), [events, activeDay]);
   const agentNames = Object.keys(agents);
   const visibleDays = [...new Set(events.filter(e => e.event_type !== 'game_over').map(e => e.day).filter(Boolean))].sort((a, b) => a - b);
@@ -796,7 +833,11 @@ export default function SpectatorScreen() {
     if (e.speech_id != null) prevById[`${e.day}-${e.speech_id}`] = e;
   });
 
-  const feedEvents = filterByAgents(filterFeedEvents(events, activeDay, activePhase), selectedAgents);
+  const phaseFilteredEvents = filterFeedEvents(events, activeDay, activePhase);
+  const agentFilteredEvents = filterByAgents(phaseFilteredEvents, selectedAgents);
+  const feedEvents = viewerMode === 'public'
+    ? agentFilteredEvents
+    : filterByRoles(agentFilteredEvents, selectedRoles, roleAssignment);
   const speechCount = events.filter(e => e.event_type === 'speech').length;
   const coCount = Object.keys(replayCoStatus).length;
 
@@ -816,7 +857,7 @@ export default function SpectatorScreen() {
       <ThreePaneLayout
         collapsibleLeft
         collapsibleRight
-        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} activePhase={activePhase} setPhase={setActivePhase} days={visibleDays} agentNames={agentNames} daySummary={daySummary} gameOverDay={gameOverDay} selectedAgents={selectedAgents} onToggleAgent={toggleAgentFilter} />}
+        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} activePhase={activePhase} setPhase={setActivePhase} days={visibleDays} agentNames={agentNames} daySummary={daySummary} gameOverDay={gameOverDay} selectedAgents={selectedAgents} onToggleAgent={toggleAgentFilter} presentRoles={presentRoles} selectedRoles={selectedRoles} onToggleRole={toggleRoleFilter} viewerMode={viewerMode} />}
         right={<RightPane agents={agents} roleAssignment={roleAssignment} coStatus={replayCoStatus} daySummary={daySummary} activeDay={activeDay} deadByDay={replayDeadByDay} viewerMode={viewerMode} />}
       >
         <div className={styles.feedHead}>
