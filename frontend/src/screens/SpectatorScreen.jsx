@@ -41,7 +41,13 @@ function Mentioned({ text }) {
   );
 }
 
-function ThoughtDetails({ reasoning, viewerMode = 'spectator' }) {
+function ThoughtDetails({ reasoning, viewerMode = 'spectator', bulkOpen = false }) {
+  const [open, setOpen] = useState(bulkOpen);
+
+  useEffect(() => {
+    setOpen(bulkOpen);
+  }, [bulkOpen]);
+
   if (!reasoning) return null;
 
   if (viewerMode === 'public') {
@@ -49,7 +55,7 @@ function ThoughtDetails({ reasoning, viewerMode = 'spectator' }) {
   }
 
   return (
-    <details className={styles.spThink}>
+    <details className={styles.spThink} open={open} onToggle={event => setOpen(event.currentTarget.open)}>
       <summary>
         <svg className={styles.bubbleIco} width="14" height="14" viewBox="0 0 16 16" fill="none">
           <path
@@ -71,7 +77,7 @@ function ThoughtDetails({ reasoning, viewerMode = 'spectator' }) {
 }
 
 // --- 発言カード ---
-function SpeechCard({ ev, prevById, roleAssignment, viewerMode = 'spectator' }) {
+function SpeechCard({ ev, prevById, roleAssignment, viewerMode = 'spectator', bulkThoughtsOpen = false }) {
   const { sessionId } = useParams();
   const role = roleAssignment[ev.agent];
   const r = ROLES[role];
@@ -113,7 +119,7 @@ function SpeechCard({ ev, prevById, roleAssignment, viewerMode = 'spectator' }) 
         <div className={styles.spBody}>
           <Mentioned text={ev.content} />
         </div>
-        <ThoughtDetails reasoning={ev.reasoning} viewerMode={viewerMode} />
+        <ThoughtDetails reasoning={ev.reasoning} viewerMode={viewerMode} bulkOpen={bulkThoughtsOpen} />
       </div>
     </article>
   );
@@ -291,7 +297,7 @@ const SYSTEM_EVENT_VIEWS = {
   },
 };
 
-function renderConfiguredSystemEvent(ev, roleAssignment, viewerMode) {
+function renderConfiguredSystemEvent(ev, roleAssignment, viewerMode, bulkThoughtsOpen) {
   const view = SYSTEM_EVENT_VIEWS[ev.event_type];
   if (!view) return null;
 
@@ -306,6 +312,7 @@ function renderConfiguredSystemEvent(ev, roleAssignment, viewerMode) {
       rightName={view.rightName?.(ev)}
       roleAssignment={roleAssignment}
       viewerMode={viewerMode}
+      bulkThoughtsOpen={bulkThoughtsOpen}
     >
       {contentForViewer(ev, viewerMode)}
     </SystemRow>
@@ -313,7 +320,7 @@ function renderConfiguredSystemEvent(ev, roleAssignment, viewerMode) {
 }
 
 // --- システム行 ---
-function SystemRow({ kind, icon, label, children, strategy, reasoning, ts, leftName, rightName, roleAssignment = {}, viewerMode = 'spectator' }) {
+function SystemRow({ kind, icon, label, children, strategy, reasoning, ts, leftName, rightName, roleAssignment = {}, viewerMode = 'spectator', bulkThoughtsOpen = false }) {
   const { sessionId } = useParams();
   const defaultIcon = { gm: '👁', death: '💀', exec: '⚑', phase: '☾' }[kind] || '⌘';
   return (
@@ -340,14 +347,14 @@ function SystemRow({ kind, icon, label, children, strategy, reasoning, ts, leftN
         {strategy && viewerMode === 'spectator' && (
           <div className={styles.strategyBadge}>[strategy: {strategy}]</div>
         )}
-        <ThoughtDetails reasoning={reasoning} viewerMode={viewerMode} />
+        <ThoughtDetails reasoning={reasoning} viewerMode={viewerMode} bulkOpen={bulkThoughtsOpen} />
       </div>
     </div>
   );
 }
 
 // --- 人狼会話カード ---
-function WolfChatCard({ ev, viewerMode = 'spectator' }) {
+function WolfChatCard({ ev, viewerMode = 'spectator', bulkThoughtsOpen = false }) {
   const { sessionId } = useParams();
   const agentTo = agentDetailPath(sessionId, ev.agent, viewerMode);
   return (
@@ -361,7 +368,7 @@ function WolfChatCard({ ev, viewerMode = 'spectator' }) {
           <Link to={agentTo} className={styles.agentLink}><span className={styles.name}>{ev.agent}</span></Link>
         </div>
         <div className={styles.spBody}>{ev.content}</div>
-        <ThoughtDetails reasoning={ev.reasoning} viewerMode={viewerMode} />
+        <ThoughtDetails reasoning={ev.reasoning} viewerMode={viewerMode} bulkOpen={bulkThoughtsOpen} />
       </div>
     </article>
   );
@@ -371,17 +378,17 @@ function WolfChatCard({ ev, viewerMode = 'spectator' }) {
 const SPECTATOR_ONLY_EVENTS = new Set(['wolf_chat', 'inspection', 'guard', 'medium_result']);
 
 // --- フィードアイテム ---
-export function FeedItem({ ev, prevById, roleAssignment, title, viewerMode = 'spectator' }) {
+export function FeedItem({ ev, prevById, roleAssignment, title, viewerMode = 'spectator', bulkThoughtsOpen = false }) {
   const isPublic = viewerMode === 'public';
 
-  if (ev.event_type === 'speech') return <SpeechCard ev={ev} prevById={prevById} roleAssignment={roleAssignment} viewerMode={viewerMode} />;
+  if (ev.event_type === 'speech') return <SpeechCard ev={ev} prevById={prevById} roleAssignment={roleAssignment} viewerMode={viewerMode} bulkThoughtsOpen={bulkThoughtsOpen} />;
 
   // public モードでは spectator 限定イベントを完全非表示
   if (isPublic && SPECTATOR_ONLY_EVENTS.has(ev.event_type)) return null;
   if (isPublic && !ev.is_public) return null;
 
   if (ev.event_type === 'game_start_narrative') {
-    return <SystemRow kind="gm" label="ゲームマスター">{ev.content}</SystemRow>;
+    return <SystemRow kind="gm" label="ゲームマスター" bulkThoughtsOpen={bulkThoughtsOpen}>{ev.content}</SystemRow>;
   }
 
   if (ev.event_type === 'role_assigned') {
@@ -389,28 +396,28 @@ export function FeedItem({ ev, prevById, roleAssignment, title, viewerMode = 'sp
       return <AgentEpisodeCard ev={ev} roleAssignment={roleAssignment} viewerMode={viewerMode} />;
     }
     if (!isPublic) return null;
-    return <SystemRow kind="gm" label="役職構成" viewerMode={viewerMode}>{contentForViewer(ev, viewerMode)}</SystemRow>;
+    return <SystemRow kind="gm" label="役職構成" viewerMode={viewerMode} bulkThoughtsOpen={bulkThoughtsOpen}>{contentForViewer(ev, viewerMode)}</SystemRow>;
   }
 
-  if (ev.event_type === 'wolf_chat') return <WolfChatCard ev={ev} viewerMode={viewerMode} />;
+  if (ev.event_type === 'wolf_chat') return <WolfChatCard ev={ev} viewerMode={viewerMode} bulkThoughtsOpen={bulkThoughtsOpen} />;
 
   if (ev.event_type === 'suspicion_update' || ev.event_type === 'threat_update') {
     return <RelationshipUpdateRow ev={ev} roleAssignment={roleAssignment} viewerMode={viewerMode} />;
   }
 
-  const configuredSystemEvent = renderConfiguredSystemEvent(ev, roleAssignment, viewerMode);
+  const configuredSystemEvent = renderConfiguredSystemEvent(ev, roleAssignment, viewerMode, bulkThoughtsOpen);
   if (configuredSystemEvent) return configuredSystemEvent;
 
   if (ev.event_type === 'guard_block') {
     return ev.is_public
-      ? <SystemRow kind="gm" icon="🛡" label="護衛" viewerMode={viewerMode}>{contentForViewer(ev, viewerMode)}</SystemRow>
-      : <SystemRow kind="gm" icon="🛡" label="護衛成功" rightName={ev.target} roleAssignment={roleAssignment} viewerMode={viewerMode}>{contentForViewer(ev, viewerMode)}</SystemRow>;
+      ? <SystemRow kind="gm" icon="🛡" label="護衛" viewerMode={viewerMode} bulkThoughtsOpen={bulkThoughtsOpen}>{contentForViewer(ev, viewerMode)}</SystemRow>
+      : <SystemRow kind="gm" icon="🛡" label="護衛成功" rightName={ev.target} roleAssignment={roleAssignment} viewerMode={viewerMode} bulkThoughtsOpen={bulkThoughtsOpen}>{contentForViewer(ev, viewerMode)}</SystemRow>;
   }
   if (ev.event_type === 'night_attack') {
     const victim = ev.target;
     return ev.is_public
-      ? <SystemRow kind="death" icon="💀" label="襲撃結果" rightName={victim} roleAssignment={roleAssignment} viewerMode={viewerMode}>{contentForViewer(ev, viewerMode)}</SystemRow>
-      : <SystemRow kind="exec" icon="🐺" label="人狼の襲撃" rightName={ev.target} roleAssignment={roleAssignment} viewerMode={viewerMode}>{contentForViewer(ev, viewerMode)}</SystemRow>;
+      ? <SystemRow kind="death" icon="💀" label="襲撃結果" rightName={victim} roleAssignment={roleAssignment} viewerMode={viewerMode} bulkThoughtsOpen={bulkThoughtsOpen}>{contentForViewer(ev, viewerMode)}</SystemRow>
+      : <SystemRow kind="exec" icon="🐺" label="人狼の襲撃" rightName={ev.target} roleAssignment={roleAssignment} viewerMode={viewerMode} bulkThoughtsOpen={bulkThoughtsOpen}>{contentForViewer(ev, viewerMode)}</SystemRow>;
   }
 
   if (ev.event_type === 'game_over') {
@@ -418,7 +425,7 @@ export function FeedItem({ ev, prevById, roleAssignment, title, viewerMode = 'sp
       : ev.winner === 'Villagers' ? styles.gameOverVillage
       : styles.gameOverUnknown;
     return (
-      <SystemRow kind="phase" icon="🏁" label="勝敗結果">
+      <SystemRow kind="phase" icon="🏁" label="勝敗結果" bulkThoughtsOpen={bulkThoughtsOpen}>
         <span className={`${styles.gameOverText} ${winnerClass}`}>{ev.content}</span>
       </SystemRow>
     );
@@ -447,6 +454,8 @@ export function LeftPane({
   presentRoles = Object.keys(ROLES),
   selectedRoles = new Set(),
   onToggleRole = () => {},
+  thoughtsOpen = false,
+  onToggleThoughts = () => {},
   viewerMode = 'spectator',
 }) {
   const handlePhase = (d, phase) => {
@@ -558,14 +567,21 @@ export function LeftPane({
             </div>
           </>
         )}
-        <div className={styles.sectionLabel}>表示</div>
-        <div className={styles.filtRow}>
-          <button className={`${styles.chip} ${styles.on}`}>発言</button>
-          <button className={`${styles.chip} ${styles.on}`}>投票</button>
-          <button className={`${styles.chip} ${styles.on}`}>CO</button>
-          <button className={styles.chip}>夜の行動</button>
-          <button className={styles.chip}>思考ログ</button>
-        </div>
+        {viewerMode === 'spectator' && (
+          <>
+            <div className={styles.sectionLabel}>表示</div>
+            <div className={styles.filtRow}>
+              <button
+                type="button"
+                className={`${styles.chip} ${thoughtsOpen ? styles.on : ''}`}
+                aria-pressed={thoughtsOpen}
+                onClick={onToggleThoughts}
+              >
+                思考ログ
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -732,6 +748,7 @@ export default function SpectatorScreen() {
   const [loadError, setLoadError] = useState(null);
   const [selectedAgents, setSelectedAgents] = useState(() => new Set());
   const [selectedRoles, setSelectedRoles] = useState(() => new Set());
+  const [thoughtsOpen, setThoughtsOpen] = useState(false);
   const viewerMode = viewerModeFromSearchParams(searchParams);
 
   const toggleViewerMode = () => {
@@ -760,6 +777,10 @@ export default function SpectatorScreen() {
       }
       return next;
     });
+  };
+
+  const toggleThoughtsOpen = () => {
+    setThoughtsOpen(current => !current);
   };
 
   useEffect(() => {
@@ -857,7 +878,7 @@ export default function SpectatorScreen() {
       <ThreePaneLayout
         collapsibleLeft
         collapsibleRight
-        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} activePhase={activePhase} setPhase={setActivePhase} days={visibleDays} agentNames={agentNames} daySummary={daySummary} gameOverDay={gameOverDay} selectedAgents={selectedAgents} onToggleAgent={toggleAgentFilter} presentRoles={presentRoles} selectedRoles={selectedRoles} onToggleRole={toggleRoleFilter} viewerMode={viewerMode} />}
+        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} activePhase={activePhase} setPhase={setActivePhase} days={visibleDays} agentNames={agentNames} daySummary={daySummary} gameOverDay={gameOverDay} selectedAgents={selectedAgents} onToggleAgent={toggleAgentFilter} presentRoles={presentRoles} selectedRoles={selectedRoles} onToggleRole={toggleRoleFilter} thoughtsOpen={thoughtsOpen} onToggleThoughts={toggleThoughtsOpen} viewerMode={viewerMode} />}
         right={<RightPane agents={agents} roleAssignment={roleAssignment} coStatus={replayCoStatus} daySummary={daySummary} activeDay={activeDay} deadByDay={replayDeadByDay} viewerMode={viewerMode} />}
       >
         <div className={styles.feedHead}>
@@ -888,6 +909,7 @@ export default function SpectatorScreen() {
               roleAssignment={roleAssignment}
               title={sessionId}
               viewerMode={viewerMode}
+              bulkThoughtsOpen={thoughtsOpen}
             />
           ))}
         </div>
