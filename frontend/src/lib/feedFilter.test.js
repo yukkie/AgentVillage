@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { filterFeedEvents } from './feedFilter.js';
+import { filterByAgents, filterFeedEvents } from './feedFilter.js';
 
 const ev = (overrides) => ({
   day: 1,
@@ -240,5 +240,77 @@ describe('filterFeedEvents', () => {
     ];
     const result = filterFeedEvents(events, 0, 'eve');
     expect(result).toHaveLength(0);
+  });
+});
+
+describe('filterByAgents', () => {
+  /*
+  SUT: filterByAgents
+  Mock: なし
+  Level: unit
+  Objective: selectedAgents が空の場合は入力イベントを全件返すことを検証する
+  */
+  it('filterByAgents: 空選択は全件返す', () => {
+    const events = [
+      ev({ event_type: 'phase_start', agent: null }),
+      ev({ event_type: 'speech', agent: 'Alice', content: 'hello' }),
+      ev({ event_type: 'speech', agent: 'Bob', content: 'hi' }),
+    ];
+
+    expect(filterByAgents(events, new Set())).toEqual(events);
+  });
+
+  /*
+  SUT: filterByAgents
+  Mock: なし
+  Level: unit
+  Objective: selectedAgents がある場合は agent が選択名に一致するイベントのみ返すことを検証する
+  */
+  it('filterByAgents: 選択時は agent 一致イベントのみ返す', () => {
+    const events = [
+      ev({ event_type: 'speech', agent: 'Alice', content: 'Alice speaks' }),
+      ev({ event_type: 'speech', agent: 'Bob', content: 'Bob speaks' }),
+      ev({ event_type: 'vote', agent: 'Carol', content: 'Carol votes' }),
+    ];
+
+    const result = filterByAgents(events, new Set(['Alice']));
+
+    expect(result.map(e => e.content)).toEqual(['Alice speaks']);
+  });
+
+  /*
+  SUT: filterByAgents
+  Mock: なし
+  Level: unit
+  Objective: agent を持たないシステムイベントは参加者選択中でも残ることを検証する
+  */
+  it('filterByAgents: agent を持たないイベントは選択中でも残す', () => {
+    const events = [
+      ev({ event_type: 'phase_start', agent: null, content: 'Day 1 starts' }),
+      ev({ event_type: 'speech', agent: 'Alice', content: 'Alice speaks' }),
+      ev({ event_type: 'speech', agent: 'Bob', content: 'Bob speaks' }),
+    ];
+
+    const result = filterByAgents(events, new Set(['Bob']));
+
+    expect(result.map(e => e.content)).toEqual(['Day 1 starts', 'Bob speaks']);
+  });
+
+  /*
+  SUT: filterByAgents
+  Mock: なし
+  Level: unit
+  Objective: 複数選択時は選択された参加者の和集合としてイベントを返すことを検証する
+  */
+  it('filterByAgents: 複数選択は和集合で返す', () => {
+    const events = [
+      ev({ event_type: 'speech', agent: 'Alice', content: 'Alice speaks' }),
+      ev({ event_type: 'speech', agent: 'Bob', content: 'Bob speaks' }),
+      ev({ event_type: 'speech', agent: 'Carol', content: 'Carol speaks' }),
+    ];
+
+    const result = filterByAgents(events, new Set(['Alice', 'Carol']));
+
+    expect(result.map(e => e.content)).toEqual(['Alice speaks', 'Carol speaks']);
   });
 });

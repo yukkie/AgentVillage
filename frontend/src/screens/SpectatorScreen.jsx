@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import Avatar from '../components/Avatar.jsx';
+import Avatar, { AvatarButton } from '../components/Avatar.jsx';
 import RoleTag from '../components/RoleTag.jsx';
 import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
@@ -8,7 +8,7 @@ import { ROLES } from '../lib/constants.js';
 import { fetchReplayAgents, fetchReplayLog } from '../lib/replayLoader.js';
 import { fetchGameBySessionId } from '../lib/archiveLoader.js';
 import { parseGameData, aggregateCoStatus, computeDeadByDay } from '../lib/parseGameData.js';
-import { filterFeedEvents } from '../lib/feedFilter.js';
+import { filterByAgents, filterFeedEvents } from '../lib/feedFilter.js';
 import styles from './SpectatorScreen.module.css';
 
 const MISSING_CONTENT = '[missing content]';
@@ -433,7 +433,18 @@ export function FeedItem({ ev, prevById, roleAssignment, title, viewerMode = 'sp
 }
 
 // === 左ペイン ===
-export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agentNames, daySummary = {}, gameOverDay = null }) {
+export function LeftPane({
+  activeDay,
+  setDay,
+  activePhase,
+  setPhase,
+  days,
+  agentNames,
+  daySummary = {},
+  gameOverDay = null,
+  selectedAgents = new Set(),
+  onToggleAgent = () => {},
+}) {
   const handlePhase = (d, phase) => {
     setDay(d);
     setPhase(phase);
@@ -507,10 +518,16 @@ export function LeftPane({ activeDay, setDay, activePhase, setPhase, days, agent
       <div className={styles.filt}>
         <div className={styles.sectionLabel}>参加者で絞る</div>
         <div className={styles.filtRow}>
-          {agentNames.slice(0, 8).map(n => (
-            <button key={n} className={styles.chip}>
-              <Avatar name={n} size="xs" /> {n}
-            </button>
+          {agentNames.map(n => (
+            <AvatarButton
+              key={n}
+              name={n}
+              label={n}
+              size="xs"
+              layout="horizontal"
+              selected={selectedAgents.has(n)}
+              onClick={() => onToggleAgent(n)}
+            />
           ))}
         </div>
         <div className={styles.sectionLabel}>役職フィルタ</div>
@@ -693,10 +710,23 @@ export default function SpectatorScreen() {
   const [loadingEvents, setLoadingEvents] = useState(Boolean(sessionId));
   const [loadingAgents, setLoadingAgents] = useState(Boolean(sessionId));
   const [loadError, setLoadError] = useState(null);
+  const [selectedAgents, setSelectedAgents] = useState(() => new Set());
   const viewerMode = viewerModeFromSearchParams(searchParams);
 
   const toggleViewerMode = () => {
     setSearchParams(viewerMode === 'spectator' ? { view: 'public' } : {});
+  };
+
+  const toggleAgentFilter = (agentName) => {
+    setSelectedAgents(current => {
+      const next = new Set(current);
+      if (next.has(agentName)) {
+        next.delete(agentName);
+      } else {
+        next.add(agentName);
+      }
+      return next;
+    });
   };
 
   useEffect(() => {
@@ -766,7 +796,7 @@ export default function SpectatorScreen() {
     if (e.speech_id != null) prevById[`${e.day}-${e.speech_id}`] = e;
   });
 
-  const feedEvents = filterFeedEvents(events, activeDay, activePhase);
+  const feedEvents = filterByAgents(filterFeedEvents(events, activeDay, activePhase), selectedAgents);
   const speechCount = events.filter(e => e.event_type === 'speech').length;
   const coCount = Object.keys(replayCoStatus).length;
 
@@ -786,7 +816,7 @@ export default function SpectatorScreen() {
       <ThreePaneLayout
         collapsibleLeft
         collapsibleRight
-        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} activePhase={activePhase} setPhase={setActivePhase} days={visibleDays} agentNames={agentNames} daySummary={daySummary} gameOverDay={gameOverDay} />}
+        left={<LeftPane activeDay={activeDay} setDay={setActiveDay} activePhase={activePhase} setPhase={setActivePhase} days={visibleDays} agentNames={agentNames} daySummary={daySummary} gameOverDay={gameOverDay} selectedAgents={selectedAgents} onToggleAgent={toggleAgentFilter} />}
         right={<RightPane agents={agents} roleAssignment={roleAssignment} coStatus={replayCoStatus} daySummary={daySummary} activeDay={activeDay} deadByDay={replayDeadByDay} viewerMode={viewerMode} />}
       >
         <div className={styles.feedHead}>

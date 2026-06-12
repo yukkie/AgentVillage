@@ -150,4 +150,18 @@ describe('AvatarButton', () => {
     const { container } = render(<AvatarButton name="Nox" label="Nox" selected onClick={vi.fn()} />);
     expect(container.querySelector('[data-variant="selected"]')).toBeTruthy();
   });
+
+  it('sets aria-pressed when selected prop is provided', () => {
+    /*
+    SUT: AvatarButton
+    Mock: なし
+    Level: unit
+    Objective: selected prop が渡された AvatarButton がトグルボタン状態を aria-pressed で公開することを検証する。
+    */
+    const { rerender } = render(<AvatarButton name="Nox" label="Nox" selected onClick={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Nox' }).getAttribute('aria-pressed')).toBe('true');
+
+    rerender(<AvatarButton name="Nox" label="Nox" selected={false} onClick={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Nox' }).getAttribute('aria-pressed')).toBe('false');
+  });
 });
