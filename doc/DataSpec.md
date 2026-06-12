@@ -193,3 +193,39 @@ CLI の色仕様（役職別カラーなど）は [Spec.md §5](Spec.md) を参�
 | `gender` | `str \| null` | `null` | 性別（`"male"` / `"female"` / `"non-binary"` 等） |
 | `age` | `str \| null` | `null` | 年齢または年代（例: `"17"`, `"teen"`, `"adult"`） |
 | `speech_style` | `str` | `"casual"` | 口調（`"polite"` / `"casual"` / `"blunt"` / `"gentle"` / `"tsundere"`） |
+
+---
+
+## 6. ゲーム統計スキーマ（state/stats/game_stats.json）
+
+ゲーム横断の通算戦績。ゲーム終了時に `record_game()` が1ゲーム分を追記する。
+正本は `src/stats/collector.py`。consumer は CUI の `show_stats()`（`--stats`）と、
+フロントの `AgentDetailScreen`（`global profile mode` = 横断プロフィール）。
+
+全体構造は `{ "games": [ {game}, ... ] }`。各 `game` は以下:
+
+| フィールド | 型 | 説明 |
+|---|---|---|
+| `game_id` | `str` | ゲーム識別子。ISO 8601（`datetime.now().isoformat(timespec="seconds")`） |
+| `winner` | `str` | 勝者陣営。`"Villagers"` / `"Werewolves"`（`check_victory()` の戻り値） |
+| `players` | `Player[]` | 参加エージェントの結果一覧 |
+
+各 `players[]` 要素（`Player`）:
+
+| フィールド | 型 | 説明 |
+|---|---|---|
+| `name` | `str` | エージェント名 |
+| `role` | `str` | 役職名（`Role.name`。例: `"Seer"` / `"Werewolf"`） |
+| `faction` | `str` | 陣営。`"village"` / `"werewolf"`（`Role.faction` をそのまま格納） |
+| `model` | `str` | 使用 LLM モデル ID |
+| `survived` | `bool` | ゲーム終了時の生存フラグ（`actor.state.is_alive`） |
+| `won` | `bool` | 勝利したか（`player.faction == winner_faction` で判定） |
+
+> **`faction` と `winner` の値域が異なる点に注意**: `players[].faction` は `"village"` / `"werewolf"`、
+> ゲームの `winner` は `"Villagers"` / `"Werewolves"`。`won` は collector 側で
+> `winner_faction = "village" if winner == "Villagers" else "werewolf"` に変換して判定済みなので、
+> consumer は `won` をそのまま読めばよく、value 変換を再実装する必要はない。
+
+> **追加フィールドの扱い**: 平均生存日数などの集計を出したくなった場合は、まず `collector.py` の
+> `record_game()` に出力フィールドを足し、本スキーマと同時に更新する。実装が書いていないフィールドを
+> 先回りで契約に載せない（consumer が存在しないデータを読むバグを防ぐ）。
