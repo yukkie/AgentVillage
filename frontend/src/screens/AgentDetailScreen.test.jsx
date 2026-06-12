@@ -8,10 +8,10 @@ afterEach(() => {
   cleanup();
 });
 
-function renderAgent({ sessionId, agentName = 'Nox' } = {}) {
+function renderAgent({ sessionId, agentName = 'Nox', search = '' } = {}) {
   const path = sessionId
-    ? `/game/${sessionId}/agent/${agentName}`
-    : `/agent/${agentName}`;
+    ? `/game/${sessionId}/agent/${agentName}${search}`
+    : `/agent/${agentName}${search}`;
   const routePath = sessionId
     ? '/game/:sessionId/agent/:agentName'
     : '/agent/:agentName';
@@ -67,6 +67,30 @@ describe('AgentDetailScreen semantic structure', () => {
     renderAgent({ sessionId: 'test-session-001', agentName: 'Nox' });
 
     expect(screen.getByText('test-session-001')).toBeTruthy();
+  });
+
+  it('preserves public viewerMode query in the game breadcrumb link', () => {
+    /*
+     * SUT: AgentDetailScreen TopBar crumbs
+     * Mock: なし
+     * Level: contract
+     * Objective: AgentDetailScreen からゲーム画面へ戻るパンくずが ?view=public を引き継ぐことを検証する。
+     */
+    renderAgent({ sessionId: 'test-session-001', agentName: 'Nox', search: '?view=public' });
+
+    expect(screen.getByRole('link', { name: 'test-session-001' }).getAttribute('href')).toBe('/game/test-session-001?view=public');
+  });
+
+  it('preserves public viewerMode query in game-scoped agent picker links', () => {
+    /*
+     * SUT: AgentDetailScreen LeftPane
+     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Level: contract
+     * Objective: game-scoped AgentDetailScreen の AgentPicker 内リンクが ?view=public を引き継ぐことを検証する。
+     */
+    renderAgent({ sessionId: 'test-session-001', agentName: 'Nox', search: '?view=public' });
+
+    expect(screen.getByRole('link', { name: /Mira/ }).getAttribute('href')).toBe('/game/test-session-001/agent/Mira?view=public');
   });
 
   it('renders global breadcrumbs when sessionId is absent', () => {

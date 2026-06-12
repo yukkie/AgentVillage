@@ -556,6 +556,10 @@ Semantic HTML: `GameCard` は自己完結したゲーム項目として `<articl
 Semantic HTML: `SpeechCard` / `WolfChatCard` は独立した発言カードとして `<article>`、発言時刻は `<time>`、ロスター・COボード・夜行動タイムラインは `<ul><li>` で表現する。`SystemRow` はシステム通知行であり、発言カードとは別扱いにする。
 
 ヘッダーの「観戦者モード / 参加者視点」トグルで `viewerMode: 'spectator' | 'public'` を切り替える。
+`viewerMode` は URL query を正本とし、`?view=public` のとき `public`、未指定または不正値では
+`spectator` として扱う（#493）。`spectator` は既存 URL 互換を保つため query なしを canonical とする。
+SpectatorScreen から AgentDetailScreen への遷移、および AgentDetailScreen から SpectatorScreen へ戻る
+パンくずでは `?view=public` を引き継ぐ。
 
 | 要素 | spectator | public |
 |---|---|---|

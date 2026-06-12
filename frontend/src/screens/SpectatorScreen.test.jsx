@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, within, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { FeedItem, LeftPane, RightPane } from './SpectatorScreen.jsx';
 import SpectatorScreen from './SpectatorScreen.jsx';
@@ -19,12 +19,18 @@ vi.mock('../lib/archiveLoader.js', () => ({
   fetchGameBySessionId: vi.fn(),
 }));
 
-function renderSpectator(sessionId) {
+function LocationProbe() {
+  const location = useLocation();
+  return <output aria-label="current-location">{location.pathname}{location.search}</output>;
+}
+
+function renderSpectator(sessionId, search = '') {
   return render(
-    <MemoryRouter initialEntries={[`/game/${sessionId}`]}>
+    <MemoryRouter initialEntries={[`/game/${sessionId}${search}`]}>
       <Routes>
         <Route path="/game/:sessionId" element={<SpectatorScreen />} />
       </Routes>
+      <LocationProbe />
     </MemoryRouter>
   );
 }
@@ -1290,6 +1296,30 @@ describe('avatar navigation links (#485)', () => {
     expect(link).toBeTruthy();
   });
 
+  it('SpeechCard avatar preserves public viewerMode query in agent detail link', () => {
+    /*
+     * SUT: FeedItem → SpeechCard
+     * Mock: なし
+     * Level: contract
+     * Objective: public viewerMode の URL query が発言カード Avatar から AgentDetailScreen への Link に引き継がれることを検証する。
+     */
+    const ev = {
+      day: 1, event_type: 'speech', agent: 'Alice', content: 'hello',
+      speech_id: 1, reply_to: null, claimed_role: null, reasoning: null, is_public: true,
+    };
+    const { container } = render(
+      <MemoryRouter initialEntries={[`/game/${sessionId}?view=public`]}>
+        <Routes>
+          <Route path="/game/:sessionId" element={
+            <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} viewerMode="public" />
+          } />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(container.querySelector(`a[href="/game/${sessionId}/agent/Alice?view=public"]`)).toBeTruthy();
+  });
+
   it('SystemRow leftName Avatar links to agent detail page (AC: フィード SystemRow leftName)', () => {
     /*
      * SUT: FeedItem → SystemRow
@@ -1460,5 +1490,51 @@ describe('SpectatorScreen: viewerMode toggle (AC1 / #314)', () => {
     // Click again to switch back
     await user.click(screen.getByText(/参加者視点/));
     expect(screen.getByText(/観戦者モード/)).toBeTruthy();
+  });
+
+  it('initializes public mode from ?view=public after reload', async () => {
+    /*
+     * SUT: SpectatorScreen viewerMode URL state
+     * Mock: fetchGameBySessionId / fetchReplayLog / fetchReplayAgents を vi.fn()
+     * Level: contract
+     * Objective: URL 直打ち/リロード相当の初期表示で ?view=public が public viewerMode として反映されることを検証する。
+     */
+    archiveLoader.fetchGameBySessionId.mockResolvedValue({ cast: [] });
+    replayLoader.fetchReplayLog.mockResolvedValue('');
+    replayLoader.fetchReplayAgents.mockResolvedValue({});
+
+    renderSpectator('test-session-001', '?view=public');
+
+    await waitFor(() => {
+      expect(screen.queryByText(/読み込み中/)).toBeNull();
+    }, { timeout: 3000 });
+
+    expect(screen.getByText(/参加者視点/)).toBeTruthy();
+    expect(screen.getByLabelText('current-location').textContent).toBe('/game/test-session-001?view=public');
+  });
+
+  it('writes viewerMode toggle changes to the URL query', async () => {
+    /*
+     * SUT: SpectatorScreen viewerMode toggle
+     * Mock: fetchGameBySessionId / fetchReplayLog / fetchReplayAgents を vi.fn()
+     * Level: contract
+     * Objective: viewerMode トグル操作が ?view=public の付与/削除として URL に反映されることを検証する。
+     */
+    archiveLoader.fetchGameBySessionId.mockResolvedValue({ cast: [] });
+    replayLoader.fetchReplayLog.mockResolvedValue('');
+    replayLoader.fetchReplayAgents.mockResolvedValue({});
+    const user = userEvent.setup();
+
+    renderSpectator('test-session-001');
+
+    await waitFor(() => {
+      expect(screen.queryByText(/読み込み中/)).toBeNull();
+    }, { timeout: 3000 });
+
+    await user.click(screen.getByText(/観戦者モード/));
+    expect(screen.getByLabelText('current-location').textContent).toBe('/game/test-session-001?view=public');
+
+    await user.click(screen.getByText(/参加者視点/));
+    expect(screen.getByLabelText('current-location').textContent).toBe('/game/test-session-001');
   });
 });
