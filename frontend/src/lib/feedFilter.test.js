@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { filterByAgents, filterFeedEvents } from './feedFilter.js';
+import { filterByAgents, filterByRoles, filterFeedEvents } from './feedFilter.js';
 
 const ev = (overrides) => ({
   day: 1,
@@ -312,5 +312,100 @@ describe('filterByAgents', () => {
     const result = filterByAgents(events, new Set(['Alice', 'Carol']));
 
     expect(result.map(e => e.content)).toEqual(['Alice speaks', 'Carol speaks']);
+  });
+});
+
+describe('filterByRoles', () => {
+  const roles = {
+    Alice: 'Seer',
+    Bob: 'Werewolf',
+    Carol: 'Knight',
+  };
+
+  /*
+  SUT: filterByRoles
+  Mock: なし
+  Level: unit
+  Objective: selectedRoles が空の場合は入力イベントを全件返すことを検証する
+  */
+  it('filterByRoles: 空選択は全件返す', () => {
+    const events = [
+      ev({ event_type: 'phase_start', agent: null }),
+      ev({ event_type: 'speech', agent: 'Alice', content: 'seer speech' }),
+      ev({ event_type: 'speech', agent: 'Bob', content: 'wolf speech' }),
+    ];
+
+    expect(filterByRoles(events, new Set(), roles)).toEqual(events);
+  });
+
+  /*
+  SUT: filterByRoles
+  Mock: なし
+  Level: unit
+  Objective: selectedRoles がある場合は roleAssignment の役職が選択役職に一致するイベントのみ返すことを検証する
+  */
+  it('filterByRoles: 選択時は roleAssignment の役職一致のみ返す', () => {
+    const events = [
+      ev({ event_type: 'speech', agent: 'Alice', content: 'seer speech' }),
+      ev({ event_type: 'speech', agent: 'Bob', content: 'wolf speech' }),
+      ev({ event_type: 'speech', agent: 'Carol', content: 'knight speech' }),
+    ];
+
+    const result = filterByRoles(events, new Set(['Seer']), roles);
+
+    expect(result.map(e => e.content)).toEqual(['seer speech']);
+  });
+
+  /*
+  SUT: filterByRoles
+  Mock: なし
+  Level: unit
+  Objective: agent を持たないシステムイベントは役職選択中でも残ることを検証する
+  */
+  it('filterByRoles: agent を持たないイベントは残す', () => {
+    const events = [
+      ev({ event_type: 'phase_start', agent: null, content: 'Day 1 starts' }),
+      ev({ event_type: 'speech', agent: 'Alice', content: 'seer speech' }),
+      ev({ event_type: 'speech', agent: 'Bob', content: 'wolf speech' }),
+    ];
+
+    const result = filterByRoles(events, new Set(['Werewolf']), roles);
+
+    expect(result.map(e => e.content)).toEqual(['Day 1 starts', 'wolf speech']);
+  });
+
+  /*
+  SUT: filterByRoles
+  Mock: なし
+  Level: unit
+  Objective: roleAssignment に存在しない agent のイベントは役職選択中に除外されることを検証する
+  */
+  it('filterByRoles: roleAssignment に存在しない agent は選択中に除外する', () => {
+    const events = [
+      ev({ event_type: 'speech', agent: 'Alice', content: 'seer speech' }),
+      ev({ event_type: 'speech', agent: 'Dave', content: 'unknown role speech' }),
+    ];
+
+    const result = filterByRoles(events, new Set(['Seer']), roles);
+
+    expect(result.map(e => e.content)).toEqual(['seer speech']);
+  });
+
+  /*
+  SUT: filterByRoles
+  Mock: なし
+  Level: unit
+  Objective: 複数役職選択時は選択された役職の和集合としてイベントを返すことを検証する
+  */
+  it('filterByRoles: 複数役職の和集合で返す', () => {
+    const events = [
+      ev({ event_type: 'speech', agent: 'Alice', content: 'seer speech' }),
+      ev({ event_type: 'speech', agent: 'Bob', content: 'wolf speech' }),
+      ev({ event_type: 'speech', agent: 'Carol', content: 'knight speech' }),
+    ];
+
+    const result = filterByRoles(events, new Set(['Seer', 'Knight']), roles);
+
+    expect(result.map(e => e.content)).toEqual(['seer speech', 'knight speech']);
   });
 });
