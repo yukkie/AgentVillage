@@ -483,6 +483,24 @@ hover / focus スタイルは CSS `:hover` / `:focus-visible` で付与（`varia
 
 `--r-color` CSS Variable を inline style で設定し、子要素が `var(--r-color)` を参照できる。
 
+#### `AgentRosterRow`
+
+ロスター（SpectatorScreen 右ペイン）と参加者ピッカー（AgentDetailScreen 左ペイン）で共有する「エージェント行」コンポーネント（#521）。レイアウトは AgentDetail picker 式（**アイコン左・名前/役職情報を縦2行で右・statusDot 右端**）、表示情報は SpectatorScreen 式（役職タグ・CO バッジ・死因メタ）を採用する。行全体を `Link` で包んで AgentDetail へ遷移する。
+
+特定 screen の state（`useParams` 等）に依存しない props ベースのコンポーネントとし、遷移先パスや役職表示可否は呼び出し側で計算して渡す。
+
+| prop | 型 | 説明 |
+|---|---|---|
+| `name` | `string` | エージェント名（必須）。Avatar の `alt` と1行目テキストに使う |
+| `role` | `string?` | 真の役職キー（例: `"Seer"`）。`showRole` が true のとき RoleTag・Avatar 役職刻印に使う |
+| `to` | `string` | 遷移先パス（`Link to`）。`agentDetailPath` 等は**呼び出し側で組み立てて渡す**（画面非依存にするため） |
+| `showRole` | `boolean?` | true で役職タグ・Avatar 役職刻印を表示。呼び出し側が `viewerMode === 'spectator'` を計算して渡す（デフォルト `false`） |
+| `coRole` | `string?` | CO 済み役職キー。あれば CO バッジを表示 |
+| `dead` | `boolean?` | 死亡フラグ。Avatar 死亡オーバーレイ・行 muted・statusDot 色（`--tx-4`）に反映 |
+| `deathMeta` | `{day, content}?` | 死因メタ（`Day {day} · {content}`）。役職を露出しないため public でも表示する |
+
+> **役職出し分けは `showRole` boolean に集約**: 「死亡者は役職常時公開」という特例は持たない。生存・死亡とも `showRole`（＝呼び出し側の `viewerMode === 'spectator'`）に従う。死亡者の役職を public で露出すると消去法で生存者の役職が絞れてしまうため（#521 AC-3）。
+
 #### `Icon`
 
 | prop | 型 | 説明 |
@@ -549,7 +567,7 @@ Semantic HTML: `GameCard` は自己完結したゲーム項目として `<articl
 | `SystemRow` | GM通知・処刑・夜フェーズ移行など非発言イベント |
 | `FeedItem` | `event_type` でルーティングして各カードに振り分ける |
 | `LeftPane` | フェーズナビ（日 × フェーズ、クリックで中央フィードを切り替え） + エージェント/役職/表示フィルタ |
-| `RightPane` | ロスター（生存/死亡）/ COボード / 夜の行動タイムライン |
+| `RightPane` | ロスター（生存/死亡、共通 `AgentRosterRow` を使用）/ COボード / 夜の行動タイムライン |
 
 #### viewerMode トグル（#314）
 
@@ -565,7 +583,7 @@ SpectatorScreen から AgentDetailScreen への遷移、および AgentDetailScr
 |---|---|---|
 | `SpeechCard` 役職タグ・Avatar 役職刻印 | 真の役職を表示 | 非表示 |
 | `ThoughtDetails` / `WolfChatCard` 思考ログ | `<details>` で展開可 | `🔒 思考ログ` ロックバッジ（クリック不可） |
-| `RightPane` 生存ロスター役職タグ・Avatar 役職刻印 | 真の役職を表示 | 非表示 |
+| `RightPane` ロスター（生存・**死亡とも**）役職タグ・Avatar 役職刻印 | 真の役職を表示 | 非表示（死亡者も伏せる。露出すると生存者の役職を絞れるため。死因メタは表示維持。#521） |
 | spectator 限定システムログ（`wolf_chat` / `inspection` / `guard` / `medium_result` および `is_public=false` のイベント） | 表示 | **完全非表示**（カード自体をマウントしない） |
 
 #### AgentDetailScreen の viewerMode 可視性（game-scoped mode）
