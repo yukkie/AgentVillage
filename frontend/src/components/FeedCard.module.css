@@ -1,0 +1,318 @@
+/* Feed cards — CSS Modules (#526)
+   SpectatorScreen.module.css から中央フィードのカード関連クラスを切り出し。 */
+
+/* Speech card */
+.speech {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 14px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--bd-soft);
+  position: relative;
+}
+.speech:hover { background: rgba(255,255,255,0.012); }
+.speechWolf { background: linear-gradient(90deg, rgba(226,107,107,0.04), transparent 60%); }
+.agentEpisode {
+  composes: speech;
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--r-color, var(--acc)) 16%, var(--bg-1)) 0%,
+      color-mix(in oklab, var(--r-color, var(--acc)) 7%, var(--bg)) 58%,
+      transparent 100%
+    );
+  border-left: 2px solid color-mix(in oklab, var(--r-color, var(--acc)) 42%, transparent);
+}
+.agentEpisode:hover {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--r-color, var(--acc)) 24%, var(--bg-1)) 0%,
+      color-mix(in oklab, var(--r-color, var(--acc)) 12%, var(--bg)) 60%,
+      transparent 100%
+    );
+}
+.wolfChat {
+  background: linear-gradient(90deg, rgba(180,40,40,0.10), transparent 70%);
+  border-left: 2px solid rgba(200,60,60,0.5);
+}
+.wolfChat:hover { background: linear-gradient(90deg, rgba(180,40,40,0.16), transparent 70%); }
+.vert {
+  position: absolute;
+  left: 53px;
+  top: 76px;
+  bottom: -1px;
+  width: 1px;
+  background: var(--bd-soft);
+}
+
+/* Speech meta */
+.spHead {
+  display: flex; align-items: baseline; gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.spHead .name   { font-family: var(--serif); font-weight: 600; font-size: 14px; color: var(--tx); }
+.spHead .turn   { font-family: var(--mono); font-size: 10px; color: var(--tx-4); }
+.spHead .ts     { font-size: 10px; color: var(--tx-3); margin-left: auto; font-family: var(--mono); }
+.spHead .coBadge {
+  font-family: var(--serif);
+  font-size: 10px;
+  background: color-mix(in oklab, var(--co-color, var(--acc)) 18%, transparent);
+  border: 1px solid color-mix(in oklab, var(--co-color, var(--acc)) 50%, transparent);
+  color: var(--co-color, var(--acc));
+  padding: 1px 5px;
+  border-radius: 2px;
+  letter-spacing: 0.04em;
+}
+
+.spQuote {
+  border-left: 2px solid var(--bd);
+  padding: 4px 10px;
+  margin-bottom: 8px;
+  background: var(--bg-1);
+  font-size: 12px;
+  color: var(--tx-3);
+  border-radius: 0 2px 2px 0;
+}
+.spQuote .qhead { font-size: 10px; color: var(--tx-4); margin-bottom: 2px; font-family: var(--mono); }
+
+.spBody {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--tx);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.spBody .mention { color: var(--info); font-weight: 500; }
+
+/* Thought disclosure */
+.spThink {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--tx-2);
+  border: 1px solid transparent;
+  border-radius: var(--r2);
+  transition: border-color 120ms;
+}
+.spThink summary {
+  cursor: pointer;
+  padding: 5px 10px 5px 8px;
+  list-style: none;
+  font-size: 11px;
+  color: var(--tx-3);
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--sans);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  background: var(--bg-1);
+  transition: all 120ms;
+}
+.spThink summary:hover {
+  color: var(--tx);
+  border-color: color-mix(in oklab, var(--acc) 40%, var(--bd));
+  background: color-mix(in oklab, var(--acc) 6%, var(--bg-1));
+}
+.spThink summary::-webkit-details-marker { display: none; }
+.spThink summary::marker { display: none; content: ''; }
+.spThink summary .bubbleIco { color: var(--tx-3); flex: 0 0 14px; }
+.spThink summary:hover .bubbleIco,
+.spThink[open] summary .bubbleIco { color: var(--acc); }
+.spThink summary .label {
+  font-family: var(--serif);
+  font-size: 12px;
+  color: inherit;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+}
+.spThink summary .conf {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--tx-4);
+  padding-left: 6px;
+  border-left: 1px solid var(--bd);
+  margin-left: 2px;
+}
+.spThink[open] {
+  display: block;
+  border-color: color-mix(in oklab, var(--acc) 30%, var(--bd));
+  background: rgba(240,199,95,0.04);
+}
+.spThink[open] summary {
+  background: transparent;
+  border-color: transparent;
+  color: var(--acc);
+  padding-left: 12px;
+}
+.spThink[open] summary .conf { color: var(--tx-3); border-color: var(--bd-soft); }
+.spThink .body {
+  padding: 0 14px 12px 36px;
+  white-space: pre-wrap;
+  line-height: 1.65;
+  font-family: var(--sans);
+  color: var(--tx-2);
+  position: relative;
+}
+.spThink .body::before {
+  content: '';
+  position: absolute;
+  left: 18px; top: 0; bottom: 8px;
+  width: 1px;
+  background: color-mix(in oklab, var(--acc) 30%, var(--bd));
+}
+
+/* spHead child / thought inner (standalone class forms used by JSX) */
+.name   { font-family: var(--serif); font-weight: 600; font-size: 14px; color: var(--tx); }
+.turn   { font-family: var(--mono); font-size: 10px; color: var(--tx-4); }
+.ts     { font-size: 10px; color: var(--tx-3); margin-left: auto; font-family: var(--mono); }
+.coBadge {
+  font-family: var(--serif); font-size: 10px;
+  background: color-mix(in oklab, var(--co-color, var(--acc)) 18%, transparent);
+  border: 1px solid color-mix(in oklab, var(--co-color, var(--acc)) 50%, transparent);
+  color: var(--co-color, var(--acc)); padding: 1px 5px; border-radius: 2px; letter-spacing: 0.04em;
+}
+.qhead { font-size: 10px; color: var(--tx-4); margin-bottom: 2px; font-family: var(--mono); }
+.mention { color: var(--info); font-weight: 500; }
+.bubbleIco { color: var(--tx-3); flex: 0 0 14px; }
+.thinkLabel { font-family: var(--serif); font-size: 12px; color: inherit; letter-spacing: 0.02em; font-weight: 600; }
+.conf { font-family: var(--mono); font-size: 10px; color: var(--tx-4); padding-left: 6px; border-left: 1px solid var(--bd); margin-left: 2px; }
+.thinkBody { padding: 0 14px 12px 36px; white-space: pre-wrap; line-height: 1.65; font-family: var(--sans); color: var(--tx-2); }
+
+/* System events */
+.sysrow {
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--bd-soft);
+  display: flex; flex-direction: row; align-items: center; gap: 12px;
+  background: var(--bg-1);
+}
+.sysContent {
+  display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0;
+}
+.sysMain {
+  display: flex; align-items: center; gap: 12px;
+}
+.sysrow .sysText strong { font-family: var(--serif); font-weight: 600; }
+.sysIconCol { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 0 0 64px; width: 64px; }
+.sysLabel { font-family: var(--serif); font-size: 10px; color: var(--tx-3); letter-spacing: 0.08em; text-align: center; }
+.sysText { font-size: 13px; color: var(--tx); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; flex: 1; min-width: 0; }
+.sysTs { font-family: var(--mono); font-size: 10px; color: var(--tx-4); }
+.sysIcon {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--serif); font-size: 14px;
+  background: var(--bg-3); color: var(--tx-2);
+}
+.sysrow.exec  .sysIcon { background: rgba(226,107,107,0.15); color: var(--danger); }
+.sysrow.death .sysIcon { background: #2a1418; color: var(--danger); }
+.sysrow.gm    .sysIcon { background: rgba(240,199,95,0.12);  color: var(--acc); }
+.sysrow.phase .sysIcon { background: rgba(125,108,255,0.18); color: #b6abff; }
+
+/* Relationship snapshot (suspicion / threat meters) */
+.scoreSnapshot {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+.scoreFallback {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.scoreBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.scoreList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+.scoreItem {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 5px;
+  flex: 0 0 100px;
+  min-height: 50px;
+  padding: 6px 7px;
+  border: 1px solid var(--bd);
+  border-radius: var(--r1);
+  background: var(--bg-2);
+  min-width: 0;
+}
+.scoreName {
+  color: var(--tx);
+  font-family: var(--serif);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.scoreTrack {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-3);
+  overflow: hidden;
+  min-width: 0;
+}
+.scoreFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+.scoreSeverity {
+  color: var(--tx-4);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+}
+.scoreItem.low .scoreFill { background: #5fbd7a; }
+.scoreItem.medium .scoreFill { background: var(--acc); }
+.scoreItem.high .scoreFill { background: var(--danger); }
+.scoreList.threat .scoreItem.low .scoreFill { background: rgba(226,107,107,0.45); }
+.scoreList.threat .scoreItem.medium .scoreFill { background: rgba(226,107,107,0.72); }
+.scoreList.threat .scoreItem.high .scoreFill { background: var(--danger); }
+.deltaTrace {
+  color: var(--tx-3);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+/* viewerMode: public lock badge */
+.lockBadge { font-size: 11px; color: var(--tx-4); padding: 2px 6px; cursor: default; user-select: none; }
+
+/* vote strategy badge */
+.strategyBadge { font-size: 11px; color: var(--tx-3); font-family: var(--mono); margin-top: 2px; }
+
+/* game_over result text in centre feed */
+.gameOverText { font-weight: 600; font-family: var(--serif); }
+.gameOverWolf    { color: var(--r-werewolf); }
+.gameOverVillage { color: var(--r-villager); }
+.gameOverUnknown { color: var(--tx); }
+
+/* agent navigation link wrapper (shared reset; copy of SpectatorScreen .agentLink) */
+.agentLink {
+  text-decoration: none;
+  color: inherit;
+  display: contents;
+}
+.agentLink:hover { opacity: 0.75; }
+.agentLink:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; border-radius: var(--r1); }

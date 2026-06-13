@@ -501,6 +501,19 @@ hover / focus スタイルは CSS `:hover` / `:focus-visible` で付与（`varia
 
 > **役職出し分けは `showRole` boolean に集約**: 「死亡者は役職常時公開」という特例は持たない。生存・死亡とも `showRole`（＝呼び出し側の `viewerMode === 'spectator'`）に従う。死亡者の役職を public で露出すると消去法で生存者の役職が絞れてしまうため（#521 AC-3）。
 
+#### `FeedCard`（`FeedItem` / `SystemRow`）
+
+中央フィードのイベントカード群（#526）。SpectatorScreen に閉じていた発言・システム行カードを `src/components/FeedCard.jsx` へ昇格し、game-scoped 中央タイムライン（#523）と共有する。
+
+| export | 責務 |
+|---|---|
+| `FeedItem` | `event_type` でルーティングして各カードへ振り分ける dispatcher。`ev` / `prevById` / `roleAssignment` / `viewerMode` / `sessionId` / `bulkThoughtsOpen` を props で受ける |
+| `SystemRow` | GM通知・処刑・夜フェーズ移行など非発言イベント行。読み込み中/エラー行としても直接使う |
+
+内部に `SpeechCard` / `WolfChatCard` / `AgentEpisodeCard` / `RelationshipUpdateRow` と付随純粋関数（`fmtTurn` / `fmtTime` / `Mentioned` / `ThoughtDetails` / `contentForViewer` / `RelationshipMeterList` / `SYSTEM_EVENT_VIEWS` / `renderConfiguredSystemEvent`）・定数（`MISSING_CONTENT` / `SPECTATOR_ONLY_EVENTS`）を同梱する。
+
+特定 screen の state（`useState`）に依存せず、`sessionId` は props で受ける（`useParams` は使わない）。AgentDetail へのリンクパスは `lib/agentLinks.js` の `agentDetailPath(sessionId, name, viewerMode)` で組み立てる（SpectatorScreen 側 RightPane とも共有する純粋関数）。
+
 #### `Icon`
 
 | prop | 型 | 説明 |
@@ -560,12 +573,10 @@ Semantic HTML: `GameCard` は自己完結したゲーム項目として `<articl
 
 特定ゲームの議論フィードを観戦する画面。発言・処刑・夜の通知をタイムライン順に表示する。SpectatorScreen は全情報開示モード（wolf_chat / inspection / guard 等の非公開イベントも表示する）。
 
+中央フィードのカード群（`SpeechCard` / `WolfChatCard` / `SystemRow` / `AgentEpisodeCard` / `FeedItem`）は `src/components/FeedCard.jsx` へ昇格済み（#526）。SpectatorScreen は `FeedItem`（フィード描画）と `SystemRow`（読み込み中/エラー行）を import して使う。
+
 | 内部コンポーネント | 責務 |
 |---|---|
-| `SpeechCard` | 発言1件。役職ティント / 引用ブロック / 本文 / 思考ログ `<details>` |
-| `WolfChatCard` | 人狼夜間会話1件。`SpeechCard` ベースで赤みがかった背景（`styles.wolfChat`）+ 🐺バッジ |
-| `SystemRow` | GM通知・処刑・夜フェーズ移行など非発言イベント |
-| `FeedItem` | `event_type` でルーティングして各カードに振り分ける |
 | `LeftPane` | フェーズナビ（日 × フェーズ、クリックで中央フィードを切り替え） + エージェント/役職/表示フィルタ |
 | `RightPane` | ロスター（生存/死亡、共通 `AgentRosterRow` を使用）/ COボード / 夜の行動タイムライン |
 
