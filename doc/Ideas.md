@@ -19,7 +19,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#521 ❌ | enhancement | — | — | Unify SpectatorScreen roster & AgentDetail picker into shared components | #515 §8.3 D 派生（先行）。統一デザインのエージェント行（AgentRosterRow: アイコン左・名前/役職縦2行・statusDot）を components/ へ抽出し Spectator ロスターを置換。見た目が変わる。feed カード抽出は #526 に分割。#523 が依存 |
 | yukkie/AgentVillage#526 ❌ | enhancement | — | — | Extract SpectatorScreen feed cards into shared components | #521 から分割（案A）。feed カード（SpeechCard/WolfChatCard/SystemRow）と付随純粋関数・CSS を components/ へ昇格。表示・挙動は不変。#523（中央タイムライン）が依存 |
 | yukkie/AgentVillage#522 ❌ | enhancement | — | — | Implement AgentDetailScreen global profile mode | #515 §8.3 A。/agent/:name を game_stats.json で実データ化（勝率・過去戦績・横断名簿リンク集）。役職/推論/夜行動/マトリクスは出さない |
 | yukkie/AgentVillage#523 ❌ | enhancement | — | — | Implement AgentDetailScreen game-scoped mode | #515 §8.3 B/D。/game/:sessionId/agent/:name を spectator_log+agents/*.json で実データ化。中央を日付タブ統合・疑念マトリクス・viewerMode 出し分け。依存: #521, #526 |
