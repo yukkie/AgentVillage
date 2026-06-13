@@ -753,7 +753,7 @@ Semantic HTML: `AgentHero` は画面内のエージェント見出しとして `
 |---|---|---|
 | `stub/spectator.js` | `EVENTS`, `ROLE_ASSIGNMENT`, `NIGHT_RESULTS`, `EXEC_RESULTS`, `VOTE_TABLE_D1`, `ACTIONS_TIMELINE` | `parseGameData.js` 経由で `state_archive/{sessionId}/spectator_log.jsonl` をパース |
 | `stub/gameList.js` | `GAMES`, `TOP_AGENTS`, `COMMUNITY_POSTS`, `VILLAGE_NAME_PRESETS` | ゲーム一覧は `state_archive/` のディレクトリ一覧を fetch（または FastAPI エンドポイント） |
-| `stub/agentDetail.js` | `ALL_AGENTS`, `DEAD_AGENTS`, `AGENT_BLURB`, `AGENT_STATS`, `THOUGHTS`, `NIGHT_ACTIONS` | `state_archive/{sessionId}/agents/*.json` + `spectator_log.jsonl` の `reasoning` フィールド |
+| `stub/agentDetail.js` | `ALL_AGENTS`, `DEAD_AGENTS`, `AGENT_BLURB`, `AGENT_STATS`, `THOUGHTS`, `NIGHT_ACTIONS` | モード別の項目仕分け・出所は §8.3（`game_stats.json` / `agents/*.json` / `spectator_log.jsonl` / `config/agents.json`） |
 
 ### 8.2 Milestone 2 移行計画
 
@@ -781,14 +781,79 @@ fetch('../state_archive/20260510_102927/spectator_log.jsonl')
 
 FastAPI + WebSocket でイベントをストリーミング配信する。`fetch` を WebSocket に切り替えるだけで対応できるよう、`SpectatorScreen` の props インターフェースは Phase A で統一しておく。
 
-### 8.3 `stub/agentDetail.js` のデータ移行先
+### 8.3 `AgentDetailScreen` スタブ項目の2軸4象限仕分け（#515）
 
-| フィールド | 移行先 |
+`stub/agentDetail.js` の全エクスポート項目と `AgentDetailScreen.jsx` 内ハードコードを、
+**2軸**で仕分けて移行方針を確定する（#515。コード実装は本仕分けに基づく後続 Issue 群で行う）。
+
+- **軸1（遷移元モード）**: `global profile mode`（`/agent/:name`・ゲーム一覧経由＝横断プロフィール、出所は `game_stats.json`） / `game-scoped mode`（`/game/:sessionId/agent/:name`・観戦経由＝1ゲーム内詳細、出所は `spectator_log.jsonl` ＋ `agents/*.json`）。用語定義は §4.2 / §4.3 と一致させる。
+- **軸2（扱い）**: ✅ 実データに置き換える / ❌ 実装せず捨てる。
+
+> **前提**: `global profile mode` は横断戦績のみを見せるシンプルな画面（勝率・過去の戦績・名前・blurb）。
+> 役職・推論・夜行動・疑念マトリクスといった1ゲーム固有情報は出さない。viewerMode 出し分けも行わない（§6.2）。
+> `game-scoped mode` は SpectatorScreen と同じ可視性ルール（§6.2 / `doc/DataSpec.md` §3）で spectator / public を出し分ける。
+
+#### A. `global profile mode` の項目（出所＝`game_stats.json` / `config/agents.json`）
+
+| 項目 | 扱い | 出所 / 理由 |
+|---|---|---|
+| 名前 ＋ アバター | ✅ | `game_stats.json` の `players[].name` / アイコンは `/icons/{name}.png` |
+| blurb（1行プロフィール、`AGENT_BLURB`） | ✅（別 Issue・重い） | `config/agents.json` に静的な新フィールド（例: `blurb`）を追加して fetch。両モード共通。実装は別 Issue（`persona_short` は未実装のため使わない） |
+| 勝率・通算成績（`AGENT_STATS` の `games` / `wins`） | ✅ | `game_stats.json` の各 `game.players[]` を `name` でフィルタし `won` / 出場数を集計（`doc/DataSpec.md` §6） |
+| 過去の戦績一覧（`TabHistory` の `records`） | ✅ | `game_stats.json` 各 `game` を `name` でフィルタ（`game_id` / `role` / `won`）。**村名列は `game_stats.json` に無いため `session_id`（`game_id`）を代わりに表示する** |
+| 左ペイン名簿（`ALL_AGENTS` / `DEAD_AGENTS`） | ✅（別物に差し替え） | `global` では「同ゲームの参加者ピッカー」は概念として存在しない。代わりに**全エージェント横断のプロフィール一覧リンク集**にする（`game_stats.json` の全 `name` 集合 → 各行 `/agent/{name}`） |
+
+#### B. `game-scoped mode` の項目（出所＝`spectator_log.jsonl` ＋ `agents/*.json`）
+
+| 項目 | 扱い | 出所 / 理由 |
+|---|---|---|
+| 参加者ピッカー（`ALL_AGENTS` / `DEAD_AGENTS`） | ✅ | `spectator_log.jsonl` の参加者集合 ＋ `agents/*.json` の `state.is_alive`（`doc/DataSpec.md` §5） |
+| 役職タグ・所属陣営（`ROLE_ASSIGNMENT`） | ✅（public 非表示） | `agents/*.json` の `role` / `Role.faction`。public モードでは隠す（§6.2） |
+| session ラベル「第N回・桜霞村」 | ✅ | session メタ（`state_archive/index.json` / `sessionId`）。固定文字列を実 session 名へ |
+| 生死「生存中・DayN」 | ✅ | `agents/*.json` の `state.is_alive` |
+| 本村発言数（`AGENT_STATS` の `speeches`） | ✅（別集計） | `spectator_log.jsonl` の `speech` イベントを `agent` 名で count（1ゲーム内）。`game_stats.json` には発言数が無いため `global` では出さない |
+| 推論ログ（`THOUGHTS`） | ✅（public は 🔒） | `spectator_log.jsonl` の `reasoning` を `agent` 別に集約（`doc/DataSpec.md` §1 / §4） |
+| 夜の行動（`NIGHT_ACTIONS`） | ✅（public 非表示） | `spectator_log.jsonl` の `inspection` / `guard` / `night_attack`（private）を集約 |
+| 疑い度マトリクス（`getSuspicionMatrix`） | ✅（public 非表示） | `agents/*.json` の `state.beliefs[].suspicion`（信頼は 1−suspicion 等）/ `suspicion_update.suspicion_snapshot`（`doc/DataSpec.md` §4 / §5）。**右ペインに置く（中央タブからは削除）** |
+
+#### C. 両モード共通で捨てる項目（❌）
+
+| 項目 | 捨てる理由 |
 |---|---|
-| `AGENT_BLURB` | `config/agents.json` の `persona_short` フィールドを追加して fetch（#321 参照） |
-| `AGENT_STATS` | `state/stats/game_stats.json` を集計して提供 |
-| `THOUGHTS` | `spectator_log.jsonl` の `reasoning` フィールドをエージェント別に集約 |
-| `NIGHT_ACTIONS` | `spectator_log.jsonl` の `INSPECTION` / `GUARD` / `NIGHT_ATTACK` イベントを集約 |
+| TopBar `● LIVE観戦中` / `⤓ プロファイルJSON` / `★ ウォッチ` | 不要。代わりに **viewerMode トグル**（`🔍 観戦者モード`・SpectatorScreen と同一）を **game-scoped mode のみ**に追加する |
+| 左ペイン並べ替えボタン（`発言数↓` / `容疑度↓` / `役職別`） | onClick 無しのダミー。不要 |
+| 応援スコア（`AGENT_STATS` の `cheers`、`+312`） | ソーシャル要素は実装予定が無い演出専用ダミー |
+| 「現在の目標」（`TabOverview` のハードコード文） | エージェントの目標を構造化出力するログが存在しない |
+| thought timestamp（`(8 + speechId*2)%24:...` の疑似時刻） | 実日時ではない疑似計算。実時刻が無いため捨てる（`<time datetime>` 方針は §6.2.1） |
+| 「疑い・信頼」タブ（`TabSuspicion`） | 右ペインの疑い度マトリクスと重複するため削除 |
+| 右ペインの「夜の行動」（`RightPane` の `NIGHT_ACTIONS`） | 下記の中央統合タイムラインに含まれ重複するため削除 |
+
+#### D. `game-scoped mode` 中央ペインの再設計（タブ統合）
+
+現状の5タブ（概要 / 推論ログ / 疑い・信頼 / 夜の行動 / 過去の戦績）を以下に再編する:
+
+- **日付タブ（Day1 / Day2 / Day3 …）**に変更し、選択した日のそのエージェントの行動を**時系列タイムライン**で表示する。
+- タイムラインの内容（1エージェントに絞ったフィード）:
+  - 発言本文（`speech` の `content`）
+  - 発言前の思考（`reasoning`・spectator 限定 / public は 🔒）
+  - 夜の行動（`inspection` / `guard` / `night_attack`・public 非表示）
+- 「現在の目標」「疑い・信頼タブ」は削除（C 参照）。「過去の戦績」は `global` 専用のため `game-scoped` では出さない。
+
+> **SpectatorScreen フィード資産の再利用（必須方針）**: この中央タイムラインは SpectatorScreen の中央フィードを
+> 「1エージェントに絞った」ものとほぼ同じ責務になる。**`SpeechCard` / `WolfChatCard` / `SystemRow` などの
+> フィードカードと `filterFeedEvents` 等の純粋関数を再利用する前提**で実装する。これらが現状
+> `SpectatorScreen.jsx` 内に閉じている（screen 専用）場合は、**`src/components/` へ昇格して共通化する**
+> （§3「2画面以上で import されていれば `components/` へ」の昇格基準に従う）。AgentDetail 専用に作り直さない。
+
+#### E. 後続実装 Issue の分割方針（提案）
+
+仕分け結果に基づき、象限・責務単位で分割する:
+
+1. **`global profile mode` 実装** — 勝率・過去の戦績・横断名簿リンク集（出所 `game_stats.json`）。`global` 画面が単独で完成する単位。
+2. **`game-scoped` 基本** — 参加者ピッカー・役職・session メタ・生死・推論ログ（`parseGameData.js` 拡張 ＋ `agents/*.json`）。
+3. **`game-scoped` 中央タイムライン統合** — 日付タブ ＋ 発言/思考/夜行動の統合表示。**SpectatorScreen フィードカードの共通コンポーネント化を含む**（D 参照）。viewerMode public 出し分けを含む。
+4. **TopBar / 演出の撤去 ＋ viewerMode トグル追加** — 不要ボタン削除・ダミー（応援・並べ替え・現在の目標・疑似時刻）撤去・`game-scoped` への viewerMode トグル追加。
+5. **blurb 実装** — `config/agents.json` に静的フィールド追加（両モード共通・別 Issue）。
 
 ---
 
