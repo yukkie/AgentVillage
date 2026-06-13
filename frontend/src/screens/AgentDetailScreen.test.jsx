@@ -37,7 +37,71 @@ function mockFetchOk(data) {
   }));
 }
 
+function mockGameScopedFetch({ indexEntry, jsonlText, agentJsonByName }) {
+  vi.stubGlobal('fetch', vi.fn(url => {
+    const path = String(url);
+    if (path === '/state_archive/index.json') {
+      return Promise.resolve({ ok: true, json: () => Promise.resolve([indexEntry]) });
+    }
+    if (path.endsWith('/spectator_log.jsonl')) {
+      return Promise.resolve({ ok: true, text: () => Promise.resolve(jsonlText) });
+    }
+    const agentEntry = Object.entries(agentJsonByName).find(([name]) => path.endsWith(`/agents/${name.toLowerCase()}.json`));
+    if (agentEntry) {
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(agentEntry[1]) });
+    }
+    return Promise.resolve({ ok: false, status: 404 });
+  }));
+}
+
+const GAME_SCOPED_INDEX = {
+  session_id: 'session-real-001',
+  title: '桜霞村',
+  days: 2,
+  cast: ['Nox', 'Mira', 'Kai'],
+};
+
+const GAME_SCOPED_JSONL = [
+  { id: 's1', day: 1, event_type: 'speech', agent: 'Nox', speech_id: 1, content: '私は占い師です', is_public: true, reasoning: 'Kaiが怪しい。', claimed_role: 'Seer' },
+  { id: 's2', day: 1, event_type: 'speech', agent: 'Mira', speech_id: 2, content: '了解です', is_public: true },
+  { id: 's3', day: 2, event_type: 'speech', agent: 'Nox', speech_id: 3, content: 'Kaiを疑います', is_public: true },
+  { id: 'u1', day: 2, event_type: 'suspicion_update', agent: 'Nox', is_public: false, suspicion_snapshot: { Kai: 0.86, Mira: 0.24 } },
+].map(event => JSON.stringify(event)).join('\n');
+
+const GAME_SCOPED_AGENTS = {
+  Nox: {
+    profile: { name: 'Nox', model: 'm', persona: {} },
+    state: { is_alive: true, beliefs: { Kai: { suspicion: 0.7 }, Mira: { suspicion: 0.2 } }, claimed_role: 'Seer' },
+    role: 'Seer',
+  },
+  Mira: {
+    profile: { name: 'Mira', model: 'm', persona: {} },
+    state: { is_alive: true, beliefs: {}, claimed_role: null },
+    role: 'Villager',
+  },
+  Kai: {
+    profile: { name: 'Kai', model: 'm', persona: {} },
+    state: { is_alive: false, beliefs: {}, claimed_role: null },
+    role: 'Werewolf',
+  },
+};
+
+function mockGameScopedReplay() {
+  mockGameScopedFetch({
+    indexEntry: GAME_SCOPED_INDEX,
+    jsonlText: GAME_SCOPED_JSONL,
+    agentJsonByName: GAME_SCOPED_AGENTS,
+  });
+}
+
 function renderGameScoped({ sessionId = 'test-session-001', agentName = 'Nox', search = '' } = {}) {
+  if (!vi.isMockFunction(globalThis.fetch)) {
+    mockGameScopedFetch({
+      indexEntry: { ...GAME_SCOPED_INDEX, session_id: sessionId, title: sessionId },
+      jsonlText: GAME_SCOPED_JSONL,
+      agentJsonByName: GAME_SCOPED_AGENTS,
+    });
+  }
   return render(
     <MemoryRouter initialEntries={[`/game/${sessionId}/agent/${agentName}${search}`]}>
       <Routes>
@@ -84,16 +148,16 @@ describe('AgentDetailScreen game-scoped breadcrumbs', () => {
     expect(screen.getByRole('link', { name: 'test-session-001' }).getAttribute('href')).toBe('/game/test-session-001?view=public');
   });
 
-  it('preserves public viewerMode query in game-scoped agent picker links', () => {
+  it('preserves public viewerMode query in game-scoped agent picker links', async () => {
     /*
      * SUT: AgentDetailScreen LeftPane
-     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Mock: global fetch（game-scoped replay fixture を返す）
      * Level: contract
      * Objective: game-scoped AgentDetailScreen の AgentPicker 内リンクが ?view=public を引き継ぐことを検証する。
      */
     renderGameScoped({ sessionId: 'test-session-001', agentName: 'Nox', search: '?view=public' });
 
-    expect(screen.getByRole('link', { name: /Mira/ }).getAttribute('href')).toBe('/game/test-session-001/agent/Mira?view=public');
+    expect((await screen.findByRole('link', { name: /Mira/ })).getAttribute('href')).toBe('/game/test-session-001/agent/Mira?view=public');
   });
 });
 
@@ -101,7 +165,7 @@ describe('AgentDetailScreen game-scoped stub-only UI cleanup', () => {
   it('game-scoped TopBar removes stub-only action buttons', () => {
     /*
      * SUT: AgentDetailScreen TopBar
-     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Mock: global fetch（game-scoped replay fixture を返す）
      * Level: integration
      * Objective: game-scoped AgentDetailScreen の TopBar から stub-only action buttons が撤去されることを検証する (AC-1)
      */
@@ -115,7 +179,7 @@ describe('AgentDetailScreen game-scoped stub-only UI cleanup', () => {
   it('game-scoped TopBar toggles viewerMode query like SpectatorScreen', async () => {
     /*
      * SUT: AgentDetailScreen TopBar viewerMode toggle
-     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Mock: global fetch（game-scoped replay fixture を返す）
      * Level: contract
      * Objective: game-scoped mode のみに viewerMode トグルがあり、SpectatorScreen と同じ query 遷移を行うことを検証する (AC-2)
      */
@@ -136,7 +200,7 @@ describe('AgentDetailScreen game-scoped stub-only UI cleanup', () => {
   it('game-scoped left pane removes sort controls', () => {
     /*
      * SUT: AgentDetailScreen LeftPane
-     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Mock: global fetch（game-scoped replay fixture を返す）
      * Level: integration
      * Objective: 左ペインの onClick なし並べ替えボタンが撤去されることを検証する (AC-3)
      */
@@ -150,7 +214,7 @@ describe('AgentDetailScreen game-scoped stub-only UI cleanup', () => {
   it('game-scoped removes cheers goal and pseudo thought timestamps', () => {
     /*
      * SUT: AgentDetailScreen game-scoped center pane
-     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Mock: global fetch（game-scoped replay fixture を返す）
      * Level: integration
      * Objective: 応援スコア・現在の目標・thought 疑似時刻が撤去されることを検証する (AC-4)
      */
@@ -164,7 +228,7 @@ describe('AgentDetailScreen game-scoped stub-only UI cleanup', () => {
   it('game-scoped removes suspicion tab and right pane night actions', () => {
     /*
      * SUT: AgentDetailScreen game-scoped tabs and RightPane
-     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Mock: global fetch（game-scoped replay fixture を返す）
      * Level: integration
      * Objective: 「疑い・信頼」タブと右ペインの「夜の行動」パネルが撤去されることを検証する (AC-5)
      */
@@ -172,6 +236,96 @@ describe('AgentDetailScreen game-scoped stub-only UI cleanup', () => {
 
     expect(screen.queryByRole('button', { name: '疑い・信頼' })).toBeNull();
     expect(screen.queryByText('夜の行動')).toBeNull();
+  });
+});
+
+describe('AgentDetailScreen game-scoped real data', () => {
+  it('game-scoped renders real role and faction from agent json in spectator mode', async () => {
+    /*
+     * SUT: AgentDetailScreen (game-scoped mode)
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: agent JSON の role から役職タグと所属陣営を spectator mode に表示することを検証する。
+     */
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Nox' });
+
+    expect(await screen.findByRole('heading', { name: 'Nox' })).toBeTruthy();
+    expect(screen.getAllByText('占い師').length).toBeGreaterThan(0);
+    expect(screen.getByText(/村人陣営/)).toBeTruthy();
+  });
+
+  it('game-scoped renders session label and alive status from real data', async () => {
+    /*
+     * SUT: AgentDetailScreen (game-scoped mode)
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: session メタと agent JSON の state.is_alive から session ラベルと生死・Day 表示を描画することを検証する。
+     */
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Nox' });
+
+    await screen.findByRole('heading', { name: 'Nox' });
+    expect(screen.getAllByText(/session-real-001/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/生存中 · Day 2/)).toBeTruthy();
+  });
+
+  it('game-scoped renders real speech count and AgentRosterRow links', async () => {
+    /*
+     * SUT: AgentDetailScreen (game-scoped mode)
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: speech イベントから対象 agent の本村発言数を数え、左ペインを実参加者リンクで描画することを検証する。
+     */
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Nox' });
+
+    await screen.findByRole('heading', { name: 'Nox' });
+    expect(screen.getByText('2')).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Mira/ }).getAttribute('href')).toBe('/game/session-real-001/agent/Mira');
+    expect(screen.getByRole('link', { name: /Kai/ }).getAttribute('href')).toBe('/game/session-real-001/agent/Kai');
+  });
+
+  it('game-scoped public mode hides role faction and suspicion matrix', async () => {
+    /*
+     * SUT: AgentDetailScreen (game-scoped mode)
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: public viewerMode で真役職・所属陣営・疑念マトリクスを非表示にすることを検証する。
+     */
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Nox', search: '?view=public' });
+
+    await screen.findByRole('heading', { name: 'Nox' });
+    expect(screen.queryByText(/村人陣営/)).toBeNull();
+    expect(screen.queryByText('疑い度マトリクス')).toBeNull();
+  });
+
+  it('game-scoped does not create real trust data from agent json', async () => {
+    /*
+     * SUT: AgentDetailScreen (game-scoped mode)
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: agents/*.json に存在しない trust 相当フィールドを実データとして新設表示しないことを検証する。
+     */
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Nox' });
+
+    await screen.findByRole('heading', { name: 'Nox' });
+    expect(screen.queryByText('信頼度')).toBeNull();
+  });
+
+  it('game-scoped shows an error message when replay loading fails', async () => {
+    /*
+     * SUT: AgentDetailScreen (game-scoped mode)
+     * Mock: global fetch（state_archive/index.json の取得失敗）
+     * Level: integration
+     * Objective: game-scoped 実データ取得が失敗したとき、エラー表示にフォールバックすることを検証する。
+     */
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Nox' });
+
+    expect(await screen.findByText(/Failed to fetch game list/)).toBeTruthy();
   });
 });
 

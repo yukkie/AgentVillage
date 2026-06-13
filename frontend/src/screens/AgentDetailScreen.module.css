@@ -327,7 +327,7 @@
 .matrixHeader,
 .matrixRow {
   display: grid;
-  grid-template-columns: 80px 1fr 38px 38px;
+  grid-template-columns: 80px 1fr 38px;
   gap: 4px 8px;
   align-items: center;
 }
@@ -349,21 +349,12 @@
   align-items: center;
 }
 
-.dualBar {
-  display: flex;
-  gap: 3px;
-  align-items: center;
-}
-
 .barWrap {
-  flex: 1;
   height: 6px;
   background: var(--bg-3);
   border-radius: 3px;
   overflow: hidden;
 }
-
-.barWrap:first-child { transform: scaleX(-1); }
 
 .barFill {
   display: block;
@@ -371,8 +362,6 @@
   background: var(--danger);
   border-radius: 3px;
 }
-
-.barTrust .barFill { background: var(--info); }
 
 .matrixNum {
   font-family: var(--mono);
