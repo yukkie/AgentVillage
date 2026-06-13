@@ -498,6 +498,8 @@ hover / focus スタイルは CSS `:hover` / `:focus-visible` で付与（`varia
 | `coRole` | `string?` | CO 済み役職キー。あれば CO バッジを表示 |
 | `dead` | `boolean?` | 死亡フラグ。Avatar 死亡オーバーレイ・行 muted・statusDot 色（`--tx-4`）に反映 |
 | `deathMeta` | `{day, content}?` | 死因メタ（`Day {day} · {content}`）。役職を露出しないため public でも表示する |
+| `showStatusDot` | `boolean?` | 右端の生死 statusDot を表示するか（デフォルト `true`）。`false` で statusDot を描画せずグリッドを2カラム化する。生死概念のない `global profile mode` 左ペインで `false` を渡す |
+| `selected` | `boolean?` | 現在表示中の行を強調（左ボーダー `--acc` ＋ 背景）。`global profile mode` 左ペインで「今表示しているエージェント」をハイライトするのに使う（デフォルト `false`） |
 
 > **役職出し分けは `showRole` boolean に集約**: 「死亡者は役職常時公開」という特例は持たない。生存・死亡とも `showRole`（＝呼び出し側の `viewerMode === 'spectator'`）に従う。死亡者の役職を public で露出すると消去法で生存者の役職が絞れてしまうため（#521 AC-3）。
 
@@ -810,6 +812,15 @@ fetch('../state_archive/20260510_102927/spectator_log.jsonl')
 
 FastAPI + WebSocket でイベントをストリーミング配信する。`fetch` を WebSocket に切り替えるだけで対応できるよう、`SpectatorScreen` の props インターフェースは Phase A で統一しておく。
 
+**Phase D — global profile mode の実データ化（#522）**
+
+`AgentDetailScreen` の `global profile mode`（`/agent/:name`）を `state/stats/game_stats.json` 由来の横断戦績に差し替える（仕分けは §8.3 A）。
+
+- `src/lib/archiveLoader.js` に `fetchGameStats()` / `parseGameStats(gamesJson, agentName)` / `parseAllAgentNames(gamesJson)` を追加。`won` をそのまま使い、`winner` / `faction` の値域変換は consumer 側で再実装しない（`doc/DataSpec.md` §6）。
+- **dev 配信経路**: `game_stats.json` は `state/stats/` 配下にあり既存の `/state_archive` middleware では配信されない。`vite.config.js` に `/stats` プレフィックスの静的配信 middleware を追加し（`/state_archive` と同形）、fetch URL を `/stats/game_stats.json` とする。#315 FastAPI 導入時は URL 差し替えのみで対応する。
+- **非同期状態の扱い**: global mode は `fetchGameStats()` 前提のため非同期状態が発生する。fetch 中は loading 表示、失敗時は error 表示にする。`agentName` が `game_stats.json` に存在しない場合も、名前・アバターは表示し、勝率・通算成績は `0戦 / 0勝`、過去戦績一覧は空表示にフォールバックする。
+- viewerMode による出し分けは行わない（§6.2）。`?view=public` でも表示内容は変わらず、viewerMode トグル UI も出さない。
+
 ### 8.3 `AgentDetailScreen` スタブ項目の2軸4象限仕分け（#515）
 
 `stub/agentDetail.js` の全エクスポート項目と `AgentDetailScreen.jsx` 内ハードコードを、
@@ -829,8 +840,8 @@ FastAPI + WebSocket でイベントをストリーミング配信する。`fetch
 | 名前 ＋ アバター | ✅ | `game_stats.json` の `players[].name` / アイコンは `/icons/{name}.png` |
 | blurb（1行プロフィール、`AGENT_BLURB`） | ✅（別 Issue・重い） | `config/agents.json` に静的な新フィールド（例: `blurb`）を追加して fetch。両モード共通。実装は別 Issue（`persona_short` は未実装のため使わない） |
 | 勝率・通算成績（`AGENT_STATS` の `games` / `wins`） | ✅ | `game_stats.json` の各 `game.players[]` を `name` でフィルタし `won` / 出場数を集計（`doc/DataSpec.md` §6） |
-| 過去の戦績一覧（`TabHistory` の `records`） | ✅ | `game_stats.json` 各 `game` を `name` でフィルタ（`game_id` / `role` / `won`）。**村名列は `game_stats.json` に無いため `session_id`（`game_id`）を代わりに表示する** |
-| 左ペイン名簿（`ALL_AGENTS` / `DEAD_AGENTS`） | ✅（別物に差し替え） | `global` では「同ゲームの参加者ピッカー」は概念として存在しない。代わりに**全エージェント横断のプロフィール一覧リンク集**にする（`game_stats.json` の全 `name` 集合 → 各行 `/agent/{name}`） |
+| 過去の戦績一覧（`TabHistory` の `records`） | ✅ | `game_stats.json` 各 `game` を `name` でフィルタ（`game_id` / `role` / `won`）。**村名列は `game_stats.json` に無いため `session_id`（`game_id`）を代わりに表示する**。過去戦績テーブルの `role` 列は表示してよい（Hero / Avatar / 左ペインの役職タグ・役職刻印を出さない方針とは別物） |
+| 左ペイン名簿（`ALL_AGENTS` / `DEAD_AGENTS`） | ✅（別物に差し替え） | `global` では「同ゲームの参加者ピッカー」は概念として存在しない。代わりに**全エージェント横断のプロフィール一覧リンク集**にする（`game_stats.json` の全 `name` 集合 → 各行 `/agent/{encodeURIComponent(name)}`）。共通 `AgentRosterRow` を `showRole={false}`（役職を出さない・AC-4）・`showStatusDot={false}`（生死概念なし）・`selected={name === current}`（現在地ハイライト）で再利用する。行全体が `Link` のためクリック領域が行全域になる（独自 `display: contents` 行だと padding/gap が hit しない問題を回避） |
 
 #### B. `game-scoped mode` の項目（出所＝`spectator_log.jsonl` ＋ `agents/*.json`）
 

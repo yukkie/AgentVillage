@@ -112,6 +112,42 @@ describe('AgentRosterRow', () => {
     expect(container.querySelector('[class*="roleTag"]')).toBeNull();
   });
 
+  it('統合: AgentRosterRow: selected=true で選択状態クラスを付与する', () => {
+    /*
+     * SUT: AgentRosterRow
+     * Mock: なし（plain props を入力）
+     * Level: component
+     * Objective: selected=true のとき行に選択状態クラス（selected）が付与されることを検証する（現在地ハイライト）。
+     */
+    const { container } = renderRow({ selected: true });
+
+    expect(container.querySelector('[class*="selected"]')).toBeTruthy();
+  });
+
+  it('統合: AgentRosterRow: selected 未指定では選択状態クラスを付与しない', () => {
+    /*
+     * SUT: AgentRosterRow
+     * Mock: なし（plain props を入力）
+     * Level: component
+     * Objective: selected を渡さないとき選択状態クラスが付与されないことを検証する（デフォルト非選択）。
+     */
+    const { container } = renderRow();
+
+    expect(container.querySelector('[class*="selected"]')).toBeNull();
+  });
+
+  it('統合: AgentRosterRow: showStatusDot=false で statusDot を描画しない', () => {
+    /*
+     * SUT: AgentRosterRow
+     * Mock: なし（plain props を入力）
+     * Level: component
+     * Objective: showStatusDot=false のとき statusDot 要素を一切描画しないことを検証する（global profile mode 用）。
+     */
+    const { container } = renderRow({ showStatusDot: false });
+
+    expect(container.querySelector('[class*="statusDot"]')).toBeNull();
+  });
+
   it('統合: AgentRosterRow: アイコン左・statusDot 右端の DOM 順で描画する', () => {
     /*
      * SUT: AgentRosterRow

@@ -371,7 +371,8 @@
 }
 
 .recordRow:last-child { border-bottom: none; }
-.recordNum   { font-family: var(--mono); color: var(--tx-4); width: 28px; }
+/* game_id（ISO 文字列）を表示する列。折り返さず収める（global・game-scoped 実データ共通） */
+.recordNum   { font-family: var(--mono); color: var(--tx-4); font-size: 11px; white-space: nowrap; }
 .recordRole  { font-family: var(--serif); color: var(--r-color, var(--tx-3)); width: 60px; }
 .recordResult { font-family: var(--mono); font-size: 11px; }
 .win  { color: var(--alive); }

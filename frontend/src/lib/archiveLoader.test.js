@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { parseIndexToGameList, parseEntryToGame, fetchGameBySessionId } from './archiveLoader.js';
+import {
+  parseIndexToGameList, parseEntryToGame, fetchGameBySessionId,
+  parseGameStats, parseAllAgentNames, fetchGameStats,
+} from './archiveLoader.js';
 import { normalizeAgentJson } from '../legacy/normalizeAgentJson.js';
 
 // --- fixture data ---
@@ -171,6 +174,123 @@ describe('fetchGameBySessionId', () => {
     }));
 
     await expect(fetchGameBySessionId('not-exist')).rejects.toThrow('Session not found: not-exist');
+  });
+});
+
+// --- parseGameStats / parseAllAgentNames（#522 global profile mode） ---
+
+const STATS_FIXTURE = {
+  games: [
+    {
+      game_id: '2026-05-09T18:10:31',
+      winner: 'Villagers',
+      players: [
+        { name: 'Nox', role: 'Seer', faction: 'village', model: 'm', survived: true, won: true },
+        { name: 'Kai', role: 'Werewolf', faction: 'werewolf', model: 'm', survived: false, won: false },
+        { name: 'Mira', role: 'Villager', faction: 'village', model: 'm', survived: true, won: true },
+      ],
+    },
+    {
+      game_id: '2026-05-10T10:29:27',
+      winner: 'Werewolves',
+      players: [
+        { name: 'Nox', role: 'Villager', faction: 'village', model: 'm', survived: false, won: false },
+        { name: 'Kai', role: 'Werewolf', faction: 'werewolf', model: 'm', survived: true, won: true },
+      ],
+    },
+  ],
+};
+
+describe('parseGameStats', () => {
+  it('勝利数・出場数を name でフィルタして集計する', () => {
+    /*
+    SUT: parseGameStats
+    Mock: なし
+    Level: unit
+    Objective: agentName で全ゲームをフィルタし wins/total が正しく集計されることを検証する (AC-1)
+    */
+    const stats = parseGameStats(STATS_FIXTURE, 'Nox');
+    expect(stats.total).toBe(2);
+    expect(stats.wins).toBe(1);
+  });
+
+  it('過去戦績一覧は gameId と role と won を含む', () => {
+    /*
+    SUT: parseGameStats
+    Mock: なし
+    Level: unit
+    Objective: records が game_id(=session_id) / role / won を含み、ゲーム降順であることを検証する (AC-2)
+    */
+    const stats = parseGameStats(STATS_FIXTURE, 'Nox');
+    expect(stats.records).toEqual([
+      { gameId: '2026-05-10T10:29:27', role: 'Villager', won: false },
+      { gameId: '2026-05-09T18:10:31', role: 'Seer', won: true },
+    ]);
+  });
+
+  it('存在しない agent は wins:0 total:0 records:[] を返す', () => {
+    /*
+    SUT: parseGameStats
+    Mock: なし
+    Level: unit
+    Objective: game_stats.json に存在しない名前で空集計を返すことを検証する (AC-7 empty state)
+    */
+    const stats = parseGameStats(STATS_FIXTURE, 'Unknown');
+    expect(stats).toEqual({ wins: 0, total: 0, records: [] });
+  });
+});
+
+describe('fetchGameStats', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('returns parsed game_stats.json on success', async () => {
+    /*
+    SUT: fetchGameStats
+    Mock: global fetch（game_stats.json のレスポンスを固定）
+    Level: unit
+    Objective: fetch 成功時に game_stats.json をパースして返すことを検証する。
+    */
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(STATS_FIXTURE),
+    }));
+    const result = await fetchGameStats();
+    expect(result).toBe(STATS_FIXTURE);
+  });
+
+  it('throws when fetch fails', async () => {
+    /*
+    SUT: fetchGameStats
+    Mock: global fetch（ok:false）
+    Level: unit
+    Objective: fetch 失敗時に Error をスローすることを検証する (AC-7 error path)。
+    */
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    await expect(fetchGameStats()).rejects.toThrow('Failed to fetch game stats: 500');
+  });
+});
+
+describe('parseAllAgentNames', () => {
+  it('全ゲームの参加エージェント名のユニーク集合を返す', () => {
+    /*
+    SUT: parseAllAgentNames
+    Mock: なし
+    Level: unit
+    Objective: 全 game.players[].name を重複排除しソートして返すことを検証する (AC-3)
+    */
+    expect(parseAllAgentNames(STATS_FIXTURE)).toEqual(['Kai', 'Mira', 'Nox']);
+  });
+
+  it('空の games には空配列を返す', () => {
+    /*
+    SUT: parseAllAgentNames
+    Mock: なし
+    Level: unit
+    Objective: games が空のとき空配列を返すことを検証する
+    */
+    expect(parseAllAgentNames({ games: [] })).toEqual([]);
   });
 });
 

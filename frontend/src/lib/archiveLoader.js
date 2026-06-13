@@ -72,6 +72,63 @@ export async function fetchGameList() {
   return parseIndexToGameList(index);
 }
 
+// --- Game stats (#522 global profile mode) ---
+
+// game_stats.json lives at state/stats/, served by the /stats middleware in
+// vite.config.js (local dev only). Replace with a FastAPI endpoint in production (#315).
+const GAME_STATS_URL = '/stats/game_stats.json';
+
+/**
+ * Aggregate a single agent's cross-game record from game_stats.json (DataSpec §6).
+ * `won` is read as-is; no winner/faction value conversion (already done by collector).
+ *
+ * @param {{games: object[]}} gamesJson - Parsed game_stats.json
+ * @param {string} agentName
+ * @returns {{wins: number, total: number, records: {gameId: string, role: string, won: boolean}[]}}
+ *   records are ordered newest-game-first. Empty for an unknown agentName.
+ */
+export function parseGameStats(gamesJson, agentName) {
+  const records = [];
+  let wins = 0;
+  let total = 0;
+  for (const game of gamesJson.games) {
+    const player = game.players.find(p => p.name === agentName);
+    if (!player) continue;
+    total += 1;
+    if (player.won) wins += 1;
+    records.push({ gameId: game.game_id, role: player.role, won: player.won });
+  }
+  // Newest game first (games[] is appended in chronological order by collector).
+  records.reverse();
+  return { wins, total, records };
+}
+
+/**
+ * Collect the unique set of all agent names across every game, sorted.
+ * Used by the global-mode left pane's cross-agent profile link list (AC-3).
+ *
+ * @param {{games: object[]}} gamesJson - Parsed game_stats.json
+ * @returns {string[]}
+ */
+export function parseAllAgentNames(gamesJson) {
+  const names = new Set();
+  for (const game of gamesJson.games) {
+    for (const player of game.players) names.add(player.name);
+  }
+  return [...names].sort();
+}
+
+/**
+ * Fetch and parse game_stats.json. Throws if the fetch fails.
+ *
+ * @returns {Promise<{games: object[]}>}
+ */
+export async function fetchGameStats() {
+  const res = await fetch(GAME_STATS_URL);
+  if (!res.ok) throw new Error(`Failed to fetch game stats: ${res.status}`);
+  return res.json();
+}
+
 /**
  * Fetch a single game entry by sessionId from state_archive/index.json.
  * Returns the raw index entry (including cast) for use by SpectatorScreen.
