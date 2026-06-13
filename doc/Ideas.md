@@ -19,6 +19,7 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| yukkie/AgentVillage#519 ❌ | enhancement | — | — | Real-data blurb for AgentDetailScreen via config/agents.json | #515 の仕分け（§8.3 E 分割案5）から切り出し。AGENT_BLURB を config/agents.json の静的フィールド（まず英語）へ実データ化し、AgentDetailScreen 両モードで表示 |
 | yukkie/AgentVillage#515 ❌ | documentation | 🔴 | — | Classify stub/agentDetail.js fields into 2-axis quadrants | #492 の Followup。stub/agentDetail.js 全項目を「遷移元（global profile / game-scoped）× 扱い（実データ置換 / 破棄）」の4象限に仕分け、FrontendDesign §8.3 に確定記載。実装 Issue 群の分割方針もここで決める |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#337 | enhancement | 🟡 | 2 | Top agents real stats | stub/gameList.js の TOP_AGENTS を実ゲーム結果の集計データに置き換え |
