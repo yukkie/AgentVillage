@@ -19,7 +19,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#515 ❌ | documentation | 🔴 | — | Classify stub/agentDetail.js fields into 2-axis quadrants | #492 の Followup。stub/agentDetail.js 全項目を「遷移元（global profile / game-scoped）× 扱い（実データ置換 / 破棄）」の4象限に仕分け、FrontendDesign §8.3 に確定記載。実装 Issue 群の分割方針もここで決める |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#337 | enhancement | 🟡 | 2 | Top agents real stats | stub/gameList.js の TOP_AGENTS を実ゲーム結果の集計データに置き換え |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
