@@ -109,22 +109,6 @@
   padding: 6px 8px 4px;
 }
 
-.sortBtn {
-  width: 100%;
-  text-align: left;
-  padding: 5px 8px;
-  font-size: 11px;
-  color: var(--tx-3);
-  background: none;
-  border: none;
-  border-radius: var(--r1);
-  cursor: pointer;
-  font-family: var(--sans);
-  margin-bottom: 2px;
-}
-
-.sortBtn:hover { background: var(--bg-2); color: var(--tx); }
-
 /* ===== 中央ペイン ===== */
 
 .mainPane {
@@ -268,16 +252,6 @@
   font-weight: 400;
 }
 
-.goalLine {
-  font-family: var(--serif);
-  font-size: 15px;
-  color: var(--tx);
-  line-height: 1.7;
-  border-left: 3px solid var(--acc);
-  padding: 4px 12px;
-  background: rgba(240, 199, 95, 0.04);
-}
-
 /* 推論ログ */
 .thought {
   border-left: 2px solid var(--bd);
@@ -309,56 +283,11 @@
 
 .thoughtHead strong { color: var(--tx-2); }
 
-.thoughtTs {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--tx-4);
-  margin-left: auto;
-}
-
 .thoughtBody {
   font-size: 13px;
   color: var(--tx);
   line-height: 1.65;
 }
-
-/* 夜の行動（中央タブ） */
-.nightRow {
-  display: grid;
-  grid-template-columns: 36px 1fr auto;
-  gap: 10px;
-  padding: 8px 0;
-  border-bottom: 1px dashed var(--bd-soft);
-  font-size: 12px;
-  align-items: center;
-}
-
-.nightRow:last-child { border-bottom: none; }
-
-.nightDay {
-  font-family: var(--mono);
-  color: var(--tx-4);
-  font-size: 10px;
-}
-
-.nightAction { color: var(--tx-2); margin-bottom: 2px; }
-
-.nightTarget {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.nightTarget span { color: var(--tx); font-family: var(--serif); }
-
-.nightResult {
-  font-family: var(--mono);
-  font-size: 11px;
-}
-
-.resultBlack { color: var(--danger); }
-.resultWhite { color: var(--info); }
-.resultSafe  { color: var(--alive); }
 
 /* 過去の戦績 */
 .recordRow {

@@ -2,18 +2,18 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
 import AgentRosterRow from '../components/AgentRosterRow.jsx';
-import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
+import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLES } from '../lib/constants.js';
 import { fetchGameStats, parseGameStats, parseAllAgentNames } from '../lib/archiveLoader.js';
 import {
   ALL_AGENTS, DEAD_AGENTS, ROLE_ASSIGNMENT,
-  AGENT_BLURB, AGENT_STATS, THOUGHTS, NIGHT_ACTIONS,
+  AGENT_BLURB, AGENT_STATS, THOUGHTS,
   getSuspicionMatrix,
 } from '../../stub/agentDetail.js';
 import styles from './AgentDetailScreen.module.css';
 
-const TABS = ['概要', '推論ログ', '疑い・信頼', '夜の行動', '過去の戦績'];
+const TABS = ['概要', '推論ログ', '過去の戦績'];
 
 function viewerModeFromSearchParams(searchParams) {
   return searchParams.get('view') === 'public' ? 'public' : 'spectator';
@@ -62,12 +62,6 @@ function LeftPane({ current, sessionId, viewerMode = 'spectator' }) {
           );
         })}
         </ul>
-        <div className={styles.sectionLabel} style={{ marginTop: 12 }}>並べ替え</div>
-        <div style={{ padding: '0 6px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <button className={styles.sortBtn}>発言数 ↓</button>
-          <button className={styles.sortBtn}>容疑度 ↓</button>
-          <button className={styles.sortBtn}>役職別</button>
-        </div>
       </div>
     </>
   );
@@ -104,10 +98,6 @@ function AgentHero({ agent }) {
           <div className={styles.statNum}>{stats.speeches}</div>
           <div className={styles.statLabel}>本村発言</div>
         </div>
-        <div className={styles.heroStat}>
-          <div className={styles.statNum} style={{ color: 'var(--alive)' }}>+{stats.cheers}</div>
-          <div className={styles.statLabel}>応援スコア</div>
-        </div>
       </div>
     </header>
   );
@@ -118,12 +108,6 @@ function TabOverview({ agent }) {
   const thoughts = (THOUGHTS[agent] || []).slice(0, 2);
   return (
     <>
-      <div className={styles.panel}>
-        <h3>現在の目標 <small>Day 2 議論フェーズ</small></h3>
-        <div className={styles.goalLine}>
-          真の占い師として認知を取りつつ、Kai を確実に処刑へ追い込む。Ren の偽占いを論理的に崩す。
-        </div>
-      </div>
       {thoughts.length > 0 && (
         <div className={styles.panel}>
           <h3>直近の推論 <small>{thoughts.length} 件 · spectator限定</small></h3>
@@ -132,7 +116,6 @@ function TabOverview({ agent }) {
               <li className={styles.thought} key={i}>
                 <div className={styles.thoughtHead}>
                   <strong>D{t.day} #{t.speechId} 発言前の思考</strong>
-                  <time className={styles.thoughtTs}>{(8 + t.speechId * 2) % 24}:{String((t.speechId * 13) % 60).padStart(2, '0')}</time>
                 </div>
                 <div className={styles.thoughtBody}>{t.text.slice(0, 180)}{t.text.length > 180 ? '…' : ''}</div>
               </li>
@@ -158,48 +141,10 @@ function TabThoughts({ agent }) {
           <li className={styles.thought} key={i}>
             <div className={styles.thoughtHead}>
               <strong>D{t.day} #{t.speechId} 発言前の思考</strong>
-              <time className={styles.thoughtTs}>{(8 + t.speechId * 2) % 24}:{String((t.speechId * 13) % 60).padStart(2, '0')}</time>
             </div>
             <div className={styles.thoughtBody}>{t.text}</div>
           </li>
         ))}
-      </ul>
-    </div>
-  );
-}
-
-// --- タブコンテンツ: 疑い・信頼 ---
-function TabSuspicion({ agent }) {
-  const matrix = getSuspicionMatrix(agent).slice(0, 8);
-  return (
-    <div className={styles.panel}>
-      <h3>疑い度マトリクス <small>{agent} 視点</small></h3>
-      <div className={styles.matrixHeader} aria-hidden="true">
-        <div className={styles.matrixHead}>対象</div>
-        <div className={styles.matrixHead}>疑い ←→ 信頼</div>
-        <div className={styles.matrixHead}>疑</div>
-        <div className={styles.matrixHead}>信</div>
-      </div>
-      <ul className={styles.matrix} aria-label="疑い度マトリクス">
-        {matrix.map(m => (
-          <MatrixRow key={m.name} m={m} />
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-// --- タブコンテンツ: 夜の行動 ---
-function TabNightActions({ agent }) {
-  const actions = NIGHT_ACTIONS[agent] || [];
-  if (actions.length === 0) {
-    return <div style={{ color: 'var(--tx-4)', fontSize: 13 }}>夜の行動なし（村人系役職）</div>;
-  }
-  return (
-    <div className={styles.panel}>
-      <h3>夜の行動</h3>
-      <ul className={styles.nightList} aria-label="夜の行動">
-        {actions.map((a, i) => <NightRow key={i} a={a} />)}
       </ul>
     </div>
   );
@@ -237,31 +182,6 @@ function TabHistory({ agent }) {
   );
 }
 
-// --- 共通パーツ: 夜の行動行 ---
-function NightRow({ a }) {
-  const resultClass = a.result === 'black' ? styles.resultBlack
-    : a.result === 'white' ? styles.resultWhite
-    : styles.resultSafe;
-  const resultLabel = a.result === 'black' ? '黒'
-    : a.result === 'white' ? '白'
-    : a.result === 'blocked' ? '護衛成功'
-    : '—';
-
-  return (
-    <li className={styles.nightRow}>
-      <div className={styles.nightDay}>D{a.day}{a.phase}</div>
-      <div>
-        <div className={styles.nightAction}>{a.action}</div>
-        <div className={styles.nightTarget}>
-          <Avatar name={a.target} size="xs" />
-          <span>{a.target}</span>
-        </div>
-      </div>
-      <div className={`${styles.nightResult} ${resultClass}`}>{resultLabel}</div>
-    </li>
-  );
-}
-
 // --- 共通パーツ: マトリクス行 ---
 function MatrixRow({ m }) {
   return (
@@ -287,7 +207,6 @@ function MatrixRow({ m }) {
 // --- 右ペイン ---
 function RightPane({ agent }) {
   const matrix  = getSuspicionMatrix(agent).slice(0, 8);
-  const actions = NIGHT_ACTIONS[agent] || [];
 
   return (
     <div className={styles.rightInner}>
@@ -303,14 +222,6 @@ function RightPane({ agent }) {
           {matrix.map(m => <MatrixRow key={m.name} m={m} />)}
         </ul>
       </div>
-      {actions.length > 0 && (
-        <div className={styles.panel}>
-          <h3>夜の行動</h3>
-          <ul className={styles.nightList} aria-label="夜の行動">
-            {actions.map((a, i) => <NightRow key={i} a={a} />)}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }
@@ -447,7 +358,7 @@ function GlobalProfile({ agent }) {
 // === メイン画面 ===
 export default function AgentDetailScreen() {
   const { sessionId, agentName } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const viewerMode = viewerModeFromSearchParams(searchParams);
   const viewerSearch = searchForViewerMode(viewerMode);
   const agent = agentName || 'Nox';
@@ -462,11 +373,13 @@ export default function AgentDetailScreen() {
   const role = ROLE_ASSIGNMENT[agent];
   const r    = ROLES[role];
 
+  const toggleViewerMode = () => {
+    setSearchParams(viewerMode === 'spectator' ? { view: 'public' } : {});
+  };
+
   const tabContent = [
     <TabOverview     agent={agent} />,
     <TabThoughts     agent={agent} />,
-    <TabSuspicion    agent={agent} />,
-    <TabNightActions agent={agent} />,
     <TabHistory      agent={agent} />,
   ];
 
@@ -479,9 +392,9 @@ export default function AgentDetailScreen() {
   return (
     <div className={styles.frame}>
       <TopBar crumbs={topCrumbs}>
-        <TopBarBtn><span className={topBarStyles.liveDot} /> LIVE観戦中</TopBarBtn>
-        <TopBarBtn>⤓ プロファイルJSON</TopBarBtn>
-        <TopBarBtn primary>★ ウォッチ</TopBarBtn>
+        <TopBarBtn onClick={toggleViewerMode}>
+          {viewerMode === 'spectator' ? '🔍 観戦者モード' : '👤 参加者視点'}
+        </TopBarBtn>
       </TopBar>
 
       <ThreePaneLayout
