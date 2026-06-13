@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
+import AgentRosterRow from '../components/AgentRosterRow.jsx';
 import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLES } from '../lib/constants.js';
+import { fetchGameStats, parseGameStats, parseAllAgentNames } from '../lib/archiveLoader.js';
 import {
   ALL_AGENTS, DEAD_AGENTS, ROLE_ASSIGNMENT,
   AGENT_BLURB, AGENT_STATS, THOUGHTS, NIGHT_ACTIONS,
@@ -313,6 +315,135 @@ function RightPane({ agent }) {
   );
 }
 
+// ============================================================================
+// global profile mode（#522）— 出所は state/stats/game_stats.json（DataSpec §6）
+// 横断戦績のみを表示する。役職タグ・推論・夜行動・疑念マトリクス・session ラベル・
+// 生死は出さない（AC-4）。viewerMode による出し分けも行わない（AC-5）。
+// ============================================================================
+
+// --- global 左ペイン: 全エージェント横断プロフィール一覧リンク集（AC-3） ---
+function GlobalLeftPane({ allNames, current }) {
+  return (
+    <>
+      <div className={styles.pickerHead}>
+        <span className={styles.pickerTitle}>エージェント一覧</span>
+        <span className={styles.pickerCount}>全{allNames.length}名</span>
+      </div>
+      <div className={styles.agentPicker}>
+        <ul className={styles.pickerList} aria-label="エージェント一覧">
+          {allNames.map(n => (
+            <AgentRosterRow
+              key={n}
+              name={n}
+              to={`/agent/${encodeURIComponent(n)}`}
+              showRole={false}
+              showStatusDot={false}
+              selected={n === current}
+            />
+          ))}
+        </ul>
+      </div>
+    </>
+  );
+}
+
+// --- global ヒーロー: 名前・アバター・勝率・通算成績（AC-1 / AC-6） ---
+// 役職タグ・生死・session ラベルは出さない（AC-4）。
+function GlobalHero({ agent, stats }) {
+  const winPct = stats.total ? Math.round(stats.wins / stats.total * 100) : 0;
+
+  return (
+    <header className={styles.agentHero}>
+      <Avatar name={agent} highlight />
+      <div className={styles.heroInfo}>
+        <h1>{agent}</h1>
+        <div className={styles.heroSub}>
+          <span>通算 {stats.total} 戦 {stats.wins} 勝</span>
+        </div>
+      </div>
+      <div className={styles.heroStats}>
+        <div className={styles.heroStat}>
+          <div className={styles.statNum}>{winPct}%</div>
+          <div className={styles.statLabel}>勝率 ({stats.total}戦)</div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// --- global 過去戦績一覧（AC-2）。村名列が無いため game_id を session_id として表示 ---
+// role 列は表示する（AC-2 で許可。AC-4 が禁じる Hero/Avatar/左ペインの役職タグとは別物）。
+function GlobalHistory({ stats }) {
+  return (
+    <div className={styles.panel}>
+      <h3>過去の戦績 <small>通算 {stats.total} 戦 {stats.wins} 勝</small></h3>
+      {stats.records.length === 0 ? (
+        <div style={{ color: 'var(--tx-4)', fontSize: 13 }}>戦績なし</div>
+      ) : (
+        <ul className={styles.recordList} aria-label="過去の戦績">
+          {stats.records.map((rec, i) => {
+            const r = ROLES[rec.role];
+            return (
+              <li key={i} className={styles.recordRow} style={{ '--r-color': r?.color }}>
+                <span className={styles.recordNum}>{rec.gameId}</span>
+                <span className={styles.recordRole}>{r?.ja || rec.role}</span>
+                <span className={`${styles.recordResult} ${rec.won ? styles.win : styles.lose}`}>
+                  {rec.won ? '勝利' : '敗北'}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// --- global profile mode 本体（非同期 fetch・loading/error/empty を扱う・AC-7） ---
+function GlobalProfile({ agent }) {
+  const [state, setState] = useState({ status: 'loading', games: null });
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchGameStats()
+      .then(games => { if (!cancelled) setState({ status: 'ready', games }); })
+      .catch(() => { if (!cancelled) setState({ status: 'error', games: null }); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const topCrumbs = [{ label: 'r/agent-jinrou', to: '/' }, { label: agent }];
+
+  let body;
+  if (state.status === 'loading') {
+    body = <div className={styles.tabContent} style={{ color: 'var(--tx-4)' }}>読み込み中…</div>;
+  } else if (state.status === 'error') {
+    body = <div className={styles.tabContent} style={{ color: 'var(--danger)' }}>戦績を読み込めませんでした。</div>;
+  } else {
+    const stats = parseGameStats(state.games, agent);
+    const allNames = parseAllAgentNames(state.games);
+    body = (
+      <ThreePaneLayout
+        collapsibleLeft
+        left={<GlobalLeftPane allNames={allNames} current={agent} />}
+      >
+        <div className={styles.mainPane}>
+          <GlobalHero agent={agent} stats={stats} />
+          <div className={styles.tabContent}>
+            <GlobalHistory stats={stats} />
+          </div>
+        </div>
+      </ThreePaneLayout>
+    );
+  }
+
+  return (
+    <div className={styles.frame}>
+      <TopBar crumbs={topCrumbs} />
+      {body}
+    </div>
+  );
+}
+
 // === メイン画面 ===
 export default function AgentDetailScreen() {
   const { sessionId, agentName } = useParams();
@@ -322,6 +453,12 @@ export default function AgentDetailScreen() {
   const agent = agentName || 'Nox';
   const [tab, setTab] = useState(0);
 
+  // sessionId なし → global profile mode（横断戦績・実データ）
+  if (!sessionId) {
+    return <GlobalProfile agent={agent} />;
+  }
+
+  // sessionId あり → game-scoped mode（現状はスタブ。実データ化は別 Issue）
   const role = ROLE_ASSIGNMENT[agent];
   const r    = ROLES[role];
 
@@ -333,9 +470,11 @@ export default function AgentDetailScreen() {
     <TabHistory      agent={agent} />,
   ];
 
-  const topCrumbs = sessionId
-    ? [{ label: 'r/agent-jinrou', to: '/' }, { label: sessionId, to: `/game/${sessionId}${viewerSearch}` }, { label: agent }]
-    : [{ label: 'r/agent-jinrou', to: '/' }, { label: agent }];
+  const topCrumbs = [
+    { label: 'r/agent-jinrou', to: '/' },
+    { label: sessionId, to: `/game/${sessionId}${viewerSearch}` },
+    { label: agent },
+  ];
 
   return (
     <div className={styles.frame}>

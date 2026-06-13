@@ -20,6 +20,15 @@
 .link:hover { border-color: var(--bd); }
 .row.dead .link { opacity: 0.6; }
 
+/* statusDot を出さない場合（global profile mode 等）は 2 カラムにして右端の余白を作らない */
+.row.noDot .link { grid-template-columns: auto 1fr; }
+
+/* 現在表示中のエージェント行を強調（左ボーダー山吹色＋背景） */
+.row.selected .link {
+  border-left: 2px solid var(--acc);
+  background: var(--bg-3);
+}
+
 .who {
   display: flex;
   flex-direction: column;

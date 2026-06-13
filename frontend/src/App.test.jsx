@@ -5,9 +5,13 @@ import App from './App.jsx';
 import * as archiveLoader from './lib/archiveLoader.js';
 import * as replayLoader from './lib/replayLoader.js';
 
-vi.mock('./lib/archiveLoader.js', () => ({
+vi.mock('./lib/archiveLoader.js', async (importOriginal) => ({
+  // Keep the real pure functions (parseGameStats / parseAllAgentNames etc.),
+  // mock only the fetch-boundary functions.
+  ...(await importOriginal()),
   fetchGameList: vi.fn().mockResolvedValue([]),
   fetchGameBySessionId: vi.fn(),
+  fetchGameStats: vi.fn().mockResolvedValue({ games: [] }),
 }));
 
 vi.mock('./lib/replayLoader.js', () => ({

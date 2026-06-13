@@ -1,62 +1,65 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import userEvent from '@testing-library/user-event';
 import AgentDetailScreen from './AgentDetailScreen.jsx';
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
-function renderAgent({ sessionId, agentName = 'Nox', search = '' } = {}) {
-  const path = sessionId
-    ? `/game/${sessionId}/agent/${agentName}${search}`
-    : `/agent/${agentName}${search}`;
-  const routePath = sessionId
-    ? '/game/:sessionId/agent/:agentName'
-    : '/agent/:agentName';
+// --- fixture: game_stats.json 形状（DataSpec §6） ---
+const STATS_FIXTURE = {
+  games: [
+    {
+      game_id: '2026-05-09T18:10:31',
+      winner: 'Villagers',
+      players: [
+        { name: 'Nox', role: 'Seer', faction: 'village', model: 'm', survived: true, won: true },
+        { name: 'Kai', role: 'Werewolf', faction: 'werewolf', model: 'm', survived: false, won: false },
+      ],
+    },
+    {
+      game_id: '2026-05-10T10:29:27',
+      winner: 'Werewolves',
+      players: [
+        { name: 'Nox', role: 'Villager', faction: 'village', model: 'm', survived: false, won: false },
+        { name: 'Kai', role: 'Werewolf', faction: 'werewolf', model: 'm', survived: true, won: true },
+      ],
+    },
+  ],
+};
+
+function mockFetchOk(data) {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve(data),
+  }));
+}
+
+function renderGameScoped({ sessionId = 'test-session-001', agentName = 'Nox', search = '' } = {}) {
   return render(
-    <MemoryRouter initialEntries={[path]}>
+    <MemoryRouter initialEntries={[`/game/${sessionId}/agent/${agentName}${search}`]}>
       <Routes>
-        <Route path={routePath} element={<AgentDetailScreen />} />
+        <Route path="/game/:sessionId/agent/:agentName" element={<AgentDetailScreen />} />
       </Routes>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
-describe('AgentDetailScreen semantic structure', () => {
-  it('exposes the agent hero as a banner-like header and picker as a list', () => {
-    /*
-     * SUT: AgentDetailScreen / AgentHero / LeftPane
-     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
-     * Level: component
-     * Objective: AgentHero が header、AgentPicker が list/listitem role で特定できることを検証する。
-     */
-    renderAgent();
+function renderGlobal(url) {
+  return render(
+    <MemoryRouter initialEntries={[url]}>
+      <Routes>
+        <Route path="/agent/:agentName" element={<AgentDetailScreen />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
 
-    expect(document.querySelector('header')?.textContent).toContain('Nox');
-    expect(within(screen.getByRole('list', { name: 'エージェント一覧' })).getAllByRole('listitem').length).toBeGreaterThan(0);
-  });
+// --- game-scoped mode（スタブ非依存の配線テスト。実データ化は別 Issue） ---
 
-  it('exposes overview thoughts, suspicion matrix, night actions, and history as semantic lists', async () => {
-    /*
-     * SUT: AgentDetailScreen tab panels
-     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
-     * Level: component
-     * Objective: 推論ログ・疑い度マトリクス・夜行動・過去戦績が list/listitem role で特定できることを検証する。
-     */
-    const user = userEvent.setup();
-    renderAgent();
-
-    expect(within(screen.getByRole('list', { name: '直近の推論' })).getAllByRole('listitem').length).toBeGreaterThan(0);
-    expect(within(screen.getByRole('list', { name: '疑い度マトリクス' })).getAllByRole('listitem')).toHaveLength(8);
-    expect(within(screen.getByRole('list', { name: '夜の行動' })).getAllByRole('listitem').length).toBeGreaterThan(0);
-
-    await user.click(screen.getByRole('button', { name: '過去の戦績' }));
-
-    expect(within(screen.getByRole('list', { name: '過去の戦績' })).getAllByRole('listitem')).toHaveLength(5);
-  });
-
+describe('AgentDetailScreen game-scoped breadcrumbs', () => {
   it('renders game-scoped breadcrumbs when sessionId is present', () => {
     /*
      * SUT: AgentDetailScreen TopBar crumbs
@@ -64,7 +67,7 @@ describe('AgentDetailScreen semantic structure', () => {
      * Level: component
      * Objective: /game/:sessionId/agent/:agentName では sessionId が含まれるパンくずが表示されることを検証する。
      */
-    renderAgent({ sessionId: 'test-session-001', agentName: 'Nox' });
+    renderGameScoped({ sessionId: 'test-session-001', agentName: 'Nox' });
 
     expect(screen.getByText('test-session-001')).toBeTruthy();
   });
@@ -76,7 +79,7 @@ describe('AgentDetailScreen semantic structure', () => {
      * Level: contract
      * Objective: AgentDetailScreen からゲーム画面へ戻るパンくずが ?view=public を引き継ぐことを検証する。
      */
-    renderAgent({ sessionId: 'test-session-001', agentName: 'Nox', search: '?view=public' });
+    renderGameScoped({ sessionId: 'test-session-001', agentName: 'Nox', search: '?view=public' });
 
     expect(screen.getByRole('link', { name: 'test-session-001' }).getAttribute('href')).toBe('/game/test-session-001?view=public');
   });
@@ -88,21 +91,141 @@ describe('AgentDetailScreen semantic structure', () => {
      * Level: contract
      * Objective: game-scoped AgentDetailScreen の AgentPicker 内リンクが ?view=public を引き継ぐことを検証する。
      */
-    renderAgent({ sessionId: 'test-session-001', agentName: 'Nox', search: '?view=public' });
+    renderGameScoped({ sessionId: 'test-session-001', agentName: 'Nox', search: '?view=public' });
 
     expect(screen.getByRole('link', { name: /Mira/ }).getAttribute('href')).toBe('/game/test-session-001/agent/Mira?view=public');
   });
+});
 
-  it('renders global breadcrumbs when sessionId is absent', () => {
+// --- global profile mode（#522・実データ化） ---
+
+describe('AgentDetailScreen(global)', () => {
+  it('エージェント名と img[alt=name] が描画される', async () => {
     /*
-     * SUT: AgentDetailScreen TopBar crumbs
-     * Mock: なし
-     * Level: component
-     * Objective: /agent/:agentName では sessionId なしのパンくずが表示されることを検証する。
-     */
-    renderAgent({ agentName: 'Nox' });
+    SUT: AgentDetailScreen (global profile mode)
+    Mock: global fetch（game_stats.json を返す）
+    Level: integration
+    Objective: 名前見出しと alt=name の Avatar img が描画されることを検証する (AC-6)
+    */
+    mockFetchOk(STATS_FIXTURE);
+    renderGlobal('/agent/Nox');
 
-    expect(screen.queryByText('test-session-001')).toBeNull();
-    expect(screen.getAllByText('Nox').length).toBeGreaterThan(0);
+    expect(await screen.findByRole('heading', { name: 'Nox' })).toBeTruthy();
+    // Hero + 左ペインの双方に Avatar(alt=Nox) が出る。1つ以上あれば AC-6 を満たす。
+    expect(screen.getAllByAltText('Nox').length).toBeGreaterThan(0);
+  });
+
+  it('左ペインに全エージェントの /agent/{name} リンクが描画される', async () => {
+    /*
+    SUT: AgentDetailScreen (global profile mode)
+    Mock: global fetch（game_stats.json を返す）
+    Level: integration
+    Objective: 左ペインが全エージェント名の /agent/{encodeURIComponent(name)} リンク集になることを検証する (AC-3)
+    */
+    mockFetchOk(STATS_FIXTURE);
+    renderGlobal('/agent/Nox');
+
+    const list = await screen.findByRole('list', { name: 'エージェント一覧' });
+    const noxLink = within(list).getByRole('link', { name: /Nox/ });
+    expect(noxLink.getAttribute('href')).toBe('/agent/Nox');
+    const kaiLink = within(list).getByRole('link', { name: /Kai/ });
+    expect(kaiLink.getAttribute('href')).toBe('/agent/Kai');
+  });
+
+  it('game-scoped 固有の要素（session ラベル・疑念マトリクス・夜の行動・推論ログ）が存在しない', async () => {
+    /*
+    SUT: AgentDetailScreen (global profile mode)
+    Mock: global fetch（game_stats.json を返す）
+    Level: integration
+    Objective: global mode で1ゲーム固有 UI が描画されないことを検証する (AC-4)
+    */
+    mockFetchOk(STATS_FIXTURE);
+    renderGlobal('/agent/Nox');
+    await screen.findByRole('heading', { name: 'Nox' });
+
+    expect(screen.queryByText('疑い度マトリクス')).toBeNull();
+    expect(screen.queryByText('推論ログ', { exact: false })).toBeNull();
+    expect(screen.queryByText('夜の行動')).toBeNull();
+    expect(screen.queryByText(/桜霞村/)).toBeNull();
+    expect(screen.queryByText('生存中', { exact: false })).toBeNull();
+  });
+
+  it('?view=public でも表示内容が変わらず viewerMode トグルが出ない', async () => {
+    /*
+    SUT: AgentDetailScreen (global profile mode)
+    Mock: global fetch（game_stats.json を返す）
+    Level: integration
+    Objective: viewerMode による出し分けを行わない（public でも内容不変・トグル UI なし）ことを検証する (AC-5)
+    */
+    mockFetchOk(STATS_FIXTURE);
+    renderGlobal('/agent/Nox?view=public');
+    await screen.findByRole('heading', { name: 'Nox' });
+
+    expect(screen.queryByText('観戦者モード')).toBeNull();
+    expect(screen.queryByText('参加者視点')).toBeNull();
+    expect(screen.getByText('50%')).toBeTruthy();
+  });
+
+  it('勝率・通算成績が game_stats.json の集計値で表示される', async () => {
+    /*
+    SUT: AgentDetailScreen (global profile mode)
+    Mock: global fetch（game_stats.json を返す）
+    Level: integration
+    Objective: 勝率・通算成績が parseGameStats の集計結果で描画されることを検証する (AC-1)
+    */
+    mockFetchOk(STATS_FIXTURE);
+    renderGlobal('/agent/Nox');
+    await screen.findByRole('heading', { name: 'Nox' });
+
+    // Nox: 2戦1勝 → 勝率 50%
+    expect(screen.getByText('50%')).toBeTruthy();
+    expect(screen.getAllByText(/2\s*戦/).length).toBeGreaterThan(0);
+  });
+
+  it('過去戦績一覧に gameId・role 列・勝敗が表示される', async () => {
+    /*
+    SUT: AgentDetailScreen (global profile mode)
+    Mock: global fetch（game_stats.json を返す）
+    Level: integration
+    Objective: 過去戦績一覧に session_id(=game_id)・role 列・勝敗が表示されることを検証する (AC-2)
+    */
+    mockFetchOk(STATS_FIXTURE);
+    renderGlobal('/agent/Nox');
+    const history = await screen.findByRole('list', { name: '過去の戦績' });
+
+    expect(within(history).getByText('2026-05-10T10:29:27')).toBeTruthy();
+    expect(within(history).getByText('2026-05-09T18:10:31')).toBeTruthy();
+    // role 列（AC-2 で許可）— Seer の日本語名
+    expect(within(history).getByText('占い師')).toBeTruthy();
+  });
+
+  it('存在しない agent でも名前・アバターを表示し成績は 0 になる', async () => {
+    /*
+    SUT: AgentDetailScreen (global profile mode)
+    Mock: global fetch（game_stats.json を返す）
+    Level: integration
+    Objective: game_stats.json に無い名前でも名前・アバターを描画し成績 0 を表示することを検証する (AC-7)
+    */
+    mockFetchOk(STATS_FIXTURE);
+    renderGlobal('/agent/Unknown');
+
+    expect(await screen.findByRole('heading', { name: 'Unknown' })).toBeTruthy();
+    expect(screen.getByAltText('Unknown')).toBeTruthy();
+    expect(screen.getByText('0%')).toBeTruthy();
+  });
+
+  it('fetch 失敗時に error 表示を出す', async () => {
+    /*
+    SUT: AgentDetailScreen (global profile mode)
+    Mock: global fetch（ok:false）
+    Level: integration
+    Objective: fetch 失敗時に error 表示へフォールバックすることを検証する (AC-7)
+    */
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    renderGlobal('/agent/Nox');
+
+    await waitFor(() => {
+      expect(screen.getByText(/読み込め|エラー/)).toBeTruthy();
+    });
   });
 });

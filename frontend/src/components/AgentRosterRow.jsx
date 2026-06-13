@@ -12,10 +12,10 @@ import styles from './AgentRosterRow.module.css';
  * 特定 screen の state（useParams 等）に依存しない props ベースのコンポーネント。
  * 遷移先 `to` と役職表示可否 `showRole` は呼び出し側で計算して渡す。
  */
-export default function AgentRosterRow({ name, role, to, showRole = false, coRole, dead = false, deathMeta }) {
+export default function AgentRosterRow({ name, role, to, showRole = false, coRole, dead = false, deathMeta, showStatusDot = true, selected = false }) {
   const r = ROLES[role];
   return (
-    <li className={`${styles.row} ${dead ? styles.dead : ''}`} style={{ '--r-color': r?.color }}>
+    <li className={`${styles.row} ${dead ? styles.dead : ''} ${showStatusDot ? '' : styles.noDot} ${selected ? styles.selected : ''}`} style={{ '--r-color': r?.color }}>
       <Link to={to} className={styles.link}>
         <Avatar name={name} role={showRole ? role : undefined} size="sm" dead={dead} />
         <div className={styles.who}>
@@ -32,7 +32,7 @@ export default function AgentRosterRow({ name, role, to, showRole = false, coRol
             )}
           </span>
         </div>
-        <span className={styles.statusDot} />
+        {showStatusDot && <span className={styles.statusDot} />}
       </Link>
     </li>
   );
