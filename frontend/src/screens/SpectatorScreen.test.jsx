@@ -2,9 +2,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
-import { FeedItem, LeftPane, RightPane } from './SpectatorScreen.jsx';
+import { LeftPane, RightPane } from './SpectatorScreen.jsx';
 import SpectatorScreen from './SpectatorScreen.jsx';
+import { FeedItem } from '../components/FeedCard.jsx';
 import styles from './SpectatorScreen.module.css';
+import feedStyles from '../components/FeedCard.module.css';
 import * as replayLoader from '../lib/replayLoader.js';
 import * as archiveLoader from '../lib/archiveLoader.js';
 
@@ -64,7 +66,7 @@ function renderFeedItem(overrides, options = {}) {
             ev={ev}
             prevById={{}}
             roleAssignment={roleAssignment}
-            title="Test Village"
+            sessionId="test-session"
             viewerMode={options.viewerMode}
             bulkThoughtsOpen={options.bulkThoughtsOpen}
           />
@@ -324,7 +326,7 @@ describe('FeedItem event routing', () => {
       content: 'Bob was executed by the village vote.',
     });
 
-    const row = container.querySelector(`.${styles.sysrow}`);
+    const row = container.querySelector(`.${feedStyles.sysrow}`);
     const avatar = screen.getByAltText('Bob');
 
     expect(row.lastElementChild.querySelector('img[alt="Bob"]')).toBe(avatar);
@@ -1681,7 +1683,7 @@ describe('avatar navigation links (#485)', () => {
       speech_id: 1, reply_to: null, claimed_role: null, reasoning: null, is_public: true,
     };
     const { container } = renderWithSession(
-      <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} viewerMode="spectator" />
+      <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} sessionId={sessionId} viewerMode="spectator" />
     );
     const link = container.querySelector(`a[href="/game/${sessionId}/agent/Alice"]`);
     expect(link).toBeTruthy();
@@ -1702,7 +1704,7 @@ describe('avatar navigation links (#485)', () => {
       <MemoryRouter initialEntries={[`/game/${sessionId}?view=public`]}>
         <Routes>
           <Route path="/game/:sessionId" element={
-            <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} viewerMode="public" />
+            <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} sessionId={sessionId} viewerMode="public" />
           } />
         </Routes>
       </MemoryRouter>
@@ -1720,7 +1722,7 @@ describe('avatar navigation links (#485)', () => {
      */
     const ev = { day: 1, event_type: 'vote', agent: 'Alice', target: 'Bob', content: 'vote', is_public: true };
     const { container } = renderWithSession(
-      <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} viewerMode="spectator" />
+      <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} sessionId={sessionId} viewerMode="spectator" />
     );
     expect(container.querySelector(`a[href="/game/${sessionId}/agent/Alice"]`)).toBeTruthy();
     expect(container.querySelector(`a[href="/game/${sessionId}/agent/Bob"]`)).toBeTruthy();
