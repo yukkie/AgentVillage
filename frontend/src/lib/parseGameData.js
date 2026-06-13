@@ -312,6 +312,85 @@ export function computeDeadByDay(events) {
   return result;
 }
 
+function collectParticipantNames(events, agents) {
+  const names = new Set(Object.keys(agents));
+  for (const ev of events) {
+    if (ev.agent) names.add(ev.agent);
+    if (ev.target) names.add(ev.target);
+  }
+  return [...names].sort();
+}
+
+/**
+ * Build the AgentDetail game-scoped roster from log participants and agent JSON.
+ *
+ * @param {object[]} events
+ * @param {Record<string, object>} agents
+ * @returns {{name: string, role: string|null, isAlive: boolean}[]}
+ */
+export function buildAgentDetailRoster(events, agents = {}) {
+  return collectParticipantNames(events, agents).map(name => ({
+    name,
+    role: agents[name]?.role ?? null,
+    isAlive: agents[name]?.is_alive ?? true,
+  }));
+}
+
+/**
+ * Count one agent's speech events.
+ *
+ * @param {object[]} events
+ * @param {string} agentName
+ * @returns {number}
+ */
+export function countAgentSpeeches(events, agentName) {
+  return events.filter(ev => ev.event_type === 'speech' && ev.agent === agentName).length;
+}
+
+function suspicionPercent(value) {
+  return Math.round(Math.max(0, Math.min(1, Number(value))) * 100);
+}
+
+function latestSuspicionSnapshot(events, agentName) {
+  for (let i = events.length - 1; i >= 0; i -= 1) {
+    const ev = events[i];
+    if (
+      ev.event_type === 'suspicion_update' &&
+      ev.agent === agentName &&
+      ev.suspicion_snapshot &&
+      typeof ev.suspicion_snapshot === 'object'
+    ) {
+      return ev.suspicion_snapshot;
+    }
+  }
+  return null;
+}
+
+/**
+ * Build suspicion matrix rows for AgentDetail.
+ *
+ * Uses the latest suspicion_update snapshot for the agent when present. Falls
+ * back to agents/*.json state.beliefs[].suspicion for older archives.
+ *
+ * @param {object[]} events
+ * @param {Record<string, object>} agents
+ * @param {string} agentName
+ * @returns {{name: string, suspicion: number}[]}
+ */
+export function buildSuspicionMatrix(events, agents = {}, agentName) {
+  const snapshot = latestSuspicionSnapshot(events, agentName);
+  const source = snapshot ?? Object.fromEntries(
+    Object.entries(agents[agentName]?.state?.beliefs ?? {})
+      .map(([name, belief]) => [name, belief?.suspicion])
+      .filter(([, value]) => Number.isFinite(value))
+  );
+
+  return Object.entries(source)
+    .filter(([name, value]) => name !== agentName && Number.isFinite(value))
+    .map(([name, value]) => ({ name, suspicion: suspicionPercent(value) }))
+    .sort((a, b) => b.suspicion - a.suspicion || a.name.localeCompare(b.name));
+}
+
 /**
  * Parse archive JSONL and agent JSON into the GameData shape consumed by React.
  *

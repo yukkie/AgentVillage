@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseEventLine, parseGameData, normalizeEvents, aggregateDaySummary, aggregateNightResults, buildActionsTimeline, aggregateCoStatus, computeDeadByDay } from './parseGameData.js';
+import { parseEventLine, parseGameData, normalizeEvents, aggregateDaySummary, aggregateNightResults, buildActionsTimeline, aggregateCoStatus, computeDeadByDay, buildAgentDetailRoster, countAgentSpeeches, buildSuspicionMatrix } from './parseGameData.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '../../..');
@@ -852,3 +852,91 @@ describe('parseGameData winner extraction', () => {
   });
 });
 
+describe('AgentDetail game-scoped aggregate helpers', () => {
+  it('buildAgentDetailRoster: combines log participants with agent alive state', () => {
+    /*
+     * SUT: buildAgentDetailRoster
+     * Mock: なし
+     * Level: unit
+     * Objective: spectator_log.jsonl の参加者集合と agents/*.json の state.is_alive から game-scoped 参加者ピッカー用データを生成できることを検証する。
+     */
+    const events = [
+      { day: 1, event_type: 'speech', agent: 'Mira' },
+      { day: 1, event_type: 'vote', agent: 'Nox', target: 'Mira' },
+      { day: 1, event_type: 'night_attack', agent: 'Kai', target: 'Sora', is_public: false },
+    ];
+    const agents = {
+      Mira: { name: 'Mira', role: 'Villager', is_alive: true },
+      Nox: { name: 'Nox', role: 'Seer', is_alive: false },
+      Kai: { name: 'Kai', role: 'Werewolf', is_alive: true },
+    };
+
+    expect(buildAgentDetailRoster(events, agents)).toEqual([
+      { name: 'Kai', role: 'Werewolf', isAlive: true },
+      { name: 'Mira', role: 'Villager', isAlive: true },
+      { name: 'Nox', role: 'Seer', isAlive: false },
+      { name: 'Sora', role: null, isAlive: true },
+    ]);
+  });
+
+  it('countAgentSpeeches: counts speech events for one agent', () => {
+    /*
+     * SUT: countAgentSpeeches
+     * Mock: なし
+     * Level: unit
+     * Objective: 対象 agent の speech イベントだけを本村発言数として数えることを検証する。
+     */
+    const events = [
+      { event_type: 'speech', agent: 'Nox' },
+      { event_type: 'speech', agent: 'Mira' },
+      { event_type: 'speech', agent: 'Nox' },
+      { event_type: 'vote', agent: 'Nox' },
+    ];
+
+    expect(countAgentSpeeches(events, 'Nox')).toBe(2);
+  });
+
+  it('buildSuspicionMatrix: uses latest suspicion snapshot before agent beliefs fallback', () => {
+    /*
+     * SUT: buildSuspicionMatrix
+     * Mock: なし
+     * Level: unit
+     * Objective: suspicion_update.suspicion_snapshot がある場合は最新 snapshot を優先し、ない場合は agents/*.json の state.beliefs[].suspicion にフォールバックすることを検証する。
+     */
+    const events = [
+      {
+        day: 1,
+        event_type: 'suspicion_update',
+        agent: 'Nox',
+        suspicion_snapshot: { Mira: 0.2, Kai: 0.9 },
+      },
+      {
+        day: 2,
+        event_type: 'suspicion_update',
+        agent: 'Nox',
+        suspicion_snapshot: { Mira: 0.7, Kai: 0.4 },
+      },
+    ];
+    const agents = {
+      Nox: {
+        state: {
+          beliefs: {
+            Mira: { suspicion: 0.1 },
+            Kai: { suspicion: 0.8 },
+            Sora: { suspicion: 0.3 },
+          },
+        },
+      },
+    };
+
+    expect(buildSuspicionMatrix(events, agents, 'Nox')).toEqual([
+      { name: 'Mira', suspicion: 70 },
+      { name: 'Kai', suspicion: 40 },
+    ]);
+    expect(buildSuspicionMatrix([], agents, 'Nox')).toEqual([
+      { name: 'Kai', suspicion: 80 },
+      { name: 'Sora', suspicion: 30 },
+      { name: 'Mira', suspicion: 10 },
+    ]);
+  });
+});
