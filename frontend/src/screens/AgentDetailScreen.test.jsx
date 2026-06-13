@@ -97,6 +97,84 @@ describe('AgentDetailScreen game-scoped breadcrumbs', () => {
   });
 });
 
+describe('AgentDetailScreen game-scoped stub-only UI cleanup', () => {
+  it('game-scoped TopBar removes stub-only action buttons', () => {
+    /*
+     * SUT: AgentDetailScreen TopBar
+     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Level: integration
+     * Objective: game-scoped AgentDetailScreen の TopBar から stub-only action buttons が撤去されることを検証する (AC-1)
+     */
+    renderGameScoped({ sessionId: 'test-session-001', agentName: 'Nox' });
+
+    expect(screen.queryByText(/LIVE観戦中/)).toBeNull();
+    expect(screen.queryByText(/プロファイルJSON/)).toBeNull();
+    expect(screen.queryByText(/ウォッチ/)).toBeNull();
+  });
+
+  it('game-scoped TopBar toggles viewerMode query like SpectatorScreen', async () => {
+    /*
+     * SUT: AgentDetailScreen TopBar viewerMode toggle
+     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Level: contract
+     * Objective: game-scoped mode のみに viewerMode トグルがあり、SpectatorScreen と同じ query 遷移を行うことを検証する (AC-2)
+     */
+    const { userEvent } = await import('@testing-library/user-event');
+    const user = userEvent.setup();
+    renderGameScoped({ sessionId: 'test-session-001', agentName: 'Nox' });
+
+    const spectatorToggle = screen.getByRole('button', { name: /観戦者モード/ });
+    await user.click(spectatorToggle);
+    expect(screen.getByRole('button', { name: /参加者視点/ })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'test-session-001' }).getAttribute('href')).toBe('/game/test-session-001?view=public');
+
+    await user.click(screen.getByRole('button', { name: /参加者視点/ }));
+    expect(screen.getByRole('button', { name: /観戦者モード/ })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'test-session-001' }).getAttribute('href')).toBe('/game/test-session-001');
+  });
+
+  it('game-scoped left pane removes sort controls', () => {
+    /*
+     * SUT: AgentDetailScreen LeftPane
+     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Level: integration
+     * Objective: 左ペインの onClick なし並べ替えボタンが撤去されることを検証する (AC-3)
+     */
+    renderGameScoped({ sessionId: 'test-session-001', agentName: 'Nox' });
+
+    expect(screen.queryByRole('button', { name: /発言数/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /容疑度/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /役職別/ })).toBeNull();
+  });
+
+  it('game-scoped removes cheers goal and pseudo thought timestamps', () => {
+    /*
+     * SUT: AgentDetailScreen game-scoped center pane
+     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Level: integration
+     * Objective: 応援スコア・現在の目標・thought 疑似時刻が撤去されることを検証する (AC-4)
+     */
+    renderGameScoped({ sessionId: 'test-session-001', agentName: 'Nox' });
+
+    expect(screen.queryByText('応援スコア')).toBeNull();
+    expect(screen.queryByText(/現在の目標/)).toBeNull();
+    expect(screen.queryByText(/^\d{1,2}:\d{2}$/)).toBeNull();
+  });
+
+  it('game-scoped removes suspicion tab and right pane night actions', () => {
+    /*
+     * SUT: AgentDetailScreen game-scoped tabs and RightPane
+     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Level: integration
+     * Objective: 「疑い・信頼」タブと右ペインの「夜の行動」パネルが撤去されることを検証する (AC-5)
+     */
+    renderGameScoped({ sessionId: 'test-session-001', agentName: 'Nox' });
+
+    expect(screen.queryByRole('button', { name: '疑い・信頼' })).toBeNull();
+    expect(screen.queryByText('夜の行動')).toBeNull();
+  });
+});
+
 // --- global profile mode（#522・実データ化） ---
 
 describe('AgentDetailScreen(global)', () => {
