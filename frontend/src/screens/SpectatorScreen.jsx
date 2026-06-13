@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import Avatar, { AvatarButton } from '../components/Avatar.jsx';
 import RoleTag from '../components/RoleTag.jsx';
+import AgentRosterRow from '../components/AgentRosterRow.jsx';
 import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLES } from '../lib/constants.js';
@@ -675,54 +676,33 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
       <section className={styles.rosterSection} aria-labelledby="roster-alive-heading">
         <h4 id="roster-alive-heading">生存 <span className={styles.count}>{alive.length}</span></h4>
         <ul className={styles.rosterList} aria-label="生存エージェント">
-          {alive.map(n => {
-            const role = roleAssignment[n];
-            const r = ROLES[role];
-            const coRole = coStatus[n];
-            return (
-              <li key={n} className={styles.rosterRow} style={{ '--r-color': r?.color }}>
-                <Link to={agentDetailPath(sessionId, n, viewerMode)} className={styles.agentLink}>
-                  <Avatar name={n} role={viewerMode === 'spectator' ? role : undefined} size="sm" label={n} layout="vertical" />
-                </Link>
-                <div className={styles.who}>
-                  <span className={styles.rosterName}>
-                    {viewerMode === 'spectator' && <RoleTag role={role} />}
-                    {coRole && (
-                      <span className={styles.coBadge} style={{ '--co-color': ROLES[coRole]?.color }}>▶ {ROLES[coRole]?.ja || coRole} CO</span>
-                    )}
-                  </span>
-                </div>
-              </li>
-            );
-          })}
+          {alive.map(n => (
+            <AgentRosterRow
+              key={n}
+              name={n}
+              role={roleAssignment[n]}
+              to={agentDetailPath(sessionId, n, viewerMode)}
+              showRole={viewerMode === 'spectator'}
+              coRole={coStatus[n]}
+            />
+          ))}
         </ul>
       </section>
 
       <section className={styles.rosterSection} aria-labelledby="roster-dead-heading">
         <h4 id="roster-dead-heading">死亡者 <span className={styles.count}>{deadNames.length}</span></h4>
         <ul className={styles.rosterList} aria-label="死亡者">
-          {deadNames.map(n => {
-            const role = roleAssignment[n];
-            const r = ROLES[role];
-            const meta = activeDead.get(n);
-            return (
-              <li key={n} className={`${styles.rosterRow} ${styles.dead}`} style={{ '--r-color': r?.color }}>
-                <Link to={agentDetailPath(sessionId, n, viewerMode)} className={styles.agentLink}>
-                  <Avatar name={n} role={role} size="sm" dead label={n} layout="vertical" />
-                </Link>
-                <div className={styles.whoMeta}>
-                  <div className={styles.whoBlock}>
-                    <span className={styles.sub}>
-                      <RoleTag role={role} />
-                    </span>
-                  </div>
-                  {meta && (
-                    <span className={styles.deathReason}>Day {meta.day} · {meta.content}</span>
-                  )}
-                </div>
-              </li>
-            );
-          })}
+          {deadNames.map(n => (
+            <AgentRosterRow
+              key={n}
+              name={n}
+              role={roleAssignment[n]}
+              to={agentDetailPath(sessionId, n, viewerMode)}
+              showRole={viewerMode === 'spectator'}
+              dead
+              deathMeta={activeDead.get(n)}
+            />
+          ))}
         </ul>
       </section>
     </div>

@@ -805,7 +805,7 @@ describe('RightPane: role display in spectator mode', () => {
      * Mock: なし
      * Level: unit
      * Objective: publicモードで生存エージェントの真の役職タグが非表示になることを検証する（AC2 / #314）。
-     *            死亡者行（Bob）は常時役職公開のため対象外。
+     *            死亡者行は #521 AC-3 の別テストで検証する。
      */
     const { container } = renderRightPane({ viewerMode: 'public', coStatus: {} });
     // Find the alive section (first rosterSection) and check no roleTag inside it
@@ -827,6 +827,44 @@ describe('RightPane: role display in spectator mode', () => {
       coStatus: { Alice: 'Seer' },
     });
     expect(screen.getByText(/占い師.*CO|CO.*占い師|▶.*占い師/)).toBeTruthy();
+  });
+});
+
+describe('RightPane: dead role hidden in public mode (#521 AC-3)', () => {
+  it('hides dead agent role tag in public mode but keeps death reason', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし
+     * Level: component
+     * Objective: 組み合わせ境界（死亡者行 × public モード）で真役職を非表示にしつつ、
+     *            役職を露出しない死因メタ（Day N · content）は表示維持されることを検証する（#521 AC-3）。
+     */
+    const { container } = renderRightPane({
+      viewerMode: 'public',
+      deadByDay: { 1: new Map([['Bob', { day: 1, content: 'Werewolves attacked Bob.' }]]) },
+      activeDay: 1,
+      coStatus: {},
+    });
+    const deadSection = container.querySelectorAll('[class*="rosterSection"]')[1];
+    expect(deadSection.querySelectorAll('[class*="roleTag"]').length).toBe(0);
+    expect(screen.getByText(/Day 1 · Werewolves attacked Bob\./)).toBeTruthy();
+  });
+
+  it('shows dead agent role tag in spectator mode', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし
+     * Level: component
+     * Objective: spectator モードでは死亡者行に真役職タグが表示されることを検証する（AC-3 の対となる正常系）。
+     */
+    const { container } = renderRightPane({
+      viewerMode: 'spectator',
+      deadByDay: { 1: new Map([['Bob', { day: 1, content: 'Werewolves attacked Bob.' }]]) },
+      activeDay: 1,
+      coStatus: {},
+    });
+    const deadSection = container.querySelectorAll('[class*="rosterSection"]')[1];
+    expect(deadSection.querySelectorAll('[class*="roleTag"]').length).toBeGreaterThan(0);
   });
 });
 
