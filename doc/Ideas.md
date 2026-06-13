@@ -19,6 +19,11 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| yukkie/AgentVillage#521 ❌ | enhancement | — | — | Unify SpectatorScreen roster & AgentDetail picker into shared components | #515 §8.3 D 派生（先行）。feed カード（SpeechCard/WolfChatCard/SystemRow）と統一デザインのエージェント行（AgentRosterRow: アイコン左・名前/役職縦2行・statusDot）を components/ へ共通化。Spectator ロスター見た目が変わる。#523 が依存 |
+| yukkie/AgentVillage#522 ❌ | enhancement | — | — | Implement AgentDetailScreen global profile mode | #515 §8.3 A。/agent/:name を game_stats.json で実データ化（勝率・過去戦績・横断名簿リンク集）。役職/推論/夜行動/マトリクスは出さない |
+| yukkie/AgentVillage#523 ❌ | enhancement | — | — | Implement AgentDetailScreen game-scoped mode | #515 §8.3 B/D。/game/:sessionId/agent/:name を spectator_log+agents/*.json で実データ化。中央を日付タブ統合・疑念マトリクス・viewerMode 出し分け。依存: #521 |
+| yukkie/AgentVillage#524 ❌ | enhancement | — | — | Remove AgentDetailScreen stub-only UI and add viewerMode toggle | #515 §8.3 C。不要ボタン/並べ替え/応援/現在の目標/疑似時刻/疑い・信頼タブ/右ペイン夜行動を撤去し、game-scoped に viewerMode トグル追加 |
+| yukkie/AgentVillage#519 ❌ | enhancement | — | — | Real-data blurb for AgentDetailScreen via config/agents.json | #515 の仕分け（§8.3 E 分割案5）から切り出し。AGENT_BLURB を config/agents.json の静的フィールド（まず英語）へ実データ化し、AgentDetailScreen 両モードで表示 |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#337 | enhancement | 🟡 | 2 | Top agents real stats | stub/gameList.js の TOP_AGENTS を実ゲーム結果の集計データに置き換え |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
