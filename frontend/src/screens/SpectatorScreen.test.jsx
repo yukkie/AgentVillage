@@ -1471,7 +1471,7 @@ describe('FeedItem: public mode hides spectator-only events (AC3 / #314)', () =>
      * Objective: public モードで spectator 限定イベント（inspection/guard/medium_result/wolf_chat）が完全非表示になることを検証する（AC3 / #314）。
      */
     const { container } = render(
-      <FeedItem ev={event} prevById={{}} roleAssignment={roleAssignment} title="Test" viewerMode="public" />
+      <FeedItem ev={event} prevById={{}} roleAssignment={roleAssignment} sessionId="test-session" viewerMode="public" />
     );
     expect(container.firstChild).toBeNull();
   });
@@ -1489,7 +1489,7 @@ describe('FeedItem: public mode hides spectator-only events (AC3 / #314)', () =>
           <Route path="/game/:sessionId" element={
             <FeedItem
               ev={{ event_type: 'inspection', agent: 'Alice', target: 'Bob', content: 'Alice inspects Bob: Werewolf', is_public: false }}
-              prevById={{}} roleAssignment={roleAssignment} title="Test" viewerMode="spectator"
+              prevById={{}} roleAssignment={roleAssignment} sessionId="test-session" viewerMode="spectator"
             />
           } />
         </Routes>
@@ -1517,7 +1517,7 @@ describe('SpeechCard: viewerMode public (AC2 / #314)', () => {
       <MemoryRouter initialEntries={['/game/test-session']}>
         <Routes>
           <Route path="/game/:sessionId" element={
-            <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} title="Test Village" viewerMode={viewerMode} />
+            <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} sessionId="test-session" viewerMode={viewerMode} />
           } />
         </Routes>
       </MemoryRouter>
@@ -1568,7 +1568,7 @@ describe('SpeechCard: viewerMode public (AC2 / #314)', () => {
       <MemoryRouter initialEntries={['/game/test-session']}>
         <Routes>
           <Route path="/game/:sessionId" element={
-            <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} title="Test" viewerMode={mode} />
+            <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} sessionId="test-session" viewerMode={mode} />
           } />
         </Routes>
       </MemoryRouter>
@@ -1596,7 +1596,7 @@ describe('ThoughtDetails: viewerMode public (AC4 / #314)', () => {
       <MemoryRouter initialEntries={['/game/test-session']}>
         <Routes>
           <Route path="/game/:sessionId" element={
-            <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} title="Test Village" viewerMode={viewerMode} />
+            <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} sessionId="test-session" viewerMode={viewerMode} />
           } />
         </Routes>
       </MemoryRouter>
