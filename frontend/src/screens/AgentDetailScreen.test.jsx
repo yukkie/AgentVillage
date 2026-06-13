@@ -151,7 +151,7 @@ describe('AgentDetailScreen game-scoped breadcrumbs', () => {
   it('preserves public viewerMode query in game-scoped agent picker links', async () => {
     /*
      * SUT: AgentDetailScreen LeftPane
-     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Mock: global fetch（game-scoped replay fixture を返す）
      * Level: contract
      * Objective: game-scoped AgentDetailScreen の AgentPicker 内リンクが ?view=public を引き継ぐことを検証する。
      */
@@ -165,7 +165,7 @@ describe('AgentDetailScreen game-scoped stub-only UI cleanup', () => {
   it('game-scoped TopBar removes stub-only action buttons', () => {
     /*
      * SUT: AgentDetailScreen TopBar
-     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Mock: global fetch（game-scoped replay fixture を返す）
      * Level: integration
      * Objective: game-scoped AgentDetailScreen の TopBar から stub-only action buttons が撤去されることを検証する (AC-1)
      */
@@ -179,7 +179,7 @@ describe('AgentDetailScreen game-scoped stub-only UI cleanup', () => {
   it('game-scoped TopBar toggles viewerMode query like SpectatorScreen', async () => {
     /*
      * SUT: AgentDetailScreen TopBar viewerMode toggle
-     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Mock: global fetch（game-scoped replay fixture を返す）
      * Level: contract
      * Objective: game-scoped mode のみに viewerMode トグルがあり、SpectatorScreen と同じ query 遷移を行うことを検証する (AC-2)
      */
@@ -200,7 +200,7 @@ describe('AgentDetailScreen game-scoped stub-only UI cleanup', () => {
   it('game-scoped left pane removes sort controls', () => {
     /*
      * SUT: AgentDetailScreen LeftPane
-     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Mock: global fetch（game-scoped replay fixture を返す）
      * Level: integration
      * Objective: 左ペインの onClick なし並べ替えボタンが撤去されることを検証する (AC-3)
      */
@@ -214,7 +214,7 @@ describe('AgentDetailScreen game-scoped stub-only UI cleanup', () => {
   it('game-scoped removes cheers goal and pseudo thought timestamps', () => {
     /*
      * SUT: AgentDetailScreen game-scoped center pane
-     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Mock: global fetch（game-scoped replay fixture を返す）
      * Level: integration
      * Objective: 応援スコア・現在の目標・thought 疑似時刻が撤去されることを検証する (AC-4)
      */
@@ -228,7 +228,7 @@ describe('AgentDetailScreen game-scoped stub-only UI cleanup', () => {
   it('game-scoped removes suspicion tab and right pane night actions', () => {
     /*
      * SUT: AgentDetailScreen game-scoped tabs and RightPane
-     * Mock: なし（stub/agentDetail.js の既存スタブデータを使用）
+     * Mock: global fetch（game-scoped replay fixture を返す）
      * Level: integration
      * Objective: 「疑い・信頼」タブと右ペインの「夜の行動」パネルが撤去されることを検証する (AC-5)
      */
