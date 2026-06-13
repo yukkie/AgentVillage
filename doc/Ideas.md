@@ -21,7 +21,6 @@
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#530 ❌ | enhancement | — | — | Establish design token usage rules & design-lint enforcement | #522 レビューで発覚したスタイル不統一が起点。トークン使用規約の明文化＋design lint 導入。idd は lint 通過のみ軽量ゲート、逸脱発見/tech-debt/リファクタは self-reflection-review |
 | yukkie/AgentVillage#523 ❌ | enhancement | — | — | Implement AgentDetailScreen game-scoped mode | #515 §8.3 B/D。/game/:sessionId/agent/:name を spectator_log+agents/*.json で実データ化。中央を日付タブ統合・疑念マトリクス・viewerMode 出し分け。依存: #521, #526 |
-| yukkie/AgentVillage#524 ❌ | enhancement | — | — | Remove AgentDetailScreen stub-only UI and add viewerMode toggle | #515 §8.3 C。不要ボタン/並べ替え/応援/現在の目標/疑似時刻/疑い・信頼タブ/右ペイン夜行動を撤去し、game-scoped に viewerMode トグル追加 |
 | yukkie/AgentVillage#519 ❌ | enhancement | — | — | Real-data blurb for AgentDetailScreen via config/agents.json | #515 の仕分け（§8.3 E 分割案5）から切り出し。AGENT_BLURB を config/agents.json の静的フィールド（まず英語）へ実データ化し、AgentDetailScreen 両モードで表示 |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#337 | enhancement | 🟡 | 2 | Top agents real stats | stub/gameList.js の TOP_AGENTS を実ゲーム結果の集計データに置き換え |
