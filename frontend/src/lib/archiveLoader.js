@@ -129,6 +129,40 @@ export async function fetchGameStats() {
   return res.json();
 }
 
+// --- Agent config blurb (#519) ---
+
+// config/agents.json holds static, name-keyed agent metadata (style, occupation,
+// blurb …). Served by the /config middleware in vite.config.js (local dev only).
+// Replace with a FastAPI endpoint in production (#315).
+const AGENT_CONFIG_URL = '/config/agents.json';
+
+/**
+ * Look up an agent's static blurb (1-line profile) from config/agents.json.
+ * Returns null when the agent is absent or config is null/missing so the
+ * display side can fall back to a placeholder (AC-4). No placeholder string
+ * is baked in here to keep this pure and decoupled from the UI symbol.
+ *
+ * @param {{name: string, blurb?: string}[] | null} config - Parsed config/agents.json
+ * @param {string} name
+ * @returns {string | null}
+ */
+export function parseBlurb(config, name) {
+  if (!Array.isArray(config)) return null;
+  const entry = config.find(a => a.name === name);
+  return entry?.blurb ?? null;
+}
+
+/**
+ * Fetch and parse config/agents.json. Throws if the fetch fails.
+ *
+ * @returns {Promise<{name: string, blurb?: string}[]>}
+ */
+export async function fetchAgentConfig() {
+  const res = await fetch(AGENT_CONFIG_URL);
+  if (!res.ok) throw new Error(`Failed to fetch agent config: ${res.status}`);
+  return res.json();
+}
+
 /**
  * Fetch a single game entry by sessionId from state_archive/index.json.
  * Returns the raw index entry (including cast) for use by SpectatorScreen.

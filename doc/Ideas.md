@@ -20,7 +20,6 @@
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#530 ❌ | enhancement | — | — | Establish design token usage rules & design-lint enforcement | #522 レビューで発覚したスタイル不統一が起点。トークン使用規約の明文化＋design lint 導入。idd は lint 通過のみ軽量ゲート、逸脱発見/tech-debt/リファクタは self-reflection-review |
-| yukkie/AgentVillage#519 ❌ | enhancement | — | — | Real-data blurb for AgentDetailScreen via config/agents.json | #515 の仕分け（§8.3 E 分割案5）から切り出し。AGENT_BLURB を config/agents.json の静的フィールド（まず英語）へ実データ化し、AgentDetailScreen 両モードで表示 |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#337 | enhancement | 🟡 | 2 | Top agents real stats | stub/gameList.js の TOP_AGENTS を実ゲーム結果の集計データに置き換え |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |

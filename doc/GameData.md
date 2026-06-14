@@ -136,7 +136,7 @@ AgentDetailScreen は現在 `stub/agentDetail.js` のデータのみを参照し
 
 | フィールド | 用途 | 現状 | 対応方針 |
 |---|---|---|---|
-| `persona_short`（blurb） | エージェントの1行プロフィール | ❌ `config/agents.json` に存在しない | `stub/agentDetail.js` の `AGENT_BLURB` スタブ固定。`config/agents.json` への追加が必要 |
+| blurb | エージェントの1行プロフィール | ✅ `config/agents.json` の `blurb`（英語）で実データ化済み（#519） | `fetchAgentConfig()` で fetch・`parseBlurb()` で抽出。fetch 失敗／未定義は `—` フォールバック。日本語化は将来の別 Issue（`persona_short` は使わない） |
 | 通算戦績（wins / games / cheers） | ヒーローヘッダーの統計表示 | ❌ アーカイブから集計されていない | `stub/agentDetail.js` の `AGENT_STATS` スタブ固定。#337 実データ集計で対応予定 |
 | 疑い・信頼スコア | 疑いマトリクス表示 | ❌ 実ログに存在しない | `getSuspicionMatrix()` が `charCodeAt` ベースのハッシュで生成。エージェントの `thought` から推定する設計が必要 |
 | 夜の行動ログ | 夜の行動タブ | ✅ `spectator_log.jsonl` に観戦者向けイベントとして存在 | `stub/agentDetail.js` の `NIGHT_ACTIONS` スタブ固定。実ログ接続が必要 |

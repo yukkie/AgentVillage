@@ -6,10 +6,29 @@ import { FeedItem } from '../components/FeedCard.jsx';
 import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLES } from '../lib/constants.js';
-import { fetchGameStats, parseGameStats, parseAllAgentNames, fetchGameBySessionId } from '../lib/archiveLoader.js';
+import { fetchGameStats, parseGameStats, parseAllAgentNames, fetchGameBySessionId, fetchAgentConfig, parseBlurb } from '../lib/archiveLoader.js';
 import { fetchReplayGame } from '../lib/replayLoader.js';
 import { buildAgentDetailRoster, buildSuspicionMatrix, countAgentSpeeches } from '../lib/parseGameData.js';
 import styles from './AgentDetailScreen.module.css';
+
+// blurb（config/agents.json 由来の1行プロフィール・#519）が無い／fetch 失敗時のフォールバック表示。
+const BLURB_FALLBACK = '—';
+
+// blurb は viewerMode にもモード（global / game-scoped）にも依存しない名前依存の静的データ。
+// 戦績／リプレイの fetch チェーンに混ぜず独立して取得し、失敗しても本体描画を妨げない（AC-4）。
+function useAgentBlurb(agent) {
+  const [config, setConfig] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchAgentConfig()
+      .then(c => { if (!cancelled) setConfig(c); })
+      .catch(() => { if (!cancelled) setConfig(null); });
+    return () => { cancelled = true; };
+  }, []);
+
+  return parseBlurb(config, agent) ?? BLURB_FALLBACK;
+}
 
 function viewerModeFromSearchParams(searchParams) {
   return searchParams.get('view') === 'public' ? 'public' : 'spectator';
@@ -51,7 +70,7 @@ function LeftPane({ current, sessionId, viewerMode = 'spectator', roster = [] })
 }
 
 // --- 中央: ヒーロー ---
-function AgentHero({ agent, agentData, speechCount, sessionMeta, currentDay, viewerMode = 'spectator' }) {
+function AgentHero({ agent, agentData, speechCount, sessionMeta, currentDay, viewerMode = 'spectator', blurb }) {
   const role = agentData?.role ?? null;
   const r = ROLES[role];
   const isPublic = viewerMode === 'public';
@@ -72,6 +91,7 @@ function AgentHero({ agent, agentData, speechCount, sessionMeta, currentDay, vie
             {isAlive ? `生存中 · Day ${currentDay || 0}` : `死亡 · Day ${currentDay || 0}`}
           </span>
         </div>
+        <p className={styles.heroBlurb}>{blurb}</p>
       </div>
       <div className={styles.heroStats}>
         <div className={styles.heroStat}>
@@ -233,7 +253,7 @@ function GlobalLeftPane({ allNames, current }) {
 
 // --- global ヒーロー: 名前・アバター・勝率・通算成績（AC-1 / AC-6） ---
 // 役職タグ・生死・session ラベルは出さない（AC-4）。
-function GlobalHero({ agent, stats }) {
+function GlobalHero({ agent, stats, blurb }) {
   const winPct = stats.total ? Math.round(stats.wins / stats.total * 100) : 0;
 
   return (
@@ -244,6 +264,7 @@ function GlobalHero({ agent, stats }) {
         <div className={styles.heroSub}>
           <span>通算 {stats.total} 戦 {stats.wins} 勝</span>
         </div>
+        <p className={styles.heroBlurb}>{blurb}</p>
       </div>
       <div className={styles.heroStats}>
         <div className={styles.heroStat}>
@@ -284,7 +305,7 @@ function GlobalHistory({ stats }) {
 }
 
 // --- global profile mode 本体（非同期 fetch・loading/error/empty を扱う・AC-7） ---
-function GlobalProfile({ agent }) {
+function GlobalProfile({ agent, blurb }) {
   const [state, setState] = useState({ status: 'loading', games: null });
 
   useEffect(() => {
@@ -311,7 +332,7 @@ function GlobalProfile({ agent }) {
         left={<GlobalLeftPane allNames={allNames} current={agent} />}
       >
         <div className={styles.mainPane}>
-          <GlobalHero agent={agent} stats={stats} />
+          <GlobalHero agent={agent} stats={stats} blurb={blurb} />
           <div className={styles.tabContent}>
             <GlobalHistory stats={stats} />
           </div>
@@ -335,6 +356,7 @@ export default function AgentDetailScreen() {
   const viewerMode = viewerModeFromSearchParams(searchParams);
   const viewerSearch = searchForViewerMode(viewerMode);
   const agent = agentName || 'Nox';
+  const blurb = useAgentBlurb(agent);
   const [gameScopedState, setGameScopedState] = useState({
     status: sessionId ? 'loading' : 'idle',
     entry: null,
@@ -364,7 +386,7 @@ export default function AgentDetailScreen() {
 
   // sessionId なし → global profile mode（横断戦績・実データ）
   if (!sessionId) {
-    return <GlobalProfile agent={agent} />;
+    return <GlobalProfile agent={agent} blurb={blurb} />;
   }
 
   const toggleViewerMode = () => {
@@ -411,6 +433,7 @@ export default function AgentDetailScreen() {
             sessionMeta={entry}
             currentDay={currentDay}
             viewerMode={viewerMode}
+            blurb={blurb}
           />
           <AgentDayTimeline
             agent={agent}

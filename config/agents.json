@@ -8,7 +8,8 @@
     "age": "adult",
     "speech_style": "polite",
     "occupation": "Mediator",
-    "occupation_ja": "仲裁人"
+    "occupation_ja": "仲裁人",
+    "blurb": "Cools every heated room with reason, and never lets a quiet voice go unheard."
   },
   {
     "name": "Nana",
@@ -19,7 +20,8 @@
     "age": "teen",
     "speech_style": "tsundere",
     "occupation": "Trickster",
-    "occupation_ja": "道化者"
+    "occupation_ja": "道化者",
+    "blurb": "Hides a sharp mind behind sharper jokes, and means more than she ever admits."
   },
   {
     "name": "Ren",
@@ -30,7 +32,8 @@
     "age": "adult",
     "speech_style": "gentle",
     "occupation": "Watcher",
-    "occupation_ja": "見張り番"
+    "occupation_ja": "見張り番",
+    "blurb": "Says little and watches everything, letting others reveal what he already suspects."
   },
   {
     "name": "Mira",
@@ -41,7 +44,8 @@
     "age": "adult",
     "speech_style": "casual",
     "occupation": "Analyst",
-    "occupation_ja": "記録係"
+    "occupation_ja": "記録係",
+    "blurb": "Stands where instinct meets logic and smells a lie before it has finished forming."
   },
   {
     "name": "Vael",
@@ -52,7 +56,8 @@
     "age": null,
     "speech_style": "polite",
     "occupation": "Deceiver",
-    "occupation_ja": "詐欺師"
+    "occupation_ja": "詐欺師",
+    "blurb": "Builds a palace of lies, brick by polished brick, and invites you to live in it."
   },
   {
     "name": "Kai",
@@ -63,7 +68,8 @@
     "age": "adult",
     "speech_style": "dry",
     "occupation": "Strategist",
-    "occupation_ja": "策士"
+    "occupation_ja": "策士",
+    "blurb": "Wields silence as a weapon, spending the fewest words to sow the most doubt."
   },
   {
     "name": "Sera",
@@ -74,7 +80,8 @@
     "age": "adult",
     "speech_style": "cool",
     "occupation": "Executioner",
-    "occupation_ja": "処刑人"
+    "occupation_ja": "処刑人",
+    "blurb": "Beneath a smile everyone trusts, the hunt is already elegantly underway."
   },
   {
     "name": "Kael",
@@ -85,7 +92,8 @@
     "age": "teen",
     "speech_style": "blunt",
     "occupation": "Guardian",
-    "occupation_ja": "守衛"
+    "occupation_ja": "守衛",
+    "blurb": "Charges in headlong to shield the ones he trusts, and asks the hard questions later."
   },
   {
     "name": "Lumi",
@@ -96,7 +104,8 @@
     "age": "teen",
     "speech_style": "gentle",
     "occupation": "Florist",
-    "occupation_ja": "花屋"
+    "occupation_ja": "花屋",
+    "blurb": "Believes the best in everyone, and her open heart is both her gift and her risk."
   },
   {
     "name": "Shiki",
@@ -107,7 +116,8 @@
     "age": "adult",
     "speech_style": "assertive",
     "occupation": "Priest",
-    "occupation_ja": "司祭"
+    "occupation_ja": "司祭",
+    "blurb": "Remembers every word that was spoken, and quietly lays each contradiction bare."
   },
   {
     "name": "Toma",
@@ -118,7 +128,8 @@
     "age": "adult",
     "speech_style": "casual",
     "occupation": "Merchant",
-    "occupation_ja": "商人"
+    "occupation_ja": "商人",
+    "blurb": "Reads the room like a marketplace and always knows which side is worth backing today."
   },
   {
     "name": "Rei",
@@ -129,7 +140,8 @@
     "age": "adult",
     "speech_style": "cool",
     "occupation": "Spy",
-    "occupation_ja": "密偵"
+    "occupation_ja": "密偵",
+    "blurb": "Keeps her cards and her loyalties hidden, trading secrets while revealing none of her own."
   },
   {
     "name": "Haru",
@@ -140,7 +152,8 @@
     "age": "teen",
     "speech_style": "gentle",
     "occupation": "Farmhand",
-    "occupation_ja": "農夫"
+    "occupation_ja": "農夫",
+    "blurb": "Wears an easy smile that puts everyone at ease, and notices far more than he lets on."
   },
   {
     "name": "Nox",
@@ -151,7 +164,8 @@
     "age": "adult",
     "speech_style": "dry",
     "occupation": "Undertaker",
-    "occupation_ja": "葬儀屋"
+    "occupation_ja": "葬儀屋",
+    "blurb": "Quiet as a moonless night, he finds the frayed edge in everything you say."
   },
   {
     "name": "Sable",
@@ -162,6 +176,7 @@
     "age": "adult",
     "speech_style": "polite",
     "occupation": "Diplomat",
-    "occupation_ja": "外交官"
+    "occupation_ja": "外交官",
+    "blurb": "Reads the current of the room and knows the one word that will turn the tide."
   }
 ]
