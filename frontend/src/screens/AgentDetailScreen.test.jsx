@@ -37,11 +37,36 @@ function mockFetchOk(data) {
   }));
 }
 
-function mockGameScopedFetch({ indexEntry, jsonlText, agentJsonByName }) {
+// global mode fetch mock: /stats/game_stats.json と /config/agents.json を出し分ける（#519）。
+// configBlurbs=null で blurb fetch だけ失敗させ、フォールバック（—）を検証する。
+function mockGlobalFetch({ stats, configBlurbs }) {
+  vi.stubGlobal('fetch', vi.fn(url => {
+    const path = String(url);
+    if (path === '/config/agents.json') {
+      return configBlurbs
+        ? Promise.resolve({ ok: true, json: () => Promise.resolve(configBlurbs) })
+        : Promise.resolve({ ok: false, status: 500 });
+    }
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(stats) });
+  }));
+}
+
+// blurb fixture（config/agents.json 形状・#519）。fetch mock が /config/agents.json に返す。
+const CONFIG_FIXTURE = [
+  { name: 'Nox', blurb: 'Quiet as a moonless night, he finds the frayed edge in everything you say.' },
+  { name: 'Mira', blurb: 'Stands where instinct meets logic and smells a lie before it forms.' },
+];
+
+function mockGameScopedFetch({ indexEntry, jsonlText, agentJsonByName, configBlurbs = CONFIG_FIXTURE }) {
   vi.stubGlobal('fetch', vi.fn(url => {
     const path = String(url);
     if (path === '/state_archive/index.json') {
       return Promise.resolve({ ok: true, json: () => Promise.resolve([indexEntry]) });
+    }
+    if (path === '/config/agents.json') {
+      return configBlurbs
+        ? Promise.resolve({ ok: true, json: () => Promise.resolve(configBlurbs) })
+        : Promise.resolve({ ok: false, status: 500 });
     }
     if (path.endsWith('/spectator_log.jsonl')) {
       return Promise.resolve({ ok: true, text: () => Promise.resolve(jsonlText) });
@@ -577,5 +602,50 @@ describe('AgentDetailScreen(global)', () => {
     await waitFor(() => {
       expect(screen.getByText(/読み込め|エラー/)).toBeTruthy();
     });
+  });
+});
+
+// --- blurb 実データ化（#519・両モード共通） ---
+
+describe('AgentDetailScreen blurb', () => {
+  it('統合: global mode が config の blurb をヒーローに表示する', async () => {
+    /*
+    SUT: AgentDetailScreen (global profile mode) GlobalHero blurb
+    Mock: global fetch（game_stats.json と config/agents.json を出し分ける）
+    Level: integration
+    Objective: global mode のヒーローが config/agents.json 由来の blurb を表示することを検証する (AC-2)
+    */
+    mockGlobalFetch({ stats: STATS_FIXTURE, configBlurbs: CONFIG_FIXTURE });
+    renderGlobal('/agent/Nox');
+
+    expect(await screen.findByText('Quiet as a moonless night, he finds the frayed edge in everything you say.')).toBeTruthy();
+  });
+
+  it('統合: game-scoped mode が config の blurb をヒーローに表示する', async () => {
+    /*
+    SUT: AgentDetailScreen (game-scoped mode) AgentHero blurb
+    Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json, config/agents.json を返す）
+    Level: integration
+    Objective: game-scoped mode のヒーローが config/agents.json 由来の blurb を表示することを検証する (AC-2)
+    */
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Nox' });
+
+    expect(await screen.findByText('Quiet as a moonless night, he finds the frayed edge in everything you say.')).toBeTruthy();
+  });
+
+  it('統合: blurb fetch 失敗時もヒーロー本体を表示しフォールバックする', async () => {
+    /*
+    SUT: AgentDetailScreen (global profile mode) GlobalHero blurb fallback
+    Mock: global fetch（game_stats.json は成功・config/agents.json のみ失敗）
+    Level: integration
+    Objective: blurb fetch が失敗してもヒーロー本体（名前・勝率）を描画し、blurb は — にフォールバックすることを検証する (AC-4)
+    */
+    mockGlobalFetch({ stats: STATS_FIXTURE, configBlurbs: null });
+    renderGlobal('/agent/Nox');
+
+    expect(await screen.findByRole('heading', { name: 'Nox' })).toBeTruthy();
+    expect(screen.getByText('50%')).toBeTruthy();
+    expect(screen.getByText('—')).toBeTruthy();
   });
 });

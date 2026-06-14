@@ -8,21 +8,7 @@ export { ROLE_ASSIGNMENT };
 export const ALL_AGENTS = ['Nox','Mira','Ren','Kai','Shiki','Rei','Sable','Sera','Kael','Sora','Toma'];
 export const DEAD_AGENTS = new Set(['Sora', 'Toma']);
 
-// エージェントごとの1行プロフィール（blurb）
-// TODO: config/agents.json の persona_short フィールドに移行予定（GameData ギャップ #312）
-export const AGENT_BLURB = {
-  Nox:   '静かな夜のように、相手の言葉のほつれを見つける。',
-  Mira:  '直感と論理の交差点に立ち、誰よりも早く嘘を嗅ぎ取る。',
-  Ren:   '軽やかな笑顔の裏に、緻密な計算が走り続けている。',
-  Kai:   '沈黙を武器に、最小の言葉で最大の混乱を生む。',
-  Shiki: '過去の言葉をすべて記憶し、矛盾を静かに暴く。',
-  Rei:   '仲間を守るために、自分が盾になることを厭わない。',
-  Sable: '流れを読み、空気を変える一言を知っている。',
-  Sera:  '誰もが信じる笑顔の下で、狩りの計画が動く。',
-  Kael:  '嘘の上に嘘を積み重ね、城を築く建築家。',
-  Sora:  '太陽のように人を照らし、嵐のようにかき乱す。',
-  Toma:  '正直すぎる言葉が、時に凶器になることを知らない。',
-};
+// blurb（1行プロフィール）は config/agents.json の blurb フィールドへ実データ化済み（#519）。
 
 // エージェントごとの通算戦績（スタブ）
 export const AGENT_STATS = {
