@@ -400,7 +400,7 @@ Python 側（`src/`）には一切依存しない。`state_archive/` の JSONL �
 frontend/
 ├── src/
 │   ├── components/         # 共通コンポーネント
-│   │   ├── Avatar.jsx      # config/icons/ の PNG を表示。モノグラムフォールバックあり
+│   │   ├── Avatar.jsx      # frontend/public/icons/ の PNG を表示。モノグラムフォールバックあり
 │   │   ├── RoleTag.jsx     # 役職名 + 役職カラー（--r-* トークン）
 │   │   └── Icon.jsx        # 吹き出し / 鍵 / チェブロン SVG
 │   ├── screens/            # 画面コンポーネント
@@ -523,7 +523,7 @@ class ReplayPager:
 イベントを順に処理しながら `CO_ANNOUNCEMENT` が来たタイミングで `claimed_role` を更新する。
 spectatorモードは `agent.role`（変化しない真の役職）を使うため影響なし。
 
-旧アーカイブ互換のため、`profile` が存在しない旧JSONは `name` / `model` / `persona` をトップレベルから読み取り、必要に応じて `config/agents.json` のカタログで補完する。
+旧アーカイブ互換のため、`profile` が存在しない旧JSONは `name` / `model` / `persona` をトップレベルから読み取り、必要に応じて `frontend/public/config/agents.json` のカタログで補完する。
 
 **ページャーループ:**
 - `shutil.get_terminal_size().lines` でターミナル高さを取得

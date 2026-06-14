@@ -4,6 +4,7 @@ import json
 
 from pydantic import BaseModel
 
+from src.config import AGENT_CONFIG_PATH
 from src.domain.roles import Role, get_role
 from src.domain.schema import RoleField
 
@@ -81,7 +82,7 @@ def make_actor(profile: ActorProfile, state: ActorState, role_name: str) -> Acto
     return Actor(profile=profile, state=state, role=get_role(role_name))
 
 
-def load_agent_catalog(path: Path = Path("config/agents.json")) -> dict[str, ActorProfile]:
+def load_agent_catalog(path: Path = AGENT_CONFIG_PATH) -> dict[str, ActorProfile]:
     configs = json.loads(path.read_text(encoding="utf-8"))
     return {
         config["name"]: ActorProfile(

@@ -51,7 +51,7 @@ function mockGlobalFetch({ stats, configBlurbs }) {
   }));
 }
 
-// blurb fixture（config/agents.json 形状・#519）。fetch mock が /config/agents.json に返す。
+// blurb fixture（/config/agents.json 形状・#519）。fetch mock が /config/agents.json に返す。
 const CONFIG_FIXTURE = [
   { name: 'Nox', blurb: 'Quiet as a moonless night, he finds the frayed edge in everything you say.' },
   { name: 'Mira', blurb: 'Stands where instinct meets logic and smells a lie before it forms.' },
@@ -611,9 +611,9 @@ describe('AgentDetailScreen blurb', () => {
   it('統合: global mode が config の blurb をヒーローに表示する', async () => {
     /*
     SUT: AgentDetailScreen (global profile mode) GlobalHero blurb
-    Mock: global fetch（game_stats.json と config/agents.json を出し分ける）
+    Mock: global fetch（game_stats.json と /config/agents.json を出し分ける）
     Level: integration
-    Objective: global mode のヒーローが config/agents.json 由来の blurb を表示することを検証する (AC-2)
+    Objective: global mode のヒーローが /config/agents.json 由来の blurb を表示することを検証する (AC-2)
     */
     mockGlobalFetch({ stats: STATS_FIXTURE, configBlurbs: CONFIG_FIXTURE });
     renderGlobal('/agent/Nox');
@@ -624,9 +624,9 @@ describe('AgentDetailScreen blurb', () => {
   it('統合: game-scoped mode が config の blurb をヒーローに表示する', async () => {
     /*
     SUT: AgentDetailScreen (game-scoped mode) AgentHero blurb
-    Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json, config/agents.json を返す）
+    Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json, /config/agents.json を返す）
     Level: integration
-    Objective: game-scoped mode のヒーローが config/agents.json 由来の blurb を表示することを検証する (AC-2)
+    Objective: game-scoped mode のヒーローが /config/agents.json 由来の blurb を表示することを検証する (AC-2)
     */
     mockGameScopedReplay();
     renderGameScoped({ sessionId: 'session-real-001', agentName: 'Nox' });
@@ -637,7 +637,7 @@ describe('AgentDetailScreen blurb', () => {
   it('統合: blurb fetch 失敗時もヒーロー本体を表示しフォールバックする', async () => {
     /*
     SUT: AgentDetailScreen (global profile mode) GlobalHero blurb fallback
-    Mock: global fetch（game_stats.json は成功・config/agents.json のみ失敗）
+    Mock: global fetch（game_stats.json は成功・/config/agents.json のみ失敗）
     Level: integration
     Objective: blurb fetch が失敗してもヒーロー本体（名前・勝率）を描画し、blurb は — にフォールバックすることを検証する (AC-4)
     */
