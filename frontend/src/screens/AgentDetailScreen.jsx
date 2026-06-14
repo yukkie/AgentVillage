@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
 import AgentRosterRow from '../components/AgentRosterRow.jsx';
+import { FeedItem } from '../components/FeedCard.jsx';
 import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLES } from '../lib/constants.js';
@@ -115,6 +116,77 @@ function RightPane({ matrix }) {
         </ul>
       </div>
     </div>
+  );
+}
+
+const AGENT_TIMELINE_EVENT_TYPES = new Set(['speech', 'inspection', 'guard', 'night_attack']);
+
+function buildPrevById(events) {
+  return Object.fromEntries(
+    events
+      .filter(ev => ev.event_type === 'speech' && ev.speech_id != null)
+      .map(ev => [`${ev.day}-${ev.speech_id}`, ev])
+  );
+}
+
+function isAgentTimelineEvent(ev, agent) {
+  if (!AGENT_TIMELINE_EVENT_TYPES.has(ev.event_type)) return false;
+  if (ev.event_type === 'night_attack' && ev.is_public) return false;
+  return ev.agent === agent;
+}
+
+function AgentDayTimeline({ agent, events, visibleDays, roleAssignment, sessionId, viewerMode }) {
+  const [selectedDay, setSelectedDay] = useState(null);
+  const activeDay = visibleDays.includes(selectedDay) ? selectedDay : visibleDays[0] ?? null;
+
+  const prevById = buildPrevById(events);
+  const timelineEvents = activeDay == null
+    ? []
+    : events.filter(ev => ev.day === activeDay && isAgentTimelineEvent(ev, agent));
+
+  if (visibleDays.length === 0) {
+    return (
+      <div className={styles.tabContent}>
+        <div className={styles.emptyState}>このゲームの Day イベントはありません。</div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className={styles.tabs} role="tablist" aria-label="日付タブ">
+        {visibleDays.map(day => (
+          <button
+            key={day}
+            type="button"
+            role="tab"
+            aria-selected={activeDay === day}
+            className={`${styles.tab} ${activeDay === day ? styles.tabOn : ''}`}
+            onClick={() => setSelectedDay(day)}
+          >
+            Day{day}
+          </button>
+        ))}
+      </div>
+      <div className={`${styles.tabContent} ${styles.timelineContent}`}>
+        {timelineEvents.length === 0 ? (
+          <div className={styles.emptyState}>Day{activeDay} の {agent} の行動はありません。</div>
+        ) : (
+          <div className={styles.timelineList} aria-label={`Day${activeDay} ${agent} タイムライン`}>
+            {timelineEvents.map((ev, index) => (
+              <FeedItem
+                key={ev.id ?? `${ev.day}-${ev.event_type}-${ev.agent}-${ev.speech_id ?? ev.target ?? index}`}
+                ev={ev}
+                prevById={prevById}
+                roleAssignment={roleAssignment}
+                sessionId={sessionId}
+                viewerMode={viewerMode}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
@@ -311,6 +383,9 @@ export default function AgentDetailScreen() {
     const speechCount = countAgentSpeeches(events, agent);
     const visibleDays = [...new Set(events.map(ev => ev.day).filter(Boolean))].sort((a, b) => a - b);
     const currentDay = entry?.days ?? visibleDays.at(-1) ?? 0;
+    const roleAssignment = Object.fromEntries(
+      Object.entries(agents).map(([name, data]) => [name, data.role])
+    );
 
     body = (
       <ThreePaneLayout
@@ -326,6 +401,14 @@ export default function AgentDetailScreen() {
             speechCount={speechCount}
             sessionMeta={entry}
             currentDay={currentDay}
+            viewerMode={viewerMode}
+          />
+          <AgentDayTimeline
+            agent={agent}
+            events={events}
+            visibleDays={visibleDays}
+            roleAssignment={roleAssignment}
+            sessionId={sessionId}
             viewerMode={viewerMode}
           />
         </div>
