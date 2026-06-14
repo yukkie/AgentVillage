@@ -25,3 +25,5 @@ playwright-screenshots/
 test-results/
 playwright-report/
 design/proposal/prototypes/_sample_events.json
+.tmp/pytest/
+.tmp_covdiff_fixture/
