@@ -5,7 +5,7 @@ import {
   parseBlurb, fetchAgentConfig,
 } from './archiveLoader.js';
 import { normalizeAgentJson } from '../legacy/normalizeAgentJson.js';
-import AGENT_CONFIG from '../../../config/agents.json';
+import AGENT_CONFIG from '../../public/config/agents.json';
 
 // --- fixture data ---
 
@@ -338,7 +338,7 @@ describe('parseBlurb', () => {
 describe('agents.json blurb data', () => {
   it('pure: agents.json の全エージェントに英語 blurb が存在する', () => {
     /*
-    SUT: config/agents.json
+    SUT: frontend/public/config/agents.json
     Mock: なし
     Level: unit
     Objective: 全エージェントに非空の英語 blurb 文字列が存在することを検証する (AC-1)
@@ -358,12 +358,12 @@ describe('fetchAgentConfig', () => {
     vi.restoreAllMocks();
   });
 
-  it('returns parsed config/agents.json on success', async () => {
+  it('returns parsed /config/agents.json on success', async () => {
     /*
     SUT: fetchAgentConfig
-    Mock: global fetch（config/agents.json のレスポンスを固定）
+    Mock: global fetch（/config/agents.json のレスポンスを固定）
     Level: unit
-    Objective: fetch 成功時に config/agents.json をパースして返すことを検証する。
+    Objective: fetch 成功時に /config/agents.json をパースして返すことを検証する。
     */
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,

@@ -5,7 +5,6 @@ import fs from 'fs';
 
 const ARCHIVE_DIR = path.resolve(__dirname, '../state_archive');
 const STATS_DIR = path.resolve(__dirname, '../state/stats');
-const CONFIG_DIR = path.resolve(__dirname, '../config');
 
 export default defineConfig({
   plugins: [
@@ -33,22 +32,6 @@ export default defineConfig({
       configureServer(server) {
         server.middlewares.use('/stats', (req, res, next) => {
           const filePath = path.join(STATS_DIR, req.url);
-          if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-            res.setHeader('Content-Type', 'application/json');
-            fs.createReadStream(filePath).pipe(res);
-          } else {
-            next();
-          }
-        });
-      },
-    },
-    // Serve config/ as static files under /config/ (local dev only).
-    // agents.json blurb (#519 agent detail blurb). Replace with FastAPI in production (#315).
-    {
-      name: 'serve-config',
-      configureServer(server) {
-        server.middlewares.use('/config', (req, res, next) => {
-          const filePath = path.join(CONFIG_DIR, req.url);
           if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
             res.setHeader('Content-Type', 'application/json');
             fs.createReadStream(filePath).pipe(res);

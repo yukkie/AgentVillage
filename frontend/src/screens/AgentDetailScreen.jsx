@@ -11,7 +11,7 @@ import { fetchReplayGame } from '../lib/replayLoader.js';
 import { buildAgentDetailRoster, buildSuspicionMatrix, countAgentSpeeches } from '../lib/parseGameData.js';
 import styles from './AgentDetailScreen.module.css';
 
-// blurb（config/agents.json 由来の1行プロフィール・#519）が無い／fetch 失敗時のフォールバック表示。
+// blurb（frontend/public/config/agents.json 由来の1行プロフィール・#519）が無い／fetch 失敗時のフォールバック表示。
 const BLURB_FALLBACK = '—';
 
 // blurb は viewerMode にもモード（global / game-scoped）にも依存しない名前依存の静的データ。

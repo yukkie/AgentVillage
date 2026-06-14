@@ -12,8 +12,7 @@ AgentVillage/
 ├── .github/workflows/
 │   └── ci.yml                  # Push/PR 時: ruff + pytest
 ├── config/
-│   ├── agents.json             # エージェント定義（name / persona / occupation）
-│   └── roles.json              # 役職定義
+│   └── MOVED.md                # 設定JSONの移動先案内
 ├── design/
 │   └── proposal/               # UI デザインプロポーザル（hifi プロトタイプ JSX/CSS）
 ├── doc/
@@ -23,6 +22,7 @@ AgentVillage/
 │   └── Task.md                 # タスク管理
 ├── frontend/                   # Web UI（Vite + React + CSS Modules）
 │   ├── public/
+│   │   ├── config/             # Python/JS 共有の静的設定SSOT（agents / roles / tokens）
 │   │   └── icons/              # エージェントアイコン PNG（旧 config/icons/）
 │   ├── src/
 │   │   ├── components/         # 共通コンポーネント（Avatar, RoleTag, TopBar, ThreePaneLayout など）
@@ -105,6 +105,21 @@ spectator.py がログを書き出す  →  state_archive/{session}/
 **将来の FastAPI 化**（#315 実装時）:
 `src/ui/api.py` を追加して WebSocket でイベントをリアルタイム配信する。
 `src/ui/cli.py` / `src/ui/renderer.py` には触れない。
+
+### 2.3.1 静的 config の配置
+
+`frontend/public/config/` は Python と JS が共有する静的設定の SSOT である。
+
+| ファイル | 用途 |
+|---|---|
+| `frontend/public/config/agents.json` | エージェント定義（name / persona / occupation / blurb） |
+| `frontend/public/config/roles.json` | 人数別の役職編成 |
+| `frontend/public/config/tokens.json` | LLM 呼び出しごとの token 上限 |
+
+これらはゲーム進行で変化しない静的データであり、`state_archive/` や `state/stats/` のような実行時データではない。
+そのため将来の FastAPI 化（#315）の対象外とし、フロントエンドでは Vite / 静的ホスティングの
+`public/` 配信により `/config/*.json` として取得する。Python 側も同じファイルを直接読むことで、
+ブラウザ用とエンジン用の設定が二重化しないようにする。
 
 ### 2.4 LogEvent — イベントスキーマと表示制御の3軸
 

@@ -50,7 +50,7 @@ uv run main.py --replay --spectator     # リプレイ（spectator モード）
 |---|---|
 | `--spectator` | エージェントの思考・夜の行動も表示 |
 | `--lang <言語>` | 発言・推理の言語（例: `Japanese`, `English`）デフォルト: `English` |
-| `--players <人数>` | エージェント数（`5` / `7` / `9`）デフォルト: `5`。編成は `config/roles.json` で管理 |
+| `--players <人数>` | エージェント数（`5` / `7` / `9`）デフォルト: `5`。編成は `frontend/public/config/roles.json` で管理 |
 | `--replay` | アーカイブからゲームをリプレイ（`state_archive/` 内のゲームを選択）|
 
 ## ゲームルール
@@ -136,7 +136,7 @@ uv run main.py --replay --spectator     # Replay with thoughts & night actions
 |---|---|
 | `--spectator` | Show agent thoughts and night actions |
 | `--lang <language>` | Language for agent speech and reasoning (e.g. `Japanese`, `English`). Default: `English` |
-| `--players <n>` | Number of agents (`5` / `7` / `9`). Default: `5`. Role sets defined in `config/roles.json` |
+| `--players <n>` | Number of agents (`5` / `7` / `9`). Default: `5`. Role sets defined in `frontend/public/config/roles.json` |
 | `--replay` | Browse and replay an archived game from `state_archive/` |
 
 ## Game Rules

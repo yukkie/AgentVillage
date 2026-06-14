@@ -8,7 +8,7 @@ export { ROLE_ASSIGNMENT };
 export const ALL_AGENTS = ['Nox','Mira','Ren','Kai','Shiki','Rei','Sable','Sera','Kael','Sora','Toma'];
 export const DEAD_AGENTS = new Set(['Sora', 'Toma']);
 
-// blurb（1行プロフィール）は config/agents.json の blurb フィールドへ実データ化済み（#519）。
+// blurb（1行プロフィール）は frontend/public/config/agents.json の blurb フィールドへ実データ化済み（#519）。
 
 // エージェントごとの通算戦績（スタブ）
 export const AGENT_STATS = {

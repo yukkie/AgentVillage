@@ -2,9 +2,8 @@
 import json
 import random
 import sys
-from pathlib import Path
 
-from src.config import AGENTS_DIR
+from src.config import AGENT_CONFIG_PATH, AGENTS_DIR, ROLE_CONFIG_PATH
 from src.domain.actor import Actor, ActorProfile, ActorState, Belief, Persona, make_actor
 from src.agent import store
 
@@ -14,21 +13,21 @@ def initialize_agents(num_players: int) -> list[Actor]:
     AGENTS_DIR.mkdir(parents=True, exist_ok=True)
 
     try:
-        agent_configs = json.loads(Path("config/agents.json").read_text(encoding="utf-8"))
+        agent_configs = json.loads(AGENT_CONFIG_PATH.read_text(encoding="utf-8"))
     except FileNotFoundError:
-        print("Error: config/agents.json not found.")
+        print(f"Error: {AGENT_CONFIG_PATH} not found.")
         sys.exit(1)
     except json.JSONDecodeError as e:
-        print(f"Error: config/agents.json is not valid JSON: {e}")
+        print(f"Error: {AGENT_CONFIG_PATH} is not valid JSON: {e}")
         sys.exit(1)
 
     try:
-        roles_config = json.loads(Path("config/roles.json").read_text(encoding="utf-8"))
+        roles_config = json.loads(ROLE_CONFIG_PATH.read_text(encoding="utf-8"))
     except FileNotFoundError:
-        print("Error: config/roles.json not found.")
+        print(f"Error: {ROLE_CONFIG_PATH} not found.")
         sys.exit(1)
     except json.JSONDecodeError as e:
-        print(f"Error: config/roles.json is not valid JSON: {e}")
+        print(f"Error: {ROLE_CONFIG_PATH} is not valid JSON: {e}")
         sys.exit(1)
 
     key = str(num_players)
@@ -39,7 +38,7 @@ def initialize_agents(num_players: int) -> list[Actor]:
 
     roles = roles_config[key]
     if len(agent_configs) < num_players:
-        print(f"Error: not enough agents in config/agents.json for {num_players} players (found {len(agent_configs)}).")
+        print(f"Error: not enough agents in {AGENT_CONFIG_PATH} for {num_players} players (found {len(agent_configs)}).")
         sys.exit(1)
     selected_configs = random.sample(agent_configs, num_players)
 

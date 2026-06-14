@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
+from src.config import AGENT_CONFIG_PATH, ROLE_CONFIG_PATH
 from src.engine.setup import initialize_agents
 
 
@@ -22,7 +23,7 @@ def test_initialize_agents_roles_distribution():
         agents = initialize_agents(5)
 
     roles = [a.role.name for a in agents]
-    roles_config = json.loads(Path("config/roles.json").read_text(encoding="utf-8"))
+    roles_config = json.loads(ROLE_CONFIG_PATH.read_text(encoding="utf-8"))
     expected = sorted(roles_config["5"])
     assert sorted(roles) == expected
 
@@ -112,6 +113,25 @@ def test_initialize_agents_corrupt_agents_json(monkeypatch):
         initialize_agents(5)
 
 
+def test_initialize_agents_missing_agents_json(monkeypatch):
+    """
+    SUT: initialize_agents()
+    Mock: monkeypatch で Path.read_text を差し替え、agents.json 読み込み時に FileNotFoundError を送出
+    Level: unit
+    Objective: agents.json が存在しないとき sys.exit(1) が呼ばれること。
+    """
+    original_read = Path.read_text
+
+    def fake_read(self, **kwargs):
+        if self == AGENT_CONFIG_PATH:
+            raise FileNotFoundError
+        return original_read(self, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", fake_read)
+    with pytest.raises(SystemExit):
+        initialize_agents(5)
+
+
 def test_initialize_agents_corrupt_roles_json(monkeypatch):
     """
     SUT: initialize_agents()
@@ -124,6 +144,26 @@ def test_initialize_agents_corrupt_roles_json(monkeypatch):
     def fake_read(self, **kwargs):
         if self.name == "roles.json":
             return "{not valid json"
+        return original_read(self, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", fake_read)
+    with patch("src.agent.store.save"):
+        with pytest.raises(SystemExit):
+            initialize_agents(5)
+
+
+def test_initialize_agents_missing_roles_json(monkeypatch):
+    """
+    SUT: initialize_agents()
+    Mock: monkeypatch で Path.read_text を差し替え、roles.json 読み込み時に FileNotFoundError を送出
+    Level: unit
+    Objective: roles.json が存在しないとき sys.exit(1) が呼ばれること。
+    """
+    original_read = Path.read_text
+
+    def fake_read(self, **kwargs):
+        if self == ROLE_CONFIG_PATH:
+            raise FileNotFoundError
         return original_read(self, **kwargs)
 
     monkeypatch.setattr(Path, "read_text", fake_read)
