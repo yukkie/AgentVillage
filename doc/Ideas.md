@@ -19,6 +19,7 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| yukkie/AgentVillage#541 ❌ | tech-debt | — | — | Remove no-plan stub UI from GameListScreen | 作る予定のないソーシャル/ユーザー機能系スタブ（upvote・提供:RunVillage・観戦コメント数・ログDL/保存/共有・並び:Hot・マイページ/カテゴリ・注目エージェント・次回開催・観戦コミュニティ・検索/通知/bot参加）を削除。ルール（roles.json 連動候補）・勝率トップ(#337)・LIVE(#319)・NewVillageForm は残す |
 | yukkie/AgentVillage#530 ❌ | enhancement | — | — | Establish design token usage rules & design-lint enforcement | #522 レビューで発覚したスタイル不統一が起点。トークン使用規約の明文化＋design lint 導入。idd は lint 通過のみ軽量ゲート、逸脱発見/tech-debt/リファクタは self-reflection-review |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#337 | enhancement | 🟡 | 2 | Top agents real stats | stub/gameList.js の TOP_AGENTS を実ゲーム結果の集計データに置き換え |
