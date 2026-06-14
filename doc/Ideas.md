@@ -60,6 +60,7 @@
 | yukkie/AgentVillage#424 | enhancement | 🟢 | 5 | Dev tool (1/3): AST-based relationship extraction for a central data type | 中心データ型の producer/consumer/transform を Python AST で全列挙し隣接リスト出力（consumer×field read マトリクス含む）。#466 の設計比較の入力。JS 抽出は #508 に分割 |
 | yukkie/AgentVillage#508 | enhancement | 🟢 | — | Dev tool (2/3): JS field-access extraction | JS consumer のフィールド read をヒューリスティック抽出し #424 の隣接リストに統合（source: js / confidence: heuristic）。#379 導入後は型起点へ強化。依存: #424 |
 | yukkie/AgentVillage#425 | enhancement | 🟢 | 3 | Dev tool (3/3): smell evaluation skill over the extracted relationship graph | #424 のグラフに判定基準を適用する AI 評価スキル（判定コードは書かない）。淀み度集計＋4評価軸。依存: #424。SP 再見積もり対象 |
+| yukkie/AgentVillage#543 ❌ | enhancement | — | — | Dev tool: machine-managed Issue dependency graph (bidirectional) | issue SKILL.md の依存配線（依存:/依存される Issue:/順序制約）を機械抽出し隣接リスト化。片方向リンク・分割時の張り替え漏れを整合性チェックで検出。#424 の隣接リスト／2層分離思想を踏襲。依存: #424 |
 
 ---
 
