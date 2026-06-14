@@ -225,6 +225,25 @@
   padding: 20px 36px 60px;
 }
 
+.timelineContent {
+  padding-top: 18px;
+}
+
+.timelineList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.emptyState {
+  color: var(--tx-4);
+  font-size: 13px;
+  border: 1px solid var(--bd-soft);
+  background: var(--bg-1);
+  border-radius: var(--r2);
+  padding: 18px;
+}
+
 .panel {
   background: var(--bg-1);
   border: 1px solid var(--bd);

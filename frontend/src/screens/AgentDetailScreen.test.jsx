@@ -64,6 +64,9 @@ const GAME_SCOPED_INDEX = {
 const GAME_SCOPED_JSONL = [
   { id: 's1', day: 1, event_type: 'speech', agent: 'Nox', speech_id: 1, content: '私は占い師です', is_public: true, reasoning: 'Kaiが怪しい。', claimed_role: 'Seer' },
   { id: 's2', day: 1, event_type: 'speech', agent: 'Mira', speech_id: 2, content: '了解です', is_public: true },
+  { id: 'i1', day: 1, event_type: 'inspection', agent: 'Nox', target: 'Kai', content: 'Nox inspects Kai: Werewolf', is_public: false, reasoning: 'Kaiの視点漏れを確認する。' },
+  { id: 'g1', day: 1, event_type: 'guard', agent: 'Nox', target: 'Mira', content: 'Nox guards Mira', is_public: false, reasoning: 'Miraを守る価値が高い。' },
+  { id: 'a1', day: 1, event_type: 'night_attack', agent: 'Nox', target: 'Mira', content: 'Nox attacks Mira', is_public: false, reasoning: '護衛が薄い。' },
   { id: 's3', day: 2, event_type: 'speech', agent: 'Nox', speech_id: 3, content: 'Kaiを疑います', is_public: true },
   { id: 'u1', day: 2, event_type: 'suspicion_update', agent: 'Nox', is_public: false, suspicion_snapshot: { Kai: 0.86, Mira: 0.24 } },
 ].map(event => JSON.stringify(event)).join('\n');
@@ -282,8 +285,9 @@ describe('AgentDetailScreen game-scoped real data', () => {
 
     await screen.findByRole('heading', { name: 'Nox' });
     expect(screen.getByText('2')).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Mira/ }).getAttribute('href')).toBe('/game/session-real-001/agent/Mira');
-    expect(screen.getByRole('link', { name: /Kai/ }).getAttribute('href')).toBe('/game/session-real-001/agent/Kai');
+    const picker = screen.getByRole('list', { name: 'エージェント一覧' });
+    expect(within(picker).getByRole('link', { name: /Mira/ }).getAttribute('href')).toBe('/game/session-real-001/agent/Mira');
+    expect(within(picker).getByRole('link', { name: /Kai/ }).getAttribute('href')).toBe('/game/session-real-001/agent/Kai');
   });
 
   it('game-scoped public mode hides role faction and suspicion matrix', async () => {
@@ -326,6 +330,120 @@ describe('AgentDetailScreen game-scoped real data', () => {
     renderGameScoped({ sessionId: 'session-real-001', agentName: 'Nox' });
 
     expect(await screen.findByText(/Failed to fetch game list/)).toBeTruthy();
+  });
+});
+
+describe('AgentDetailScreen game-scoped day timeline', () => {
+  it('game-scoped renders day tabs and switches the agent timeline day', async () => {
+    /*
+     * SUT: AgentDetailScreen game-scoped day timeline
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: 中央ペインの Day タブをクリックすると、選択日の対象エージェント timeline に切り替わることを検証する。
+     */
+    const { default: userEvent } = await import('@testing-library/user-event');
+    const user = userEvent.setup();
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Nox' });
+
+    expect(await screen.findByRole('tab', { name: 'Day1' })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Day2' })).toBeTruthy();
+    expect(screen.getByRole('tabpanel', { name: 'Day1' }).getAttribute('id')).toBe('agent-day-panel-1');
+    expect(screen.getByRole('tab', { name: 'Day1' }).getAttribute('aria-controls')).toBe('agent-day-panel-1');
+    expect(screen.getByText('私は占い師です')).toBeTruthy();
+    expect(screen.queryByText('Kaiを疑います')).toBeNull();
+
+    await user.click(screen.getByRole('tab', { name: 'Day2' }));
+    expect(screen.getByRole('tabpanel', { name: 'Day2' }).getAttribute('id')).toBe('agent-day-panel-2');
+    expect(screen.getByText('Kaiを疑います')).toBeTruthy();
+    expect(screen.queryByText('私は占い師です')).toBeNull();
+  });
+
+  it('game-scoped renders selected agent speech and spectator reasoning through FeedItem', async () => {
+    /*
+     * SUT: AgentDetailScreen game-scoped day timeline
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: 対象エージェントの speech が FeedItem 経由で表示され、spectator mode では reasoning を確認できることを検証する。
+     */
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Nox' });
+
+    expect(await screen.findByText('私は占い師です')).toBeTruthy();
+    expect(screen.getAllByText('思考ログを読む').length).toBeGreaterThan(0);
+    expect(screen.getByText('Kaiが怪しい。')).toBeTruthy();
+  });
+
+  it('game-scoped renders selected agent private night actions through shared feed rows', async () => {
+    /*
+     * SUT: AgentDetailScreen game-scoped day timeline
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: 対象エージェントの inspection / guard / private night_attack が共通 FeedItem/SystemRow 表示で描画されることを検証する。
+     */
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Nox' });
+
+    expect(await screen.findByText('占い結果')).toBeTruthy();
+    expect(screen.getByText('Nox inspects Kai: Werewolf')).toBeTruthy();
+    expect(screen.getByText('護衛')).toBeTruthy();
+    expect(screen.getByText('Nox guards Mira')).toBeTruthy();
+    expect(screen.getByText('人狼の襲撃')).toBeTruthy();
+    expect(screen.getByText('Nox attacks Mira')).toBeTruthy();
+  });
+
+  it('game-scoped public mode locks reasoning and hides private night actions', async () => {
+    /*
+     * SUT: AgentDetailScreen game-scoped day timeline
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: public mode では speech reasoning がロック表示になり、private 夜行動は非表示になることを検証する。
+     */
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Nox', search: '?view=public' });
+
+    expect(await screen.findByText('私は占い師です')).toBeTruthy();
+    expect(screen.getByText('🔒 思考ログ')).toBeTruthy();
+    expect(screen.queryByText('Kaiが怪しい。')).toBeNull();
+    expect(screen.queryByText('Nox inspects Kai: Werewolf')).toBeNull();
+    expect(screen.queryByText('Nox guards Mira')).toBeNull();
+    expect(screen.queryByText('Nox attacks Mira')).toBeNull();
+  });
+
+  it('game-scoped timeline uses FeedItem semantics for speech links and system rows', async () => {
+    /*
+     * SUT: AgentDetailScreen game-scoped day timeline
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: 中央タイムラインが FeedItem のリンク・SystemRow 表示契約を使って描画されることを検証する。
+     */
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Nox' });
+
+    expect(await screen.findByText('私は占い師です')).toBeTruthy();
+    expect(screen.getAllByRole('link', { name: /Nox/ }).some(link => (
+      link.getAttribute('href') === '/game/session-real-001/agent/Nox'
+    ))).toBe(true);
+    expect(screen.getByText('占い結果')).toBeTruthy();
+    expect(screen.getByText('人狼の襲撃')).toBeTruthy();
+  });
+
+  it('game-scoped timeline shows an empty state when no Day events exist', async () => {
+    /*
+     * SUT: AgentDetailScreen game-scoped day timeline
+     * Mock: global fetch（day=0 のみの spectator_log.jsonl と agents/*.json を返す）
+     * Level: integration
+     * Objective: Day1 以降のイベントが無い game-scoped archive では Day タブを出さず空状態を表示することを検証する。
+     */
+    mockGameScopedFetch({
+      indexEntry: { session_id: 'session-empty-001', title: '空村', days: 0, cast: ['Nox'] },
+      jsonlText: JSON.stringify({ id: 'r0', day: 0, event_type: 'role_assigned', agent: 'Nox', is_public: false }),
+      agentJsonByName: { Nox: GAME_SCOPED_AGENTS.Nox },
+    });
+    renderGameScoped({ sessionId: 'session-empty-001', agentName: 'Nox' });
+
+    expect(await screen.findByText('このゲームの Day イベントはありません。')).toBeTruthy();
+    expect(screen.queryByRole('tab', { name: 'Day1' })).toBeNull();
   });
 });
 
