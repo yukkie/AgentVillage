@@ -26,7 +26,8 @@
 | yukkie/AgentVillage#495 | enhancement | 🟢 | 3 | Log visibility classes and recipient-based authorization model | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
 | yukkie/AgentVillage#319 | enhancement | 🟢 | 3 | LIVE spectator | state/ を tail して進行中ゲームを表示（将来フェーズ） |
 | yukkie/AgentVillage#364 | enhancement | 🟢 | 5 | introduce SpectatorScreen view model indexes | SpectatorScreen 用 view model/index を導入し、render 中の events 全走査を減らす |
-| yukkie/AgentVillage#321 | enhancement | 🟢 | 3 | Move config/ under frontend/public and share role/agent JSON (SSOT) | config/ を frontend/public/config/ へ移動し Python/JS 共有 SSOT 化、constants.js のハードコードを廃止 |
+| yukkie/AgentVillage#321 | tech-debt | 🟢 | 2 | Relocate config/ to frontend/public and repoint references | config/ を frontend/public/config/ へ移動し Python/JS の参照を張り替える（純粋移動）。メタ拡充は #539 |
+| yukkie/AgentVillage#539 | enhancement | 🟢 | 2 | Share role/agent metadata JSON and drop constants.js hardcode | #321 の移動後、役職/エージェントメタを共有 JSON 化し constants.js のハードコードを廃止 |
 | yukkie/AgentVillage#323 | enhancement | 🟢 | 3 | i18n support for frontend UI strings (ja/en) | JSX 内の日本語ハードコードを locale リソースに外出しし、ja/en 切り替えに対応 |
 | yukkie/AgentVillage#403 | enhancement | 🟢 | 2 | Add avatars to CO status and night action sections | CO状況・夜の行動セクションにアバターアイコンを追加しコンポーネント化 |
 | yukkie/AgentVillage#379 | enhancement | 🟢 | 3 | Add static type checking to frontend JS (JSDoc or TypeScript) | フィールド名ミスをエディタ/CIで検出できるようにする。スタブ撤廃（#318）以降に検討 |
