@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
 import AgentRosterRow from '../components/AgentRosterRow.jsx';
@@ -139,10 +139,12 @@ function AgentDayTimeline({ agent, events, visibleDays, roleAssignment, sessionI
   const [selectedDay, setSelectedDay] = useState(null);
   const activeDay = visibleDays.includes(selectedDay) ? selectedDay : visibleDays[0] ?? null;
 
-  const prevById = buildPrevById(events);
+  const prevById = useMemo(() => buildPrevById(events), [events]);
   const timelineEvents = activeDay == null
     ? []
     : events.filter(ev => ev.day === activeDay && isAgentTimelineEvent(ev, agent));
+  const activeTabId = activeDay == null ? undefined : `agent-day-tab-${activeDay}`;
+  const activePanelId = activeDay == null ? undefined : `agent-day-panel-${activeDay}`;
 
   if (visibleDays.length === 0) {
     return (
@@ -158,8 +160,10 @@ function AgentDayTimeline({ agent, events, visibleDays, roleAssignment, sessionI
         {visibleDays.map(day => (
           <button
             key={day}
+            id={`agent-day-tab-${day}`}
             type="button"
             role="tab"
+            aria-controls={`agent-day-panel-${day}`}
             aria-selected={activeDay === day}
             className={`${styles.tab} ${activeDay === day ? styles.tabOn : ''}`}
             onClick={() => setSelectedDay(day)}
@@ -168,7 +172,12 @@ function AgentDayTimeline({ agent, events, visibleDays, roleAssignment, sessionI
           </button>
         ))}
       </div>
-      <div className={`${styles.tabContent} ${styles.timelineContent}`}>
+      <div
+        id={activePanelId}
+        className={`${styles.tabContent} ${styles.timelineContent}`}
+        role="tabpanel"
+        aria-labelledby={activeTabId}
+      >
         {timelineEvents.length === 0 ? (
           <div className={styles.emptyState}>Day{activeDay} の {agent} の行動はありません。</div>
         ) : (

@@ -348,10 +348,13 @@ describe('AgentDetailScreen game-scoped day timeline', () => {
 
     expect(await screen.findByRole('tab', { name: 'Day1' })).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'Day2' })).toBeTruthy();
+    expect(screen.getByRole('tabpanel', { name: 'Day1' }).getAttribute('id')).toBe('agent-day-panel-1');
+    expect(screen.getByRole('tab', { name: 'Day1' }).getAttribute('aria-controls')).toBe('agent-day-panel-1');
     expect(screen.getByText('私は占い師です')).toBeTruthy();
     expect(screen.queryByText('Kaiを疑います')).toBeNull();
 
     await user.click(screen.getByRole('tab', { name: 'Day2' }));
+    expect(screen.getByRole('tabpanel', { name: 'Day2' }).getAttribute('id')).toBe('agent-day-panel-2');
     expect(screen.getByText('Kaiを疑います')).toBeTruthy();
     expect(screen.queryByText('私は占い師です')).toBeNull();
   });
