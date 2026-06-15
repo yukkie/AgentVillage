@@ -50,7 +50,7 @@ Milestone 3（FastAPI / DB 導入後）に改めて対応方針を検討する�
 
 | UI要素 | 現状 | 対応方針 |
 |---|---|---|
-| 🏆 勝率ランキング | ✅ `state/stats/game_stats.json` の `players[].won` / 出場数から15人分を集計 | **実装済み（#337）** — `fetchGameStats()` / `parseWinRateRanking()` で右ペインに表示 |
+| 🏆 勝率ランキング | ✅ `state/stats/game_stats.json` の `players[].won` / 出場数から15人分を集計 | **実装済み（#337）** — `fetchGameStats()` / `parseWinRateRanking()` で右ペインに表示。出場2試合未満は集計対象外 |
 | ~~📅 次回開催（第14回「夜霧の灯台」）~~ | ~~完全ハードコード~~ | **削除済み（#541）** |
 | ~~📰 観戦コミュニティ~~ | ~~`COMMUNITY_POSTS` スタブ固定~~ | **削除済み（#541）** |
 

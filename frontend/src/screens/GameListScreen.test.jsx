@@ -81,12 +81,8 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-function mockGameList(games = [game]) {
+function mockGameList(games = [game], stats = statsFixture) {
   archiveLoader.fetchGameList.mockResolvedValue(games);
-  archiveLoader.fetchGameStats.mockResolvedValue(statsFixture);
-}
-
-function mockGameStats(stats = statsFixture) {
   archiveLoader.fetchGameStats.mockResolvedValue(stats);
 }
 
@@ -198,7 +194,7 @@ describe('GameListScreen real stats ranking（#337）', () => {
      * SUT: GameListScreen / RightPane
      * Mock: fetchGameList / fetchGameStats
      * Level: component
-     * Objective: 統計取得中・失敗時・空ランキング時に右ペインだけが fallback 表示になることを検証する (AC-4)
+     * Objective: 統計取得中・失敗時・空ランキング時に右ペインだけが fallback 表示になることを検証する (AC-5)
      */
     mockGameList();
     archiveLoader.fetchGameStats.mockImplementation(() => new Promise(() => {}));
@@ -212,8 +208,7 @@ describe('GameListScreen real stats ranking（#337）', () => {
     expect(await screen.findByText('勝率を読み込めませんでした')).toBeTruthy();
     cleanup();
 
-    mockGameList();
-    mockGameStats({ games: [] });
+    mockGameList([game], { games: [] });
     renderGameList();
     expect(await screen.findByText('集計できる戦績がありません')).toBeTruthy();
   });
