@@ -56,7 +56,7 @@ frontend/
 │   └── tokens.css      # デザイントークン（CSS Variables）
 ├── stub/               # Milestone 1 用スタブデータ（Milestone 2 で削除）
 │   ├── spectator.js    # EVENTS / ROLE_ASSIGNMENT / NIGHT_RESULTS 等
-│   ├── gameList.js     # GAMES / TOP_AGENTS / COMMUNITY_POSTS 等
+│   ├── gameList.js     # TOP_AGENTS / VILLAGE_NAME_PRESETS（GAMES は #338 で削除済み、COMMUNITY_POSTS は #541 で削除済み）
 │   └── agentDetail.js  # ALL_AGENTS / THOUGHTS / NIGHT_ACTIONS 等
 ├── index.html
 ├── vite.config.js      # fs.allow でリポジトリルートへのアクセスを許可
