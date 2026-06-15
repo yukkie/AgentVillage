@@ -5,8 +5,10 @@ import userEvent from '@testing-library/user-event';
 import GameListScreen from './GameListScreen.jsx';
 import * as archiveLoader from '../lib/archiveLoader.js';
 
-vi.mock('../lib/archiveLoader.js', () => ({
+vi.mock('../lib/archiveLoader.js', async (importOriginal) => ({
+  ...(await importOriginal()),
   fetchGameList: vi.fn(),
+  fetchGameStats: vi.fn(),
 }));
 
 const game = {
@@ -37,13 +39,51 @@ const liveGame = {
   desc: '',
 };
 
+const rankingAgents = [
+  'Ada Lovelace',
+  'Kai',
+  'Mira',
+  'Nox',
+  'Sera',
+  'Rei',
+  'Haru',
+  'Toma',
+  'Lumi',
+  'Nana',
+  'Vael',
+  'Sora',
+  'Ren',
+  'Kael',
+  'Sable',
+];
+
+const statsFixture = {
+  games: [
+    {
+      game_id: 'g1',
+      players: rankingAgents.map(name => ({
+        name,
+        won: name === 'Ada Lovelace' || name === 'Kai',
+      })),
+    },
+    {
+      game_id: 'g2',
+      players: rankingAgents.map(name => ({
+        name,
+        won: name === 'Ada Lovelace',
+      })),
+    },
+  ],
+};
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
 
-function mockGameList(games = [game]) {
+function mockGameList(games = [game], stats = statsFixture) {
   archiveLoader.fetchGameList.mockResolvedValue(games);
+  archiveLoader.fetchGameStats.mockResolvedValue(stats);
 }
 
 function renderGameList() {
@@ -95,7 +135,7 @@ describe('GameListScreen list semantics', () => {
      * SUT: GameListScreen / LeftPane / RightPane
      * Mock: fetchGameList（state_archive index の取得を固定）
      * Level: component
-     * Objective: 左サイドナビ（ルールのみ）と右ウィジェット（勝率トップのみ）の項目群が list/listitem role で特定できることを検証する。
+     * Objective: 左サイドナビ（ルールのみ）と右ウィジェット（勝率ランキングのみ）の項目群が list/listitem role で特定できることを検証する。
      */
     mockGameList();
 
@@ -106,26 +146,71 @@ describe('GameListScreen list semantics', () => {
     expect(within(sideNav).getAllByRole('list').length).toBeGreaterThanOrEqual(1);
     expect(within(sideNav).getAllByRole('listitem').length).toBeGreaterThanOrEqual(4);
 
-    const ranking = screen.getByRole('list', { name: '今週の勝率トップ' });
-    expect(within(ranking).getAllByRole('listitem')).toHaveLength(5);
+    const ranking = await screen.findByRole('list', { name: '勝率ランキング' });
+    expect(within(ranking).getAllByRole('listitem')).toHaveLength(15);
   });
 
-  it('renders agent links to /agent/:agentName in ranking only', async () => {
+  it('統合: GameListScreen: 勝率ランキングの行は encodeURIComponent した /agent/:name リンクを維持する', async () => {
     /*
      * SUT: GameListScreen / RightPane
-     * Mock: fetchGameList
+     * Mock: fetchGameList / fetchGameStats
      * Level: component
-     * Objective: 右ペイン「勝率トップ」が /agent/:name へのリンクを持つことを検証する（注目エージェント削除後、勝率トップのみが agent リンクを持つ）。
+     * Objective: 右ペイン「勝率ランキング」が encodeURIComponent した /agent/:name へのリンクを持つことを検証する (AC-5)
      */
     mockGameList();
 
     renderGameList();
-    await screen.findByRole('article', { name: '20260510_102927' });
+    const ranking = await screen.findByRole('list', { name: '勝率ランキング' });
 
-    const agentLinks = screen.getAllByRole('link').filter(
-      l => l.getAttribute('href')?.startsWith('/agent/')
-    );
-    expect(agentLinks.length).toBeGreaterThan(0);
+    const adaLink = within(ranking).getByRole('link', { name: /Ada Lovelace/ });
+    expect(adaLink.getAttribute('href')).toBe('/agent/Ada%20Lovelace');
+  });
+});
+
+describe('GameListScreen real stats ranking（#337）', () => {
+  it('統合: GameListScreen: 勝率ランキングは fetchGameStats 由来の15人分を表示し TOP_AGENTS 固定値を表示しない', async () => {
+    /*
+     * SUT: GameListScreen / RightPane
+     * Mock: fetchGameList / fetchGameStats
+     * Level: component
+     * Objective: TOP_AGENTS スタブではなく game_stats.json 由来の15人分のランキング順と勝率が表示されることを検証する (AC-1/AC-7)
+     */
+    mockGameList();
+    renderGameList();
+
+    const ranking = await screen.findByRole('list', { name: '勝率ランキング' });
+    const rows = within(ranking).getAllByRole('listitem');
+
+    expect(rows).toHaveLength(15);
+    expect(within(rows[0]).getByText('Ada Lovelace')).toBeTruthy();
+    expect(within(rows[0]).getByText('100%')).toBeTruthy();
+    expect(within(rows[1]).getByText('Kai')).toBeTruthy();
+    expect(within(rows[1]).getByText('50%')).toBeTruthy();
+    expect(within(ranking).queryByText('72%')).toBeNull();
+  });
+
+  it('統合: GameListScreen: 勝率ランキングの loading/error/empty fallback を表示する', async () => {
+    /*
+     * SUT: GameListScreen / RightPane
+     * Mock: fetchGameList / fetchGameStats
+     * Level: component
+     * Objective: 統計取得中・失敗時・空ランキング時に右ペインだけが fallback 表示になることを検証する (AC-5)
+     */
+    mockGameList();
+    archiveLoader.fetchGameStats.mockImplementation(() => new Promise(() => {}));
+    const { unmount } = renderGameList();
+    expect(screen.getByText('勝率を集計中…')).toBeTruthy();
+    unmount();
+
+    mockGameList();
+    archiveLoader.fetchGameStats.mockRejectedValue(new Error('boom'));
+    renderGameList();
+    expect(await screen.findByText('勝率を読み込めませんでした')).toBeTruthy();
+    cleanup();
+
+    mockGameList([game], { games: [] });
+    renderGameList();
+    expect(await screen.findByText('集計できる戦績がありません')).toBeTruthy();
   });
 });
 
@@ -173,18 +258,18 @@ describe('GameListScreen stub UI 削除（AC-1〜AC-4）', () => {
     expect(within(nav).queryByText('注目エージェント')).toBeNull();
   });
 
-  it('統合: RightPane は勝率トップのみ残し次回開催・観戦コミュニティを表示しない', async () => {
+  it('統合: RightPane は勝率ランキングのみ残し次回開催・観戦コミュニティを表示しない', async () => {
     /*
      * SUT: GameListScreen / RightPane
      * Mock: fetchGameList
      * Level: component
-     * Objective: #541 で削除した RightPane セクションが存在せず、勝率トップが残ることを検証する (AC-3)
+     * Objective: #541 で削除した RightPane セクションが存在せず、勝率ランキングが残ることを検証する (AC-3)
      */
     mockGameList();
     renderGameList();
     await screen.findByRole('article', { name: '20260510_102927' });
 
-    expect(screen.getByRole('list', { name: '今週の勝率トップ' })).toBeTruthy();
+    expect(screen.getByRole('list', { name: '勝率ランキング' })).toBeTruthy();
     expect(screen.queryByText(/次回開催/)).toBeNull();
     expect(screen.queryByRole('list', { name: '観戦コミュニティ' })).toBeNull();
   });

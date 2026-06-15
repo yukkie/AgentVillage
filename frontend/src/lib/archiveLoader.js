@@ -115,6 +115,42 @@ export function parseAllAgentNames(gamesJson) {
 }
 
 /**
+ * Build the GameListScreen win-rate ranking from game_stats.json.
+ *
+ * @param {{games: object[]} | null} gamesJson - Parsed game_stats.json
+ * @param {{limit?: number, minGames?: number}} options
+ * @returns {{name: string, wins: number, games: number, winRate: number}[]}
+ */
+export function parseWinRateRanking(gamesJson, { limit = 15, minGames = 2 } = {}) {
+  if (!Array.isArray(gamesJson?.games)) return [];
+
+  const byName = new Map();
+  for (const game of gamesJson.games) {
+    if (!Array.isArray(game.players)) continue;
+    for (const player of game.players) {
+      if (!player?.name) continue;
+      const current = byName.get(player.name) ?? { name: player.name, wins: 0, games: 0 };
+      current.games += 1;
+      if (player.won) current.wins += 1;
+      byName.set(player.name, current);
+    }
+  }
+
+  return [...byName.values()]
+    .filter(agent => agent.games >= minGames)
+    .map(agent => ({
+      ...agent,
+      winRate: Math.round((agent.wins / agent.games) * 100),
+    }))
+    .sort((a, b) =>
+      b.winRate - a.winRate ||
+      b.games - a.games ||
+      a.name.localeCompare(b.name)
+    )
+    .slice(0, limit);
+}
+
+/**
  * Fetch and parse game_stats.json. Throws if the fetch fails.
  *
  * @returns {Promise<{games: object[]}>}

@@ -56,7 +56,7 @@ frontend/
 │   └── tokens.css      # デザイントークン（CSS Variables）
 ├── stub/               # Milestone 1 用スタブデータ（Milestone 2 で削除）
 │   ├── spectator.js    # EVENTS / ROLE_ASSIGNMENT / NIGHT_RESULTS 等
-│   ├── gameList.js     # TOP_AGENTS / VILLAGE_NAME_PRESETS（GAMES は #338 で削除済み、COMMUNITY_POSTS は #541 で削除済み）
+│   ├── gameList.js     # VILLAGE_NAME_PRESETS（GAMES は #338、COMMUNITY_POSTS は #541、TOP_AGENTS は #337 で削除済み）
 │   └── agentDetail.js  # ALL_AGENTS / THOUGHTS / NIGHT_ACTIONS 等
 ├── index.html
 ├── vite.config.js      # fs.allow でリポジトリルートへのアクセスを許可
@@ -225,7 +225,7 @@ stateDiagram-v2
     {+
       == SideWidgets (280px)
       {+
-        == 今週の勝率トップ (<section><ul><li>)
+        == 勝率ランキング (<section><ul><li> / 15人)
         1 | [Nox]  | 72%
         2 | [Kai]  | 68%
         3 | [Sera] | 64%
@@ -537,9 +537,9 @@ CSS Grid `grid-template-columns: var(--lcol) 1fr var(--rcol)` で 3 ペインを
 | `NewVillageForm` | 展開/収納トグル付きのゲーム作成フォーム。人数選択 → エージェント選択 → 作成ボタン |
 | `GameCard` | ゲーム1件のカード表示（タイトル / ロスターストリップ / 👁同時観戦数） |
 | `LeftPane` | サイドナビ（ルールのみ。#541 でマイページ / カテゴリ / 注目エージェントを削除） |
-| `RightPane` | サイドウィジェット（勝率トップのみ。#541 で次回開催 / コミュニティ投稿を削除） |
+| `RightPane` | サイドウィジェット（勝率ランキングのみ。#541 で次回開催 / コミュニティ投稿を削除、#337 で `game_stats.json` 実集計化） |
 
-データソース: `stub/gameList.js`（`TOP_AGENTS`, `VILLAGE_NAME_PRESETS`。`COMMUNITY_POSTS` は #541 で削除済み）。
+データソース: `state_archive/index.json`（ゲーム一覧）、`state/stats/game_stats.json`（右ペイン勝率ランキング）、`stub/gameList.js`（`VILLAGE_NAME_PRESETS` のみ。`COMMUNITY_POSTS` は #541、`TOP_AGENTS` は #337 で削除済み）。
 
 Semantic HTML: `GameCard` は自己完結したゲーム項目として `<article>`、サイドナビと複数項目を持つ右ウィジェットの項目群は `<ul><li>` で表現する。
 
@@ -755,7 +755,7 @@ Semantic HTML: `AgentHero` は画面内のエージェント見出しとして `
 | ファイル | 提供するデータ | 将来の差し替え先 |
 |---|---|---|
 | `stub/spectator.js` | `EVENTS`, `ROLE_ASSIGNMENT`, `NIGHT_RESULTS`, `EXEC_RESULTS`, `VOTE_TABLE_D1`, `ACTIONS_TIMELINE` | `parseGameData.js` 経由で `state_archive/{sessionId}/spectator_log.jsonl` をパース |
-| `stub/gameList.js` | `TOP_AGENTS`, `VILLAGE_NAME_PRESETS`（`GAMES` は #338 で削除済み、`COMMUNITY_POSTS` は #541 で削除済み） | `TOP_AGENTS` は #337 で実データ化予定 |
+| `stub/gameList.js` | `VILLAGE_NAME_PRESETS`（`GAMES` は #338、`COMMUNITY_POSTS` は #541、`TOP_AGENTS` は #337 で削除済み） | 新規村フォームの村名候補のみ。右ペイン勝率ランキングは `game_stats.json` から15人分を集計済み |
 | `stub/agentDetail.js` | `ALL_AGENTS`, `DEAD_AGENTS`, `AGENT_STATS`, `THOUGHTS`, `NIGHT_ACTIONS`（`AGENT_BLURB` は #519 で実データ化済み・削除） | モード別の項目仕分け・出所は §8.3（`game_stats.json` / `agents/*.json` / `spectator_log.jsonl` / `frontend/public/config/agents.json`） |
 
 ### 8.2 Milestone 2 移行計画
