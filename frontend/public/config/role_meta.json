@@ -1,0 +1,8 @@
+[
+  { "key": "Villager", "ja": "村人",   "short": "村", "team": "village", "color": "var(--r-villager)" },
+  { "key": "Seer",     "ja": "占い師", "short": "占", "team": "village", "color": "var(--r-seer)" },
+  { "key": "Medium",   "ja": "霊媒師", "short": "霊", "team": "village", "color": "var(--r-medium)" },
+  { "key": "Knight",   "ja": "狩人",   "short": "狩", "team": "village", "color": "var(--r-hunter)" },
+  { "key": "Madman",   "ja": "狂人",   "short": "狂", "team": "wolf",    "color": "var(--r-madman)" },
+  { "key": "Werewolf", "ja": "人狼",   "short": "狼", "team": "wolf",    "color": "var(--r-werewolf)" }
+]

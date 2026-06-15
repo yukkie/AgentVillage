@@ -5,7 +5,7 @@ import AgentRosterRow from '../components/AgentRosterRow.jsx';
 import { FeedItem, SystemRow } from '../components/FeedCard.jsx';
 import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
-import { ROLES } from '../lib/constants.js';
+import { ROLE_META_BY_KEY, ROLE_KEYS, listRoles } from '../lib/roleMeta.js';
 import { agentDetailPath } from '../lib/agentLinks.js';
 import { fetchReplayAgents, fetchReplayLog } from '../lib/replayLoader.js';
 import { fetchGameBySessionId } from '../lib/archiveLoader.js';
@@ -29,7 +29,7 @@ export function LeftPane({
   gameOverDay = null,
   selectedAgents = new Set(),
   onToggleAgent = () => {},
-  presentRoles = Object.keys(ROLES),
+  presentRoles = ROLE_KEYS,
   selectedRoles = new Set(),
   onToggleRole = () => {},
   thoughtsOpen = false,
@@ -126,7 +126,7 @@ export function LeftPane({
             <div className={styles.sectionLabel}>役職フィルタ</div>
             <div className={styles.filtRow}>
               {presentRoles.map(roleKey => {
-                const roleDef = ROLES[roleKey];
+                const roleDef = ROLE_META_BY_KEY[roleKey];
                 if (!roleDef) return null;
                 const selected = selectedRoles.has(roleKey);
                 return (
@@ -185,7 +185,8 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
     <div className={styles.roster}>
       <div className={styles.sectionLabel}>カミングアウト状況</div>
       <ul className={styles.coBoard} aria-label="カミングアウト状況">
-        {Object.entries(ROLES)
+        {listRoles()
+          .map(roleDef => [roleDef.key, roleDef])
           .filter(([k]) => k !== 'Villager' && k !== 'Werewolf' && k !== 'Madman')
           .map(([roleKey, roleDef]) => {
             const coAgents = Object.entries(coStatus)
@@ -211,7 +212,7 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
             <div className={styles.actionIco}>{NIGHT_ACTION_ICON[a.event_type] || '・'}</div>
             <div className={styles.what}>
               <Link to={agentDetailPath(sessionId, a.agent, viewerMode)} className={styles.agentLink}><strong>{a.agent}</strong></Link>
-              {a.target && <> → <Link to={agentDetailPath(sessionId, a.target, viewerMode)} className={styles.agentLink}><em style={{ '--r-color': ROLES[roleAssignment[a.target]]?.color }}>{a.target}</em></Link></>}
+              {a.target && <> → <Link to={agentDetailPath(sessionId, a.target, viewerMode)} className={styles.agentLink}><em style={{ '--r-color': ROLE_META_BY_KEY[roleAssignment[a.target]]?.color }}>{a.target}</em></Link></>}
               <span style={{ color: 'var(--tx-4)', marginLeft: 6 }}>{NIGHT_ACTION_LABEL[a.event_type]}</span>
             </div>
           </li>
@@ -399,7 +400,7 @@ export default function SpectatorScreen() {
   ), [agents]);
   const presentRoles = useMemo(() => {
     const presentRoleSet = new Set(Object.values(roleAssignment));
-    return Object.keys(ROLES).filter(roleKey => presentRoleSet.has(roleKey));
+    return ROLE_KEYS.filter(roleKey => presentRoleSet.has(roleKey));
   }, [roleAssignment]);
   const replayCoStatus = useMemo(() => aggregateCoStatus(events, activeDay), [events, activeDay]);
   const agentNames = Object.keys(agents);

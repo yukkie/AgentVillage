@@ -9,7 +9,8 @@
     "speech_style": "polite",
     "occupation": "Mediator",
     "occupation_ja": "仲裁人",
-    "blurb": "Cools every heated room with reason, and never lets a quiet voice go unheard."
+    "blurb": "Cools every heated room with reason, and never lets a quiet voice go unheard.",
+    "color": "#cdd29a"
   },
   {
     "name": "Nana",
@@ -21,7 +22,8 @@
     "speech_style": "tsundere",
     "occupation": "Trickster",
     "occupation_ja": "道化者",
-    "blurb": "Hides a sharp mind behind sharper jokes, and means more than she ever admits."
+    "blurb": "Hides a sharp mind behind sharper jokes, and means more than she ever admits.",
+    "color": "#e0b87a"
   },
   {
     "name": "Ren",
@@ -33,7 +35,8 @@
     "speech_style": "gentle",
     "occupation": "Watcher",
     "occupation_ja": "見張り番",
-    "blurb": "Says little and watches everything, letting others reveal what he already suspects."
+    "blurb": "Says little and watches everything, letting others reveal what he already suspects.",
+    "color": "#c89a5d"
   },
   {
     "name": "Mira",
@@ -45,7 +48,8 @@
     "speech_style": "casual",
     "occupation": "Analyst",
     "occupation_ja": "記録係",
-    "blurb": "Stands where instinct meets logic and smells a lie before it has finished forming."
+    "blurb": "Stands where instinct meets logic and smells a lie before it has finished forming.",
+    "color": "#7fb0e0"
   },
   {
     "name": "Vael",
@@ -57,7 +61,8 @@
     "speech_style": "polite",
     "occupation": "Deceiver",
     "occupation_ja": "詐欺師",
-    "blurb": "Builds a palace of lies, brick by polished brick, and invites you to live in it."
+    "blurb": "Builds a palace of lies, brick by polished brick, and invites you to live in it.",
+    "color": "#7a9fd4"
   },
   {
     "name": "Kai",
@@ -69,7 +74,8 @@
     "speech_style": "dry",
     "occupation": "Strategist",
     "occupation_ja": "策士",
-    "blurb": "Wields silence as a weapon, spending the fewest words to sow the most doubt."
+    "blurb": "Wields silence as a weapon, spending the fewest words to sow the most doubt.",
+    "color": "#7ed1a3"
   },
   {
     "name": "Sera",
@@ -81,7 +87,8 @@
     "speech_style": "cool",
     "occupation": "Executioner",
     "occupation_ja": "処刑人",
-    "blurb": "Beneath a smile everyone trusts, the hunt is already elegantly underway."
+    "blurb": "Beneath a smile everyone trusts, the hunt is already elegantly underway.",
+    "color": "#e08fb8"
   },
   {
     "name": "Kael",
@@ -93,7 +100,8 @@
     "speech_style": "blunt",
     "occupation": "Guardian",
     "occupation_ja": "守衛",
-    "blurb": "Charges in headlong to shield the ones he trusts, and asks the hard questions later."
+    "blurb": "Charges in headlong to shield the ones he trusts, and asks the hard questions later.",
+    "color": "#7ec9c2"
   },
   {
     "name": "Lumi",
@@ -105,7 +113,8 @@
     "speech_style": "gentle",
     "occupation": "Florist",
     "occupation_ja": "花屋",
-    "blurb": "Believes the best in everyone, and her open heart is both her gift and her risk."
+    "blurb": "Believes the best in everyone, and her open heart is both her gift and her risk.",
+    "color": "#c4a0d8"
   },
   {
     "name": "Shiki",
@@ -117,7 +126,8 @@
     "speech_style": "assertive",
     "occupation": "Priest",
     "occupation_ja": "司祭",
-    "blurb": "Remembers every word that was spoken, and quietly lays each contradiction bare."
+    "blurb": "Remembers every word that was spoken, and quietly lays each contradiction bare.",
+    "color": "#a18bd0"
   },
   {
     "name": "Toma",
@@ -129,7 +139,8 @@
     "speech_style": "casual",
     "occupation": "Merchant",
     "occupation_ja": "商人",
-    "blurb": "Reads the room like a marketplace and always knows which side is worth backing today."
+    "blurb": "Reads the room like a marketplace and always knows which side is worth backing today.",
+    "color": "#d98a8a"
   },
   {
     "name": "Rei",
@@ -141,7 +152,8 @@
     "speech_style": "cool",
     "occupation": "Spy",
     "occupation_ja": "密偵",
-    "blurb": "Keeps her cards and her loyalties hidden, trading secrets while revealing none of her own."
+    "blurb": "Keeps her cards and her loyalties hidden, trading secrets while revealing none of her own.",
+    "color": "#d6b978"
   },
   {
     "name": "Haru",
@@ -153,7 +165,8 @@
     "speech_style": "gentle",
     "occupation": "Farmhand",
     "occupation_ja": "農夫",
-    "blurb": "Wears an easy smile that puts everyone at ease, and notices far more than he lets on."
+    "blurb": "Wears an easy smile that puts everyone at ease, and notices far more than he lets on.",
+    "color": "#88c0a8"
   },
   {
     "name": "Nox",
@@ -165,7 +178,8 @@
     "speech_style": "dry",
     "occupation": "Undertaker",
     "occupation_ja": "葬儀屋",
-    "blurb": "Quiet as a moonless night, he finds the frayed edge in everything you say."
+    "blurb": "Quiet as a moonless night, he finds the frayed edge in everything you say.",
+    "color": "#b06b8c"
   },
   {
     "name": "Sable",
@@ -177,6 +191,7 @@
     "speech_style": "polite",
     "occupation": "Diplomat",
     "occupation_ja": "外交官",
-    "blurb": "Reads the current of the room and knows the one word that will turn the tide."
+    "blurb": "Reads the current of the room and knows the one word that will turn the tide.",
+    "color": "#9aa3b6"
   }
 ]

@@ -5,12 +5,12 @@ import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { VILLAGE_NAME_PRESETS } from '../../stub/gameList.js';
 import { fetchGameList, fetchGameStats, parseWinRateRanking } from '../lib/archiveLoader.js';
-import { AGENT_PALETTE } from '../lib/constants.js';
+import { ALL_AGENT_NAMES } from '../lib/agentMeta.js';
 import styles from './GameListScreen.module.css';
 
 const TABS = ['🔴 LIVE', '完了'];
 const COUNTS = [5, 8, 11];
-const ALL_AGENTS = Object.keys(AGENT_PALETTE);
+const ALL_AGENTS = ALL_AGENT_NAMES;
 
 function NewVillageForm() {
   const [open, setOpen] = useState(false);

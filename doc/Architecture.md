@@ -112,8 +112,9 @@ spectator.py がログを書き出す  →  state_archive/{session}/
 
 | ファイル | 用途 |
 |---|---|
-| `frontend/public/config/agents.json` | エージェント定義（name / persona / occupation / blurb） |
-| `frontend/public/config/roles.json` | 人数別の役職編成 |
+| `frontend/public/config/agents.json` | エージェント定義（name / persona / occupation / blurb / color） |
+| `frontend/public/config/roles.json` | 人数別の役職編成（配分表） |
+| `frontend/public/config/role_meta.json` | 役職メタ（日本語名・short・team・色）。`roles.json`（配分表）とは別ファイル |
 | `frontend/public/config/tokens.json` | LLM 呼び出しごとの token 上限 |
 
 これらはゲーム進行で変化しない静的データであり、`state_archive/` や `state/stats/` のような実行時データではない。
