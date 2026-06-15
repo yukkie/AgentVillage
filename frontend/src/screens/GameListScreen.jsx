@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import Avatar, { AvatarButton } from '../components/Avatar.jsx';
 import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
-import { TOP_AGENTS, VILLAGE_NAME_PRESETS } from '../../stub/gameList.js';
-import { fetchGameList } from '../lib/archiveLoader.js';
+import { VILLAGE_NAME_PRESETS } from '../../stub/gameList.js';
+import { fetchGameList, fetchGameStats, parseWinRateRanking } from '../lib/archiveLoader.js';
 import { AGENT_PALETTE } from '../lib/constants.js';
 import styles from './GameListScreen.module.css';
 
@@ -184,23 +184,34 @@ function LeftPane() {
 }
 
 // === 右サイドウィジェット ===
-function RightPane() {
+function RightPane({ winRateRankingState }) {
   return (
     <div className={styles.sideWidgets}>
       <section className={styles.sideCard}>
-        <h5>🏆 今週の勝率トップ</h5>
-        <ul className={styles.sideList} aria-label="今週の勝率トップ">
-          {TOP_AGENTS.map(({ name, winRate }, i) => (
-            <li className={styles.rankRow} key={name}>
-              <Link to={`/agent/${encodeURIComponent(name)}`} className={styles.rankLink}>
-                <span className={styles.rank}>{i + 1}</span>
-                <Avatar name={name} size="xs" />
-                <span className={styles.rankName}>{name}</span>
-                <span className={styles.rankNum}>{winRate}%</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <h5>🏆 勝率ランキング</h5>
+        {winRateRankingState.status === 'loading' && (
+          <p className={styles.sideNote}>勝率を集計中…</p>
+        )}
+        {winRateRankingState.status === 'error' && (
+          <p className={styles.sideNote}>勝率を読み込めませんでした</p>
+        )}
+        {winRateRankingState.status === 'ready' && winRateRankingState.agents.length === 0 && (
+          <p className={styles.sideNote}>集計できる戦績がありません</p>
+        )}
+        {winRateRankingState.status === 'ready' && winRateRankingState.agents.length > 0 && (
+          <ul className={styles.sideList} aria-label="勝率ランキング">
+            {winRateRankingState.agents.map(({ name, winRate }, i) => (
+              <li className={styles.rankRow} key={name}>
+                <Link to={`/agent/${encodeURIComponent(name)}`} className={styles.rankLink}>
+                  <span className={styles.rank}>{i + 1}</span>
+                  <Avatar name={name} size="xs" />
+                  <span className={styles.rankName}>{name}</span>
+                  <span className={styles.rankNum}>{winRate}%</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );
@@ -211,11 +222,26 @@ export default function GameListScreen() {
   const [activeTab, setActiveTab] = useState('完了');
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [winRateRankingState, setWinRateRankingState] = useState({ status: 'loading', agents: [] });
 
   useEffect(() => {
     fetchGameList()
       .then(setGames)
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchGameStats()
+      .then(stats => {
+        if (!cancelled) {
+          setWinRateRankingState({ status: 'ready', agents: parseWinRateRanking(stats) });
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setWinRateRankingState({ status: 'error', agents: [] });
+      });
+    return () => { cancelled = true; };
   }, []);
 
   const visibleGames = filterGames(games, activeTab);
@@ -225,7 +251,12 @@ export default function GameListScreen() {
     <div className={styles.frame}>
       <TopBar crumbs={[{ label: 'r/agent-jinrou' }, { label: 'Live & Recent' }]} />
 
-      <ThreePaneLayout collapsibleLeft collapsibleRight left={<LeftPane />} right={<RightPane />}>
+      <ThreePaneLayout
+        collapsibleLeft
+        collapsibleRight
+        left={<LeftPane />}
+        right={<RightPane winRateRankingState={winRateRankingState} />}
+      >
         <div className={styles.listMain}>
           <NewVillageForm />
 

@@ -44,13 +44,13 @@ Milestone 3（FastAPI / DB 導入後）に改めて対応方針を検討する�
 | ルール（標準11人 / 拡張15人 / 妖狐入り / 短期戦） | クリックしてもフィルターなし | 実データ化候補（`config/roles.json` 連動）。現行ラベルは roles.json と不整合のため実データ化は別途行う |
 | ~~マイページ（ホーム / ウォッチ中 / 履歴 / 自分のbot）~~ | ~~リンクなしのダミーナビ~~ | **削除済み（#541）** |
 | ~~カテゴリ（村人陣営勝 / 狼陣営勝 / 研究村 / 解説付き）~~ | ~~クリックしてもフィルターなし~~ | **削除済み（#541）** |
-| ~~注目エージェント / 勝率~~ | ~~`TOP_AGENTS` スタブ固定~~ | **削除済み（#541）** — 右ペイン「勝率トップ」に一本化 |
+| ~~注目エージェント / 勝率~~ | ~~`TOP_AGENTS` スタブ固定~~ | **削除済み（#541）** — 右ペイン「勝率ランキング」に一本化 |
 
 **右サイドウィジェット（RightPane）**
 
 | UI要素 | 現状 | 対応方針 |
 |---|---|---|
-| 🏆 今週の勝率トップ | `stub/gameList.js` の `TOP_AGENTS` スタブ固定 | #337 実データ集計で対応予定 |
+| 🏆 勝率ランキング | ✅ `state/stats/game_stats.json` の `players[].won` / 出場数から15人分を集計 | **実装済み（#337）** — `fetchGameStats()` / `parseWinRateRanking()` で右ペインに表示 |
 | ~~📅 次回開催（第14回「夜霧の灯台」）~~ | ~~完全ハードコード~~ | **削除済み（#541）** |
 | ~~📰 観戦コミュニティ~~ | ~~`COMMUNITY_POSTS` スタブ固定~~ | **削除済み（#541）** |
 
@@ -144,7 +144,7 @@ AgentDetailScreen は現在 `stub/agentDetail.js` のデータのみを参照し
 | フィールド | 用途 | 現状 | 対応方針 |
 |---|---|---|---|
 | blurb | エージェントの1行プロフィール | ✅ `frontend/public/config/agents.json` の `blurb`（英語）で実データ化済み（#519） | `/config/agents.json` を `fetchAgentConfig()` で fetch・`parseBlurb()` で抽出。fetch 失敗／未定義は `—` フォールバック。日本語化は将来の別 Issue（`persona_short` は使わない） |
-| 通算戦績（wins / games / cheers） | ヒーローヘッダーの統計表示 | ❌ アーカイブから集計されていない | `stub/agentDetail.js` の `AGENT_STATS` スタブ固定。#337 実データ集計で対応予定 |
+| 通算戦績（wins / games） | global profile mode のヒーローヘッダー統計表示 | ✅ `state/stats/game_stats.json` から集計済み | #522 で `fetchGameStats()` / `parseGameStats()` により実データ化済み。`cheers` はソーシャル要素のため実装対象外 |
 | 疑い・信頼スコア | 疑いマトリクス表示 | ❌ 実ログに存在しない | `getSuspicionMatrix()` が `charCodeAt` ベースのハッシュで生成。エージェントの `thought` から推定する設計が必要 |
 | 夜の行動ログ | 夜の行動タブ | ✅ `spectator_log.jsonl` に観戦者向けイベントとして存在 | `stub/agentDetail.js` の `NIGHT_ACTIONS` スタブ固定。実ログ接続が必要 |
 
@@ -186,7 +186,7 @@ AgentDetailScreen は現在 `stub/agentDetail.js` のデータのみを参照し
 
 | UI要素 | 現状 | 対応方針 |
 |---|---|---|
-| 戦績レコード（#9〜#13） | エージェントによらずハードコード5件 | #337 実データ集計で対応予定 |
+| 戦績レコード（#9〜#13） | global profile mode では `game_stats.json` 由来の実データ表示済み | #522 で実データ化済み。game-scoped mode では過去戦績タブを出さない |
 
 ---
 

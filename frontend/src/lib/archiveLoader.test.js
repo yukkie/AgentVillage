@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   parseIndexToGameList, parseEntryToGame, fetchGameBySessionId,
-  parseGameStats, parseAllAgentNames, fetchGameStats,
+  parseGameStats, parseAllAgentNames, parseWinRateRanking, fetchGameStats,
   parseBlurb, fetchAgentConfig,
 } from './archiveLoader.js';
 import { normalizeAgentJson } from '../legacy/normalizeAgentJson.js';
@@ -293,6 +293,81 @@ describe('parseAllAgentNames', () => {
     Objective: games が空のとき空配列を返すことを検証する
     */
     expect(parseAllAgentNames({ games: [] })).toEqual([]);
+  });
+});
+
+describe('parseWinRateRanking', () => {
+  it('pure: parseWinRateRanking: game_stats players の won と出場数から minGames 以上の勝率ランキングを返す', () => {
+    /*
+    SUT: parseWinRateRanking
+    Mock: なし
+    Level: unit
+    Objective: game_stats.json の players[].won を name ごとに集計し、minGames 以上のエージェントだけを勝率順で返すことを検証する (AC-2/AC-3/AC-6)
+    */
+    const stats = {
+      games: [
+        {
+          game_id: 'g1',
+          players: [
+            { name: 'Nox', won: true },
+            { name: 'Kai', won: false },
+            { name: 'Mira', won: true },
+          ],
+        },
+        {
+          game_id: 'g2',
+          players: [
+            { name: 'Nox', won: false },
+            { name: 'Kai', won: true },
+            { name: 'Mira', won: true },
+          ],
+        },
+        {
+          game_id: 'g3',
+          players: [
+            { name: 'Nox', won: true },
+            { name: 'Kai', won: true },
+            { name: 'Solo', won: true },
+          ],
+        },
+      ],
+    };
+
+    expect(parseWinRateRanking(stats, { limit: 3, minGames: 2 })).toEqual([
+      { name: 'Mira', wins: 2, games: 2, winRate: 100 },
+      { name: 'Kai', wins: 2, games: 3, winRate: 67 },
+      { name: 'Nox', wins: 2, games: 3, winRate: 67 },
+    ]);
+  });
+
+  it('pure: parseWinRateRanking: デフォルトでは15人分の勝率ランキングを返す', () => {
+    /*
+    SUT: parseWinRateRanking
+    Mock: なし
+    Level: unit
+    Objective: 5人に絞らず、現行エージェント全員分（15人）の勝率を返すことを検証する (AC-1/AC-2)
+    */
+    const agents = Array.from({ length: 15 }, (_, i) => `Agent ${String(i + 1).padStart(2, '0')}`);
+    const stats = {
+      games: [
+        { game_id: 'g1', players: agents.map(name => ({ name, won: name === 'Agent 01' })) },
+        { game_id: 'g2', players: agents.map(name => ({ name, won: name === 'Agent 01' || name === 'Agent 02' })) },
+      ],
+    };
+
+    expect(parseWinRateRanking(stats)).toHaveLength(15);
+    expect(parseWinRateRanking(stats)[0]).toMatchObject({ name: 'Agent 01', winRate: 100 });
+  });
+
+  it('pure: parseWinRateRanking: 空または不正な game_stats では空ランキングを返す', () => {
+    /*
+    SUT: parseWinRateRanking
+    Mock: なし
+    Level: unit
+    Objective: games が空または欠落している場合に例外ではなく空配列を返し UI fallback に委ねることを検証する (AC-4)
+    */
+    expect(parseWinRateRanking({ games: [] })).toEqual([]);
+    expect(parseWinRateRanking(null)).toEqual([]);
   });
 });
 
