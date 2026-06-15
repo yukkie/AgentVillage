@@ -14,16 +14,27 @@ const game = {
   title: '【第12回】「黎明の小径」— 狼勝利',
   tag: '完了',
   live: false,
-  hot: false,
   day: 3,
   winner: 'wolf',
   winnerLabel: '狼陣営勝',
   rule: '標準11人',
-  votes: 0,
-  comments: 0,
   viewers: null,
   cast: ['Kael', 'Kai', 'Mira'],
   desc: '狂人 Kael の超積極投票で村が分断',
+};
+
+const liveGame = {
+  id: '20260601_120000',
+  title: '第13回「桜霞」',
+  tag: '',
+  live: true,
+  day: 2,
+  winner: null,
+  winnerLabel: null,
+  rule: '標準11人',
+  viewers: 142,
+  cast: ['Nox', 'Mira'],
+  desc: '',
 };
 
 afterEach(() => {
@@ -45,7 +56,7 @@ function renderGameList() {
 
 describe('GameListScreen GameCard semantics', () => {
   it('exposes each game card as an article named by session id', async () => {
-    /**
+    /*
      * SUT: GameListScreen / GameCard
      * Mock: fetchGameList（state_archive index の取得を固定）
      * Level: component
@@ -62,7 +73,7 @@ describe('GameListScreen GameCard semantics', () => {
   });
 
   it('renders a link to /game/:sessionId for each game card', async () => {
-    /**
+    /*
      * SUT: GameListScreen / GameCard
      * Mock: fetchGameList（state_archive index の取得を固定）
      * Level: component
@@ -84,7 +95,7 @@ describe('GameListScreen list semantics', () => {
      * SUT: GameListScreen / LeftPane / RightPane
      * Mock: fetchGameList（state_archive index の取得を固定）
      * Level: component
-     * Objective: 左サイドナビと右ウィジェットの項目群が list/listitem role で特定できることを検証する。
+     * Objective: 左サイドナビ（ルールのみ）と右ウィジェット（勝率トップのみ）の項目群が list/listitem role で特定できることを検証する。
      */
     mockGameList();
 
@@ -92,22 +103,19 @@ describe('GameListScreen list semantics', () => {
     await screen.findByRole('article', { name: '20260510_102927' });
 
     const sideNav = screen.getByRole('navigation', { name: 'ゲーム一覧サイドナビ' });
-    expect(within(sideNav).getAllByRole('list').length).toBeGreaterThanOrEqual(4);
-    expect(within(sideNav).getAllByRole('listitem').length).toBeGreaterThanOrEqual(10);
+    expect(within(sideNav).getAllByRole('list').length).toBeGreaterThanOrEqual(1);
+    expect(within(sideNav).getAllByRole('listitem').length).toBeGreaterThanOrEqual(4);
 
     const ranking = screen.getByRole('list', { name: '今週の勝率トップ' });
     expect(within(ranking).getAllByRole('listitem')).toHaveLength(5);
-
-    const posts = screen.getByRole('list', { name: '観戦コミュニティ' });
-    expect(within(posts).getAllByRole('listitem').length).toBeGreaterThan(0);
   });
 
-  it('renders agent links to /agent/:agentName in top agents and ranking', async () => {
+  it('renders agent links to /agent/:agentName in ranking only', async () => {
     /*
-     * SUT: GameListScreen / LeftPane / RightPane
+     * SUT: GameListScreen / RightPane
      * Mock: fetchGameList
      * Level: component
-     * Objective: 左ペイン「注目エージェント」と右ペイン「勝率トップ」が /agent/:name へのリンクを持つことを検証する。
+     * Objective: 右ペイン「勝率トップ」が /agent/:name へのリンクを持つことを検証する（注目エージェント削除後、勝率トップのみが agent リンクを持つ）。
      */
     mockGameList();
 
@@ -118,5 +126,150 @@ describe('GameListScreen list semantics', () => {
       l => l.getAttribute('href')?.startsWith('/agent/')
     );
     expect(agentLinks.length).toBeGreaterThan(0);
+  });
+});
+
+describe('GameListScreen stub UI 削除（AC-1〜AC-4）', () => {
+  it('統合: GameCard に upvote・提供:RunVillage・観戦コメント数・並びHot が存在しない', async () => {
+    /*
+     * SUT: GameListScreen / GameCard
+     * Mock: fetchGameList
+     * Level: component
+     * Objective: #541 で削除したスタブ UI 要素が GameCard に存在せず、👁同時観戦は残ることを検証する (AC-1)
+     */
+    mockGameList();
+    renderGameList();
+    await screen.findByRole('article', { name: '20260510_102927' });
+
+    expect(screen.queryByText('▲')).toBeNull();
+    expect(screen.queryByText('▼')).toBeNull();
+    expect(screen.queryByText(/提供/)).toBeNull();
+    expect(screen.queryByText(/RunVillage/)).toBeNull();
+    expect(screen.queryByText(/観戦コメント/)).toBeNull();
+    expect(screen.queryByText(/ログDL/)).toBeNull();
+    expect(screen.queryByText(/保存/)).toBeNull();
+    expect(screen.queryByText(/共有/)).toBeNull();
+    expect(screen.queryByText(/並び/)).toBeNull();
+    expect(screen.queryByText(/Hot/)).toBeNull();
+    // 👁 同時観戦は残っている
+    expect(screen.getByText(/同時観戦/)).toBeTruthy();
+  });
+
+  it('統合: LeftPane はルールのみ残しマイページ・カテゴリ・注目エージェントを表示しない', async () => {
+    /*
+     * SUT: GameListScreen / LeftPane
+     * Mock: fetchGameList
+     * Level: component
+     * Objective: #541 で削除した LeftPane セクションが存在せず、ルールセクションが残ることを検証する (AC-2)
+     */
+    mockGameList();
+    renderGameList();
+    await screen.findByRole('article', { name: '20260510_102927' });
+
+    const nav = screen.getByRole('navigation', { name: 'ゲーム一覧サイドナビ' });
+    expect(within(nav).getByText('ルール')).toBeTruthy();
+    expect(within(nav).queryByText('マイページ')).toBeNull();
+    expect(within(nav).queryByText('カテゴリ')).toBeNull();
+    expect(within(nav).queryByText('注目エージェント')).toBeNull();
+  });
+
+  it('統合: RightPane は勝率トップのみ残し次回開催・観戦コミュニティを表示しない', async () => {
+    /*
+     * SUT: GameListScreen / RightPane
+     * Mock: fetchGameList
+     * Level: component
+     * Objective: #541 で削除した RightPane セクションが存在せず、勝率トップが残ることを検証する (AC-3)
+     */
+    mockGameList();
+    renderGameList();
+    await screen.findByRole('article', { name: '20260510_102927' });
+
+    expect(screen.getByRole('list', { name: '今週の勝率トップ' })).toBeTruthy();
+    expect(screen.queryByText(/次回開催/)).toBeNull();
+    expect(screen.queryByRole('list', { name: '観戦コミュニティ' })).toBeNull();
+  });
+
+  it('統合: TopBar は検索ボックス・通知3・自分のbot参加を表示しない', async () => {
+    /*
+     * SUT: GameListScreen / TopBar
+     * Mock: fetchGameList
+     * Level: component
+     * Objective: #541 で削除した TopBar 要素が存在しないことを検証する (AC-4)
+     */
+    mockGameList();
+    renderGameList();
+    await screen.findByRole('article', { name: '20260510_102927' });
+
+    expect(screen.queryByPlaceholderText(/検索/)).toBeNull();
+    expect(screen.queryByText(/通知/)).toBeNull();
+    expect(screen.queryByText(/自分のbot/)).toBeNull();
+  });
+});
+
+describe('GameListScreen 保持要素（AC-6）', () => {
+  it('統合: LIVE バナー・NewVillageForm・ルールセクション・viewers が残っている', async () => {
+    /*
+     * SUT: GameListScreen
+     * Mock: fetchGameList（live ゲームを含む）
+     * Level: component
+     * Objective: AC-6 の保持要素（LIVE バナー・NewVillageForm・ルールセクション・👁同時観戦）が存在することを検証する
+     */
+    mockGameList([liveGame, game]);
+    renderGameList();
+    // 完了タブがデフォルト — live ゲームは完了タブで非表示
+    await screen.findByRole('article', { name: '20260510_102927' });
+
+    // NewVillageForm
+    expect(screen.getByText('新しい村を作る')).toBeTruthy();
+    // ルールセクション
+    const nav = screen.getByRole('navigation', { name: 'ゲーム一覧サイドナビ' });
+    expect(within(nav).getByText('ルール')).toBeTruthy();
+    // 👁 同時観戦（完了ゲームの viewers は null → '—'）
+    expect(screen.getByText(/同時観戦/)).toBeTruthy();
+  });
+});
+
+describe('GameListScreen タブ（AC-9・AC-10）', () => {
+  it('統合: タブが LIVE と完了の2つのみ表示される', async () => {
+    /*
+     * SUT: GameListScreen
+     * Mock: fetchGameList
+     * Level: component
+     * Objective: タブが「🔴 LIVE」と「完了」の2つのみで、削除済みタブが存在しないことを検証する (AC-9)
+     */
+    mockGameList();
+    renderGameList();
+    await screen.findByRole('article', { name: '20260510_102927' });
+
+    const tabs = screen.getAllByRole('button').filter(
+      b => b.className.includes('tab') || ['🔴 LIVE', '完了'].includes(b.textContent.trim())
+    );
+    const tabTexts = tabs.map(b => b.textContent.trim());
+    expect(tabTexts).toContain('🔴 LIVE');
+    expect(tabTexts).toContain('完了');
+    expect(tabTexts).not.toContain('▶ 注目');
+    expect(tabTexts).not.toContain('🔥 熱い議論');
+    expect(tabTexts).not.toContain('🆕 新着');
+  });
+
+  it('統合: LIVE タブは live=true のゲームのみ、完了タブは live=false のゲームのみ表示する', async () => {
+    /*
+     * SUT: GameListScreen / filterGames
+     * Mock: fetchGameList（live と完了が混在）
+     * Level: component
+     * Objective: タブ切り替えで live/完了 が正しくフィルタされることを検証する (AC-10)
+     */
+    const user = userEvent.setup();
+    mockGameList([liveGame, game]);
+    renderGameList();
+
+    // デフォルトは完了タブ — 完了ゲームのみ表示
+    await screen.findByRole('article', { name: '20260510_102927' });
+    expect(screen.queryByRole('article', { name: '20260601_120000' })).toBeNull();
+
+    // LIVE タブに切り替え — live ゲームのみ表示
+    await user.click(screen.getByRole('button', { name: '🔴 LIVE' }));
+    await screen.findByRole('article', { name: '20260601_120000' });
+    expect(screen.queryByRole('article', { name: '20260510_102927' })).toBeNull();
   });
 });

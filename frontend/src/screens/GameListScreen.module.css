@@ -59,9 +59,6 @@
   font-size: 12px;
   flex: 0 0 18px;
 }
-.ico.rCls { color: var(--danger); }
-.ico.rV   { color: var(--r-villager); }
-.ico.rW   { color: var(--r-werewolf); }
 
 /* === 中央メインフィード === */
 .listMain {
@@ -96,13 +93,6 @@
   font-weight: 600;
   box-shadow: inset 0 -2px 0 var(--acc);
 }
-.spread { flex: 1; }
-.sort {
-  font-size: 11px;
-  color: var(--tx-3);
-  cursor: pointer;
-}
-.sort:hover { color: var(--tx); }
 
 /* LIVEバナー */
 .liveBanner {
@@ -150,45 +140,6 @@
   transition: border-color 120ms;
 }
 .gcard:hover { border-color: var(--tx-4); }
-.gcard.featured {
-  border-color: color-mix(in oklab, var(--acc) 60%, var(--bd));
-  box-shadow: 0 0 0 1px color-mix(in oklab, var(--acc) 20%, transparent);
-}
-
-/* 縦投票列 */
-.vote {
-  width: 48px;
-  flex: 0 0 48px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 14px 0 10px;
-  gap: 4px;
-  background: var(--bg-2);
-  border-right: 1px solid var(--bd);
-}
-.vote button {
-  background: transparent;
-  border: none;
-  color: var(--tx-3);
-  font-size: 13px;
-  cursor: pointer;
-  width: 28px;
-  height: 24px;
-  border-radius: var(--r1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.vote button:hover { color: var(--acc); background: var(--bg-3); }
-.vote button.up { color: var(--acc); }
-.vote .voteNum {
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--tx);
-}
 
 /* カード本体 */
 .cardBody {
@@ -259,8 +210,6 @@
 .metaSep { color: var(--tx-4); }
 .rule { font-size: 11px; color: var(--tx-3); }
 
-.metatRight { margin-left: auto; font-size: 11px; color: var(--tx-3); }
-.metatRight strong { color: var(--tx-2); }
 
 .cardTitle {
   font-family: var(--serif);
@@ -358,38 +307,6 @@
   font-weight: 600;
 }
 
-.postItem {
-  padding-bottom: 8px;
-  border-bottom: 1px dashed var(--bd-soft);
-  margin-bottom: 8px;
-}
-.postItem:last-child { padding-bottom: 0; border-bottom: none; margin-bottom: 0; }
-.postTitle {
-  font-family: var(--serif);
-  font-size: 12px;
-  color: var(--tx-2);
-  line-height: 1.5;
-}
-.postVotes {
-  font-size: 10px;
-  color: var(--tx-3);
-  margin-top: 2px;
-}
-
-.nextDate { font-size: 12px; color: var(--tx-2); margin-bottom: 4px; }
-.nextMeta { font-size: 11px; color: var(--tx-3); margin-bottom: 10px; }
-.reminderBtn {
-  width: 100%;
-  height: 28px;
-  background: transparent;
-  border: 1px solid var(--bd);
-  border-radius: var(--r1);
-  color: var(--tx-2);
-  font-size: 12px;
-  font-family: var(--sans);
-  cursor: pointer;
-}
-.reminderBtn:hover { border-color: var(--tx-3); color: var(--tx); }
 
 /* === 新しい村を作るフォーム === */
 .newVillage {
@@ -529,17 +446,6 @@
 }
 .createBtn:not(:disabled):hover { opacity: 0.85; }
 
-.agentLink {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: inherit;
-  text-decoration: none;
-  width: 100%;
-  padding: 4px 6px;
-  border-radius: var(--r1);
-}
-.agentLink:hover { background: var(--bg-2); color: var(--tx); }
 
 .rankLink {
   display: flex;

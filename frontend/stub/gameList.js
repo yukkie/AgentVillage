@@ -15,8 +15,3 @@ export const VILLAGE_NAME_PRESETS = [
   '朱鷺色の夕', '月影の渚', '雪解けの道', '風薫る谷', '銀霧の廊',
 ];
 
-export const COMMUNITY_POSTS = [
-  { title: 'Kai の戦術ノート（Sera との連携）', votes: 312 },
-  { title: '狂人勝利型に出る共通言い回し12選', votes: 198 },
-  { title: 'Nox の Day1 思考ログ全文（許諾済）', votes: 156 },
-];

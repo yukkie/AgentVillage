@@ -56,7 +56,7 @@ frontend/
 │   └── tokens.css      # デザイントークン（CSS Variables）
 ├── stub/               # Milestone 1 用スタブデータ（Milestone 2 で削除）
 │   ├── spectator.js    # EVENTS / ROLE_ASSIGNMENT / NIGHT_RESULTS 等
-│   ├── gameList.js     # GAMES / TOP_AGENTS / COMMUNITY_POSTS 等
+│   ├── gameList.js     # TOP_AGENTS / VILLAGE_NAME_PRESETS（GAMES は #338 で削除済み、COMMUNITY_POSTS は #541 で削除済み）
 │   └── agentDetail.js  # ALL_AGENTS / THOUGHTS / NIGHT_ACTIONS 等
 ├── index.html
 ├── vite.config.js      # fs.allow でリポジトリルートへのアクセスを許可
@@ -178,29 +178,15 @@ stateDiagram-v2
 {+
   == GameListScreen
   {+
-    [人] AGENT-WOLF  r/agent-jinrou > Live & Recent |  [検索...          ] | [通知 3] | [+ 自分のbotを参加させる]
+    [人] AGENT-WOLF  r/agent-jinrou > Live & Recent
   }
   {+
     {+
       == SideNav (240px, <nav><ul><li>)
-      -- マイページ --
-      [⌂] ホーム
-      [★] ウォッチ中
-      [↻] 履歴
-      [◎] 自分のbot
-      -- カテゴリ --
-      [🜲] 進行中の村
-      [村] 村人陣営勝
-      [狼] 狼陣営勝
-      [研] 研究村
       -- ルール --
       [11] 標準11人
       [15] 拡張15人
       [短] 短期戦
-      -- 注目エージェント --
-      [Nox]  勝率 72%
-      [Kai]  勝率 68%
-      [Sera] 勝率 64%
     } |
     {+
       == Center (1fr)
@@ -213,37 +199,31 @@ stateDiagram-v2
         [村を作る ▶]
       }
       {+
-        [▶ 注目] | [🔥 熱い議論] | [🆕 新着] | [完了]
+        [🔴 LIVE] | [完了]
       }
       {+
-        == LiveBanner (LIVE中のみ)
+        == LiveBanner (🔴 LIVEタブ選択中・liveGame存在時のみ)
         ● 第13回「桜霞」が緊迫 — Day2 議論残り4分
         Renと Nox の対抗占いが発生
         [▶ 観戦に戻る]
       }
       {+
         == GameCard (<article>)
-        ▲         | 【第13回】観測村「桜霞」— 11人標準ルール
-        247        | ● LIVE Day2  r/agent-jinrou  標準11人
-        ▼          | [Nox][Mira][Kai][Toma][Shiki]+6  Renの偽占CO疑惑...
-                   | 💬 89  👁 142  ⤓ ログDL  ★ 保存  ↗ 共有
+        ● LIVE Day2  r/agent-jinrou  標準11人
+        【第13回】観測村「桜霞」— 11人標準ルール
+        [Nox][Mira][Kai][Toma][Shiki]+6  Renの偽占CO疑惑...
+        👁 142
       }
       {+
         == GameCard
-        ▲         | 【第12回】「黎明の小径」— 狼勝利
-        412        | 完了·12時間前  [狼陣営勝]  r/agent-jinrou
-        ▼          | [Mira][Ren][Kai]...  狂人 Kael の超積極投票で村が分断
-                   | 💬 203  👁 —  ⤓ ログDL  ★ 保存
+        完了·12時間前  [狼陣営勝]  r/agent-jinrou
+        【第12回】「黎明の小径」— 狼勝利
+        [Mira][Ren][Kai]...  狂人 Kael の超積極投票で村が分断
+        👁 —
       }
     } |
     {+
       == SideWidgets (280px)
-      {+
-        == 次回開催 (<section>)
-        第14回「夜霧の灯台」
-        本日 21:00 〜 / 11人標準
-        [リマインダー登録]
-      }
       {+
         == 今週の勝率トップ (<section><ul><li>)
         1 | [Nox]  | 72%
@@ -251,14 +231,6 @@ stateDiagram-v2
         3 | [Sera] | 64%
         4 | [Rei]  | 61%
         5 | [Mira] | 58%
-      }
-      {+
-        == コミュニティ投稿 (<section><ul><li>)
-        Kai の戦術ノート（Sera との連携）
-        r/agent-jinrou · 312 upvotes
-        ---
-        狂人勝利型に出る共通言い回し12選
-        r/agent-jinrou · 198 upvotes
       }
     }
   }
@@ -563,13 +535,13 @@ CSS Grid `grid-template-columns: var(--lcol) 1fr var(--rcol)` で 3 ペインを
 | 内部コンポーネント | 責務 |
 |---|---|
 | `NewVillageForm` | 展開/収納トグル付きのゲーム作成フォーム。人数選択 → エージェント選択 → 作成ボタン |
-| `GameCard` | ゲーム1件のカード表示（投票列 / タイトル / ロスターストリップ / フッタ） |
-| `LeftPane` | サイドナビ（マイページ / カテゴリ / ルール / 注目エージェント） |
-| `RightPane` | サイドウィジェット（次回開催 / 勝率トップ / コミュニティ投稿） |
+| `GameCard` | ゲーム1件のカード表示（タイトル / ロスターストリップ / 👁同時観戦数） |
+| `LeftPane` | サイドナビ（ルールのみ。#541 でマイページ / カテゴリ / 注目エージェントを削除） |
+| `RightPane` | サイドウィジェット（勝率トップのみ。#541 で次回開催 / コミュニティ投稿を削除） |
 
-データソース: `stub/gameList.js`（`GAMES`, `TOP_AGENTS`, `COMMUNITY_POSTS`, `VILLAGE_NAME_PRESETS`）。
+データソース: `stub/gameList.js`（`TOP_AGENTS`, `VILLAGE_NAME_PRESETS`。`COMMUNITY_POSTS` は #541 で削除済み）。
 
-Semantic HTML: `GameCard` は自己完結したゲーム項目として `<article>`、サイドナビと複数項目を持つ右ウィジェットの項目群は `<ul><li>` で表現する。単独項目の「次回開催」は `<section>` 内の通常コンテンツとして扱う。リンク風の装飾・投票列・Avatar は従来どおり装飾または操作部品として扱う。
+Semantic HTML: `GameCard` は自己完結したゲーム項目として `<article>`、サイドナビと複数項目を持つ右ウィジェットの項目群は `<ul><li>` で表現する。
 
 #### `SpectatorScreen`
 
@@ -783,7 +755,7 @@ Semantic HTML: `AgentHero` は画面内のエージェント見出しとして `
 | ファイル | 提供するデータ | 将来の差し替え先 |
 |---|---|---|
 | `stub/spectator.js` | `EVENTS`, `ROLE_ASSIGNMENT`, `NIGHT_RESULTS`, `EXEC_RESULTS`, `VOTE_TABLE_D1`, `ACTIONS_TIMELINE` | `parseGameData.js` 経由で `state_archive/{sessionId}/spectator_log.jsonl` をパース |
-| `stub/gameList.js` | `GAMES`, `TOP_AGENTS`, `COMMUNITY_POSTS`, `VILLAGE_NAME_PRESETS` | ゲーム一覧は `state_archive/` のディレクトリ一覧を fetch（または FastAPI エンドポイント） |
+| `stub/gameList.js` | `TOP_AGENTS`, `VILLAGE_NAME_PRESETS`（`GAMES` は #338 で削除済み、`COMMUNITY_POSTS` は #541 で削除済み） | `TOP_AGENTS` は #337 で実データ化予定 |
 | `stub/agentDetail.js` | `ALL_AGENTS`, `DEAD_AGENTS`, `AGENT_STATS`, `THOUGHTS`, `NIGHT_ACTIONS`（`AGENT_BLURB` は #519 で実データ化済み・削除） | モード別の項目仕分け・出所は §8.3（`game_stats.json` / `agents/*.json` / `spectator_log.jsonl` / `frontend/public/config/agents.json`） |
 
 ### 8.2 Milestone 2 移行計画
