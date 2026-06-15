@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Avatar from './Avatar.jsx';
 import RoleTag from './RoleTag.jsx';
-import { ROLES } from '../lib/constants.js';
+import { ROLE_META_BY_KEY } from '../lib/roleMeta.js';
 import { agentDetailPath } from '../lib/agentLinks.js';
 import styles from './FeedCard.module.css';
 
@@ -62,12 +62,12 @@ function ThoughtDetails({ reasoning, viewerMode = 'spectator', bulkOpen = false 
 // --- 発言カード ---
 function SpeechCard({ ev, prevById, roleAssignment, sessionId, viewerMode = 'spectator', bulkThoughtsOpen = false }) {
   const role = roleAssignment[ev.agent];
-  const r = ROLES[role];
+  const r = ROLE_META_BY_KEY[role];
   const replied = ev.reply_to ? prevById[`${ev.day}-${ev.reply_to}`] : null;
   const isWolf = role === 'Werewolf';
   const isPublic = viewerMode === 'public';
   const coedRole = ev.claimed_role;
-  const coColor = coedRole ? ROLES[coedRole]?.color : undefined;
+  const coColor = coedRole ? ROLE_META_BY_KEY[coedRole]?.color : undefined;
   const agentTo = agentDetailPath(sessionId, ev.agent, viewerMode);
 
   return (
@@ -87,7 +87,7 @@ function SpeechCard({ ev, prevById, roleAssignment, sessionId, viewerMode = 'spe
           {!isPublic && <RoleTag role={role} />}
           {coedRole && (
             <span className={styles.coBadge} style={{ '--co-color': coColor }}>
-              ▶ {ROLES[coedRole]?.ja || coedRole} CO
+              ▶ {ROLE_META_BY_KEY[coedRole]?.ja || coedRole} CO
             </span>
           )}
           <time className={styles.ts}>{fmtTime(ev.day, ev.speech_id || 0)}</time>
@@ -109,7 +109,7 @@ function SpeechCard({ ev, prevById, roleAssignment, sessionId, viewerMode = 'spe
 
 function AgentEpisodeCard({ ev, roleAssignment, sessionId, viewerMode = 'spectator', label = '役職割り当て' }) {
   const role = roleAssignment[ev.agent];
-  const r = ROLES[role];
+  const r = ROLE_META_BY_KEY[role];
   const isPublic = viewerMode === 'public';
   const agentTo = agentDetailPath(sessionId, ev.agent, viewerMode);
 

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { ROLES, AGENT_PALETTE } from '../lib/constants.js';
+import { ROLE_META_BY_KEY } from '../lib/roleMeta.js';
+import { AGENT_COLORS } from '../lib/agentMeta.js';
 import styles from './Avatar.module.css';
 
 function AvatarIcon({ name, role, dead, size, highlight }) {
   const [imgLoaded, setImgLoaded] = useState(false);
-  const color = AGENT_PALETTE[name] || '#888';
-  const roleInfo = role && ROLES[role];
+  const color = AGENT_COLORS[name] || '#888';
+  const roleInfo = role && ROLE_META_BY_KEY[role];
   const sizeClass = size === 'sm' ? styles.sm : size === 'xs' ? styles.xs : '';
 
   return (
@@ -33,8 +34,8 @@ function AvatarIcon({ name, role, dead, size, highlight }) {
 
 function AvatarIconLabeled({ name, role, dead, size, highlight }) {
   const [imgLoaded, setImgLoaded] = useState(false);
-  const color = AGENT_PALETTE[name] || '#888';
-  const roleInfo = role && ROLES[role];
+  const color = AGENT_COLORS[name] || '#888';
+  const roleInfo = role && ROLE_META_BY_KEY[role];
   const sizeClass = size === 'sm' ? styles.sm : size === 'xs' ? styles.xs : '';
 
   return (

@@ -48,7 +48,8 @@ frontend/
 │   │   ├── GameListScreen.jsx / .module.css
 │   │   └── AgentDetailScreen.jsx / .module.css
 │   ├── lib/
-│   │   ├── constants.js    # ROLES 定義・AGENT_PALETTE（#321 で API fetch に移行予定）
+│   │   ├── roleMeta.js     # role_meta.json adapter（ROLE_META_BY_KEY / ROLE_KEYS / listRoles）
+│   │   ├── agentMeta.js    # agents.json adapter（AGENT_COLORS / ALL_AGENT_NAMES）
 │   │   ├── feedFilter.js   # filterFeedEvents(events, day, phase) — フェーズ別フィルタ純粋関数
 │   │   └── feedFilter.test.js
 │   ├── App.jsx / .module.css
@@ -427,7 +428,7 @@ stateDiagram-v2
 
 `label` あり時は identity wrapper 要素（新クラス）がアイコン frame（`.av`）を内包する構造になる。`.av` のスタイルは変更しないため、`label` なしの既存呼び出しは挙動変更なし。
 
-データソース: `AGENT_PALETTE`（`lib/constants.js`）でエージェント名 → 個人カラー（`--av-c`）を解決。
+データソース: `AGENT_COLORS`（`lib/agentMeta.js`・`agents.json` の `color` 由来）でエージェント名 → 個人カラー（`--av-c`）を解決。
 
 #### `AvatarButton`（named export）
 
@@ -451,7 +452,7 @@ hover / focus スタイルは CSS `:hover` / `:focus-visible` で付与（`varia
 
 | prop | 型 | 説明 |
 |---|---|---|
-| `role` | `string` | 役職キー（例: `"Seer"`）。`ROLES` にない場合は `null` を返す |
+| `role` | `string` | 役職キー（例: `"Seer"`）。`ROLE_META_BY_KEY` にない場合は `null` を返す |
 
 `--r-color` CSS Variable を inline style で設定し、子要素が `var(--r-color)` を参照できる。
 
@@ -744,7 +745,7 @@ Semantic HTML: `AgentHero` は画面内のエージェント見出しとして `
 }
 ```
 
-`AGENT_PALETTE`（`lib/constants.js`）はエージェント個人カラーを管理する別トークン。`Avatar` の背景グラデーションと `highlight` アウトラインに使用する（`--av-c` として設定）。
+`AGENT_COLORS`（`lib/agentMeta.js`・`agents.json` の `color` 由来）はエージェント個人カラーを管理する別トークン。`Avatar` の背景グラデーションと `highlight` アウトラインに使用する（`--av-c` として設定）。
 
 ---
 

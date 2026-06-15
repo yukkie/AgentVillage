@@ -5,7 +5,7 @@ import AgentRosterRow from '../components/AgentRosterRow.jsx';
 import { FeedItem } from '../components/FeedCard.jsx';
 import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
-import { ROLES } from '../lib/constants.js';
+import { ROLE_META_BY_KEY } from '../lib/roleMeta.js';
 import { fetchGameStats, parseGameStats, parseAllAgentNames, fetchGameBySessionId, fetchAgentConfig, parseBlurb } from '../lib/archiveLoader.js';
 import { fetchReplayGame } from '../lib/replayLoader.js';
 import { buildAgentDetailRoster, buildSuspicionMatrix, countAgentSpeeches } from '../lib/parseGameData.js';
@@ -72,7 +72,7 @@ function LeftPane({ current, sessionId, viewerMode = 'spectator', roster = [] })
 // --- 中央: ヒーロー ---
 function AgentHero({ agent, agentData, speechCount, sessionMeta, currentDay, viewerMode = 'spectator', blurb }) {
   const role = agentData?.role ?? null;
-  const r = ROLES[role];
+  const r = ROLE_META_BY_KEY[role];
   const isPublic = viewerMode === 'public';
   const isAlive = agentData?.is_alive ?? true;
   const teamLabel = r?.team === 'wolf' ? '人狼陣営' : '村人陣営';
@@ -287,7 +287,7 @@ function GlobalHistory({ stats }) {
       ) : (
         <ul className={styles.recordList} aria-label="過去の戦績">
           {stats.records.map((rec, i) => {
-            const r = ROLES[rec.role];
+            const r = ROLE_META_BY_KEY[rec.role];
             return (
               <li key={i} className={styles.recordRow} style={{ '--r-color': r?.color }}>
                 <span className={styles.recordNum}>{rec.gameId}</span>

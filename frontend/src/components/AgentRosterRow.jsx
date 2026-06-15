@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import Avatar from './Avatar.jsx';
 import RoleTag from './RoleTag.jsx';
-import { ROLES } from '../lib/constants.js';
+import { ROLE_META_BY_KEY } from '../lib/roleMeta.js';
 import styles from './AgentRosterRow.module.css';
 
 /**
@@ -13,7 +13,7 @@ import styles from './AgentRosterRow.module.css';
  * 遷移先 `to` と役職表示可否 `showRole` は呼び出し側で計算して渡す。
  */
 export default function AgentRosterRow({ name, role, to, showRole = false, coRole, dead = false, deathMeta, showStatusDot = true, selected = false }) {
-  const r = ROLES[role];
+  const r = ROLE_META_BY_KEY[role];
   return (
     <li className={`${styles.row} ${dead ? styles.dead : ''} ${showStatusDot ? '' : styles.noDot} ${selected ? styles.selected : ''}`} style={{ '--r-color': r?.color }}>
       <Link to={to} className={styles.link}>
@@ -23,8 +23,8 @@ export default function AgentRosterRow({ name, role, to, showRole = false, coRol
           <span className={styles.meta}>
             {showRole && <RoleTag role={role} />}
             {coRole && (
-              <span className={styles.coBadge} style={{ '--co-color': ROLES[coRole]?.color }}>
-                ▶ {ROLES[coRole]?.ja || coRole} CO
+              <span className={styles.coBadge} style={{ '--co-color': ROLE_META_BY_KEY[coRole]?.color }}>
+                ▶ {ROLE_META_BY_KEY[coRole]?.ja || coRole} CO
               </span>
             )}
             {deathMeta && (

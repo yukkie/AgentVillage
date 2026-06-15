@@ -1,4 +1,4 @@
-import { ROLES } from '../lib/constants.js';
+import { ROLE_META_BY_KEY } from '../lib/roleMeta.js';
 import styles from './RoleTag.module.css';
 
 /**
@@ -6,7 +6,7 @@ import styles from './RoleTag.module.css';
  * @param {string} role - 役職キー（例: "Werewolf"）
  */
 export default function RoleTag({ role }) {
-  const info = ROLES[role];
+  const info = ROLE_META_BY_KEY[role];
   if (!info) return null;
   return (
     <span className={styles.tag} style={{ '--r-color': info.color }}>
