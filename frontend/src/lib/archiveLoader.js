@@ -41,11 +41,7 @@ export function parseEntryToGame(entry) {
     cast: entry.cast ?? [],
     desc: '',                          // #312: game summary not in logs
     tag: `完了 · ${dateLabel}`,
-    // Social fields are not stored in the archive
-    votes: 0,                          // #312: not available in logs
-    comments: 0,                       // #312: not available in logs
     viewers: 0,
-    hot: false,
   };
 }
 

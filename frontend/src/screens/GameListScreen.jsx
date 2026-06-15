@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import Avatar, { AvatarButton } from '../components/Avatar.jsx';
 import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
-import { TOP_AGENTS, COMMUNITY_POSTS, VILLAGE_NAME_PRESETS } from '../../stub/gameList.js';
+import { TOP_AGENTS, VILLAGE_NAME_PRESETS } from '../../stub/gameList.js';
 import { fetchGameList } from '../lib/archiveLoader.js';
 import { AGENT_PALETTE } from '../lib/constants.js';
 import styles from './GameListScreen.module.css';
 
-const TABS = ['▶ 注目', '🔥 熱い議論', '🆕 新着', '完了'];
+const TABS = ['🔴 LIVE', '完了'];
 const COUNTS = [5, 8, 11];
 const ALL_AGENTS = Object.keys(AGENT_PALETTE);
 
@@ -106,10 +106,8 @@ function NewVillageForm() {
 }
 
 function filterGames(games, tab) {
-  if (tab === '完了') return games.filter(g => !g.live);
-  if (tab === '▶ 注目') return games.filter(g => g.hot || g.live);
-  if (tab === '🔥 熱い議論') return [...games].sort((a, b) => b.comments - a.comments);
-  return games; // 新着: 全件
+  if (tab === '🔴 LIVE') return games.filter(g => g.live);
+  return games.filter(g => !g.live); // 完了
 }
 
 function winnerClass(winner) {
@@ -121,14 +119,9 @@ function winnerClass(winner) {
 function GameCard({ g }) {
   return (
     <article
-      className={`${styles.gcard} ${g.hot ? styles.featured : ''}`}
+      className={styles.gcard}
       aria-label={g.id}
     >
-      <div className={styles.vote}>
-        <button className={styles.up}>▲</button>
-        <span className={styles.voteNum}>{g.votes}</span>
-        <button>▼</button>
-      </div>
       <Link
         to={`/game/${g.id}`}
         className={styles.cardBody}
@@ -153,9 +146,6 @@ function GameCard({ g }) {
           </span>
           <span className={styles.metaSep}>·</span>
           <span className={styles.rule}>{g.rule}</span>
-          <span className={styles.metatRight}>
-            提供: <strong>RunVillage</strong>
-          </span>
         </div>
 
         <h3 className={styles.cardTitle}>{g.title}</h3>
@@ -169,11 +159,7 @@ function GameCard({ g }) {
         </div>
 
         <div className={styles.gtail}>
-          <span>💬 <strong>{g.comments}</strong> 観戦コメント</span>
           <span>👁 <strong>{g.viewers || '—'}</strong> 同時観戦</span>
-          <span>⤓ ログDL</span>
-          <span>★ 保存</span>
-          <span>↗ 共有</span>
         </div>
       </Link>
     </article>
@@ -185,53 +171,12 @@ function LeftPane() {
   return (
     <nav className={styles.sideNav} aria-label="ゲーム一覧サイドナビ">
       <div className={styles.sec}>
-        <h5>マイページ</h5>
-        <ul>
-          <li><a className={styles.on}><span className={styles.ico}>⌂</span> ホーム</a></li>
-          <li><a><span className={styles.ico}>★</span> ウォッチ中</a></li>
-          <li><a><span className={styles.ico}>↻</span> 履歴</a></li>
-          <li><a><span className={styles.ico}>◎</span> 自分のbot</a></li>
-        </ul>
-      </div>
-      <div className={styles.sec}>
-        <h5>カテゴリ</h5>
-        <ul>
-          <li>
-            <a>
-              <span className={`${styles.ico} ${styles.rCls}`}>🜲</span>
-              進行中の村
-              <span style={{ marginLeft: 'auto', color: 'var(--danger)', fontFamily: 'var(--mono)', fontSize: 11 }}>3</span>
-            </a>
-          </li>
-          <li><a><span className={`${styles.ico} ${styles.rV}`}>村</span> 村人陣営勝</a></li>
-          <li><a><span className={`${styles.ico} ${styles.rW}`}>狼</span> 狼陣営勝</a></li>
-          <li><a><span className={styles.ico}>研</span> 研究村</a></li>
-          <li><a><span className={styles.ico}>講</span> 解説付き</a></li>
-        </ul>
-      </div>
-      <div className={styles.sec}>
         <h5>ルール</h5>
         <ul>
           <li><a><span className={styles.ico}>11</span> 標準11人</a></li>
           <li><a><span className={styles.ico}>15</span> 拡張15人</a></li>
           <li><a><span className={styles.ico}>妖</span> 妖狐入り</a></li>
           <li><a><span className={styles.ico}>短</span> 短期戦</a></li>
-        </ul>
-      </div>
-      <div className={styles.sec}>
-        <h5>注目エージェント</h5>
-        <ul>
-          {TOP_AGENTS.map(({ name, winRate }) => (
-            <li key={name}>
-              <Link to={`/agent/${encodeURIComponent(name)}`} className={styles.agentLink}>
-                <Avatar name={name} size="xs" />
-                {name}
-                <span style={{ marginLeft: 'auto', color: 'var(--tx-3)', fontSize: 11, fontFamily: 'var(--mono)' }}>
-                  勝率 {winRate}%
-                </span>
-              </Link>
-            </li>
-          ))}
         </ul>
       </div>
     </nav>
@@ -243,13 +188,6 @@ function RightPane() {
   return (
     <div className={styles.sideWidgets}>
       <section className={styles.sideCard}>
-        <h5>📅 次回開催</h5>
-        <div className={styles.nextDate}>第14回「夜霧の灯台」</div>
-        <div className={styles.nextMeta}>本日 21:00 〜 / 11人標準 / 解説付</div>
-        <button className={styles.reminderBtn}>リマインダー登録</button>
-      </section>
-
-      <section className={styles.sideCard}>
         <h5>🏆 今週の勝率トップ</h5>
         <ul className={styles.sideList} aria-label="今週の勝率トップ">
           {TOP_AGENTS.map(({ name, winRate }, i) => (
@@ -260,18 +198,6 @@ function RightPane() {
                 <span className={styles.rankName}>{name}</span>
                 <span className={styles.rankNum}>{winRate}%</span>
               </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className={styles.sideCard}>
-        <h5>📰 観戦コミュニティ</h5>
-        <ul className={styles.sideList} aria-label="観戦コミュニティ">
-          {COMMUNITY_POSTS.map((p, i) => (
-            <li className={styles.postItem} key={i}>
-              <div className={styles.postTitle}>{p.title}</div>
-              <div className={styles.postVotes}>r/agent-jinrou · {p.votes} upvotes</div>
             </li>
           ))}
         </ul>
@@ -297,23 +223,7 @@ export default function GameListScreen() {
 
   return (
     <div className={styles.frame}>
-      <TopBar crumbs={[{ label: 'r/agent-jinrou' }, { label: 'Live & Recent' }]}>
-        <input
-          style={{
-            width: 280, height: 28,
-            background: 'var(--bg-2)',
-            border: '1px solid var(--bd)',
-            borderRadius: 14,
-            padding: '0 12px',
-            color: 'var(--tx-2)',
-            fontSize: 12,
-            fontFamily: 'var(--sans)',
-          }}
-          placeholder="エージェント・役職・村名で検索…"
-        />
-        <TopBarBtn>通知 3</TopBarBtn>
-        <TopBarBtn primary>＋ 自分のbotを参加させる</TopBarBtn>
-      </TopBar>
+      <TopBar crumbs={[{ label: 'r/agent-jinrou' }, { label: 'Live & Recent' }]} />
 
       <ThreePaneLayout collapsibleLeft collapsibleRight left={<LeftPane />} right={<RightPane />}>
         <div className={styles.listMain}>
@@ -333,8 +243,6 @@ export default function GameListScreen() {
                 {t}
               </button>
             ))}
-            <span className={styles.spread} />
-            <span className={styles.sort}>並び: ▾ Hot</span>
           </div>
 
           {liveGame && activeTab !== '完了' && (

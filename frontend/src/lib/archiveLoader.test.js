@@ -100,17 +100,17 @@ describe('parseEntryToGame', () => {
     expect(game.cast).toEqual(['Kael', 'Kai', 'Mira']);
   });
 
-  it('falls back votes/comments/hot to 0/0/false (#312)', () => {
+  it('pure: parseEntryToGame は votes/comments/hot フィールドを返さない', () => {
     /*
     SUT: parseEntryToGame
     Mock: なし
     Level: unit
-    Objective: ログに存在しないソーシャルフィールドがフォールバック値になることを検証する (#312)
+    Objective: #541 でソーシャルフィールドを削除済み — votes/comments/hot が返り値に含まれないことを検証する (AC-11)
     */
     const game = parseEntryToGame(ENTRY_WOLF);
-    expect(game.votes).toBe(0);
-    expect(game.comments).toBe(0);
-    expect(game.hot).toBe(false);
+    expect(game).not.toHaveProperty('votes');
+    expect(game).not.toHaveProperty('comments');
+    expect(game).not.toHaveProperty('hot');
   });
 });
 
