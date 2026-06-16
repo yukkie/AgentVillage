@@ -362,7 +362,7 @@
   border-bottom-left-radius: var(--r2);
   border-bottom-right-radius: var(--r2);
   background: var(--bg-1);
-  padding: 16px;
+  padding: 28px 16px 16px;
 }
 
 .formRow {
