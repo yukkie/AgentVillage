@@ -19,7 +19,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#547 ❌ | tech-debt | — | — | Remove unused stub files: spectator.js and agentDetail.js | stub/spectator.js と stub/agentDetail.js が未参照のため削除。stub/gameList.js は #337 完了後に削除し stub/ フォルダを撤去 |
 | yukkie/AgentVillage#530 ❌ | enhancement | — | — | Establish design token usage rules & design-lint enforcement | #522 レビューで発覚したスタイル不統一が起点。トークン使用規約の明文化＋design lint 導入。idd は lint 通過のみ軽量ゲート、逸脱発見/tech-debt/リファクタは self-reflection-review |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | GameData registry | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#337 | enhancement | 🟡 | 2 | Top agents real stats | stub/gameList.js の TOP_AGENTS を実ゲーム結果の集計データに置き換え |

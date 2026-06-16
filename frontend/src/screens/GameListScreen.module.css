@@ -382,13 +382,6 @@
   flex: 0 0 72px;
 }
 
-.villageName {
-  font-family: var(--serif);
-  font-size: 14px;
-  color: var(--tx);
-  font-weight: 600;
-}
-
 .countBtns {
   display: flex;
   gap: 6px;

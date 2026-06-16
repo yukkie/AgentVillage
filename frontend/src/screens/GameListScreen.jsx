@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import Avatar, { AvatarButton } from '../components/Avatar.jsx';
 import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
-import { VILLAGE_NAME_PRESETS } from '../../stub/gameList.js';
 import { fetchGameList, fetchGameStats, parseWinRateRanking } from '../lib/archiveLoader.js';
 import { ALL_AGENT_NAMES } from '../lib/agentMeta.js';
 import styles from './GameListScreen.module.css';
@@ -16,9 +15,6 @@ function NewVillageForm() {
   const [open, setOpen] = useState(false);
   const [count, setCount] = useState(COUNTS[0]);
   const [selected, setSelected] = useState(new Set());
-  const [villageName] = useState(
-    () => VILLAGE_NAME_PRESETS[Math.floor(Math.random() * VILLAGE_NAME_PRESETS.length)]
-  );
 
   function toggleAgent(name) {
     setSelected(prev => {
@@ -51,11 +47,6 @@ function NewVillageForm() {
 
       {open && (
         <div className={styles.newVillageForm}>
-          <div className={styles.formRow}>
-            <span className={styles.formLabel}>村名</span>
-            <span className={styles.villageName}>{villageName}</span>
-          </div>
-
           <div className={styles.formRow}>
             <span className={styles.formLabel}>人数</span>
             <div className={styles.countBtns}>

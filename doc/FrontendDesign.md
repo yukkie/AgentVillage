@@ -55,10 +55,6 @@ frontend/
 │   ├── App.jsx / .module.css
 │   ├── main.jsx
 │   └── tokens.css      # デザイントークン（CSS Variables）
-├── stub/               # Milestone 1 用スタブデータ（Milestone 2 で削除）
-│   ├── spectator.js    # EVENTS / ROLE_ASSIGNMENT / NIGHT_RESULTS 等
-│   ├── gameList.js     # VILLAGE_NAME_PRESETS（GAMES は #338、COMMUNITY_POSTS は #541、TOP_AGENTS は #337 で削除済み）
-│   └── agentDetail.js  # ALL_AGENTS / THOUGHTS / NIGHT_ACTIONS 等
 ├── index.html
 ├── vite.config.js      # fs.allow でリポジトリルートへのアクセスを許可
 └── package.json
@@ -540,7 +536,7 @@ CSS Grid `grid-template-columns: var(--lcol) 1fr var(--rcol)` で 3 ペインを
 | `LeftPane` | サイドナビ（ルールのみ。#541 でマイページ / カテゴリ / 注目エージェントを削除） |
 | `RightPane` | サイドウィジェット（勝率ランキングのみ。#541 で次回開催 / コミュニティ投稿を削除、#337 で `game_stats.json` 実集計化） |
 
-データソース: `state_archive/index.json`（ゲーム一覧）、`state/stats/game_stats.json`（右ペイン勝率ランキング）、`stub/gameList.js`（`VILLAGE_NAME_PRESETS` のみ。`COMMUNITY_POSTS` は #541、`TOP_AGENTS` は #337 で削除済み）。
+データソース: `state_archive/index.json`（ゲーム一覧）、`state/stats/game_stats.json`（右ペイン勝率ランキング）。新規村フォームの村名プリセット（`VILLAGE_NAME_PRESETS`）は #547 で廃止。
 
 Semantic HTML: `GameCard` は自己完結したゲーム項目として `<article>`、サイドナビと複数項目を持つ右ウィジェットの項目群は `<ul><li>` で表現する。
 
@@ -620,7 +616,7 @@ SpectatorScreen から AgentDetailScreen への遷移、および AgentDetailScr
 | `threat_update` | `threat_snapshot` があれば SystemRow 内で脅威メーターを表示（高いほど長いバー、赤系の濃淡）。snapshot 欠如時は `{content}` にフォールバック |
 | `role_assigned` | 前夜フィードに表示。summary row（`agent=null`, `is_public=true`）は public mode のみ SystemRow の役職構成として表示し、spectator mode では個別役職カードと重複するため表示しない。per-agent row（`agent={name}`, `is_public=false`）は spectator mode のみ AgentEpisodeCard で表示し、真役職 Avatar / RoleTag と本文を表示する。public mode では既存の `is_public=false` 非表示ルールでマウントしない |
 
-データソース: `stub/spectator.js`（`EVENTS`, `ROLE_ASSIGNMENT`, `NIGHT_RESULTS`, `EXEC_RESULTS`, `VOTE_TABLE_D1`, `ACTIONS_TIMELINE`）。
+データソース: `state_archive/{sessionId}/spectator_log.jsonl`（`parseGameData.js` 経由）および `agents/*.json`。`stub/spectator.js` は #547 で削除済み。
 
 #### `AgentDetailScreen`
 
@@ -638,7 +634,7 @@ SpectatorScreen から AgentDetailScreen への遷移、および AgentDetailScr
 | `TabHistory` | 過去戦績（ゲーム番号・役職・勝敗） |
 | `MatrixRow` / `NightRow` | 各リストの行コンポーネント |
 
-データソース: `stub/agentDetail.js`（`ALL_AGENTS`, `DEAD_AGENTS`, `AGENT_STATS`, `THOUGHTS`, `NIGHT_ACTIONS`, `getSuspicionMatrix`）。blurb（1行プロフィール）は `frontend/public/config/agents.json` の `blurb` フィールドを `/config/agents.json` として fetch（#519）。
+データソース: `game_stats.json` / `agents/*.json` / `spectator_log.jsonl` / `frontend/public/config/agents.json`（§8.3 参照）。`stub/agentDetail.js` は #547 で削除済み。blurb（1行プロフィール）は `frontend/public/config/agents.json` の `blurb` フィールドを `/config/agents.json` として fetch（#519）。
 
 Semantic HTML: `AgentHero` は画面内のエージェント見出しとして `<header>`、AgentPicker・推論ログ・夜行動・過去戦績・疑い度マトリクスの行群は `<ul><li>` で表現する。picker 行の clickable 化は React Router 導入時（#342）に `<a>` / `<Link>` として扱う。
 
@@ -751,13 +747,15 @@ Semantic HTML: `AgentHero` は画面内のエージェント見出しとして `
 
 ## 8. スタブの差し替え方針
 
-### 8.1 現状の `stub/` ファイル
+### 8.1 `stub/` ファイルの撤去状況
 
-| ファイル | 提供するデータ | 将来の差し替え先 |
-|---|---|---|
-| `stub/spectator.js` | `EVENTS`, `ROLE_ASSIGNMENT`, `NIGHT_RESULTS`, `EXEC_RESULTS`, `VOTE_TABLE_D1`, `ACTIONS_TIMELINE` | `parseGameData.js` 経由で `state_archive/{sessionId}/spectator_log.jsonl` をパース |
-| `stub/gameList.js` | `VILLAGE_NAME_PRESETS`（`GAMES` は #338、`COMMUNITY_POSTS` は #541、`TOP_AGENTS` は #337 で削除済み） | 新規村フォームの村名候補のみ。右ペイン勝率ランキングは `game_stats.json` から15人分を集計済み |
-| `stub/agentDetail.js` | `ALL_AGENTS`, `DEAD_AGENTS`, `AGENT_STATS`, `THOUGHTS`, `NIGHT_ACTIONS`（`AGENT_BLURB` は #519 で実データ化済み・削除） | モード別の項目仕分け・出所は §8.3（`game_stats.json` / `agents/*.json` / `spectator_log.jsonl` / `frontend/public/config/agents.json`） |
+`stub/` フォルダは #547 で完全削除済み。各ファイルの差し替え先:
+
+| ファイル（削除済み） | 差し替え先 |
+|---|---|
+| `stub/spectator.js` | `parseGameData.js` 経由で `state_archive/{sessionId}/spectator_log.jsonl` をパース（#318） |
+| `stub/gameList.js` | `GAMES` は #338、`TOP_AGENTS` は #337 で実データ化。`VILLAGE_NAME_PRESETS`（村名プリセット）は #547 で廃止 |
+| `stub/agentDetail.js` | `game_stats.json` / `agents/*.json` / `spectator_log.jsonl` / `frontend/public/config/agents.json`（§8.3 参照） |
 
 ### 8.2 Milestone 2 移行計画
 
@@ -770,7 +768,7 @@ fetch('../state_archive/20260510_102927/spectator_log.jsonl')
   → parseGameData(text) → { events: PublicEvent[], agents: AgentProfile[] }
 ```
 
-差し替え対象: `stub/spectator.js` を除去し、`SpectatorScreen` が `parseGameData` の結果を受け取る props ベースに変更する。
+差し替え済み: `stub/spectator.js` は削除済み（#547）。`SpectatorScreen` は `parseGameData` の結果を受け取る props ベースに変更済み。
 
 **Phase B — ゲーム一覧の動的化（#338 完了）**
 
