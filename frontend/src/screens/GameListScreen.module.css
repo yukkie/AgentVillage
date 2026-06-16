@@ -362,7 +362,7 @@
   border-bottom-left-radius: var(--r2);
   border-bottom-right-radius: var(--r2);
   background: var(--bg-1);
-  padding: 16px;
+  padding: 28px 16px 16px;
 }
 
 .formRow {
@@ -380,13 +380,6 @@
   text-transform: uppercase;
   width: 72px;
   flex: 0 0 72px;
-}
-
-.villageName {
-  font-family: var(--serif);
-  font-size: 14px;
-  color: var(--tx);
-  font-weight: 600;
 }
 
 .countBtns {
