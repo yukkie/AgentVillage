@@ -23,7 +23,7 @@
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | feat(frontend): GameData registry — track data gaps continuously | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#530 | enhancement | 🟡 | 8 | Establish design token usage rules & design-lint enforcement | #522 レビューで発覚したスタイル不統一が起点。トークン使用規約の明文化＋design lint 導入。idd は lint 通過のみ軽量ゲート、逸脱発見/tech-debt/リファクタは self-reflection-review |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
-| yukkie/AgentVillage#554 | tech-debt | 🟡 | 3 | refactor: replace computeDeadByDay with pure death-day accessor | ❌ PR #553/#535 派生。computeDeadByDay が表示ロジックに引きずられた構造のため、deathDaysByAgent / deathDayOf を切り出し AgentDetail・SpectatorScreen RightPane を移行、computeDeadByDay を削除 |
+| yukkie/AgentVillage#554 | tech-debt | 🟡 | 3 | refactor: replace computeDeadByDay with pure death-day accessor | ❌ PR #553/#535 派生。computeDeadByDay が表示ロジックに引きずられ、かつ死を private night_attack×guard_block で再導出している。public night_attack+elimination 読みの deathsByAgent / deathDayOf を切り出し AgentDetail・SpectatorScreen RightPane を移行、computeDeadByDay を削除 |
 | yukkie/AgentVillage#495 | enhancement | 🟢 | 3 | design: log visibility classes and recipient-based authorization model (for LIVE / player participation) | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
 | yukkie/AgentVillage#319 | enhancement | 🟢 | 3 | feat(frontend): LIVE spectator (real-time view of in-progress game) | state/ を tail して進行中ゲームを表示（将来フェーズ） |
 | yukkie/AgentVillage#364 | enhancement | 🟢 | 5 | refactor: introduce SpectatorScreen view model indexes | SpectatorScreen 用 view model/index を導入し、render 中の events 全走査を減らす |
