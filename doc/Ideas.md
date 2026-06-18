@@ -20,7 +20,6 @@
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | feat(frontend): GameData registry — track data gaps continuously | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
-| yukkie/AgentVillage#530 | enhancement | 🟡 | 5 | Establish design token usage rules & self-reflection-review観点追加 | #522 レビューで発覚したスタイル不統一が起点。トークン使用規約の明文化＋self-reflection-review への視覚的不統一発見観点追加。design lint 導入は #557 に分割 |
 | yukkie/AgentVillage#557 | enhancement | 🟡 | 3 | feat(frontend): introduce design-lint (stylelint) and add /idd gate | #530 の使用規約策定後に実装。stylelint 導入・CI/pre-commit 設定・/idd flow-js.md への軽量ゲート追加 |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
 | yukkie/AgentVillage#495 | enhancement | 🟢 | 3 | design: log visibility classes and recipient-based authorization model (for LIVE / player participation) | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
