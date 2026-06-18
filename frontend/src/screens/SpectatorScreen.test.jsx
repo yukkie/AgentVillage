@@ -1946,3 +1946,72 @@ describe('SpectatorScreen: viewerMode toggle (AC1 / #314)', () => {
     expect(screen.getByLabelText('current-location').textContent).toBe('/game/test-session-001');
   });
 });
+
+describe('RightPane: avatars in CO status and night actions (#403)', () => {
+  it('統合: RightPane: CO済みエージェント行にアバターアイコンと名前テキストが表示される', () => {
+    /*
+     * SUT: RightPane (CoStatusBoard)
+     * Mock: なし
+     * Level: integration
+     * Objective: coStatus に Seer: Alice がある場合、COボード内に Alice のアバター画像と名前テキストが Link で表示されることを検証する（AC-1）。
+     */
+    const { container } = renderRightPane({
+      coStatus: { Alice: 'Seer' },
+    });
+    const coBoard = container.querySelector('[aria-label="カミングアウト状況"]');
+    const aliceImg = coBoard.querySelector('img[src*="Alice"]');
+    expect(aliceImg).toBeTruthy();
+    const aliceLabel = coBoard.querySelector('[data-testid="avatar-label"]');
+    expect(aliceLabel).toBeTruthy();
+    expect(aliceLabel.textContent).toBe('Alice');
+    expect(aliceImg.closest('a')).toBeTruthy();
+  });
+
+  it('統合: RightPane: 夜の行動actor行にアバターと名前が表示される', () => {
+    /*
+     * SUT: RightPane (NightActionsPanel)
+     * Mock: なし
+     * Level: integration
+     * Objective: nightActions に inspection(agent=Alice) がある場合、夜の行動リスト内に Alice のアバター画像と名前テキストが表示されることを検証する（AC-2）。
+     */
+    const daySummary = {
+      1: {
+        nightActions: [{ event_type: 'inspection', agent: 'Alice', target: 'Bob', is_public: false }],
+        execResult: null,
+        speechCount: 0,
+        nightDone: true,
+      },
+    };
+    const { container } = renderRightPane({ daySummary, activeDay: 1 });
+    const actionList = container.querySelector('[aria-label="Day 1 夜の行動"]');
+    const aliceImg = actionList.querySelector('img[src*="Alice"]');
+    expect(aliceImg).toBeTruthy();
+    const labels = actionList.querySelectorAll('[data-testid="avatar-label"]');
+    const aliceLabel = Array.from(labels).find(el => el.textContent === 'Alice');
+    expect(aliceLabel).toBeTruthy();
+  });
+
+  it('統合: RightPane: 夜の行動ターゲット行にアバターと名前が表示される', () => {
+    /*
+     * SUT: RightPane (NightActionsPanel)
+     * Mock: なし
+     * Level: integration
+     * Objective: nightActions に target=Bob がある場合、夜の行動リスト内に Bob のアバター画像と名前テキストが表示されることを検証する（AC-2）。
+     */
+    const daySummary = {
+      1: {
+        nightActions: [{ event_type: 'inspection', agent: 'Alice', target: 'Bob', is_public: false }],
+        execResult: null,
+        speechCount: 0,
+        nightDone: true,
+      },
+    };
+    const { container } = renderRightPane({ daySummary, activeDay: 1 });
+    const actionList = container.querySelector('[aria-label="Day 1 夜の行動"]');
+    const bobImg = actionList.querySelector('img[src*="Bob"]');
+    expect(bobImg).toBeTruthy();
+    const labels = actionList.querySelectorAll('[data-testid="avatar-label"]');
+    const bobLabel = Array.from(labels).find(el => el.textContent === 'Bob');
+    expect(bobLabel).toBeTruthy();
+  });
+});

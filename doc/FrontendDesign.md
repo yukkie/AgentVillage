@@ -549,7 +549,7 @@ Semantic HTML: `GameCard` は自己完結したゲーム項目として `<articl
 | 内部コンポーネント | 責務 |
 |---|---|
 | `LeftPane` | フェーズナビ（日 × フェーズ、クリックで中央フィードを切り替え） + エージェント/役職/表示フィルタ |
-| `RightPane` | ロスター（生存/死亡、共通 `AgentRosterRow` を使用）/ COボード / 夜の行動タイムライン |
+| `RightPane` | ロスター（生存/死亡、共通 `AgentRosterRow` を使用）/ `CoStatusBoard`（COボード）/ `NightActionsPanel`（夜の行動タイムライン） |
 
 #### viewerMode トグル（#314）
 
