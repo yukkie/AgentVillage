@@ -169,6 +169,62 @@ export function LeftPane({
 const NIGHT_ACTION_ICON = { inspection: '🔮', guard: '🛡', night_attack: '🐺' };
 const NIGHT_ACTION_LABEL = { inspection: '占い', guard: '護衛', night_attack: '襲撃' };
 
+function CoStatusBoard({ coStatus, sessionId, viewerMode }) {
+  return (
+    <ul className={styles.coBoard} aria-label="カミングアウト状況">
+      {listRoles()
+        .map(roleDef => [roleDef.key, roleDef])
+        .filter(([k]) => k !== 'Villager' && k !== 'Werewolf' && k !== 'Madman')
+        .map(([roleKey, roleDef]) => {
+          const coAgents = Object.entries(coStatus)
+            .filter(([, cr]) => cr === roleKey)
+            .map(([name]) => name);
+          return (
+            <li key={roleKey} className={styles.coRow} style={{ '--r-color': roleDef.color }}>
+              <span className={styles.coRole}>{roleDef.ja}</span>
+              <span className={styles.coName} style={{ color: coAgents.length ? 'var(--tx)' : 'var(--tx-3)' }}>
+                {coAgents.length ? coAgents.map((name, i) => (
+                  <span key={name} className={styles.coAgent}>
+                    {i > 0 && ', '}
+                    <Link to={agentDetailPath(sessionId, name, viewerMode)} className={styles.agentLink}>
+                      <Avatar name={name} size="xs" label={name} layout="horizontal" />
+                    </Link>
+                  </span>
+                )) : '未CO'}
+              </span>
+            </li>
+          );
+        })}
+    </ul>
+  );
+}
+
+function NightActionsPanel({ nightActions, roleAssignment, sessionId, viewerMode, activeDay }) {
+  return (
+    <ul className={styles.actionList} aria-label={`Day ${activeDay} 夜の行動`}>
+      {nightActions.map((a, i) => (
+        <li key={i} className={`${styles.action} ${styles[a.event_type] || ''}`}>
+          <div className={styles.actionIco}>{NIGHT_ACTION_ICON[a.event_type] || '・'}</div>
+          <div className={styles.what}>
+            <Link to={agentDetailPath(sessionId, a.agent, viewerMode)} className={styles.agentLink}>
+              <Avatar name={a.agent} size="xs" label={a.agent} layout="horizontal" />
+            </Link>
+            {a.target && (
+              <> → <Link to={agentDetailPath(sessionId, a.target, viewerMode)} className={styles.agentLink} style={{ '--r-color': ROLE_META_BY_KEY[roleAssignment[a.target]]?.color }}>
+                <Avatar name={a.target} size="xs" label={a.target} layout="horizontal" />
+              </Link></>
+            )}
+            <span style={{ color: 'var(--tx-4)', marginLeft: 6 }}>{NIGHT_ACTION_LABEL[a.event_type]}</span>
+          </div>
+        </li>
+      ))}
+      {nightActions.length === 0 && (
+        <li className={styles.action} style={{ color: 'var(--tx-3)' }}>夜の行動ログなし</li>
+      )}
+    </ul>
+  );
+}
+
 // === 右ペイン ===
 export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = {}, activeDay, deaths = {}, viewerMode = 'spectator' }) {
   const { sessionId } = useParams();
@@ -187,43 +243,10 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
   return (
     <div className={styles.roster}>
       <div className={styles.sectionLabel}>カミングアウト状況</div>
-      <ul className={styles.coBoard} aria-label="カミングアウト状況">
-        {listRoles()
-          .map(roleDef => [roleDef.key, roleDef])
-          .filter(([k]) => k !== 'Villager' && k !== 'Werewolf' && k !== 'Madman')
-          .map(([roleKey, roleDef]) => {
-            const coAgents = Object.entries(coStatus)
-              .filter(([, cr]) => cr === roleKey)
-              .map(([name]) => name);
-            return (
-              <li key={roleKey} className={styles.coRow} style={{ '--r-color': roleDef.color }}>
-                <span className={styles.coRole}>{roleDef.ja}</span>
-                <span className={styles.coName} style={{ color: coAgents.length ? 'var(--tx)' : 'var(--tx-3)' }}>
-                  {coAgents.length ? coAgents.map((name, i) => (
-                    <span key={name}>{i > 0 && ', '}<Link to={agentDetailPath(sessionId, name, viewerMode)} className={styles.agentLink}>{name}</Link></span>
-                  )) : '未CO'}
-                </span>
-              </li>
-            );
-          })}
-      </ul>
+      <CoStatusBoard coStatus={coStatus} sessionId={sessionId} viewerMode={viewerMode} />
 
       <div className={styles.sectionLabel}>Day {activeDay} 夜の行動</div>
-      <ul className={styles.actionList} aria-label={`Day ${activeDay} 夜の行動`}>
-        {nightActions.map((a, i) => (
-          <li key={i} className={`${styles.action} ${styles[a.event_type] || ''}`}>
-            <div className={styles.actionIco}>{NIGHT_ACTION_ICON[a.event_type] || '・'}</div>
-            <div className={styles.what}>
-              <Link to={agentDetailPath(sessionId, a.agent, viewerMode)} className={styles.agentLink}><strong>{a.agent}</strong></Link>
-              {a.target && <> → <Link to={agentDetailPath(sessionId, a.target, viewerMode)} className={styles.agentLink}><em style={{ '--r-color': ROLE_META_BY_KEY[roleAssignment[a.target]]?.color }}>{a.target}</em></Link></>}
-              <span style={{ color: 'var(--tx-4)', marginLeft: 6 }}>{NIGHT_ACTION_LABEL[a.event_type]}</span>
-            </div>
-          </li>
-        ))}
-        {nightActions.length === 0 && (
-          <li className={styles.action} style={{ color: 'var(--tx-3)' }}>夜の行動ログなし</li>
-        )}
-      </ul>
+      <NightActionsPanel nightActions={nightActions} roleAssignment={roleAssignment} sessionId={sessionId} viewerMode={viewerMode} activeDay={activeDay} />
 
       {execResult && (
         <>
