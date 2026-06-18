@@ -9,7 +9,7 @@ import { ROLE_META_BY_KEY, ROLE_KEYS, listRoles } from '../lib/roleMeta.js';
 import { agentDetailPath } from '../lib/agentLinks.js';
 import { fetchReplayAgents, fetchReplayLog } from '../lib/replayLoader.js';
 import { fetchGameBySessionId } from '../lib/archiveLoader.js';
-import { parseGameData, aggregateCoStatus, computeDeadByDay } from '../lib/parseGameData.js';
+import { parseGameData, aggregateCoStatus, deathsByAgent } from '../lib/parseGameData.js';
 import { filterByAgents, filterByRoles, filterFeedEvents } from '../lib/feedFilter.js';
 import styles from './SpectatorScreen.module.css';
 
@@ -169,13 +169,15 @@ const NIGHT_ACTION_ICON = { inspection: '🔮', guard: '🛡', night_attack: '�
 const NIGHT_ACTION_LABEL = { inspection: '占い', guard: '護衛', night_attack: '襲撃' };
 
 // === 右ペイン ===
-export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = {}, activeDay, deadByDay = {}, viewerMode = 'spectator' }) {
+export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = {}, activeDay, deaths = {}, viewerMode = 'spectator' }) {
   const { sessionId } = useParams();
   const order = Object.keys(agents);
-  const activeDead = deadByDay[activeDay] ?? new Map();
-  const deadNames = order.filter(n => activeDead.has(n))
-    .sort((a, b) => (activeDead.get(a)?.day ?? 0) - (activeDead.get(b)?.day ?? 0));
-  const alive = order.filter(n => !activeDead.has(n));
+  const activeDeadNames = new Set(Object.entries(deaths)
+    .filter(([, death]) => death?.day <= activeDay)
+    .map(([name]) => name));
+  const deadNames = order.filter(n => activeDeadNames.has(n))
+    .sort((a, b) => (deaths[a]?.day ?? 0) - (deaths[b]?.day ?? 0));
+  const alive = order.filter(n => !activeDeadNames.has(n));
 
   const dayData = daySummary[activeDay];
   const nightActions = dayData?.nightActions ?? [];
@@ -278,7 +280,7 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
               to={agentDetailPath(sessionId, n, viewerMode)}
               showRole={viewerMode === 'spectator'}
               dead
-              deathMeta={activeDead.get(n)}
+              deathMeta={deaths[n]}
             />
           ))}
         </ul>
@@ -297,7 +299,7 @@ export default function SpectatorScreen() {
   const [replayEvents, setReplayEvents] = useState(null);
   const [replayAgents, setReplayAgents] = useState({});
   const [replayDaySummary, setReplayDaySummary] = useState({});
-  const [replayDeadByDay, setReplayDeadByDay] = useState({});
+  const [replayDeaths, setReplayDeaths] = useState({});
   const [gameWinner, setGameWinner] = useState(null);
   const [gameOverDay, setGameOverDay] = useState(null);
   const [loadingEvents, setLoadingEvents] = useState(Boolean(sessionId));
@@ -347,7 +349,7 @@ export default function SpectatorScreen() {
     setReplayEvents(null);
     setReplayAgents({});
     setReplayDaySummary({});
-    setReplayDeadByDay({});
+    setReplayDeaths({});
     setGameWinner(null);
     setGameOverDay(null);
     setLoadingEvents(true);
@@ -373,7 +375,7 @@ export default function SpectatorScreen() {
         const parsed = parseGameData(jsonlText);
         setReplayEvents(parsed.events);
         setReplayDaySummary(parsed.daySummary);
-        setReplayDeadByDay(computeDeadByDay(parsed.events));
+        setReplayDeaths(deathsByAgent(parsed.events));
         setGameWinner(parsed.winner ?? null);
         const goEvent = parsed.events.find(e => e.event_type === 'game_over');
         if (goEvent) setGameOverDay(goEvent.day);
@@ -436,7 +438,7 @@ export default function SpectatorScreen() {
         collapsibleLeft
         collapsibleRight
         left={<LeftPane activeDay={activeDay} setDay={setActiveDay} activePhase={activePhase} setPhase={setActivePhase} days={visibleDays} agentNames={agentNames} daySummary={daySummary} gameOverDay={gameOverDay} selectedAgents={selectedAgents} onToggleAgent={toggleAgentFilter} presentRoles={presentRoles} selectedRoles={selectedRoles} onToggleRole={toggleRoleFilter} thoughtsOpen={thoughtsOpen} onToggleThoughts={toggleThoughtsOpen} viewerMode={viewerMode} />}
-        right={<RightPane agents={agents} roleAssignment={roleAssignment} coStatus={replayCoStatus} daySummary={daySummary} activeDay={activeDay} deadByDay={replayDeadByDay} viewerMode={viewerMode} />}
+        right={<RightPane agents={agents} roleAssignment={roleAssignment} coStatus={replayCoStatus} daySummary={daySummary} activeDay={activeDay} deaths={replayDeaths} viewerMode={viewerMode} />}
       >
         <div className={styles.feedHead}>
           <h2>{activePhase === 'game_over' ? '勝敗結果' : activePhase === 'eve' ? '前夜 プロローグ' : `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}`} <small>{sessionId}</small></h2>

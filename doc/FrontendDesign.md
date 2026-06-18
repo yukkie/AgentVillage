@@ -122,7 +122,7 @@ React Router v7 を導入済み。`App.jsx` は `Routes`/`Route` でルートを
 | `aggregateDaySummary` | 日別タイムライン・右ペイン表示に必要なサマリを単一ソースとして作る。旧 `aggregateDayResults` と `aggregateDayActions` の責務を統合する | raw `LogEvent[]` | `{ [day]: { speechCount, nightDone, nightActions, execResult } }` | private `night_attack` は `nightActions` に含める。public `night_attack` は夜明け結果の公知イベントなので `nightActions` には入れず、`nightDone` 判定だけに使う。public `elimination` は `execResult.target` に使う |
 | `aggregateCoStatus` | CO 状況を agent 名から claimed role へ引く map にする。日別表示では `upToDay` までを累積する | normalized `LogEvent[]`, optional `upToDay` | `{ [agentName]: claimed_role }` | `speech` イベントの `claimed_role` を正とする（CO は speech に統合）。旧ログの `co_announcement` 別行は read 側フォールバックで同様に扱う。`is_public` でフィルタしない |
 | `aggregateNightResults` | private 夜襲ログから日別の襲撃先を取り出す。後方互換の派生データ | raw `LogEvent[]` | `{ [day]: { attacked } }` | private `night_attack` の `target` のみ使う。public `night_attack` はログ生成側の agent/target 揺れを避けるため無視する |
-| `computeDeadByDay` | 各日終了時点の累積死亡者 map を作る | raw または normalized `LogEvent[]` | `{ [day]: Map<agentName, { day, content }> }` | `elimination` は死亡として扱う。private `night_attack` は死亡候補として扱い、同日同 target の private `guard_block` があれば除外する。public `night_attack` は使わない |
+| `deathsByAgent` / `deathDayOf` | log から死亡者ごとの死亡日・死因を引くドメイン寄りのアクセサ。`deathDayOf` は死亡日だけを返す薄い wrapper | raw または normalized `LogEvent[]` | `{ [agentName]: { day, cause, content } }` / `day \| -1` | 死亡確定イベントとして public `night_attack` と `elimination` のみを読む。private `night_attack` / `guard_block` は死亡判定に使わない |
 | `buildActionsTimeline` | 夜行動・処刑を横断的なアクション履歴に平坦化する | raw `LogEvent[]` | `[{ day, when, kind, who, target, label }]` | private `night_attack` は人狼視点の行動として含める。public `night_attack` は村への結果告知なので除外する。public `elimination` は処刑アクションとして含める |
 
 `daySummary` は `SpectatorScreen` の左右ペインで共有する日別データ名とする。`nightActions` や `execResult` のような行動系フィールドも `daySummary` 配下に置き、左ペインと右ペインが別々の集計結果を参照して表示ずれを起こさないようにする。
@@ -636,7 +636,7 @@ SpectatorScreen から AgentDetailScreen への遷移、および AgentDetailScr
 
 データソース: `game_stats.json` / `agents/*.json` / `spectator_log.jsonl` / `frontend/public/config/agents.json`（§8.3 参照）。`stub/agentDetail.js` は #547 で削除済み。blurb（1行プロフィール）は `frontend/public/config/agents.json` の `blurb` フィールドを `/config/agents.json` として fetch（#519）。
 
-**死亡日表示（#535）**: `AgentHero` の `死亡 · Day N` の `N` は、ゲーム最終日ではなく**当該エージェントの死亡日**を使う。死亡日は `computeDeadByDay(events)` の**最終日の累積 Map** から `deadByDay[visibleDays.at(-1)]?.get(name)?.day` で引く（SpectatorScreen `RightPane` が `deadByDay[activeDay]` を直読みするのと同じパターン。AgentDetail は日タブに依存せず最終的な死亡状態を見るため最終日 Map を使う）。死亡イベント欠落で引けない場合は現在日（最終日）へフォールバックする。生存中エージェントの `生存中 · Day N` は従来どおり現在日を使う。
+**死亡日表示（#535 / #554）**: `AgentHero` の `死亡 · Day N` の `N` は、ゲーム最終日ではなく**当該エージェントの死亡日**を使う。死亡日は `deathDayOf(events, name)` で public `night_attack` / `elimination` 由来の死亡確定イベントから引く。死亡イベント欠落で `-1` が返った場合は現在日（最終日）へフォールバックする。生存中エージェントの `生存中 · Day N` は従来どおり現在日を使う。
 
 Semantic HTML: `AgentHero` は画面内のエージェント見出しとして `<header>`、AgentPicker・推論ログ・夜行動・過去戦績・疑い度マトリクスの行群は `<ul><li>` で表現する。picker 行の clickable 化は React Router 導入時（#342）に `<a>` / `<Link>` として扱う。
 

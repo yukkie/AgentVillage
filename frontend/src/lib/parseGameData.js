@@ -261,55 +261,35 @@ export function aggregateCoStatus(events, upToDay) {
 }
 
 /**
- * Build a cumulative dead-map per day from elimination and night_attack events.
- *
- * Returns a map from day number → Map<agentName, { day: number, content: string }>.
- * Days with no new deaths inherit the previous day's map so callers can simply
- * do `deadByDay[activeDay]?.has(name)` or `.get(name)` without caring about history.
+ * Build death records by agent from public death-confirmation events.
  *
  * @param {object[]} events
- * @returns {Record<number, Map<string, { day: number, content: string }>>}
+ * @returns {Record<string, { day: number, cause: 'attack'|'elimination', content: string }>}
  */
-export function computeDeadByDay(events) {
-  const dayNumbers = [...new Set(events.map(ev => ev.day).filter(Boolean))].sort((a, b) => a - b);
-  if (dayNumbers.length === 0) return {};
+export function deathsByAgent(events) {
+  const result = {};
 
-  const deathsByDay = {};
-  const guardBlocksByDay = {};
   for (const ev of events) {
     if (!ev.day) continue;
-    if (ev.event_type === 'elimination' && ev.agent) {
-      if (!deathsByDay[ev.day]) deathsByDay[ev.day] = [];
-      deathsByDay[ev.day].push({ name: ev.agent, day: ev.day, content: ev.content ?? '' });
-    } else if (ev.event_type === 'night_attack' && !ev.is_public && ev.target) {
-      if (!deathsByDay[ev.day]) deathsByDay[ev.day] = [];
-      deathsByDay[ev.day].push({ name: ev.target, day: ev.day, content: ev.content ?? '', isNightAttack: true });
-    } else if (ev.event_type === 'guard_block' && !ev.is_public && ev.target) {
-      if (!guardBlocksByDay[ev.day]) guardBlocksByDay[ev.day] = new Set();
-      guardBlocksByDay[ev.day].add(ev.target);
+    if (ev.event_type === 'elimination' && ev.agent && !result[ev.agent]) {
+      result[ev.agent] = { day: ev.day, cause: 'elimination', content: ev.content ?? '' };
+    } else if (ev.event_type === 'night_attack' && ev.is_public === true && ev.target && !result[ev.target]) {
+      result[ev.target] = { day: ev.day, cause: 'attack', content: ev.content ?? '' };
     }
   }
 
-  const result = {};
-  let cumulative = new Map();
-  for (const day of dayNumbers) {
-    const blocked = guardBlocksByDay[day] ?? new Set();
-    const entries = deathsByDay[day] ?? [];
-    if (entries.length > 0) {
-      cumulative = new Map(cumulative);
-      for (const entry of entries) {
-        if (entry.isNightAttack) {
-          if (!blocked.has(entry.name)) {
-            cumulative.set(entry.name, { day: entry.day, content: entry.content });
-          }
-        } else {
-          cumulative.set(entry.name, { day: entry.day, content: entry.content });
-        }
-      }
-    }
-    result[day] = cumulative;
-  }
   return result;
+}
+
+/**
+ * Return the day an agent died, or -1 when no death record exists.
+ *
+ * @param {object[]} events
+ * @param {string} name
+ * @returns {number}
+ */
+export function deathDayOf(events, name) {
+  return deathsByAgent(events)[name]?.day ?? -1;
 }
 
 function collectParticipantNames(events, agents) {
