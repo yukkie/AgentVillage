@@ -677,7 +677,7 @@ const baseAgents = {
 };
 
 // Bob is dead at day 1
-const baseDeadByDay = { 1: new Map([['Bob', { day: 1, content: 'Bob was executed.' }]]) };
+const baseDeaths = { Bob: { day: 1, cause: 'elimination', content: 'Bob was executed.' } };
 
 function renderRightPane(overrides = {}) {
   const props = {
@@ -686,7 +686,7 @@ function renderRightPane(overrides = {}) {
     coStatus: {},
     daySummary: {},
     activeDay: 1,
-    deadByDay: baseDeadByDay,
+    deaths: baseDeaths,
     viewerMode: 'spectator',
     ...overrides,
   };
@@ -700,6 +700,21 @@ function renderRightPane(overrides = {}) {
 }
 
 describe('RightPane: death reason display (#391)', () => {
+  it('keeps future death records alive before their death day', () => {
+    /*
+     * SUT: RightPane
+     * Mock: なし
+     * Level: unit
+     * Objective: activeDay より後の日に死亡するエージェントは、activeDay 時点の生存者として表示されることを検証する（#554 AC-4）。
+     */
+    renderRightPane({
+      deaths: { Bob: { day: 2, cause: 'attack', content: 'Bob was found dead at dawn.' } },
+      activeDay: 1,
+    });
+    expect(within(screen.getByRole('list', { name: '生存エージェント' })).getByText('Bob')).toBeTruthy();
+    expect(within(screen.getByRole('list', { name: '死亡者' })).queryByText('Bob')).toBeNull();
+  });
+
   it('shows day and content for dead agent in roster', () => {
     /*
      * SUT: RightPane
@@ -708,7 +723,7 @@ describe('RightPane: death reason display (#391)', () => {
      * Objective: 死亡者行に死亡日（Day N）と死因テキスト（content）が表示されることを検証する（AC1 / #391）。
      */
     renderRightPane({
-      deadByDay: { 1: new Map([['Bob', { day: 1, content: 'Bob was executed.' }]]) },
+      deaths: { Bob: { day: 1, cause: 'elimination', content: 'Bob was executed.' } },
       activeDay: 1,
     });
     expect(screen.getByText(/Day 1 · Bob was executed\./)).toBeTruthy();
@@ -722,13 +737,13 @@ describe('RightPane: death reason display (#391)', () => {
      * Objective: 夜襲死亡者行に night_attack の content テキストが表示されることを検証する（AC2 / #391）。
      */
     renderRightPane({
-      deadByDay: { 1: new Map([['Bob', { day: 1, content: 'Werewolves attacked Bob.' }]]) },
+      deaths: { Bob: { day: 1, cause: 'attack', content: 'Werewolves attacked Bob.' } },
       activeDay: 1,
     });
     expect(screen.getByText(/Werewolves attacked Bob\./)).toBeTruthy();
   });
 
-  it('shows no deathReason when deadByDay entry has no metadata', () => {
+  it('shows no deathReason when death entry has no metadata', () => {
     /*
      * SUT: RightPane
      * Mock: なし
@@ -736,7 +751,7 @@ describe('RightPane: death reason display (#391)', () => {
      * Objective: メタデータなし（Map.get が undefined）の死亡者行には死亡理由が表示されないことを検証する。
      */
     const { container } = renderRightPane({
-      deadByDay: { 1: new Map([['Bob', undefined]]) },
+      deaths: { Bob: undefined },
       activeDay: 1,
     });
     expect(container.querySelector('[class*="deathReason"]')).toBeNull();
@@ -843,7 +858,7 @@ describe('RightPane: dead role hidden in public mode (#521 AC-3)', () => {
      */
     const { container } = renderRightPane({
       viewerMode: 'public',
-      deadByDay: { 1: new Map([['Bob', { day: 1, content: 'Werewolves attacked Bob.' }]]) },
+      deaths: { Bob: { day: 1, cause: 'attack', content: 'Werewolves attacked Bob.' } },
       activeDay: 1,
       coStatus: {},
     });
@@ -861,7 +876,7 @@ describe('RightPane: dead role hidden in public mode (#521 AC-3)', () => {
      */
     const { container } = renderRightPane({
       viewerMode: 'spectator',
-      deadByDay: { 1: new Map([['Bob', { day: 1, content: 'Werewolves attacked Bob.' }]]) },
+      deaths: { Bob: { day: 1, cause: 'attack', content: 'Werewolves attacked Bob.' } },
       activeDay: 1,
       coStatus: {},
     });
@@ -1742,7 +1757,7 @@ describe('avatar navigation links (#485)', () => {
         coStatus={{}}
         daySummary={{}}
         activeDay={1}
-        deadByDay={baseDeadByDay}
+        deaths={baseDeaths}
         viewerMode="spectator"
       />
     );
@@ -1763,7 +1778,7 @@ describe('avatar navigation links (#485)', () => {
         coStatus={{ Alice: 'Seer' }}
         daySummary={{}}
         activeDay={1}
-        deadByDay={baseDeadByDay}
+        deaths={baseDeaths}
         viewerMode="spectator"
       />
     );
@@ -1790,7 +1805,7 @@ describe('avatar navigation links (#485)', () => {
         coStatus={{}}
         daySummary={daySummary}
         activeDay={1}
-        deadByDay={baseDeadByDay}
+        deaths={baseDeaths}
         viewerMode="spectator"
       />
     );
@@ -1820,7 +1835,7 @@ describe('avatar navigation links (#485)', () => {
         coStatus={{}}
         daySummary={daySummary}
         activeDay={1}
-        deadByDay={baseDeadByDay}
+        deaths={baseDeaths}
         viewerMode="spectator"
       />
     );
