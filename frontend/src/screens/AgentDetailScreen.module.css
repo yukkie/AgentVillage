@@ -309,6 +309,7 @@
 }
 
 /* 過去の戦績 */
+/* 行（基底）でフォントサイズを一元定義し、各列はファミリー・色だけ上書きする（#530 §7.4 同一リスト内サイズ統一） */
 .recordRow {
   display: flex;
   gap: 16px;
@@ -320,9 +321,9 @@
 
 .recordRow:last-child { border-bottom: none; }
 /* game_id（ISO 文字列）を表示する列。折り返さず収める（global・game-scoped 実データ共通） */
-.recordNum   { font-family: var(--mono); color: var(--tx-4); font-size: 11px; white-space: nowrap; }
+.recordNum   { font-family: var(--mono); color: var(--tx-4); white-space: nowrap; }
 .recordRole  { font-family: var(--serif); color: var(--r-color, var(--tx-3)); width: 60px; }
-.recordResult { font-family: var(--mono); font-size: 11px; }
+.recordResult { font-family: var(--serif); }
 .win  { color: var(--alive); }
 .lose { color: var(--danger); }
 
