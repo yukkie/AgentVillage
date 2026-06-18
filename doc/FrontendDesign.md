@@ -636,6 +636,8 @@ SpectatorScreen から AgentDetailScreen への遷移、および AgentDetailScr
 
 データソース: `game_stats.json` / `agents/*.json` / `spectator_log.jsonl` / `frontend/public/config/agents.json`（§8.3 参照）。`stub/agentDetail.js` は #547 で削除済み。blurb（1行プロフィール）は `frontend/public/config/agents.json` の `blurb` フィールドを `/config/agents.json` として fetch（#519）。
 
+**死亡日表示（#535）**: `AgentHero` の `死亡 · Day N` の `N` は、ゲーム最終日ではなく**当該エージェントの死亡日**を使う。死亡日は `computeDeadByDay(events)` の**最終日の累積 Map** から `deadByDay[visibleDays.at(-1)]?.get(name)?.day` で引く（SpectatorScreen `RightPane` が `deadByDay[activeDay]` を直読みするのと同じパターン。AgentDetail は日タブに依存せず最終的な死亡状態を見るため最終日 Map を使う）。死亡イベント欠落で引けない場合は現在日（最終日）へフォールバックする。生存中エージェントの `生存中 · Day N` は従来どおり現在日を使う。
+
 Semantic HTML: `AgentHero` は画面内のエージェント見出しとして `<header>`、AgentPicker・推論ログ・夜行動・過去戦績・疑い度マトリクスの行群は `<ul><li>` で表現する。picker 行の clickable 化は React Router 導入時（#342）に `<a>` / `<Link>` として扱う。
 
 ### 6.3 セマンティック HTML 設計方針（#411）

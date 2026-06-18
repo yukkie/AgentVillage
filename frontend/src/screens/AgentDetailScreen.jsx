@@ -8,7 +8,7 @@ import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLE_META_BY_KEY } from '../lib/roleMeta.js';
 import { fetchGameStats, parseGameStats, parseAllAgentNames, fetchGameBySessionId, fetchAgentConfig, parseBlurb } from '../lib/archiveLoader.js';
 import { fetchReplayGame } from '../lib/replayLoader.js';
-import { buildAgentDetailRoster, buildSuspicionMatrix, countAgentSpeeches } from '../lib/parseGameData.js';
+import { buildAgentDetailRoster, buildSuspicionMatrix, countAgentSpeeches, computeDeadByDay } from '../lib/parseGameData.js';
 import styles from './AgentDetailScreen.module.css';
 
 // blurb（frontend/public/config/agents.json 由来の1行プロフィール・#519）が無い／fetch 失敗時のフォールバック表示。
@@ -70,7 +70,7 @@ function LeftPane({ current, sessionId, viewerMode = 'spectator', roster = [] })
 }
 
 // --- 中央: ヒーロー ---
-function AgentHero({ agent, agentData, speechCount, sessionMeta, currentDay, viewerMode = 'spectator', blurb }) {
+function AgentHero({ agent, agentData, speechCount, sessionMeta, currentDay, deathDay, viewerMode = 'spectator', blurb }) {
   const role = agentData?.role ?? null;
   const r = ROLE_META_BY_KEY[role];
   const isPublic = viewerMode === 'public';
@@ -88,7 +88,7 @@ function AgentHero({ agent, agentData, speechCount, sessionMeta, currentDay, vie
           {!isPublic && r && <span>所属: <strong style={{ color: 'var(--tx-2)' }}>{teamLabel}</strong></span>}
           <span>{sessionLabel}</span>
           <span style={{ color: isAlive ? 'var(--alive)' : 'var(--dead)' }}>
-            {isAlive ? `生存中 · Day ${currentDay || 0}` : `死亡 · Day ${currentDay || 0}`}
+            {isAlive ? `生存中 · Day ${currentDay || 0}` : `死亡 · Day ${deathDay ?? currentDay ?? 0}`}
           </span>
         </div>
         <p className={styles.heroBlurb}>{blurb}</p>
@@ -414,6 +414,10 @@ export default function AgentDetailScreen() {
     const speechCount = countAgentSpeeches(events, agent);
     const visibleDays = [...new Set(events.map(ev => ev.day).filter(Boolean))].sort((a, b) => a - b);
     const currentDay = entry?.days ?? visibleDays.at(-1) ?? 0;
+    // 死亡日は computeDeadByDay の最終日累積 Map から引く（SpectatorScreen RightPane と同パターン・#535）。
+    // 死亡イベント欠落で引けなければ undefined → AgentHero が currentDay にフォールバックする（AC-4）。
+    const deadByDay = computeDeadByDay(events);
+    const deathDay = deadByDay[visibleDays.at(-1)]?.get(agent)?.day;
     const roleAssignment = Object.fromEntries(
       Object.entries(agents).map(([name, data]) => [name, data.role])
     );
@@ -432,6 +436,7 @@ export default function AgentDetailScreen() {
             speechCount={speechCount}
             sessionMeta={entry}
             currentDay={currentDay}
+            deathDay={deathDay}
             viewerMode={viewerMode}
             blurb={blurb}
           />

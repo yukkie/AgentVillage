@@ -358,6 +358,56 @@ describe('AgentDetailScreen game-scoped real data', () => {
   });
 });
 
+// --- 死亡日表示（#535）: hero の「死亡 · Day N」が当該エージェントの死亡日を出す ---
+describe('AgentDetailScreen game-scoped death day', () => {
+  // 最終日 Day 2 まで続くゲーム。Mira は Day 1 に elimination で死亡（agent JSON も is_alive:false で整合）。
+  // Kai は is_alive:false だが log に死亡イベントが無い（AC-4 のフォールバックケース）。
+  const DEATH_DAY_INDEX = { session_id: 'session-death-001', title: '死亡日村', days: 2, cast: ['Nox', 'Mira', 'Kai'] };
+  const DEATH_DAY_JSONL = [
+    { id: 's1', day: 1, event_type: 'speech', agent: 'Mira', speech_id: 1, content: 'Mira speaks', is_public: true },
+    { id: 'e1', day: 1, event_type: 'elimination', agent: 'Mira', content: 'Mira was eliminated', is_public: true },
+    { id: 's2', day: 2, event_type: 'speech', agent: 'Nox', speech_id: 2, content: 'Nox speaks', is_public: true },
+  ].map(e => JSON.stringify(e)).join('\n');
+  const DEATH_DAY_AGENTS = {
+    Nox: { profile: { name: 'Nox', model: 'm', persona: {} }, state: { is_alive: true, beliefs: {}, claimed_role: null }, role: 'Villager' },
+    Mira: { profile: { name: 'Mira', model: 'm', persona: {} }, state: { is_alive: false, beliefs: {}, claimed_role: null }, role: 'Villager' },
+    Kai: { profile: { name: 'Kai', model: 'm', persona: {} }, state: { is_alive: false, beliefs: {}, claimed_role: null }, role: 'Werewolf' },
+  };
+
+  function mockDeathDayReplay() {
+    mockGameScopedFetch({ indexEntry: DEATH_DAY_INDEX, jsonlText: DEATH_DAY_JSONL, agentJsonByName: DEATH_DAY_AGENTS });
+  }
+
+  it('game-scoped hero shows the agent actual death day, not the game last day', async () => {
+    /*
+     * SUT: AgentDetailScreen (game-scoped mode) AgentHero
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: Day 1 に死亡し最終日 Day 2 まで続くゲームで、死亡エージェントの hero が「死亡 · Day 1」を表示することを検証する (AC-1)
+     */
+    mockDeathDayReplay();
+    renderGameScoped({ sessionId: 'session-death-001', agentName: 'Mira' });
+
+    await screen.findByRole('heading', { name: 'Mira' });
+    expect(screen.getByText(/死亡 · Day 1/)).toBeTruthy();
+    expect(screen.queryByText(/死亡 · Day 2/)).toBeNull();
+  });
+
+  it('game-scoped hero falls back to the last day when no death event exists', async () => {
+    /*
+     * SUT: AgentDetailScreen (game-scoped mode) AgentHero
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: is_alive:false だが log に死亡イベントが無いエージェントでも、クラッシュせず最終日（Day 2）にフォールバック表示することを検証する (AC-4)
+     */
+    mockDeathDayReplay();
+    renderGameScoped({ sessionId: 'session-death-001', agentName: 'Kai' });
+
+    await screen.findByRole('heading', { name: 'Kai' });
+    expect(screen.getByText(/死亡 · Day 2/)).toBeTruthy();
+  });
+});
+
 describe('AgentDetailScreen game-scoped day timeline', () => {
   it('game-scoped renders day tabs and switches the agent timeline day', async () => {
     /*
