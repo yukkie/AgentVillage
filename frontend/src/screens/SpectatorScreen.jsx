@@ -9,7 +9,8 @@ import { ROLE_META_BY_KEY, ROLE_KEYS, listRoles } from '../lib/roleMeta.js';
 import { agentDetailPath } from '../lib/agentLinks.js';
 import { fetchReplayAgents, fetchReplayLog } from '../lib/replayLoader.js';
 import { fetchGameBySessionId } from '../lib/archiveLoader.js';
-import { parseGameData, aggregateCoStatus, deathsByAgent } from '../lib/parseGameData.js';
+import { parseGameData, aggregateCoStatus } from '../lib/parseGameData.js';
+import { useDeaths } from '../lib/useDeaths.js';
 import { filterByAgents, filterByRoles, filterFeedEvents } from '../lib/feedFilter.js';
 import styles from './SpectatorScreen.module.css';
 
@@ -299,7 +300,6 @@ export default function SpectatorScreen() {
   const [replayEvents, setReplayEvents] = useState(null);
   const [replayAgents, setReplayAgents] = useState({});
   const [replayDaySummary, setReplayDaySummary] = useState({});
-  const [replayDeaths, setReplayDeaths] = useState({});
   const [gameWinner, setGameWinner] = useState(null);
   const [gameOverDay, setGameOverDay] = useState(null);
   const [loadingEvents, setLoadingEvents] = useState(Boolean(sessionId));
@@ -349,7 +349,6 @@ export default function SpectatorScreen() {
     setReplayEvents(null);
     setReplayAgents({});
     setReplayDaySummary({});
-    setReplayDeaths({});
     setGameWinner(null);
     setGameOverDay(null);
     setLoadingEvents(true);
@@ -375,7 +374,6 @@ export default function SpectatorScreen() {
         const parsed = parseGameData(jsonlText);
         setReplayEvents(parsed.events);
         setReplayDaySummary(parsed.daySummary);
-        setReplayDeaths(deathsByAgent(parsed.events));
         setGameWinner(parsed.winner ?? null);
         const goEvent = parsed.events.find(e => e.event_type === 'game_over');
         if (goEvent) setGameOverDay(goEvent.day);
@@ -395,6 +393,7 @@ export default function SpectatorScreen() {
   }, [sessionId]);
 
   const events = replayEvents ?? [];
+  const replayDeaths = useDeaths(replayEvents);
   const agents = replayAgents;
   const daySummary = replayDaySummary;
   const roleAssignment = useMemo(() => Object.fromEntries(

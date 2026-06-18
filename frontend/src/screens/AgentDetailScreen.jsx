@@ -8,7 +8,8 @@ import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLE_META_BY_KEY } from '../lib/roleMeta.js';
 import { fetchGameStats, parseGameStats, parseAllAgentNames, fetchGameBySessionId, fetchAgentConfig, parseBlurb } from '../lib/archiveLoader.js';
 import { fetchReplayGame } from '../lib/replayLoader.js';
-import { buildAgentDetailRoster, buildSuspicionMatrix, countAgentSpeeches, deathDayOf } from '../lib/parseGameData.js';
+import { buildAgentDetailRoster, buildSuspicionMatrix, countAgentSpeeches } from '../lib/parseGameData.js';
+import { useDeaths } from '../lib/useDeaths.js';
 import styles from './AgentDetailScreen.module.css';
 
 // blurb（frontend/public/config/agents.json 由来の1行プロフィール・#519）が無い／fetch 失敗時のフォールバック表示。
@@ -363,6 +364,8 @@ export default function AgentDetailScreen() {
     gameData: null,
     error: null,
   });
+  const gameScopedEvents = gameScopedState.gameData?.events;
+  const deaths = useDeaths(gameScopedEvents);
 
   useEffect(() => {
     if (!sessionId) return undefined;
@@ -415,8 +418,7 @@ export default function AgentDetailScreen() {
     const visibleDays = [...new Set(events.map(ev => ev.day).filter(Boolean))].sort((a, b) => a - b);
     const currentDay = entry?.days ?? visibleDays.at(-1) ?? 0;
     // 死亡イベント欠落で引けなければ undefined → AgentHero が currentDay にフォールバックする（AC-4）。
-    const resolvedDeathDay = deathDayOf(events, agent);
-    const deathDay = resolvedDeathDay === -1 ? undefined : resolvedDeathDay;
+    const deathDay = deaths[agent]?.day;
     const roleAssignment = Object.fromEntries(
       Object.entries(agents).map(([name, data]) => [name, data.role])
     );
