@@ -771,6 +771,16 @@ Semantic HTML: `AgentHero` は画面内のエージェント見出しとして `
 
 逸脱の発見・是正は `/self-reflection-review` の責務とする（§本ドキュメント外、スキル側に観点を追記）。
 
+### 7.5 design lint（stylelint）による機械検出（#557）
+
+トークン使用規約（§7.2, §7.4）のうち、**色・border-radius・font-family の生値ハードコード**は stylelint で機械的に検出する。`frontend/.stylelintrc.json` で `scale-unlimited/declaration-strict-value` ルールを適用し、`var(--*)` 以外の値を禁止する。
+
+- 検出対象: `color`/`background`/`border-color`系、`border-radius`、`font-family`
+- 検出対象外: `font-size`（トークン化していないため。サイズは上の相対ルールに従う）
+- `npm run lint:css` で実行。pre-commit で `frontend/` 配下のCSS変更時に自動実行される
+- 既存違反は導入時点で `severity: "warning"`（ブロックしない）。是正は別Issue（#561）で対応する
+- 意味論的な使い分け（数値=mono/固有名=serifの妥当性など）は静的解析で検出できないため対象外。これは `/self-reflection-review` の責務（上記参照）
+
 ---
 
 ## 8. スタブの差し替え方針
