@@ -27,3 +27,10 @@ repos:
         pass_filenames: false
         files: ^frontend/
         stages: [pre-commit]
+      - id: design-lint
+        name: design lint
+        entry: npm --prefix frontend run lint:css
+        language: system
+        pass_filenames: false
+        files: ^frontend/
+        stages: [pre-commit]
