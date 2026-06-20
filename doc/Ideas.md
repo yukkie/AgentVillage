@@ -21,7 +21,6 @@
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | feat(frontend): GameData registry — track data gaps continuously | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | ❌ yukkie/AgentVillage#562 | tech-debt | （なし） | （なし） | Survey font-size usage to design font-size tokens | font-size の使用実態を一覧化し、トークン化の粒度案を提案する（#557 のスコープ拡張から派生） |
-| ❌ yukkie/AgentVillage#565 | tech-debt | （なし） | （なし） | Decide token strategy for color/background raw values flagged by stylelint | #561 の調査で機械的に置換できなかった color/background 系生値11件のトークン化方針を決定する |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
 | yukkie/AgentVillage#495 | enhancement | 🟢 | 3 | design: log visibility classes and recipient-based authorization model (for LIVE / player participation) | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
 | yukkie/AgentVillage#319 | enhancement | 🟢 | 3 | feat(frontend): LIVE spectator (real-time view of in-progress game) | state/ を tail して進行中ゲームを表示（将来フェーズ） |

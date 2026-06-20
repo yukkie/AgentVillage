@@ -203,9 +203,9 @@
   background: var(--bg-3); color: var(--tx-2);
 }
 .sysrow.exec  .sysIcon { background: rgba(226,107,107,0.15); color: var(--danger); }
-.sysrow.death .sysIcon { background: #2a1418; color: var(--danger); }
+.sysrow.death .sysIcon { background: var(--danger-dark); color: var(--danger); }
 .sysrow.gm    .sysIcon { background: rgba(240,199,95,0.12);  color: var(--acc); }
-.sysrow.phase .sysIcon { background: rgba(125,108,255,0.18); color: #b6abff; }
+.sysrow.phase .sysIcon { background: rgba(125,108,255,0.18); color: var(--phase-tint); }
 
 /* Relationship snapshot (suspicion / threat meters) */
 .scoreSnapshot {
@@ -282,7 +282,7 @@
   text-align: center;
   text-transform: uppercase;
 }
-.scoreItem.low .scoreFill { background: #5fbd7a; }
+.scoreItem.low .scoreFill { background: var(--alive-low); }
 .scoreItem.medium .scoreFill { background: var(--acc); }
 .scoreItem.high .scoreFill { background: var(--danger); }
 .scoreList.threat .scoreItem.low .scoreFill { background: rgba(226,107,107,0.45); }

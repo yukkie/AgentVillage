@@ -13,7 +13,13 @@
       {
         "ignoreValues": {
           "": ["inherit", "transparent", "none"],
-          "border-radius": ["50%", "0", "inherit"]
+          "border-radius": ["50%", "0", "inherit"],
+          "background": [
+            "inherit",
+            "transparent",
+            "none",
+            "/^radial-gradient\\(/"
+          ]
         },
         "severity": "error"
       }
