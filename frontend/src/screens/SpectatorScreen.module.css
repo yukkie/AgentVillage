@@ -92,7 +92,7 @@
   display: inline-flex; align-items: center; gap: 6px;
   background: transparent;
   border: 1px solid var(--bd);
-  border-radius: 12px;
+  border-radius: var(--r3);
   font-size: 11px;
   color: var(--tx-2);
   cursor: pointer;
@@ -100,7 +100,7 @@
 }
 .chip:hover { border-color: var(--tx-3); color: var(--tx); }
 .chip.on { background: var(--bg-3); border-color: var(--tx-3); color: var(--tx); }
-.chip .swatch { width: 8px; height: 8px; border-radius: 2px; }
+.chip .swatch { width: 8px; height: 8px; border-radius: var(--r-xs); }
 
 /* === Feed (center pane) === */
 .feedHead {
@@ -147,7 +147,7 @@
   color: var(--danger);
   font-size: 10px;
   padding: 1px 6px;
-  border-radius: 2px;
+  border-radius: var(--r-xs);
   letter-spacing: 0.05em;
 }
 .voteGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 18px; }
@@ -224,7 +224,7 @@
 .action .what  { color: var(--tx-2); flex: 1; }
 .action .what strong { color: var(--tx); font-weight: 600; }
 .action .what em { font-style: normal; color: var(--r-color, var(--tx)); font-family: var(--serif); }
-.action .res   { font-family: var(--mono); font-size: 10px; padding: 1px 5px; border-radius: 2px; }
+.action .res   { font-family: var(--mono); font-size: 10px; padding: 1px 5px; border-radius: var(--r-xs); }
 .action .res.black { color: var(--r-werewolf); background: rgba(226,107,107,0.12); }
 .action .res.white { color: var(--r-seer);     background: rgba(110,168,255,0.12); }
 
@@ -268,7 +268,7 @@
 .coMeta { margin-left: auto; color: var(--tx-3); font-size: 10px; font-family: var(--mono); }
 
 /* filter chip swatch */
-.swatch { width: 8px; height: 8px; border-radius: 2px; }
+.swatch { width: 8px; height: 8px; border-radius: var(--r-xs); }
 
 /* game_over result row in left pane */
 .phaseGameOver { color: var(--tx-2); }

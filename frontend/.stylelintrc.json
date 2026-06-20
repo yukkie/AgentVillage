@@ -13,9 +13,9 @@
       {
         "ignoreValues": {
           "": ["inherit", "transparent", "none"],
-          "border-radius": ["50%"]
+          "border-radius": ["50%", "0", "inherit"]
         },
-        "severity": "warning"
+        "severity": "error"
       }
     ]
   }

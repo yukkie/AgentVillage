@@ -62,7 +62,7 @@
   border: 1px solid color-mix(in oklab, var(--co-color, var(--acc)) 50%, transparent);
   color: var(--co-color, var(--acc));
   padding: 1px 5px;
-  border-radius: 2px;
+  border-radius: var(--r-xs);
   letter-spacing: 0.04em;
 }
 
@@ -73,7 +73,7 @@
   background: var(--bg-1);
   font-size: 12px;
   color: var(--tx-3);
-  border-radius: 0 2px 2px 0;
+  border-radius: 0 var(--r-xs) var(--r-xs) 0;
 }
 .spQuote .qhead { font-size: 10px; color: var(--tx-4); margin-bottom: 2px; font-family: var(--mono); }
 
@@ -104,7 +104,7 @@
   display: inline-flex; align-items: center; gap: 7px;
   font-family: var(--sans);
   border: 1px solid var(--bd);
-  border-radius: 14px;
+  border-radius: var(--r-lg);
   background: var(--bg-1);
   transition: all 120ms;
 }
@@ -169,7 +169,7 @@
   font-family: var(--serif); font-size: 10px;
   background: color-mix(in oklab, var(--co-color, var(--acc)) 18%, transparent);
   border: 1px solid color-mix(in oklab, var(--co-color, var(--acc)) 50%, transparent);
-  color: var(--co-color, var(--acc)); padding: 1px 5px; border-radius: 2px; letter-spacing: 0.04em;
+  color: var(--co-color, var(--acc)); padding: 1px 5px; border-radius: var(--r-xs); letter-spacing: 0.04em;
 }
 .qhead { font-size: 10px; color: var(--tx-4); margin-bottom: 2px; font-family: var(--mono); }
 .mention { color: var(--info); font-weight: 500; }
@@ -264,7 +264,7 @@
 }
 .scoreTrack {
   height: 6px;
-  border-radius: 3px;
+  border-radius: var(--r-sm);
   background: var(--bg-3);
   overflow: hidden;
   min-width: 0;

@@ -40,7 +40,7 @@
   color: var(--acc);
   font-family: var(--serif);
   font-size: 13px;
-  border-radius: 2px;
+  border-radius: var(--r-xs);
 }
 
 .crumb {
