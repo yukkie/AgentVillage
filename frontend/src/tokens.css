@@ -20,6 +20,8 @@
   --tx-2: #dadde4;
   --tx-3: #c2c7d1;
   --tx-4: #aab0bd;
+  --tx-on-acc: #fff;
+  --av-fallback: #444;
 
   /* 役職カラー */
   --r-villager: #95a8bd;
@@ -31,13 +33,20 @@
 
   /* ステータス */
   --alive: #6dd592;
+  --alive-low: #5fbd7a;
   --dead: #6e7585;
   --warn: #e8a85c;
   --danger: #e26b6b;
+  --danger-dark: #2a1418;
   --info: #6ea8ff;
+  --info-rgb: 110, 168, 255;
+  --phase-tint: #b6abff;
+  --phase-night: #7d6cff;
 
   /* アクセント（山吹色） */
   --acc: #f0c75f;
+  --acc-ink: #1a1408;
+  --acc-hover: #f5d06e;
 
   /* 角丸 */
   --r-xs: 2px;

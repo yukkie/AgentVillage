@@ -88,10 +88,10 @@
 .primary {
   background: var(--acc);
   border-color: var(--acc);
-  color: #1a1408;
+  color: var(--acc-ink);
   font-weight: 600;
 }
-.primary:hover { background: #f5d06e; border-color: #f5d06e; color: #1a1408; }
+.primary:hover { background: var(--acc-hover); border-color: var(--acc-hover); color: var(--acc-ink); }
 
 .liveDot {
   width: 7px;

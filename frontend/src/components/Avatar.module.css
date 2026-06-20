@@ -14,7 +14,7 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 50% 30%, var(--av-c, #444) 0%, transparent 70%),
+    radial-gradient(ellipse at 50% 30%, var(--av-c, var(--av-fallback)) 0%, transparent 70%),
     linear-gradient(180deg, color-mix(in oklab, var(--av-c, #555) 35%, #1a1d24), #0e1015);
 }
 

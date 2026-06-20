@@ -72,7 +72,7 @@
   flex: 0 0 6px;
 }
 .phaseItem.day   .dot { background: var(--acc); }
-.phaseItem.night .dot { background: #7d6cff; }
+.phaseItem.night .dot { background: var(--phase-night); }
 .phaseItem.exec  .dot { background: var(--danger); }
 .phaseItem .turn {
   font-family: var(--mono);
@@ -249,7 +249,7 @@
 
 /* phase nav inner */
 .phaseDiscuss .dot { background: var(--acc); }
-.phaseNight   .dot { background: #7d6cff; }
+.phaseNight   .dot { background: var(--phase-night); }
 .phaseExec    .dot { background: var(--danger); }
 .deathline { font-size: 10px; color: var(--danger); }
 .phaseTurn { font-family: var(--mono); font-size: 10px; color: var(--tx-2); margin-left: auto; }
