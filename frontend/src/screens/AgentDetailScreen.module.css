@@ -156,7 +156,7 @@
   letter-spacing: 0.04em;
   border: 1px solid color-mix(in oklab, var(--r-color) 50%, transparent);
   padding: 1px 8px;
-  border-radius: 2px;
+  border-radius: var(--r-xs);
   background: color-mix(in oklab, var(--r-color) 10%, transparent);
 }
 
@@ -372,7 +372,7 @@
 .barWrap {
   height: 6px;
   background: var(--bg-3);
-  border-radius: 3px;
+  border-radius: var(--r-sm);
   overflow: hidden;
 }
 
@@ -380,7 +380,7 @@
   display: block;
   height: 100%;
   background: var(--danger);
-  border-radius: 3px;
+  border-radius: var(--r-sm);
 }
 
 .matrixNum {

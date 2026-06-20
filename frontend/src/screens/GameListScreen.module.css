@@ -180,7 +180,7 @@
   font-size: 10px;
   font-weight: 700;
   padding: 1px 7px;
-  border-radius: 10px;
+  border-radius: var(--r-md);
   letter-spacing: 0.06em;
 }
 .livePillDot {
@@ -198,7 +198,7 @@
   font-size: 10px;
   font-weight: 700;
   padding: 1px 6px;
-  border-radius: 2px;
+  border-radius: var(--r-xs);
   letter-spacing: 0.04em;
 }
 .winnerWolf    { background: rgba(226,107,107,0.15); color: var(--r-werewolf); }

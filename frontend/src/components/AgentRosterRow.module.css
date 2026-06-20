@@ -62,7 +62,7 @@
   border: 1px solid color-mix(in oklab, var(--co-color, var(--acc)) 50%, transparent);
   color: var(--co-color, var(--acc));
   padding: 1px 5px;
-  border-radius: 2px;
+  border-radius: var(--r-xs);
   letter-spacing: 0.04em;
 }
 
