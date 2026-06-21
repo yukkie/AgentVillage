@@ -350,29 +350,18 @@ function GlobalProfile({ agent, blurb }) {
   );
 }
 
-// === メイン画面 ===
-export default function AgentDetailScreen() {
-  const { sessionId, agentName } = useParams();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const viewerMode = viewerModeFromSearchParams(searchParams);
-  const viewerSearch = searchForViewerMode(viewerMode);
-  const agent = agentName || 'Nox';
-  const blurb = useAgentBlurb(agent);
+// --- game-scoped mode 本体（sessionId ごとに key 再マウントし、fetch state を新規化する） ---
+function GameScopedProfile({ sessionId, agent, blurb, viewerMode, viewerSearch, toggleViewerMode }) {
   const [gameScopedState, setGameScopedState] = useState({
-    status: sessionId ? 'loading' : 'idle',
+    status: 'loading',
     entry: null,
     gameData: null,
     error: null,
   });
-  const gameScopedEvents = gameScopedState.gameData?.events;
-  const deaths = useDeaths(gameScopedEvents);
+  const deaths = useDeaths(gameScopedState.gameData?.events);
 
   useEffect(() => {
-    if (!sessionId) return undefined;
-
     let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- sessionId 変更時の意図的なリセット。key 再マウント化は別Issueで検討
-    setGameScopedState({ status: 'loading', entry: null, gameData: null, error: null });
 
     fetchGameBySessionId(sessionId)
       .then(entry => fetchReplayGame({ sessionId, cast: entry.cast ?? [] }).then(gameData => ({ entry, gameData })))
@@ -387,15 +376,6 @@ export default function AgentDetailScreen() {
       cancelled = true;
     };
   }, [sessionId]);
-
-  // sessionId なし → global profile mode（横断戦績・実データ）
-  if (!sessionId) {
-    return <GlobalProfile agent={agent} blurb={blurb} />;
-  }
-
-  const toggleViewerMode = () => {
-    setSearchParams(viewerMode === 'spectator' ? { view: 'public' } : {});
-  };
 
   const topCrumbs = [
     { label: 'r/agent-jinrou', to: '/' },
@@ -464,5 +444,36 @@ export default function AgentDetailScreen() {
       </TopBar>
       {body}
     </div>
+  );
+}
+
+// === メイン画面 ===
+export default function AgentDetailScreen() {
+  const { sessionId, agentName } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewerMode = viewerModeFromSearchParams(searchParams);
+  const viewerSearch = searchForViewerMode(viewerMode);
+  const agent = agentName || 'Nox';
+  const blurb = useAgentBlurb(agent);
+
+  // sessionId なし → global profile mode（横断戦績・実データ）
+  if (!sessionId) {
+    return <GlobalProfile agent={agent} blurb={blurb} />;
+  }
+
+  const toggleViewerMode = () => {
+    setSearchParams(viewerMode === 'spectator' ? { view: 'public' } : {});
+  };
+
+  return (
+    <GameScopedProfile
+      key={sessionId}
+      sessionId={sessionId}
+      agent={agent}
+      blurb={blurb}
+      viewerMode={viewerMode}
+      viewerSearch={viewerSearch}
+      toggleViewerMode={toggleViewerMode}
+    />
   );
 }

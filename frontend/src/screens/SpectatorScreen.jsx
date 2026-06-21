@@ -314,69 +314,33 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
   );
 }
 
-// === メイン観戦画面 ===
-export default function SpectatorScreen() {
-  const { sessionId } = useParams();
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [activeDay, setActiveDay] = useState(2);
-  const [activePhase, setActivePhase] = useState('discuss');
+// --- リプレイ fetch state（sessionId ごとに key 再マウントし、fetch state を新規化する） ---
+function SpectatorReplayData({
+  sessionId,
+  viewerMode,
+  navigate,
+  toggleViewerMode,
+  activeDay,
+  setActiveDay,
+  activePhase,
+  setActivePhase,
+  selectedAgents,
+  toggleAgentFilter,
+  selectedRoles,
+  toggleRoleFilter,
+  thoughtsOpen,
+  toggleThoughtsOpen,
+}) {
   const [replayEvents, setReplayEvents] = useState(null);
   const [replayAgents, setReplayAgents] = useState({});
   const [replayDaySummary, setReplayDaySummary] = useState({});
   const [gameOverDay, setGameOverDay] = useState(null);
-  const [loadingEvents, setLoadingEvents] = useState(Boolean(sessionId));
-  const [loadingAgents, setLoadingAgents] = useState(Boolean(sessionId));
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [loadingAgents, setLoadingAgents] = useState(true);
   const [loadError, setLoadError] = useState(null);
-  const [selectedAgents, setSelectedAgents] = useState(() => new Set());
-  const [selectedRoles, setSelectedRoles] = useState(() => new Set());
-  const [thoughtsOpen, setThoughtsOpen] = useState(false);
-  const viewerMode = viewerModeFromSearchParams(searchParams);
-
-  const toggleViewerMode = () => {
-    setSearchParams(viewerMode === 'spectator' ? { view: 'public' } : {});
-  };
-
-  const toggleAgentFilter = (agentName) => {
-    setSelectedAgents(current => {
-      const next = new Set(current);
-      if (next.has(agentName)) {
-        next.delete(agentName);
-      } else {
-        next.add(agentName);
-      }
-      return next;
-    });
-  };
-
-  const toggleRoleFilter = (roleKey) => {
-    setSelectedRoles(current => {
-      const next = new Set(current);
-      if (next.has(roleKey)) {
-        next.delete(roleKey);
-      } else {
-        next.add(roleKey);
-      }
-      return next;
-    });
-  };
-
-  const toggleThoughtsOpen = () => {
-    setThoughtsOpen(current => !current);
-  };
 
   useEffect(() => {
-    if (!sessionId) return undefined;
-
     let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- sessionId 変更時の意図的なリセット。key 再マウント化は別Issueで検討
-    setReplayEvents(null);
-    setReplayAgents({});
-    setReplayDaySummary({});
-    setGameOverDay(null);
-    setLoadingEvents(true);
-    setLoadingAgents(true);
-    setLoadError(null);
 
     fetchGameBySessionId(sessionId)
       .then(entry => fetchReplayAgents({ sessionId, cast: entry.cast ?? [] }))
@@ -412,7 +376,7 @@ export default function SpectatorScreen() {
     return () => {
       cancelled = true;
     };
-  }, [sessionId]);
+  }, [sessionId, setActiveDay, setActivePhase]);
 
   const events = useMemo(() => replayEvents ?? [], [replayEvents]);
   const replayDeaths = useDeaths(replayEvents);
@@ -495,5 +459,70 @@ export default function SpectatorScreen() {
         </div>
       </ThreePaneLayout>
     </div>
+  );
+}
+
+// === メイン観戦画面 ===
+export default function SpectatorScreen() {
+  const { sessionId } = useParams();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeDay, setActiveDay] = useState(2);
+  const [activePhase, setActivePhase] = useState('discuss');
+  const [selectedAgents, setSelectedAgents] = useState(() => new Set());
+  const [selectedRoles, setSelectedRoles] = useState(() => new Set());
+  const [thoughtsOpen, setThoughtsOpen] = useState(false);
+  const viewerMode = viewerModeFromSearchParams(searchParams);
+
+  const toggleViewerMode = () => {
+    setSearchParams(viewerMode === 'spectator' ? { view: 'public' } : {});
+  };
+
+  const toggleAgentFilter = (agentName) => {
+    setSelectedAgents(current => {
+      const next = new Set(current);
+      if (next.has(agentName)) {
+        next.delete(agentName);
+      } else {
+        next.add(agentName);
+      }
+      return next;
+    });
+  };
+
+  const toggleRoleFilter = (roleKey) => {
+    setSelectedRoles(current => {
+      const next = new Set(current);
+      if (next.has(roleKey)) {
+        next.delete(roleKey);
+      } else {
+        next.add(roleKey);
+      }
+      return next;
+    });
+  };
+
+  const toggleThoughtsOpen = () => {
+    setThoughtsOpen(current => !current);
+  };
+
+  return (
+    <SpectatorReplayData
+      key={sessionId}
+      sessionId={sessionId}
+      viewerMode={viewerMode}
+      navigate={navigate}
+      toggleViewerMode={toggleViewerMode}
+      activeDay={activeDay}
+      setActiveDay={setActiveDay}
+      activePhase={activePhase}
+      setActivePhase={setActivePhase}
+      selectedAgents={selectedAgents}
+      toggleAgentFilter={toggleAgentFilter}
+      selectedRoles={selectedRoles}
+      toggleRoleFilter={toggleRoleFilter}
+      thoughtsOpen={thoughtsOpen}
+      toggleThoughtsOpen={toggleThoughtsOpen}
+    />
   );
 }
