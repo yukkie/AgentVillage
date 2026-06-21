@@ -8,7 +8,7 @@
   background: var(--bg);
   color: var(--tx);
   font-family: var(--sans);
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.55;
   overflow: hidden;
   display: flex;
@@ -16,7 +16,7 @@
 }
 
 .sectionLabel {
-  font-size: 10px;
+  font-size: var(--fs-base);
   font-weight: 700;
   color: var(--tx-3);
   letter-spacing: 0.16em;
@@ -32,7 +32,7 @@
 }
 .phaseDay h3 {
   font-family: var(--serif);
-  font-size: 14px;
+  font-size: var(--fs-lg);
   font-weight: 600;
   margin: 0;
   color: var(--tx);
@@ -40,12 +40,12 @@
 }
 .phaseDay h3 small {
   font-family: var(--sans);
-  font-size: 10px;
+  font-size: var(--fs-xs);
   color: var(--tx-3);
   font-weight: 400;
   letter-spacing: 0.08em;
 }
-.phaseDay .deathline { font-size: 10px; color: var(--danger); }
+.phaseDay .deathline { font-size: var(--fs-xs); color: var(--danger); }
 
 .dayBlock .phaseList {
   max-height: 0;
@@ -62,7 +62,7 @@
   padding: 6px 8px;
   border-radius: var(--r1);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--fs-base);
   color: var(--tx-2);
   border-left: 2px solid transparent;
 }
@@ -76,7 +76,7 @@
 .phaseItem.exec  .dot { background: var(--danger); }
 .phaseItem .turn {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--fs-xs);
   color: var(--tx-4);
   margin-left: auto;
 }
@@ -93,7 +93,7 @@
   background: transparent;
   border: 1px solid var(--bd);
   border-radius: var(--r3);
-  font-size: 11px;
+  font-size: var(--fs-sm);
   color: var(--tx-2);
   cursor: pointer;
   font-family: var(--sans);
@@ -117,10 +117,10 @@
   display: flex; align-items: baseline; gap: 10px;
 }
 .feedHead h2 small {
-  font-family: var(--sans); font-size: 11px; color: var(--tx-3); letter-spacing: 0.1em;
+  font-family: var(--sans); font-size: var(--fs-sm); color: var(--tx-3); letter-spacing: 0.1em;
 }
 .feedHead .stat {
-  font-size: 11px;
+  font-size: var(--fs-sm);
   color: var(--tx-3);
   display: flex; align-items: center; gap: 6px;
 }
@@ -136,7 +136,7 @@
 }
 .voteDetail h4 {
   font-family: var(--serif);
-  font-size: 12px;
+  font-size: var(--fs-base);
   margin: 0 0 10px;
   color: var(--tx-2);
   letter-spacing: 0.08em;
@@ -145,7 +145,7 @@
 .voteDetail h4 .pill {
   background: rgba(226,107,107,0.15);
   color: var(--danger);
-  font-size: 10px;
+  font-size: var(--fs-xs);
   padding: 1px 6px;
   border-radius: var(--r-xs);
   letter-spacing: 0.05em;
@@ -153,7 +153,7 @@
 .voteGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 18px; }
 .voteCell {
   display: flex; align-items: center; gap: 8px;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   padding: 4px 0;
   border-bottom: 1px dashed var(--bd-soft);
 }
@@ -171,7 +171,7 @@
   padding: 0;
 }
 .rosterSection h4 {
-  font-size: 10px;
+  font-size: var(--fs-xs);
   letter-spacing: 0.16em;
   font-weight: 700;
   color: var(--tx-3);
@@ -179,7 +179,7 @@
   margin: 12px 0 8px;
   display: flex; align-items: center; justify-content: space-between;
 }
-.rosterSection h4 .count { font-family: var(--mono); font-size: 10px; color: var(--tx-4); letter-spacing: 0; }
+.rosterSection h4 .count { font-family: var(--mono); font-size: var(--fs-xs); color: var(--tx-4); letter-spacing: 0; }
 
 /* roster rows are rendered by the shared AgentRosterRow component (#521) */
 
@@ -194,14 +194,14 @@
 }
 .coRow {
   display: flex; align-items: center; gap: 8px;
-  font-size: 12px;
+  font-size: var(--fs-base);
   padding: 4px 0;
   border-bottom: 1px dashed var(--bd-soft);
 }
 .coRow:last-child { border-bottom: 0; }
-.coRow .coRole { font-family: var(--serif); font-size: 11px; color: var(--r-color); flex: 0 0 56px; }
+.coRow .coRole { font-family: var(--serif); font-size: var(--fs-sm); color: var(--r-color); flex: 0 0 56px; }
 .coRow .coName { color: var(--tx); font-weight: 500; }
-.coRow .coMeta { margin-left: auto; color: var(--tx-3); font-size: 10px; font-family: var(--mono); }
+.coRow .coMeta { margin-left: auto; color: var(--tx-3); font-size: var(--fs-xs); font-family: var(--mono); }
 
 /* Action timeline */
 .actionList {
@@ -213,10 +213,10 @@
   display: flex; gap: 10px;
   padding: 8px 6px;
   border-bottom: 1px dashed var(--bd-soft);
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
 }
-.action .when  { font-family: var(--mono); font-size: 10px; color: var(--tx-4); flex: 0 0 32px; }
-.action .ico   { font-family: var(--serif); font-size: 11px; color: var(--tx-2); flex: 0 0 18px; }
+.action .when  { font-family: var(--mono); font-size: var(--fs-xs); color: var(--tx-4); flex: 0 0 32px; }
+.action .ico   { font-family: var(--serif); font-size: var(--fs-sm); color: var(--tx-2); flex: 0 0 18px; }
 .action.divine .ico { color: var(--r-seer); }
 .action.guard  .ico { color: var(--r-hunter); }
 .action.attack .ico { color: var(--r-werewolf); }
@@ -224,7 +224,7 @@
 .action .what  { color: var(--tx-2); flex: 1; }
 .action .what strong { color: var(--tx); font-weight: 600; }
 .action .what em { font-style: normal; color: var(--r-color, var(--tx)); font-family: var(--serif); }
-.action .res   { font-family: var(--mono); font-size: 10px; padding: 1px 5px; border-radius: var(--r-xs); }
+.action .res   { font-family: var(--mono); font-size: var(--fs-xs); padding: 1px 5px; border-radius: var(--r-xs); }
 .action .res.black { color: var(--r-werewolf); background: rgba(226,107,107,0.12); }
 .action .res.white { color: var(--r-seer);     background: rgba(110,168,255,0.12); }
 
@@ -239,10 +239,10 @@
 .voteTo    { color: var(--tx); font-weight: 500; }
 
 /* roster inner */
-.count     { font-family: var(--mono); font-size: 10px; color: var(--tx-4); letter-spacing: 0; }
+.count     { font-family: var(--mono); font-size: var(--fs-xs); color: var(--tx-4); letter-spacing: 0; }
 
 /* action inner */
-.actionIco { font-family: var(--serif); font-size: 11px; color: var(--tx-2); flex: 0 0 18px; }
+.actionIco { font-family: var(--serif); font-size: var(--fs-sm); color: var(--tx-2); flex: 0 0 18px; }
 .what      { color: var(--tx-2); flex: 1; }
 .what strong { color: var(--tx); font-weight: 600; }
 .what em   { font-style: normal; color: var(--r-color, var(--tx)); font-family: var(--serif); }
@@ -251,21 +251,21 @@
 .phaseDiscuss .dot { background: var(--acc); }
 .phaseNight   .dot { background: var(--phase-night); }
 .phaseExec    .dot { background: var(--danger); }
-.deathline { font-size: 10px; color: var(--danger); }
-.phaseTurn { font-family: var(--mono); font-size: 10px; color: var(--tx-2); margin-left: auto; }
+.deathline { font-size: var(--fs-xs); color: var(--danger); }
+.phaseTurn { font-family: var(--mono); font-size: var(--fs-xs); color: var(--tx-2); margin-left: auto; }
 .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--tx-4); flex: 0 0 6px; }
 
 /* feed head */
 .spacer { flex: 1; }
 
 /* feed head stat */
-.stat { font-size: 11px; color: var(--tx-3); display: flex; align-items: center; gap: 6px; }
+.stat { font-size: var(--fs-sm); color: var(--tx-3); display: flex; align-items: center; gap: 6px; }
 .stat strong { color: var(--tx); font-weight: 600; font-family: var(--mono); }
 
 /* co board inner */
-.coRole { font-family: var(--serif); font-size: 11px; color: var(--r-color); flex: 0 0 56px; }
+.coRole { font-family: var(--serif); font-size: var(--fs-sm); color: var(--r-color); flex: 0 0 56px; }
 .coName { color: var(--tx); font-weight: 500; }
-.coMeta { margin-left: auto; color: var(--tx-3); font-size: 10px; font-family: var(--mono); }
+.coMeta { margin-left: auto; color: var(--tx-3); font-size: var(--fs-xs); font-family: var(--mono); }
 
 /* filter chip swatch */
 .swatch { width: 8px; height: 8px; border-radius: var(--r-xs); }
