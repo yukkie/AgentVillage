@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
     "lint:css": "stylelint \"src/**/*.css\""
   },
   "dependencies": {
@@ -17,10 +18,15 @@
     "react-router-dom": "^7.17.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "^4.1.8",
+    "eslint": "^10.5.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "globals": "^17.6.0",
     "jsdom": "^29.1.1",
     "stylelint": "^17.13.0",
     "stylelint-declaration-strict-value": "^1.11.1",

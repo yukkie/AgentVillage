@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Avatar from './Avatar.jsx';
 import RoleTag from './RoleTag.jsx';
@@ -25,11 +25,9 @@ function Mentioned({ text }) {
 }
 
 function ThoughtDetails({ reasoning, viewerMode = 'spectator', bulkOpen = false }) {
+  // bulkOpen が変わるたびに開閉状態をリセットしたいので、key として渡して再マウントさせる
+  // （useEffect 内 setState だとマウント後の余分な再レンダーを招くため避ける）。
   const [open, setOpen] = useState(bulkOpen);
-
-  useEffect(() => {
-    setOpen(bulkOpen);
-  }, [bulkOpen]);
 
   if (!reasoning) return null;
 
@@ -101,7 +99,7 @@ function SpeechCard({ ev, prevById, roleAssignment, sessionId, viewerMode = 'spe
         <div className={styles.spBody}>
           <Mentioned text={ev.content} />
         </div>
-        <ThoughtDetails reasoning={ev.reasoning} viewerMode={viewerMode} bulkOpen={bulkThoughtsOpen} />
+        <ThoughtDetails key={String(bulkThoughtsOpen)} reasoning={ev.reasoning} viewerMode={viewerMode} bulkOpen={bulkThoughtsOpen} />
       </div>
     </article>
   );
@@ -330,7 +328,7 @@ export function SystemRow({ kind, icon, label, children, strategy, reasoning, ts
         {strategy && viewerMode === 'spectator' && (
           <div className={styles.strategyBadge}>[strategy: {strategy}]</div>
         )}
-        <ThoughtDetails reasoning={reasoning} viewerMode={viewerMode} bulkOpen={bulkThoughtsOpen} />
+        <ThoughtDetails key={String(bulkThoughtsOpen)} reasoning={reasoning} viewerMode={viewerMode} bulkOpen={bulkThoughtsOpen} />
       </div>
     </div>
   );
@@ -350,7 +348,7 @@ function WolfChatCard({ ev, sessionId, viewerMode = 'spectator', bulkThoughtsOpe
           <Link to={agentTo} className={styles.agentLink}><span className={styles.name}>{ev.agent}</span></Link>
         </div>
         <div className={styles.spBody}>{ev.content}</div>
-        <ThoughtDetails reasoning={ev.reasoning} viewerMode={viewerMode} bulkOpen={bulkThoughtsOpen} />
+        <ThoughtDetails key={String(bulkThoughtsOpen)} reasoning={ev.reasoning} viewerMode={viewerMode} bulkOpen={bulkThoughtsOpen} />
       </div>
     </article>
   );

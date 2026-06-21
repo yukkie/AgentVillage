@@ -53,5 +53,3 @@ export function TopBarBtn({ primary, children, ...props }) {
     </button>
   );
 }
-
-export { styles as topBarStyles };
