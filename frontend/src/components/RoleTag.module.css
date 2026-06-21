@@ -1,6 +1,6 @@
 .tag {
   font-family: var(--serif);
-  font-size: 11px;
+  font-size: var(--fs-sm);
   color: var(--r-color, var(--tx-2));
   border: 1px solid color-mix(in oklab, var(--r-color, var(--bd)) 50%, transparent);
   background: color-mix(in oklab, var(--r-color, transparent) 12%, transparent);

@@ -52,12 +52,12 @@
   flex-wrap: wrap;
   margin-bottom: 6px;
 }
-.spHead .name   { font-family: var(--serif); font-weight: 600; font-size: 14px; color: var(--tx); }
-.spHead .turn   { font-family: var(--mono); font-size: 10px; color: var(--tx-4); }
-.spHead .ts     { font-size: 10px; color: var(--tx-3); margin-left: auto; font-family: var(--mono); }
+.spHead .name   { font-family: var(--serif); font-weight: 600; font-size: var(--fs-lg); color: var(--tx); }
+.spHead .turn   { font-family: var(--mono); font-size: var(--fs-xs); color: var(--tx-4); }
+.spHead .ts     { font-size: var(--fs-xs); color: var(--tx-3); margin-left: auto; font-family: var(--mono); }
 .spHead .coBadge {
   font-family: var(--serif);
-  font-size: 10px;
+  font-size: var(--fs-xs);
   background: color-mix(in oklab, var(--co-color, var(--acc)) 18%, transparent);
   border: 1px solid color-mix(in oklab, var(--co-color, var(--acc)) 50%, transparent);
   color: var(--co-color, var(--acc));
@@ -71,14 +71,14 @@
   padding: 4px 10px;
   margin-bottom: 8px;
   background: var(--bg-1);
-  font-size: 12px;
+  font-size: var(--fs-base);
   color: var(--tx-3);
   border-radius: 0 var(--r-xs) var(--r-xs) 0;
 }
-.spQuote .qhead { font-size: 10px; color: var(--tx-4); margin-bottom: 2px; font-family: var(--mono); }
+.spQuote .qhead { font-size: var(--fs-xs); color: var(--tx-4); margin-bottom: 2px; font-family: var(--mono); }
 
 .spBody {
-  font-size: 13.5px;
+  font-size: var(--fs-lg);
   line-height: 1.7;
   color: var(--tx);
   white-space: pre-wrap;
@@ -89,7 +89,7 @@
 /* Thought disclosure */
 .spThink {
   margin-top: 10px;
-  font-size: 12px;
+  font-size: var(--fs-base);
   color: var(--tx-2);
   border: 1px solid transparent;
   border-radius: var(--r2);
@@ -99,7 +99,7 @@
   cursor: pointer;
   padding: 5px 10px 5px 8px;
   list-style: none;
-  font-size: 11px;
+  font-size: var(--fs-sm);
   color: var(--tx-3);
   display: inline-flex; align-items: center; gap: 7px;
   font-family: var(--sans);
@@ -120,14 +120,14 @@
 .spThink[open] summary .bubbleIco { color: var(--acc); }
 .spThink summary .label {
   font-family: var(--serif);
-  font-size: 12px;
+  font-size: var(--fs-base);
   color: inherit;
   letter-spacing: 0.02em;
   font-weight: 600;
 }
 .spThink summary .conf {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--fs-base);
   color: var(--tx-4);
   padding-left: 6px;
   border-left: 1px solid var(--bd);
@@ -162,20 +162,20 @@
 }
 
 /* spHead child / thought inner (standalone class forms used by JSX) */
-.name   { font-family: var(--serif); font-weight: 600; font-size: 14px; color: var(--tx); }
-.turn   { font-family: var(--mono); font-size: 10px; color: var(--tx-4); }
-.ts     { font-size: 10px; color: var(--tx-3); margin-left: auto; font-family: var(--mono); }
+.name   { font-family: var(--serif); font-weight: 600; font-size: var(--fs-lg); color: var(--tx); }
+.turn   { font-family: var(--mono); font-size: var(--fs-xs); color: var(--tx-4); }
+.ts     { font-size: var(--fs-xs); color: var(--tx-3); margin-left: auto; font-family: var(--mono); }
 .coBadge {
-  font-family: var(--serif); font-size: 10px;
+  font-family: var(--serif); font-size: var(--fs-xs);
   background: color-mix(in oklab, var(--co-color, var(--acc)) 18%, transparent);
   border: 1px solid color-mix(in oklab, var(--co-color, var(--acc)) 50%, transparent);
   color: var(--co-color, var(--acc)); padding: 1px 5px; border-radius: var(--r-xs); letter-spacing: 0.04em;
 }
-.qhead { font-size: 10px; color: var(--tx-4); margin-bottom: 2px; font-family: var(--mono); }
+.qhead { font-size: var(--fs-xs); color: var(--tx-4); margin-bottom: 2px; font-family: var(--mono); }
 .mention { color: var(--info); font-weight: 500; }
 .bubbleIco { color: var(--tx-3); flex: 0 0 14px; }
-.thinkLabel { font-family: var(--serif); font-size: 12px; color: inherit; letter-spacing: 0.02em; font-weight: 600; }
-.conf { font-family: var(--mono); font-size: 10px; color: var(--tx-4); padding-left: 6px; border-left: 1px solid var(--bd); margin-left: 2px; }
+.thinkLabel { font-family: var(--serif); font-size: var(--fs-base); color: inherit; letter-spacing: 0.02em; font-weight: 600; }
+.conf { font-family: var(--mono); font-size: var(--fs-base); color: var(--tx-4); padding-left: 6px; border-left: 1px solid var(--bd); margin-left: 2px; }
 .thinkBody { padding: 0 14px 12px 36px; white-space: pre-wrap; line-height: 1.65; font-family: var(--sans); color: var(--tx-2); }
 
 /* System events */
@@ -193,13 +193,13 @@
 }
 .sysrow .sysText strong { font-family: var(--serif); font-weight: 600; }
 .sysIconCol { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 0 0 64px; width: 64px; }
-.sysLabel { font-family: var(--serif); font-size: 10px; color: var(--tx-3); letter-spacing: 0.08em; text-align: center; }
-.sysText { font-size: 13px; color: var(--tx); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; flex: 1; min-width: 0; }
-.sysTs { font-family: var(--mono); font-size: 10px; color: var(--tx-4); }
+.sysLabel { font-family: var(--serif); font-size: var(--fs-xs); color: var(--tx-3); letter-spacing: 0.08em; text-align: center; }
+.sysText { font-size: var(--fs-lg); color: var(--tx); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; flex: 1; min-width: 0; }
+.sysTs { font-family: var(--mono); font-size: var(--fs-xs); color: var(--tx-4); }
 .sysIcon {
   width: 28px; height: 28px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
-  font-family: var(--serif); font-size: 14px;
+  font-family: var(--serif); font-size: var(--fs-lg);
   background: var(--bg-3); color: var(--tx-2);
 }
 .sysrow.exec  .sysIcon { background: rgba(226,107,107,0.15); color: var(--danger); }
@@ -254,7 +254,7 @@
 .scoreName {
   color: var(--tx);
   font-family: var(--serif);
-  font-size: 12px;
+  font-size: var(--fs-base);
   font-weight: 600;
   line-height: 1.1;
   overflow: hidden;
@@ -277,7 +277,7 @@
 .scoreSeverity {
   color: var(--tx-4);
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--fs-xs);
   line-height: 1;
   text-align: center;
   text-transform: uppercase;
@@ -291,16 +291,16 @@
 .deltaTrace {
   color: var(--tx-3);
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: var(--fs-xs);
   line-height: 1.5;
   word-break: break-word;
 }
 
 /* viewerMode: public lock badge */
-.lockBadge { font-size: 11px; color: var(--tx-4); padding: 2px 6px; cursor: default; user-select: none; }
+.lockBadge { font-size: var(--fs-sm); color: var(--tx-4); padding: 2px 6px; cursor: default; user-select: none; }
 
 /* vote strategy badge */
-.strategyBadge { font-size: 11px; color: var(--tx-3); font-family: var(--mono); margin-top: 2px; }
+.strategyBadge { font-size: var(--fs-sm); color: var(--tx-3); font-family: var(--mono); margin-top: 2px; }
 
 /* game_over result text in centre feed */
 .gameOverText { font-weight: 600; font-family: var(--serif); }

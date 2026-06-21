@@ -20,13 +20,13 @@
 
 .pickerTitle {
   font-family: var(--serif);
-  font-size: 12px;
+  font-size: var(--fs-base);
   color: var(--tx-2);
   letter-spacing: 0.05em;
 }
 
 .pickerCount {
-  font-size: 10px;
+  font-size: var(--fs-xs);
   color: var(--tx-4);
   font-family: var(--mono);
 }
@@ -54,7 +54,7 @@
   padding: 6px 8px;
   border-radius: var(--r1);
   cursor: pointer;
-  font-size: 12.5px;
+  font-size: var(--fs-base);
   border-left: 2px solid transparent;
   margin-bottom: 2px;
 }
@@ -87,7 +87,7 @@
 .pickDead .pickName { text-decoration: line-through; }
 
 .pickRole {
-  font-size: 10px;
+  font-size: var(--fs-xs);
   color: var(--r-color, var(--tx-3));
   font-family: var(--serif);
 }
@@ -102,7 +102,7 @@
 .pickDead .statusDot { background: var(--tx-4); }
 
 .sectionLabel {
-  font-size: 10px;
+  font-size: var(--fs-xs);
   color: var(--tx-4);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -144,13 +144,13 @@
   align-items: baseline;
   gap: 12px;
   color: var(--tx-3);
-  font-size: 12px;
+  font-size: var(--fs-base);
   flex-wrap: wrap;
 }
 
 .heroRoleLabel {
   font-family: var(--serif);
-  font-size: 14px;
+  font-size: var(--fs-lg);
   color: var(--r-color);
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -163,7 +163,7 @@
 .heroBlurb {
   margin-top: 12px;
   color: var(--tx-2);
-  font-size: 14px;
+  font-size: var(--fs-lg);
   line-height: 1.7;
   max-width: 560px;
   font-family: var(--serif);
@@ -185,7 +185,7 @@
 }
 
 .statLabel {
-  font-size: 10px;
+  font-size: var(--fs-xs);
   color: var(--tx-3);
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -204,7 +204,7 @@
 
 .tab {
   padding: 10px 14px;
-  font-size: 12px;
+  font-size: var(--fs-base);
   color: var(--tx-3);
   border-bottom: 2px solid transparent;
   border-top: none;
@@ -237,7 +237,7 @@
 
 .emptyState {
   color: var(--tx-4);
-  font-size: 13px;
+  font-size: var(--fs-md);
   border: 1px solid var(--bd-soft);
   background: var(--bg-1);
   border-radius: var(--r2);
@@ -254,7 +254,7 @@
 
 .panel h3 {
   font-family: var(--serif);
-  font-size: 14px;
+  font-size: var(--fs-lg);
   margin: 0 0 12px;
   letter-spacing: 0.04em;
   display: flex;
@@ -264,7 +264,7 @@
 
 .panel h3 small {
   font-family: var(--sans);
-  font-size: 10px;
+  font-size: var(--fs-xs);
   color: var(--tx-3);
   letter-spacing: 0.1em;
   margin-left: auto;
@@ -292,7 +292,7 @@
 }
 
 .thoughtHead {
-  font-size: 11px;
+  font-size: var(--fs-sm);
   color: var(--tx-3);
   display: flex;
   align-items: center;
@@ -303,7 +303,7 @@
 .thoughtHead strong { color: var(--tx-2); }
 
 .thoughtBody {
-  font-size: 13px;
+  font-size: var(--fs-md);
   color: var(--tx);
   line-height: 1.65;
 }
@@ -315,7 +315,7 @@
   gap: 16px;
   padding: 8px 0;
   border-bottom: 1px solid var(--bd-soft);
-  font-size: 12px;
+  font-size: var(--fs-base);
   align-items: center;
 }
 
@@ -338,7 +338,7 @@
 }
 
 .matrix {
-  font-size: 12px;
+  font-size: var(--fs-base);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -353,7 +353,7 @@
 }
 
 .matrixHead {
-  font-size: 10px;
+  font-size: var(--fs-xs);
   color: var(--tx-3);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -385,6 +385,6 @@
 
 .matrixNum {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: var(--fs-sm);
   text-align: right;
 }

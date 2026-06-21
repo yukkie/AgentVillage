@@ -19,6 +19,7 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| ❌ yukkie/AgentVillage#574 | tech-debt | （なし） | （なし） | Simplify font-size scale from 5 steps to 2 (small=12px / medium=14px) | #572 の5段トークンを2段（小12px・中14px）に簡素化。人間の知覚は粗い区別しかつかないため、機械的な1px刻みより比率ベースの少数段が妥当という議論から派生 |
 | ❌ yukkie/AgentVillage#572 | tech-debt | （なし） | （なし） | Reduce font-size variants: define --fs-* tokens and replace raw values | #562 調査の §7.4.1 粒度案を基に --fs-* トークン定義・既存CSS置き換え・stylelint検出追加。半端値の吸収先・大見出し系の扱いは実機で吟味 |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | feat(frontend): GameData registry — track data gaps continuously | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | ❌ yukkie/AgentVillage#568 | tech-debt | （なし） | （なし） | Refactor sessionId-driven state reset out of useEffect (set-state-in-effect) | ESLint導入で発覚した set-state-in-effect 違反2箇所をkey再マウント等で解消する |
