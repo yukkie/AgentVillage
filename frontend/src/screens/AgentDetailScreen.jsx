@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
 import AgentRosterRow from '../components/AgentRosterRow.jsx';
 import { FeedItem } from '../components/FeedCard.jsx';
@@ -371,6 +371,7 @@ export default function AgentDetailScreen() {
     if (!sessionId) return undefined;
 
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sessionId 変更時の意図的なリセット。key 再マウント化は別Issueで検討
     setGameScopedState({ status: 'loading', entry: null, gameData: null, error: null });
 
     fetchGameBySessionId(sessionId)

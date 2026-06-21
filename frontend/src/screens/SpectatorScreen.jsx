@@ -3,7 +3,8 @@ import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import Avatar, { AvatarButton } from '../components/Avatar.jsx';
 import AgentRosterRow from '../components/AgentRosterRow.jsx';
 import { FeedItem, SystemRow } from '../components/FeedCard.jsx';
-import TopBar, { TopBarBtn, topBarStyles } from '../components/TopBar.jsx';
+import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
+import topBarStyles from '../components/TopBar.module.css';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLE_META_BY_KEY, ROLE_KEYS, listRoles } from '../lib/roleMeta.js';
 import { agentDetailPath } from '../lib/agentLinks.js';
@@ -323,7 +324,6 @@ export default function SpectatorScreen() {
   const [replayEvents, setReplayEvents] = useState(null);
   const [replayAgents, setReplayAgents] = useState({});
   const [replayDaySummary, setReplayDaySummary] = useState({});
-  const [gameWinner, setGameWinner] = useState(null);
   const [gameOverDay, setGameOverDay] = useState(null);
   const [loadingEvents, setLoadingEvents] = useState(Boolean(sessionId));
   const [loadingAgents, setLoadingAgents] = useState(Boolean(sessionId));
@@ -369,10 +369,10 @@ export default function SpectatorScreen() {
     if (!sessionId) return undefined;
 
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sessionId 変更時の意図的なリセット。key 再マウント化は別Issueで検討
     setReplayEvents(null);
     setReplayAgents({});
     setReplayDaySummary({});
-    setGameWinner(null);
     setGameOverDay(null);
     setLoadingEvents(true);
     setLoadingAgents(true);
@@ -397,7 +397,6 @@ export default function SpectatorScreen() {
         const parsed = parseGameData(jsonlText);
         setReplayEvents(parsed.events);
         setReplayDaySummary(parsed.daySummary);
-        setGameWinner(parsed.winner ?? null);
         const goEvent = parsed.events.find(e => e.event_type === 'game_over');
         if (goEvent) setGameOverDay(goEvent.day);
         const firstDay = parsed.events.find(event => event.day)?.day;
@@ -415,7 +414,7 @@ export default function SpectatorScreen() {
     };
   }, [sessionId]);
 
-  const events = replayEvents ?? [];
+  const events = useMemo(() => replayEvents ?? [], [replayEvents]);
   const replayDeaths = useDeaths(replayEvents);
   const agents = replayAgents;
   const daySummary = replayDaySummary;

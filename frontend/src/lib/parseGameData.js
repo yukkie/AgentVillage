@@ -138,13 +138,6 @@ export function aggregateNightResults(events) {
   return result;
 }
 
-const ACTION_KIND = {
-  inspection: 'divine',
-  guard: 'guard',
-  night_attack: 'attack',
-  elimination: 'exec',
-};
-
 /**
  * Build a flat timeline of night/day actions for the right-pane action list.
  * Includes inspection, guard, private night_attack (wolf POV), and elimination.
