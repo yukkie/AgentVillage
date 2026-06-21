@@ -19,10 +19,8 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| ❌ yukkie/AgentVillage#574 | tech-debt | （なし） | （なし） | Simplify font-size scale from 5 steps to 2 (small=12px / medium=14px) | #572 の5段トークンを2段（小12px・中14px）に簡素化。人間の知覚は粗い区別しかつかないため、機械的な1px刻みより比率ベースの少数段が妥当という議論から派生 |
-| ❌ yukkie/AgentVillage#572 | tech-debt | （なし） | （なし） | Reduce font-size variants: define --fs-* tokens and replace raw values | #562 調査の §7.4.1 粒度案を基に --fs-* トークン定義・既存CSS置き換え・stylelint検出追加。半端値の吸収先・大見出し系の扱いは実機で吟味 |
+| yukkie/AgentVillage#574 | tech-debt | 🔴 | 2 | Simplify font-size scale from 5 steps to 2 (small=12px / medium=14px) | #572 の5段トークンを2段（小12px・中14px）に簡素化。人間の知覚は粗い区別しかつかないため、機械的な1px刻みより比率ベースの少数段が妥当という議論から派生 |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | feat(frontend): GameData registry — track data gaps continuously | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
-| ❌ yukkie/AgentVillage#568 | tech-debt | （なし） | （なし） | Refactor sessionId-driven state reset out of useEffect (set-state-in-effect) | ESLint導入で発覚した set-state-in-effect 違反2箇所をkey再マウント等で解消する |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
 | yukkie/AgentVillage#495 | enhancement | 🟢 | 3 | design: log visibility classes and recipient-based authorization model (for LIVE / player participation) | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
 | yukkie/AgentVillage#319 | enhancement | 🟢 | 3 | feat(frontend): LIVE spectator (real-time view of in-progress game) | state/ を tail して進行中ゲームを表示（将来フェーズ） |
@@ -40,7 +38,7 @@
 | yukkie/AgentVillage#266 | tech-debt | 🟡 | 5 | Replace intended_co flag with a typed scheduled-event model | intended_co をフラグから timing 付きスケジュール済みイベント型に置き換え、ライフサイクルを型で表現する |
 | yukkie/AgentVillage#23 | enhancement | 🟡 | 3 | Auto-summarize memory_summary when it grows too long | 記憶が長くなったら LLM で自動要約 |
 | yukkie/AgentVillage#227 | enhancement | 🟡 | 2 | Add early exit for wolf night chat consensus | 全狼の最新攻撃候補が一致したら夜会話を早期終了し、未合意時は既存ラウンド継続を維持する |
-| yukkie/AgentVillage#468 | tech-debt | 🟢 | 2 | Improve IDD smell detection for schema drift | #451/#466 から派生。中心契約型への field 追加時に schema drift を検知する IDD スキル定義を再検討する |
+| yukkie/AgentVillage#468 | tech-debt | 🟡 | 2 | Improve IDD smell detection for schema drift | #451/#466 から派生。中心契約型への field 追加時に schema drift を検知する IDD スキル定義を再検討する |
 | yukkie/AgentVillage#26 | enhancement | 🟢 | 2 | Thought log display mode switching (debug vs spectator) | 思考ログの表示モード切り替え |
 | yukkie/AgentVillage#79 | enhancement | 🟢 | 5 | Log analysis agent skill for post-game review | ゲームログをAgentに委譲して解析・サマリーを返すスキル |
 | yukkie/AgentVillage#45 | enhancement | 🟢 | 5 | Introduce promptfoo for LLM output testing | speech/thought/intent の品質を CI で自動検証 |
