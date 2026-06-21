@@ -20,7 +20,6 @@
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | feat(frontend): GameData registry — track data gaps continuously | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
-| ❌ yukkie/AgentVillage#562 | tech-debt | （なし） | （なし） | Survey font-size usage to design font-size tokens | font-size の使用実態を一覧化し、トークン化の粒度案を提案する（#557 のスコープ拡張から派生） |
 | ❌ yukkie/AgentVillage#568 | tech-debt | （なし） | （なし） | Refactor sessionId-driven state reset out of useEffect (set-state-in-effect) | ESLint導入で発覚した set-state-in-effect 違反2箇所をkey再マウント等で解消する |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
 | yukkie/AgentVillage#495 | enhancement | 🟢 | 3 | design: log visibility classes and recipient-based authorization model (for LIVE / player participation) | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
