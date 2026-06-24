@@ -62,12 +62,9 @@
   --sans: "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
   --mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
 
-  /* フォントサイズ（#572。本文・メタ帯の5段。見出し・Hero等の単発大サイズは対象外 — doc/FrontendDesign.md §7.4.1 参照） */
-  --fs-xs: 10px;
-  --fs-sm: 11px;
-  --fs-base: 12px;
-  --fs-md: 13px;
-  --fs-lg: 14px;
+  /* フォントサイズ（#574。本文・メタ帯の2段（小=12px・中=14px）。見出し・Hero等の単発大サイズは対象外 — doc/FrontendDesign.md §7.4.1 参照） */
+  --fs-sm: 12px;
+  --fs-md: 14px;
 
   font-family: var(--sans);
   color: var(--tx);
