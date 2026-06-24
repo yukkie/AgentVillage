@@ -26,7 +26,7 @@
 }
 .sec h5 {
   font-family: var(--serif);
-  font-size: var(--fs-lg);
+  font-size: var(--fs-md);
   font-weight: 700;
   color: var(--tx-3);
   letter-spacing: 0.16em;
@@ -45,7 +45,7 @@
   gap: 8px;
   padding: 6px 8px;
   border-radius: var(--r1);
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   color: var(--tx-2);
   cursor: pointer;
   text-decoration: none;
@@ -57,7 +57,7 @@
 .ico {
   width: 18px;
   text-align: center;
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   flex: 0 0 18px;
 }
 
@@ -82,7 +82,7 @@
   background: transparent;
   border: none;
   border-radius: var(--r1);
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   font-family: var(--sans);
   color: var(--tx-3);
   cursor: pointer;
@@ -178,7 +178,7 @@
   gap: 5px;
   background: rgba(226,107,107,0.15);
   color: var(--danger);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   font-weight: 700;
   padding: 1px 7px;
   border-radius: var(--r-md);
@@ -196,7 +196,7 @@
 
 .winnerBadge {
   display: inline-block;
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   font-weight: 700;
   padding: 1px 6px;
   border-radius: var(--r-xs);
@@ -214,7 +214,7 @@
 
 .cardTitle {
   font-family: var(--serif);
-  font-size: var(--fs-lg);
+  font-size: var(--fs-md);
   font-weight: 600;
   color: var(--tx);
   margin: 0 0 8px;
@@ -229,7 +229,7 @@
   margin-bottom: 8px;
 }
 .moreCount {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   color: var(--tx-3);
   font-family: var(--mono);
   margin-left: 2px;
@@ -273,7 +273,7 @@
 }
 .sideCard h5 {
   font-family: var(--serif);
-  font-size: var(--fs-lg);
+  font-size: var(--fs-md);
   font-weight: 600;
   color: var(--tx-2);
   margin: 0 0 10px;
@@ -286,7 +286,7 @@
 
 .sideNote {
   margin: 0;
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   color: var(--tx-3);
 }
 
@@ -294,14 +294,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   padding: 4px 0;
   border-bottom: 1px dashed var(--bd-soft);
 }
 .rankRow:last-child { border-bottom: none; }
 .rank {
   font-family: var(--mono);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   color: var(--tx-4);
   width: 14px;
   text-align: right;
@@ -352,7 +352,7 @@
 }
 
 .newVillagePlus {
-  font-size: var(--fs-lg);
+  font-size: var(--fs-md);
   line-height: 1;
   color: var(--acc);
 }
@@ -395,7 +395,7 @@
   border: 1px solid var(--bd);
   border-radius: var(--r1);
   color: var(--tx-3);
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   font-family: var(--sans);
   cursor: pointer;
   transition: border-color 100ms, color 100ms, background 100ms;

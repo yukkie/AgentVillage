@@ -45,7 +45,7 @@
   position: absolute;
   bottom: 4px;
   left: 4px;
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   font-family: var(--serif);
   background: rgba(0, 0, 0, 0.55);
   color: var(--av-c);
@@ -80,7 +80,7 @@
   height: 40px;
   flex: 0 0 32px;
 }
-.sm .mono { font-size: var(--fs-lg); }
+.sm .mono { font-size: var(--fs-md); }
 .sm .roleTag { display: none; }
 
 .xs {
@@ -89,7 +89,7 @@
   flex: 0 0 22px;
   border-radius: var(--r-sm);
 }
-.xs .mono { font-size: var(--fs-xs); }
+.xs .mono { font-size: var(--fs-sm); }
 .xs .roleTag { display: none; }
 
 /* === Identity wrapper（label あり時のみ） === */
@@ -114,7 +114,7 @@
 }
 
 .chipLabel {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   font-family: var(--sans);
   color: var(--tx-2);
   line-height: 1;

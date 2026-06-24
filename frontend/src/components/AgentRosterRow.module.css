@@ -45,7 +45,7 @@
   text-overflow: ellipsis;
 }
 .meta {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   color: var(--tx-3);
   display: flex;
   align-items: center;
@@ -57,7 +57,7 @@
 /* CO バッジ（SpeechCard と同等スタイル。共通化は #526 で feed カード移動時に整理） */
 .coBadge {
   font-family: var(--serif);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   background: color-mix(in oklab, var(--co-color, var(--acc)) 18%, transparent);
   border: 1px solid color-mix(in oklab, var(--co-color, var(--acc)) 50%, transparent);
   color: var(--co-color, var(--acc));

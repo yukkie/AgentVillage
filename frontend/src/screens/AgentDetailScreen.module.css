@@ -20,13 +20,13 @@
 
 .pickerTitle {
   font-family: var(--serif);
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   color: var(--tx-2);
   letter-spacing: 0.05em;
 }
 
 .pickerCount {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   color: var(--tx-4);
   font-family: var(--mono);
 }
@@ -54,7 +54,7 @@
   padding: 6px 8px;
   border-radius: var(--r1);
   cursor: pointer;
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   border-left: 2px solid transparent;
   margin-bottom: 2px;
 }
@@ -87,7 +87,7 @@
 .pickDead .pickName { text-decoration: line-through; }
 
 .pickRole {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   color: var(--r-color, var(--tx-3));
   font-family: var(--serif);
 }
@@ -102,7 +102,7 @@
 .pickDead .statusDot { background: var(--tx-4); }
 
 .sectionLabel {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   color: var(--tx-4);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -144,13 +144,13 @@
   align-items: baseline;
   gap: 12px;
   color: var(--tx-3);
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   flex-wrap: wrap;
 }
 
 .heroRoleLabel {
   font-family: var(--serif);
-  font-size: var(--fs-lg);
+  font-size: var(--fs-md);
   color: var(--r-color);
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -163,7 +163,7 @@
 .heroBlurb {
   margin-top: 12px;
   color: var(--tx-2);
-  font-size: var(--fs-lg);
+  font-size: var(--fs-md);
   line-height: 1.7;
   max-width: 560px;
   font-family: var(--serif);
@@ -185,7 +185,7 @@
 }
 
 .statLabel {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   color: var(--tx-3);
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -204,7 +204,7 @@
 
 .tab {
   padding: 10px 14px;
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   color: var(--tx-3);
   border-bottom: 2px solid transparent;
   border-top: none;
@@ -254,7 +254,7 @@
 
 .panel h3 {
   font-family: var(--serif);
-  font-size: var(--fs-lg);
+  font-size: var(--fs-md);
   margin: 0 0 12px;
   letter-spacing: 0.04em;
   display: flex;
@@ -264,7 +264,7 @@
 
 .panel h3 small {
   font-family: var(--sans);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   color: var(--tx-3);
   letter-spacing: 0.1em;
   margin-left: auto;
@@ -315,7 +315,7 @@
   gap: 16px;
   padding: 8px 0;
   border-bottom: 1px solid var(--bd-soft);
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   align-items: center;
 }
 
@@ -338,7 +338,7 @@
 }
 
 .matrix {
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -353,7 +353,7 @@
 }
 
 .matrixHead {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   color: var(--tx-3);
   letter-spacing: 0.1em;
   text-transform: uppercase;

@@ -46,7 +46,7 @@
 .crumb {
   display: flex;
   align-items: center;
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   color: var(--tx-3);
 }
 .crumbList {
@@ -76,7 +76,7 @@
   border: 1px solid var(--bd);
   border-radius: var(--r1);
   color: var(--tx-2);
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   font-family: var(--sans);
   display: inline-flex;
   align-items: center;
