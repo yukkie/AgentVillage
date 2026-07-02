@@ -578,11 +578,21 @@ SpectatorScreen から AgentDetailScreen への遷移、および AgentDetailScr
 |---|---|---|
 | 役職タグ・Avatar 役職刻印 | 真の役職を表示 | 非表示 |
 | 推論ログ（`reasoning`） | 表示 | `🔒` ロックバッジ（閲覧不可） |
-| 夜の行動（占い・護衛・襲撃） | 表示 | 非表示（spectator 限定イベント由来） |
+| 夜の行動（占い・護衛・襲撃・狼会話・霊媒結果） | 表示 | 非表示（spectator 限定イベント由来） |
 | 疑い度マトリクス | 表示 | 非表示 |
 
 `global profile mode`（横断プロフィール）は `game_stats.json` 由来の集計戦績のみを扱い、特定ゲームの
 役職・推論を露出しないため、viewerMode による出し分けは行わない。
+
+##### 中央タイムラインの対象 event_type（#578）
+
+中央タイムラインは `doc/DataSpec.md` §1.1 の全 event_type のうち、対象エージェント個人の発言・夜の行動のみを表示する。
+
+| 含める | 含めない（理由） |
+|---|---|
+| `speech` / `inspection` / `guard` / `night_attack`（public は除外） / `wolf_chat` / `medium_result` | `vote` / `elimination` / `game_over` / `game_start_narrative` / `role_assigned` / `phase_start`（ゲーム全体・昼フェーズの出来事） / `guard_block`（agent が対象本人と一致しない） / `suspicion_update` / `threat_update`（スコア更新ログで発言・行動ではない） |
+
+実装側の正本は `frontend/src/screens/AgentDetailScreen.jsx` の `AGENT_TIMELINE_EVENT_TYPES`（同ファイル内に同一の仕分けコメントを付与）。
 
 #### フェーズクリックの仕様（#358）
 

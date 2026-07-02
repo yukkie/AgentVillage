@@ -140,7 +140,19 @@ function RightPane({ matrix }) {
   );
 }
 
-const AGENT_TIMELINE_EVENT_TYPES = new Set(['speech', 'inspection', 'guard', 'night_attack']);
+// AgentDetail 中央タイムラインが対象エージェント個人の行動として表示する event_type 一覧
+// （doc/DataSpec.md §1.1 の現行イベント全種と対応。含めないものは理由を明記する）。
+//
+// 含める: speech（発言）/ inspection（占い）/ guard（護衛）/ night_attack（襲撃、public は除外）/
+//         wolf_chat（狼会話）/ medium_result（霊媒結果） — いずれも対象エージェント個人が
+//         実行した夜の行動または発言。
+// 含めない:
+//   - vote / elimination / game_over / game_start_narrative / role_assigned / phase_start
+//     → ゲーム全体・昼フェーズの出来事であり、個人の行動記録という本タイムラインの対象外
+//   - guard_block → 護衛成功の通知は night_attack 側の SystemRow で表現され、agent が対象
+//     エージェント本人と一致しないため、このタイムラインには乗らない
+//   - suspicion_update / threat_update → 疑念・脅威スコアの更新ログであり発言・行動ではない
+const AGENT_TIMELINE_EVENT_TYPES = new Set(['speech', 'inspection', 'guard', 'night_attack', 'wolf_chat', 'medium_result']);
 
 function buildPrevById(events) {
   return Object.fromEntries(
