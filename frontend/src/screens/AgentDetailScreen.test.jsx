@@ -92,6 +92,8 @@ const GAME_SCOPED_JSONL = [
   { id: 'i1', day: 1, event_type: 'inspection', agent: 'Nox', target: 'Kai', content: 'Nox inspects Kai: Werewolf', is_public: false, reasoning: 'Kaiの視点漏れを確認する。' },
   { id: 'g1', day: 1, event_type: 'guard', agent: 'Nox', target: 'Mira', content: 'Nox guards Mira', is_public: false, reasoning: 'Miraを守る価値が高い。' },
   { id: 'a1', day: 1, event_type: 'night_attack', agent: 'Nox', target: 'Mira', content: 'Nox attacks Mira', is_public: false, reasoning: '護衛が薄い。' },
+  { id: 'w1', day: 1, event_type: 'wolf_chat', agent: 'Kai', content: 'Miraを噛もう', is_public: false, reasoning: '護衛がいなさそう。' },
+  { id: 'm1', day: 1, event_type: 'medium_result', agent: 'Mira', target: 'Kai', content: 'Mira senses: Kai was Werewolf', is_public: false },
   { id: 's3', day: 2, event_type: 'speech', agent: 'Nox', speech_id: 3, content: 'Kaiを疑います', is_public: true },
   { id: 'u1', day: 2, event_type: 'suspicion_update', agent: 'Nox', is_public: false, suspicion_snapshot: { Kai: 0.86, Mira: 0.24 } },
 ].map(event => JSON.stringify(event)).join('\n');
@@ -483,6 +485,92 @@ describe('AgentDetailScreen game-scoped day timeline', () => {
     expect(screen.queryByText('Nox inspects Kai: Werewolf')).toBeNull();
     expect(screen.queryByText('Nox guards Mira')).toBeNull();
     expect(screen.queryByText('Nox attacks Mira')).toBeNull();
+  });
+
+  it('game-scoped renders selected agent wolf_chat through shared feed rows (#578 AC-1/AC-2)', async () => {
+    /*
+     * SUT: AgentDetailScreen game-scoped day timeline
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: 対象エージェントの wolf_chat が WolfChatCard（FeedCard.jsx）経由で表示されることを検証する。
+     */
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Kai' });
+
+    expect(await screen.findByText('Miraを噛もう')).toBeTruthy();
+    expect(screen.getByRole('article', { name: 'Kai wolf chat' })).toBeTruthy();
+  });
+
+  it('game-scoped public mode hides wolf_chat (#578 AC-3)', async () => {
+    /*
+     * SUT: AgentDetailScreen game-scoped day timeline
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: public モードでは wolf_chat がタイムラインに表示されないことを検証する。
+     */
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Kai', search: '?view=public' });
+
+    await waitFor(() => expect(screen.queryByRole('tab', { name: 'Day1' })).toBeTruthy());
+    expect(screen.queryByText('Miraを噛もう')).toBeNull();
+    expect(screen.queryByRole('article', { name: 'Kai wolf chat' })).toBeNull();
+  });
+
+  it("game-scoped timeline excludes other agents' wolf_chat (#578 AC-4)", async () => {
+    /*
+     * SUT: AgentDetailScreen game-scoped day timeline
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: 対象エージェントが発言者でない wolf_chat は、そのエージェントのタイムラインに表示されないことを検証する（組み合わせ境界）。
+     */
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Nox' });
+
+    expect(await screen.findByText('Nox inspects Kai: Werewolf')).toBeTruthy();
+    expect(screen.queryByText('Miraを噛もう')).toBeNull();
+  });
+
+  it('game-scoped renders selected agent medium_result through shared feed rows (#578 AC-6/AC-7)', async () => {
+    /*
+     * SUT: AgentDetailScreen game-scoped day timeline
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: 対象エージェント（霊媒師）の medium_result が SystemRow（FeedCard.jsx の SYSTEM_EVENT_VIEWS）経由で表示されることを検証する。
+     */
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Mira' });
+
+    expect(await screen.findByText('霊媒結果')).toBeTruthy();
+    expect(screen.getByText('Mira senses: Kai was Werewolf')).toBeTruthy();
+  });
+
+  it('game-scoped public mode hides medium_result (#578 AC-8)', async () => {
+    /*
+     * SUT: AgentDetailScreen game-scoped day timeline
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: public モードでは medium_result がタイムラインに表示されないことを検証する。
+     */
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Mira', search: '?view=public' });
+
+    await waitFor(() => expect(screen.queryByRole('tab', { name: 'Day1' })).toBeTruthy());
+    expect(screen.queryByText('霊媒結果')).toBeNull();
+    expect(screen.queryByText('Mira senses: Kai was Werewolf')).toBeNull();
+  });
+
+  it("game-scoped timeline excludes other agents' medium_result (#578 AC-6 combinatorial)", async () => {
+    /*
+     * SUT: AgentDetailScreen game-scoped day timeline
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: 対象エージェントが実行者でない medium_result は、そのエージェントのタイムラインに表示されないことを検証する（組み合わせ境界）。
+     */
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Nox' });
+
+    expect(await screen.findByText('Nox inspects Kai: Werewolf')).toBeTruthy();
+    expect(screen.queryByText('Mira senses: Kai was Werewolf')).toBeNull();
   });
 
   it('game-scoped timeline uses FeedItem semantics for speech links and system rows', async () => {
