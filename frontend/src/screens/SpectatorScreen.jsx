@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import AgentLink from '../components/AgentLink.jsx';
 import Avatar, { AvatarButton } from '../components/Avatar.jsx';
 import AgentRosterRow from '../components/AgentRosterRow.jsx';
 import { FeedItem, SystemRow } from '../components/FeedCard.jsx';
@@ -187,9 +188,9 @@ function CoStatusBoard({ coStatus, sessionId, viewerMode }) {
                 {coAgents.length ? coAgents.map((name, i) => (
                   <span key={name} className={styles.coAgent}>
                     {i > 0 && ', '}
-                    <Link to={agentDetailPath(sessionId, name, viewerMode)} className={styles.agentLink}>
+                    <AgentLink sessionId={sessionId} name={name} viewerMode={viewerMode}>
                       <Avatar name={name} size="xs" label={name} layout="horizontal" />
-                    </Link>
+                    </AgentLink>
                   </span>
                 )) : '未CO'}
               </span>
@@ -207,13 +208,13 @@ function NightActionsPanel({ nightActions, roleAssignment, sessionId, viewerMode
         <li key={i} className={`${styles.action} ${styles[a.event_type] || ''}`}>
           <div className={styles.actionIco}>{NIGHT_ACTION_ICON[a.event_type] || '・'}</div>
           <div className={styles.what}>
-            <Link to={agentDetailPath(sessionId, a.agent, viewerMode)} className={styles.agentLink}>
+            <AgentLink sessionId={sessionId} name={a.agent} viewerMode={viewerMode}>
               <Avatar name={a.agent} size="xs" label={a.agent} layout="horizontal" />
-            </Link>
+            </AgentLink>
             {a.target && (
-              <> → <Link to={agentDetailPath(sessionId, a.target, viewerMode)} className={styles.agentLink} style={{ '--r-color': ROLE_META_BY_KEY[roleAssignment[a.target]]?.color }}>
+              <> → <AgentLink sessionId={sessionId} name={a.target} viewerMode={viewerMode} style={{ '--r-color': ROLE_META_BY_KEY[roleAssignment[a.target]]?.color }}>
                 <Avatar name={a.target} size="xs" label={a.target} layout="horizontal" />
-              </Link></>
+              </AgentLink></>
             )}
             <span style={{ color: 'var(--tx-4)', marginLeft: 6 }}>{NIGHT_ACTION_LABEL[a.event_type]}</span>
           </div>
@@ -259,13 +260,13 @@ export function RightPane({ agents, roleAssignment, coStatus = {}, daySummary = 
             <div className={styles.voteGrid}>
               {execResult.voteTable.map((v, i) => (
                 <div className={styles.voteCell} key={i}>
-                  <Link to={agentDetailPath(sessionId, v.from, viewerMode)} className={styles.agentLink}>
+                  <AgentLink sessionId={sessionId} name={v.from} viewerMode={viewerMode}>
                     <Avatar name={v.from} size="xs" label={v.from} layout="horizontal" />
-                  </Link>
+                  </AgentLink>
                   <span className={styles.voteArrow}>▶</span>
-                  <Link to={agentDetailPath(sessionId, v.to, viewerMode)} className={styles.agentLink}>
+                  <AgentLink sessionId={sessionId} name={v.to} viewerMode={viewerMode}>
                     <Avatar name={v.to} size="xs" label={v.to} layout="horizontal" variant={v.to === execResult.target ? 'danger' : 'plain'} />
-                  </Link>
+                  </AgentLink>
                 </div>
               ))}
             </div>

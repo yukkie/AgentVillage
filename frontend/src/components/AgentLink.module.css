@@ -1,0 +1,8 @@
+/* agent navigation link wrapper — 唯一の家（#586。旧 SpectatorScreen / FeedCard のコピーを一本化） */
+.agentLink {
+  text-decoration: none;
+  color: inherit;
+  display: contents;
+}
+.agentLink:hover { opacity: 0.75; }
+.agentLink:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; border-radius: var(--r1); }
