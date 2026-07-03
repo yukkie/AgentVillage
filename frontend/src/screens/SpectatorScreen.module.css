@@ -272,12 +272,3 @@
 
 /* game_over result row in left pane */
 .phaseGameOver { color: var(--tx-2); }
-
-/* agent navigation link wrapper (shared with FeedCard; kept here for RightPane) */
-.agentLink {
-  text-decoration: none;
-  color: inherit;
-  display: contents;
-}
-.agentLink:hover { opacity: 0.75; }
-.agentLink:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; border-radius: var(--r1); }

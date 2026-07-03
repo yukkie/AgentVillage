@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import AgentLink from './AgentLink.jsx';
 import Avatar from './Avatar.jsx';
 import RoleTag from './RoleTag.jsx';
 import { ROLE_META_BY_KEY } from '../lib/roleMeta.js';
-import { agentDetailPath } from '../lib/agentLinks.js';
 import styles from './FeedCard.module.css';
 
 const MISSING_CONTENT = '[missing content]';
@@ -66,7 +65,6 @@ function SpeechCard({ ev, prevById, roleAssignment, sessionId, viewerMode = 'spe
   const isPublic = viewerMode === 'public';
   const coedRole = ev.claimed_role;
   const coColor = coedRole ? ROLE_META_BY_KEY[coedRole]?.color : undefined;
-  const agentTo = agentDetailPath(sessionId, ev.agent, viewerMode);
 
   return (
     <article
@@ -74,13 +72,13 @@ function SpeechCard({ ev, prevById, roleAssignment, sessionId, viewerMode = 'spe
       style={{ '--r-color': r?.color }}
       aria-label={`${ev.agent} ${fmtTurn(ev.day, ev.speech_id || 0)} ${fmtTime(ev.day, ev.speech_id || 0)}`}
     >
-      <Link to={agentTo} className={styles.agentLink}>
+      <AgentLink sessionId={sessionId} name={ev.agent} viewerMode={viewerMode}>
         <Avatar name={ev.agent} role={isPublic ? undefined : role} />
-      </Link>
+      </AgentLink>
       <div className={styles.vert} />
       <div>
         <div className={styles.spHead}>
-          <Link to={agentTo} className={styles.agentLink}><span className={styles.name}>{ev.agent}</span></Link>
+          <AgentLink sessionId={sessionId} name={ev.agent} viewerMode={viewerMode}><span className={styles.name}>{ev.agent}</span></AgentLink>
           <span className={styles.turn}>{fmtTurn(ev.day, ev.speech_id || 0)}</span>
           {!isPublic && <RoleTag role={role} />}
           {coedRole && (
@@ -109,7 +107,6 @@ function AgentEpisodeCard({ ev, roleAssignment, sessionId, viewerMode = 'spectat
   const role = roleAssignment[ev.agent];
   const r = ROLE_META_BY_KEY[role];
   const isPublic = viewerMode === 'public';
-  const agentTo = agentDetailPath(sessionId, ev.agent, viewerMode);
 
   return (
     <article
@@ -117,13 +114,13 @@ function AgentEpisodeCard({ ev, roleAssignment, sessionId, viewerMode = 'spectat
       style={{ '--r-color': r?.color }}
       aria-label={`${ev.agent} ${label}`}
     >
-      <Link to={agentTo} className={styles.agentLink}>
+      <AgentLink sessionId={sessionId} name={ev.agent} viewerMode={viewerMode}>
         <Avatar name={ev.agent} role={isPublic ? undefined : role} />
-      </Link>
+      </AgentLink>
       <div className={styles.vert} />
       <div>
         <div className={styles.spHead}>
-          <Link to={agentTo} className={styles.agentLink}><span className={styles.name}>{ev.agent}</span></Link>
+          <AgentLink sessionId={sessionId} name={ev.agent} viewerMode={viewerMode}><span className={styles.name}>{ev.agent}</span></AgentLink>
           <span className={styles.turn}>{label}</span>
           {!isPublic && <RoleTag role={role} />}
         </div>
@@ -313,16 +310,16 @@ export function SystemRow({ kind, icon, label, children, strategy, reasoning, ts
       <div className={styles.sysContent}>
         <div className={styles.sysMain}>
           {leftName && (
-            <Link to={agentDetailPath(sessionId, leftName, viewerMode)} className={styles.agentLink}>
+            <AgentLink sessionId={sessionId} name={leftName} viewerMode={viewerMode}>
               <Avatar name={leftName} role={roleAssignment[leftName]} size="xs" />
-            </Link>
+            </AgentLink>
           )}
           <div className={styles.sysText}>{children}</div>
           {ts && <div className={styles.sysTs}>{ts}</div>}
           {rightName && (
-            <Link to={agentDetailPath(sessionId, rightName, viewerMode)} className={styles.agentLink}>
+            <AgentLink sessionId={sessionId} name={rightName} viewerMode={viewerMode}>
               <Avatar name={rightName} role={roleAssignment[rightName]} size="xs" />
-            </Link>
+            </AgentLink>
           )}
         </div>
         {strategy && viewerMode === 'spectator' && (
@@ -336,16 +333,15 @@ export function SystemRow({ kind, icon, label, children, strategy, reasoning, ts
 
 // --- 人狼会話カード ---
 function WolfChatCard({ ev, sessionId, viewerMode = 'spectator', bulkThoughtsOpen = false }) {
-  const agentTo = agentDetailPath(sessionId, ev.agent, viewerMode);
   return (
     <article className={`${styles.speech} ${styles.wolfChat}`} aria-label={`${ev.agent} wolf chat`}>
-      <Link to={agentTo} className={styles.agentLink}>
+      <AgentLink sessionId={sessionId} name={ev.agent} viewerMode={viewerMode}>
         <Avatar name={ev.agent} />
-      </Link>
+      </AgentLink>
       <div className={styles.vert} />
       <div>
         <div className={styles.spHead}>
-          <Link to={agentTo} className={styles.agentLink}><span className={styles.name}>{ev.agent}</span></Link>
+          <AgentLink sessionId={sessionId} name={ev.agent} viewerMode={viewerMode}><span className={styles.name}>{ev.agent}</span></AgentLink>
         </div>
         <div className={styles.spBody}>{ev.content}</div>
         <ThoughtDetails key={String(bulkThoughtsOpen)} reasoning={ev.reasoning} viewerMode={viewerMode} bulkOpen={bulkThoughtsOpen} />

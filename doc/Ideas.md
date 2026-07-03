@@ -20,8 +20,6 @@
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | feat(frontend): GameData registry — track data gaps continuously | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
-| yukkie/AgentVillage#585 | tech-debt | 🔴 | - | Merge duplicated AvatarIcon / AvatarIconLabeled in Avatar.jsx | Avatar.jsx の2関数がほぼ完全コピー（差分は img alt のみ）。alt を prop 化して1実装に統合。SP は refinement で見積もり |
-| yukkie/AgentVillage#586 | tech-debt | 🔴 | - | Extract shared AgentLink component (JSX + copied .agentLink CSS) | `<Link><Avatar/></Link>` パターン約10箇所と .agentLink CSS の2重コピーを AgentLink コンポーネントに集約。SP は refinement で見積もり |
 | yukkie/AgentVillage#587 | tech-debt | 🔴 | - | Consolidate viewerMode handling into a shared useViewerMode hook | viewerMode の parse/serialize/toggle/切替ボタンが両 screen に重複（searchForViewerMode は lib 済みなのに再定義）。useViewerMode() に集約。SP は refinement で見積もり |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
 | yukkie/AgentVillage#495 | enhancement | 🟢 | 3 | design: log visibility classes and recipient-based authorization model (for LIVE / player participation) | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
@@ -81,3 +79,4 @@ frontend 特化 self-reflection review（観点 E 中心）で検出した mediu
 - **FeedCard 3カードの骨格コピー**（🟡）: SpeechCard / AgentEpisodeCard / WolfChatCard が `article > Link+Avatar > vert > spHead` を複製 → `FeedCardShell` 抽出
 - **Set トグル state の3重複**（🟢）: toggleAgentFilter / toggleRoleFilter / GameList toggleAgent → `toggleInSet` ユーティリティか `useToggleSet()` フック
 - **fetchGameBySessionId の INDEX fetch 再実装**（🟢）: fetchGameList と同じ fetch＋エラー処理を重複、呼び出しごとに index.json 全体を再取得 → 共通 `fetchIndex()`
+- **AgentRosterRow のアクセシブルネーム重複**（🟢・#585/#586 設計時に検出）: 行リンク内で bare Avatar の `alt={name}` と可視の名前 span が同居し、スクリーンリーダーの読み上げが「Alice Alice …」と二重になる。#585 の alt 導出（可視ラベルがあれば `alt=""`）は Avatar の `label` prop 経由でしか効かないため、AgentRosterRow が alt 抑制を伝える手段（`label` 利用への構造変更 or 装飾指定 prop）が要る

@@ -424,6 +424,8 @@ stateDiagram-v2
 
 `label` あり時は identity wrapper 要素（新クラス）がアイコン frame（`.av`）を内包する構造になる。`.av` のスタイルは変更しないため、`label` なしの既存呼び出しは挙動変更なし。
 
+内部構成: アイコン描画は単一の内部実装（`AvatarIcon`）に一本化されている（#585）。`alt` は公開 prop ではなく、`Avatar` が `label` の有無から導出して内部的に渡す（`label` あり → `alt=""`、なし → `alt={name}`）。導出規則と食い違う消費箇所を作らないため、`alt` を個別制御する prop は設けない。
+
 データソース: `AGENT_COLORS`（`lib/agentMeta.js`・`agents.json` の `color` 由来）でエージェント名 → 個人カラー（`--av-c`）を解決。
 
 #### `AvatarButton`（named export）
@@ -437,12 +439,29 @@ stateDiagram-v2
 | `...avatarProps` | — | `Avatar` の全 props をそのまま受け付ける |
 
 hover / focus スタイルは CSS `:hover` / `:focus-visible` で付与（`variant` prop には含まない）。
-画面遷移用途では Avatar を React Router `<Link>` で直接包む方式を採用（#485）。`AvatarLink` コンポーネントの追加は不要と判断。
+画面遷移用途では Avatar を `<Link>` で包む方式を採用（#485）。当初はコンポーネント化せず各呼び出し側で `<Link>` を書いていたが、link wrapper JSX と `.agentLink` CSS のコピーが増えたため `AgentLink` に一本化した（#586）。
 
 **使い分け:**
 - icon-only（名前テキスト不要）→ bare `Avatar`（`label` なし）
 - 名前表示・display-only → `Avatar` with `label`
-- 名前表示・クリック可能 → `AvatarButton` with `label`
+- 名前表示・クリック可能（画面内アクション）→ `AvatarButton` with `label`
+- AgentDetail への画面遷移 → `AgentLink` で包む（中身は bare `Avatar` / labeled `Avatar` / テキストいずれも可）
+
+#### `AgentLink`
+
+AgentDetail への画面遷移リンクラッパー（#586）。`Link to={agentDetailPath(...)}` の組み立てと `.agentLink` CSS（reset＋`display: contents` / `:hover` opacity / `:focus-visible` outline）を単独で所有する。SpectatorScreen（CoStatusBoard・NightActionsPanel・投票グリッド）と FeedCard（SpeechCard・AgentEpisodeCard・WolfChatCard・SystemRow）の全リンク箇所がこれを使う。
+
+| prop | 型 | 説明 |
+|---|---|---|
+| `sessionId` | `string` | セッション ID（必須） |
+| `name` | `string` | 遷移先エージェント名（必須） |
+| `viewerMode` | `string` | `'spectator'｜'public'`（必須・デフォルトなし）。渡し忘れを黙って spectator に落とさず、テストで顕在化させるため |
+| `style` | `object?` | `Link` に素通しする inline style。`display: contents` のため CSS 変数（例: `--r-color`）が children に継承される |
+| `children` | node | リンクの中身。Avatar 描画は所有しない（呼び出し側が bare/labeled Avatar・テキスト span を自由に入れる） |
+
+children ベースの API とした理由: 重複していたのは「`Link` + `agentDetailPath` + `className`」の三点セットであり、Avatar 描画は重複していない（テキスト span を包む箇所もある）。パスは `lib/agentLinks.js` の `agentDetailPath` を内部で使う。
+
+アクセシビリティ: children が bare `Avatar` のみ（可視テキストなし）の場合、リンクのアクセシブルネームは `img alt={name}` が供給する（#585 の alt 導出規則が前提）。
 
 #### `RoleTag`
 
@@ -483,7 +502,7 @@ hover / focus スタイルは CSS `:hover` / `:focus-visible` で付与（`varia
 
 内部に `SpeechCard` / `WolfChatCard` / `AgentEpisodeCard` / `RelationshipUpdateRow` と付随純粋関数（`fmtTurn` / `fmtTime` / `Mentioned` / `ThoughtDetails` / `contentForViewer` / `RelationshipMeterList` / `SYSTEM_EVENT_VIEWS` / `renderConfiguredSystemEvent`）・定数（`MISSING_CONTENT` / `SPECTATOR_ONLY_EVENTS`）を同梱する。
 
-特定 screen の state（`useState`）に依存せず、`sessionId` は props で受ける（`useParams` は使わない）。AgentDetail へのリンクパスは `lib/agentLinks.js` の `agentDetailPath(sessionId, name, viewerMode)` で組み立てる（SpectatorScreen 側 RightPane とも共有する純粋関数）。
+特定 screen の state（`useState`）に依存せず、`sessionId` は props で受ける（`useParams` は使わない）。AgentDetail へのリンクは共有コンポーネント `AgentLink`（#586）で描画する（パス組み立ては `AgentLink` 内部の `lib/agentLinks.js` `agentDetailPath` に委譲）。
 
 #### `Icon`
 
