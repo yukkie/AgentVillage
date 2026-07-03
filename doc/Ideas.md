@@ -20,6 +20,9 @@
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | feat(frontend): GameData registry — track data gaps continuously | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
+| yukkie/AgentVillage#585 | tech-debt | 🔴 | - | Merge duplicated AvatarIcon / AvatarIconLabeled in Avatar.jsx | Avatar.jsx の2関数がほぼ完全コピー（差分は img alt のみ）。alt を prop 化して1実装に統合。SP は refinement で見積もり |
+| yukkie/AgentVillage#586 | tech-debt | 🔴 | - | Extract shared AgentLink component (JSX + copied .agentLink CSS) | `<Link><Avatar/></Link>` パターン約10箇所と .agentLink CSS の2重コピーを AgentLink コンポーネントに集約。SP は refinement で見積もり |
+| yukkie/AgentVillage#587 | tech-debt | 🔴 | - | Consolidate viewerMode handling into a shared useViewerMode hook | viewerMode の parse/serialize/toggle/切替ボタンが両 screen に重複（searchForViewerMode は lib 済みなのに再定義）。useViewerMode() に集約。SP は refinement で見積もり |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
 | yukkie/AgentVillage#495 | enhancement | 🟢 | 3 | design: log visibility classes and recipient-based authorization model (for LIVE / player participation) | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
 | yukkie/AgentVillage#319 | enhancement | 🟢 | 3 | feat(frontend): LIVE spectator (real-time view of in-progress game) | state/ を tail して進行中ゲームを表示（将来フェーズ） |
@@ -64,3 +67,17 @@
 ## 未整理メモ
 
 *新しいアイデアはここに追記する*
+
+### frontend 重複コード整理バンドル（self-reflection review 2026-07-04・起票は backlog refinement で検討）
+
+frontend 特化 self-reflection review（観点 E 中心）で検出した medium/low の重複。high 3件は #585 / #586 / #587 として起票済み。以下は1 Issue にまとめて refinement で優先度・分割を判断する。
+
+- **CO バッジ重複**（🟡）: `▶ {role} CO` の JSX と `.coBadge` CSS（color-mix 含む）が FeedCard（2箇所）・AgentRosterRow で3重複 → `CoBadge` コンポーネント化。#586 と同時にやると安い
+- **fetch + cancelled フラグ effect の6重複**（🟡）: useAgentBlurb / GlobalProfile / GameScopedProfile / SpectatorReplayData×2 / GameListScreen → `useAsyncData(fetcher, deps)` フックに集約。state 形状（status タプル vs 個別 loading）の不揃いも同時に解消
+- **loading / error 表示の3流派分裂**（🟡）: GlobalProfile と GameScopedProfile はインライン div コピー、SpectatorScreen は SystemRow 流用、GameListScreen は独自 class → 共通ステータス表示部品
+- **prevById 構築の2重実装**（🟡）: SpectatorScreen 版は `event_type === 'speech'` フィルタが無く AgentDetailScreen 版と微妙に挙動が違う → parseGameData.js に一本化。関連: #364（view model indexes、同じ場所に着地しうる）
+- **roleAssignment / visibleDays 導出の両 screen コピー**（🟡）: visibleDays は game_over 除外有無の微差あり（仕様か事故か不明）→ parseGameData の派生セレクタ化。関連: #364
+- **フェーズ見出しラベル式の同一ファイル内2重複**（🟡）: SpectatorScreen.jsx L411 / L429 の長い三項式＋インラインマップ → `phaseHeading(day, phase)` 関数化
+- **FeedCard 3カードの骨格コピー**（🟡）: SpeechCard / AgentEpisodeCard / WolfChatCard が `article > Link+Avatar > vert > spHead` を複製 → `FeedCardShell` 抽出
+- **Set トグル state の3重複**（🟢）: toggleAgentFilter / toggleRoleFilter / GameList toggleAgent → `toggleInSet` ユーティリティか `useToggleSet()` フック
+- **fetchGameBySessionId の INDEX fetch 再実装**（🟢）: fetchGameList と同じ fetch＋エラー処理を重複、呼び出しごとに index.json 全体を再取得 → 共通 `fetchIndex()`
