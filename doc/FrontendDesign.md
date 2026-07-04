@@ -459,7 +459,7 @@ AgentDetail への画面遷移リンクラッパー（#586）。`Link to={agentD
 | `style` | `object?` | `Link` に素通しする inline style。`display: contents` のため CSS 変数（例: `--r-color`）が children に継承される |
 | `children` | node | リンクの中身。Avatar 描画は所有しない（呼び出し側が bare/labeled Avatar・テキスト span を自由に入れる） |
 
-children ベースの API とした理由: 重複していたのは「`Link` + `agentDetailPath` + `className`」の三点セットであり、Avatar 描画は重複していない（テキスト span を包む箇所もある）。パスは `lib/agentLinks.js` の `agentDetailPath` を内部で使う。
+children ベースの API とした理由: 重複していたのは「`Link` + `agentDetailPath` + `className`」の三点セットであり、Avatar 描画は重複していない（テキスト span を包む箇所もある）。パスは `lib/agentDetailPath.js` の `agentDetailPath` を内部で使う。
 
 アクセシビリティ: children が bare `Avatar` のみ（可視テキストなし）の場合、リンクのアクセシブルネームは `img alt={name}` が供給する（#585 の alt 導出規則が前提）。
 
@@ -502,7 +502,7 @@ children ベースの API とした理由: 重複していたのは「`Link` + `
 
 内部に `SpeechCard` / `WolfChatCard` / `AgentEpisodeCard` / `RelationshipUpdateRow` と付随純粋関数（`fmtTurn` / `fmtTime` / `Mentioned` / `ThoughtDetails` / `contentForViewer` / `RelationshipMeterList` / `SYSTEM_EVENT_VIEWS` / `renderConfiguredSystemEvent`）・定数（`MISSING_CONTENT` / `SPECTATOR_ONLY_EVENTS`）を同梱する。
 
-特定 screen の state（`useState`）に依存せず、`sessionId` は props で受ける（`useParams` は使わない）。AgentDetail へのリンクは共有コンポーネント `AgentLink`（#586）で描画する（パス組み立ては `AgentLink` 内部の `lib/agentLinks.js` `agentDetailPath` に委譲）。
+特定 screen の state（`useState`）に依存せず、`sessionId` は props で受ける（`useParams` は使わない）。AgentDetail へのリンクは共有コンポーネント `AgentLink`（#586）で描画する（パス組み立ては `AgentLink` 内部の `lib/agentDetailPath.js` `agentDetailPath` に委譲）。
 
 #### `Icon`
 
@@ -577,6 +577,9 @@ Semantic HTML: `SpeechCard` / `WolfChatCard` は独立した発言カードと�
 ヘッダーの「観戦者モード / 参加者視点」トグルで `viewerMode: 'spectator' | 'public'` を切り替える。
 `viewerMode` は URL query を正本とし、`?view=public` のとき `public`、未指定または不正値では
 `spectator` として扱う（#493）。`spectator` は既存 URL 互換を保つため query なしを canonical とする。
+URL contract（parse / serialize / toggle）の実装正本は `frontend/src/lib/useViewerMode.js` とする。
+AgentDetail への path assembly は `frontend/src/lib/agentDetailPath.js` の `agentDetailPath` が所有し、
+agent 名は同関数内で `encodeURIComponent` する。
 SpectatorScreen から AgentDetailScreen への遷移、および AgentDetailScreen から SpectatorScreen へ戻る
 パンくずでは `?view=public` を引き継ぐ。
 

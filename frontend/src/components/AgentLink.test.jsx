@@ -40,6 +40,21 @@ describe('AgentLink', () => {
     expect(screen.getByRole('link').getAttribute('href')).toBe('/game/s1/agent/Alice?view=public');
   });
 
+  it('統合: AgentLink: agent name with spaces is percent-encoded', () => {
+    /*
+     * SUT: AgentLink
+     * Mock: なし（plain props を入力）
+     * Level: contract
+     * Objective: agentDetailPath が agent 名を encodeURIComponent し、空白を含む名前でも壊れない URL を組み立てることを検証する（#587）。
+     */
+    render(
+      <MemoryRouter>
+        <AgentLink sessionId="s1" name="Ada Lovelace" viewerMode="public">Ada Lovelace</AgentLink>
+      </MemoryRouter>
+    );
+    expect(screen.getByRole('link').getAttribute('href')).toBe('/game/s1/agent/Ada%20Lovelace?view=public');
+  });
+
   it('統合: AgentLink: children を agentLink クラスの Link 内に描画する', () => {
     /*
      * SUT: AgentLink
