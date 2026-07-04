@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import AgentLink from '../components/AgentLink.jsx';
 import Avatar, { AvatarButton } from '../components/Avatar.jsx';
 import AgentRosterRow from '../components/AgentRosterRow.jsx';
@@ -8,17 +8,14 @@ import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import topBarStyles from '../components/TopBar.module.css';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLE_META_BY_KEY, ROLE_KEYS, listRoles } from '../lib/roleMeta.js';
-import { agentDetailPath } from '../lib/agentLinks.js';
+import { agentDetailPath } from '../lib/agentDetailPath.js';
 import { fetchReplayAgents, fetchReplayLog } from '../lib/replayLoader.js';
 import { fetchGameBySessionId } from '../lib/archiveLoader.js';
 import { parseGameData, aggregateCoStatus } from '../lib/parseGameData.js';
 import { useDeaths } from '../lib/useDeaths.js';
 import { filterByAgents, filterByRoles, filterFeedEvents } from '../lib/feedFilter.js';
+import { useViewerMode, viewerModeToggleLabel } from '../lib/useViewerMode.js';
 import styles from './SpectatorScreen.module.css';
-
-function viewerModeFromSearchParams(searchParams) {
-  return searchParams.get('view') === 'public' ? 'public' : 'spectator';
-}
 
 // === 左ペイン ===
 export function LeftPane({
@@ -414,7 +411,7 @@ function SpectatorReplayData({
         <TopBarBtn><span className={topBarStyles.liveDot} /> REPLAY</TopBarBtn>
         <TopBarBtn>同時観戦 142</TopBarBtn>
         <TopBarBtn onClick={toggleViewerMode}>
-          {viewerMode === 'spectator' ? '🔍 観戦者モード' : '👤 参加者視点'}
+          {viewerModeToggleLabel(viewerMode)}
         </TopBarBtn>
         <TopBarBtn>⤓ 全ログDL</TopBarBtn>
         <TopBarBtn primary>★ 応援</TopBarBtn>
@@ -467,17 +464,12 @@ function SpectatorReplayData({
 export default function SpectatorScreen() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { viewerMode, toggleViewerMode } = useViewerMode();
   const [activeDay, setActiveDay] = useState(2);
   const [activePhase, setActivePhase] = useState('discuss');
   const [selectedAgents, setSelectedAgents] = useState(() => new Set());
   const [selectedRoles, setSelectedRoles] = useState(() => new Set());
   const [thoughtsOpen, setThoughtsOpen] = useState(false);
-  const viewerMode = viewerModeFromSearchParams(searchParams);
-
-  const toggleViewerMode = () => {
-    setSearchParams(viewerMode === 'spectator' ? { view: 'public' } : {});
-  };
 
   const toggleAgentFilter = (agentName) => {
     setSelectedAgents(current => {

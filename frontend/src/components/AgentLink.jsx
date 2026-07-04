@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { agentDetailPath } from '../lib/agentLinks.js';
+import { agentDetailPath } from '../lib/agentDetailPath.js';
 import styles from './AgentLink.module.css';
 
 /**

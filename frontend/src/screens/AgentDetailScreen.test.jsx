@@ -83,7 +83,7 @@ const GAME_SCOPED_INDEX = {
   session_id: 'session-real-001',
   title: '桜霞村',
   days: 2,
-  cast: ['Nox', 'Mira', 'Kai'],
+  cast: ['Nox', 'Mira', 'Kai', 'Ada Lovelace'],
 };
 
 const GAME_SCOPED_JSONL = [
@@ -113,6 +113,11 @@ const GAME_SCOPED_AGENTS = {
     profile: { name: 'Kai', model: 'm', persona: {} },
     state: { is_alive: false, beliefs: {}, claimed_role: null },
     role: 'Werewolf',
+  },
+  'Ada Lovelace': {
+    profile: { name: 'Ada Lovelace', model: 'm', persona: {} },
+    state: { is_alive: true, beliefs: {}, claimed_role: null },
+    role: 'Villager',
   },
 };
 
@@ -188,6 +193,7 @@ describe('AgentDetailScreen game-scoped breadcrumbs', () => {
     renderGameScoped({ sessionId: 'test-session-001', agentName: 'Nox', search: '?view=public' });
 
     expect((await screen.findByRole('link', { name: /Mira/ })).getAttribute('href')).toBe('/game/test-session-001/agent/Mira?view=public');
+    expect((await screen.findByRole('link', { name: /Ada Lovelace/ })).getAttribute('href')).toBe('/game/test-session-001/agent/Ada%20Lovelace?view=public');
   });
 });
 

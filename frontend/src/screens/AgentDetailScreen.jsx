@@ -1,15 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
 import AgentRosterRow from '../components/AgentRosterRow.jsx';
 import { FeedItem } from '../components/FeedCard.jsx';
 import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLE_META_BY_KEY } from '../lib/roleMeta.js';
+import { agentDetailPath } from '../lib/agentDetailPath.js';
 import { fetchGameStats, parseGameStats, parseAllAgentNames, fetchGameBySessionId, fetchAgentConfig, parseBlurb } from '../lib/archiveLoader.js';
 import { fetchReplayGame } from '../lib/replayLoader.js';
 import { buildAgentDetailRoster, buildSuspicionMatrix, countAgentSpeeches } from '../lib/parseGameData.js';
 import { useDeaths } from '../lib/useDeaths.js';
+import { useViewerMode, viewerModeToggleLabel } from '../lib/useViewerMode.js';
 import styles from './AgentDetailScreen.module.css';
 
 // blurb（frontend/public/config/agents.json 由来の1行プロフィール・#519）が無い／fetch 失敗時のフォールバック表示。
@@ -31,19 +33,10 @@ function useAgentBlurb(agent) {
   return parseBlurb(config, agent) ?? BLURB_FALLBACK;
 }
 
-function viewerModeFromSearchParams(searchParams) {
-  return searchParams.get('view') === 'public' ? 'public' : 'spectator';
-}
-
-function searchForViewerMode(viewerMode) {
-  return viewerMode === 'public' ? '?view=public' : '';
-}
-
 // --- 左ペイン ---
 function LeftPane({ current, sessionId, viewerMode = 'spectator', roster = [] }) {
   const alive = roster.filter(agent => agent.isAlive);
   const dead = roster.filter(agent => !agent.isAlive);
-  const viewerSearch = searchForViewerMode(viewerMode);
 
   return (
     <>
@@ -58,7 +51,7 @@ function LeftPane({ current, sessionId, viewerMode = 'spectator', roster = [] })
               key={row.name}
               name={row.name}
               role={row.role}
-              to={`/game/${sessionId}/agent/${encodeURIComponent(row.name)}${viewerSearch}`}
+              to={agentDetailPath(sessionId, row.name, viewerMode)}
               showRole={viewerMode === 'spectator'}
               dead={!row.isAlive}
               selected={current === row.name}
@@ -451,7 +444,7 @@ function GameScopedProfile({ sessionId, agent, blurb, viewerMode, viewerSearch, 
     <div className={styles.frame}>
       <TopBar crumbs={topCrumbs}>
         <TopBarBtn onClick={toggleViewerMode}>
-          {viewerMode === 'spectator' ? '🔍 観戦者モード' : '👤 参加者視点'}
+          {viewerModeToggleLabel(viewerMode)}
         </TopBarBtn>
       </TopBar>
       {body}
@@ -462,9 +455,7 @@ function GameScopedProfile({ sessionId, agent, blurb, viewerMode, viewerSearch, 
 // === メイン画面 ===
 export default function AgentDetailScreen() {
   const { sessionId, agentName } = useParams();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const viewerMode = viewerModeFromSearchParams(searchParams);
-  const viewerSearch = searchForViewerMode(viewerMode);
+  const { viewerMode, viewerSearch, toggleViewerMode } = useViewerMode();
   const agent = agentName || 'Nox';
   const blurb = useAgentBlurb(agent);
 
@@ -472,10 +463,6 @@ export default function AgentDetailScreen() {
   if (!sessionId) {
     return <GlobalProfile agent={agent} blurb={blurb} />;
   }
-
-  const toggleViewerMode = () => {
-    setSearchParams(viewerMode === 'spectator' ? { view: 'public' } : {});
-  };
 
   return (
     <GameScopedProfile
