@@ -18,7 +18,7 @@ AgentVillage/
 ├── doc/
 │   ├── Architecture.md         # 本ドキュメント
 │   ├── Spec.md                 # 仕様書
-│   ├── Ideas.md                # アイデア・未決事項
+│   ├── Backlog.md              # アイデア・未決事項
 │   └── Task.md                 # タスク管理
 ├── frontend/                   # Web UI（Vite + React + CSS Modules）
 │   ├── public/

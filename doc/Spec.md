@@ -6,7 +6,7 @@ LLMエージェント同士が自律的に人狼ゲームをプレイする社�
 プレイヤーはAIたちの会話・推理・裏切りを観察し、間接的に介入する観戦型ゲーム。
 
 アーキテクチャ・技術選定・ADR は [Architecture.md](Architecture.md) を参照。
-アイデア・未決事項は [Ideas.md](Ideas.md) を参照。
+アイデア・未決事項は [Backlog.md](Backlog.md) を参照。
 人狼の基本ルールと夜フェーズの処理順は、人狼知能プロジェクトの「人狼 ルール詳細 Ver0.100」
 （https://www.aiwolf.org/aiwp/wp-content/uploads/2015/05/Ver0.100.pdf）を主要な参照元とする。
 

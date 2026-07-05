@@ -11,7 +11,7 @@ LLMエージェント同士が自律的に人狼ゲームをプレイする「�
 
 | ドキュメント | 内容 |
 |---|---|
-| [doc/Ideas.md](doc/Ideas.md) | アイデア・未決事項 |
+| [doc/Backlog.md](doc/Backlog.md) | アイデア・未決事項 |
 | [doc/Spec.md](doc/Spec.md) | 何を作るか（ゲームルール・機能要件） |
 | [doc/DataSpec.md](doc/DataSpec.md) | データ契約の SSOT（EventType 一覧・可視性ルール・ログ／エージェント JSON スキーマ） |
 | [doc/Architecture.md](doc/Architecture.md) | どう作るか（設計方針・ADR・コンポーネント） |
