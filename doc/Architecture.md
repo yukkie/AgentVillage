@@ -491,3 +491,24 @@ read 側に残る。旧 `[THINK]` の reasoning は復元を試みるが、復�
 生グラフ（抽出層）を doc に commit すると、コード変更のたびに doc が嘘になる（陳腐化）。逆に、
 評価・知見（解釈層）を `.tmp/`（揮発）に置くと、再生成のたびに消えて蓄積されない。**「揮発する
 客観データ」と「永続する主観知見」を物理的に別の置き場に分ける**ことで、どちらの失敗も避ける。
+
+### 7.4 派生ビュー: consumer×field read マトリクス（#581）
+
+抽出層の `reads-field` エッジから、**新しいトップレベル構造を足さずに**「どの consumer が
+どのフィールドをどう読むか」を集計した派生ビュー（`type-lineage --format matrix`）。Mermaid 図と
+同じく一次データ（隣接リスト）の派生であり、揮発層（7.1）に属する。
+
+- **read_kind**: 各 read サイトを `structured`（構造・同一性を検査）/ `passthrough`（そのまま
+  表示・連結へ流す）/ `undetermined`（判別不能）に分類する。判定は read サイトの**直接の親 AST
+  文脈のみ**を用いるヒューリスティックで、データフローの第2パスは持たない。曖昧なものは無理に
+  倒さず `undetermined` として伝播する（上流での解決は将来課題）。
+- **field scope**: `event_type_guard` をフィールド単位で集計し、単一ガード下でのみ読まれる
+  フィールドを `event-specific`、無ガードまたは複数ガードで読まれるフィールドを `shared` とする。
+- **2軸の非混同**: `reads-field` エッジ自体の `confidence` は `typed`（読取の*存在*は型注釈由来）を
+  維持し、read_kind の推定性は属性レベル `read_kind_confidence: "heuristic"` で表す（7.1 の独立2軸
+  とは別に、read_kind だけを属性レベルの推定として切り出す）。
+- **限界**: 型注釈由来の read のみが対象（未注釈変数・`dict["field"]`・`getattr` 経由は抽出しない）。
+  Pydantic + 注釈徹底の AgentVillage では recall はほぼ 100% だが、動的型付けの自由な Python
+  プロジェクトでは recall が下がる（heuristic read 抽出は #583）。
+- **用途**: LogEvent ペイロード再設計（#466）が「どのフィールドが特定 event_type 専用か」を
+  判断する入力として読む。
