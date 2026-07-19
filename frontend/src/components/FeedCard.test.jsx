@@ -2,11 +2,49 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { FeedItem, SystemRow } from './FeedCard.jsx';
+import styles from './FeedCard.module.css';
 
 const roleAssignment = { Alice: 'Seer', Bob: 'Werewolf', Carol: 'Knight' };
 
 afterEach(() => {
   cleanup();
+});
+
+// #596 判断3-A案: FeedCardShell 抽出前に骨格 DOM を固定する contract テスト。
+// 抽出前に GREEN を確認してから抽出する（通常の RED→GREEN と順序が異なる意図的な例外）。
+// 抽出後も GREEN であることを FeedCardShell が骨格を変えていない証跡として恒久的に残す。
+describe('FeedCard: card skeleton (article > Link+Avatar > vert > spHead)', () => {
+  it.each([
+    ['speech', { day: 1, event_type: 'speech', agent: 'Alice', content: 'hi', speech_id: 1, is_public: true }],
+    ['role_assigned (per-agent)', { day: 1, event_type: 'role_assigned', agent: 'Alice', content: 'You are Seer.', is_public: false }],
+    ['wolf_chat', { day: 1, event_type: 'wolf_chat', agent: 'Bob', content: 'howl', is_public: false }],
+  ])('統合: FeedItem: %s カードが article > AgentLink+Avatar > vert > spHead の骨格を保つ', (_label, ev) => {
+    /*
+     * SUT: FeedItem → SpeechCard / AgentEpisodeCard / WolfChatCard
+     * Mock: なし（plain props を入力）
+     * Level: component
+     * Objective: 3カードいずれも article 直下が「AgentLink(a)→.vert→div」の順で並び、
+     * div の中に .spHead が存在することを検証する（AC-2 骨格の DOM 不変性）。
+     */
+    const { container } = render(
+      <MemoryRouter>
+        <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} sessionId="s1" viewerMode="spectator" />
+      </MemoryRouter>
+    );
+
+    const article = container.querySelector('article');
+    expect(article).toBeTruthy();
+
+    const children = Array.from(article.children);
+    expect(children[0].tagName).toBe('A');
+    expect(children[0].querySelector('img')).toBeTruthy();
+    expect(children[1].className).toBe(styles.vert);
+    expect(children[2].tagName).toBe('DIV');
+
+    const spHead = children[2].querySelector(`.${styles.spHead}`);
+    expect(spHead).toBeTruthy();
+    expect(spHead.querySelector('a')).toBeTruthy();
+  });
 });
 
 // AC-1 / AC-3: FeedItem / SystemRow を新モジュールから、特定 screen の state（useParams 等）に

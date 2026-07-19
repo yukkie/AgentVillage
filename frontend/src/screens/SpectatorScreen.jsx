@@ -15,6 +15,7 @@ import { parseGameData, aggregateCoStatus } from '../lib/parseGameData.js';
 import { useDeaths } from '../lib/useDeaths.js';
 import { filterByAgents, filterByRoles, filterFeedEvents } from '../lib/feedFilter.js';
 import { useViewerMode, viewerModeToggleLabel } from '../lib/useViewerMode.js';
+import { phaseHeading } from '../lib/phaseHeading.js';
 import styles from './SpectatorScreen.module.css';
 
 // === 左ペイン ===
@@ -406,7 +407,7 @@ function SpectatorReplayData({
 
   return (
     <div className={styles.frame}>
-      <TopBar crumbs={[{ label: 'r/agent-jinrou', to: '/' }, { label: sessionId }, { label: activePhase === 'game_over' ? '勝敗結果' : activePhase === 'eve' ? '前夜 プロローグ' : `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}` }]}>
+      <TopBar crumbs={[{ label: 'r/agent-jinrou', to: '/' }, { label: sessionId }, { label: phaseHeading(activeDay, activePhase) }]}>
         <TopBarBtn onClick={() => navigate('/')}>← 一覧</TopBarBtn>
         <TopBarBtn><span className={topBarStyles.liveDot} /> REPLAY</TopBarBtn>
         <TopBarBtn>同時観戦 142</TopBarBtn>
@@ -424,7 +425,7 @@ function SpectatorReplayData({
         right={<RightPane agents={agents} roleAssignment={roleAssignment} coStatus={replayCoStatus} daySummary={daySummary} activeDay={activeDay} deaths={replayDeaths} viewerMode={viewerMode} />}
       >
         <div className={styles.feedHead}>
-          <h2>{activePhase === 'game_over' ? '勝敗結果' : activePhase === 'eve' ? '前夜 プロローグ' : `Day ${activeDay} ${{ discuss: '議論', vote: '投票・処刑', night: '夜フェーズ' }[activePhase]}`} <small>{sessionId}</small></h2>
+          <h2>{phaseHeading(activeDay, activePhase)} <small>{sessionId}</small></h2>
           <span className={styles.stat}>発言 <strong>{speechCount}</strong></span>
           <span className={styles.stat}>CO <strong>{coCount}</strong></span>
           <span className={styles.spacer} />

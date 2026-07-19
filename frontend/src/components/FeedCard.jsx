@@ -2,6 +2,8 @@ import { useState } from 'react';
 import AgentLink from './AgentLink.jsx';
 import Avatar from './Avatar.jsx';
 import RoleTag from './RoleTag.jsx';
+import CoBadge from './CoBadge.jsx';
+import FeedCardShell from './FeedCardShell.jsx';
 import { ROLE_META_BY_KEY } from '../lib/roleMeta.js';
 import styles from './FeedCard.module.css';
 
@@ -63,43 +65,37 @@ function SpeechCard({ ev, prevById, roleAssignment, sessionId, viewerMode = 'spe
   const replied = ev.reply_to ? prevById[`${ev.day}-${ev.reply_to}`] : null;
   const isWolf = role === 'Werewolf';
   const isPublic = viewerMode === 'public';
-  const coedRole = ev.claimed_role;
-  const coColor = coedRole ? ROLE_META_BY_KEY[coedRole]?.color : undefined;
 
   return (
-    <article
+    <FeedCardShell
       className={`${styles.speech} ${isWolf ? styles.speechWolf : ''}`}
+      vertClassName={styles.vert}
+      spHeadClassName={styles.spHead}
+      nameClassName={styles.name}
       style={{ '--r-color': r?.color }}
-      aria-label={`${ev.agent} ${fmtTurn(ev.day, ev.speech_id || 0)} ${fmtTime(ev.day, ev.speech_id || 0)}`}
+      ariaLabel={`${ev.agent} ${fmtTurn(ev.day, ev.speech_id || 0)} ${fmtTime(ev.day, ev.speech_id || 0)}`}
+      agent={ev.agent}
+      avatarRole={isPublic ? undefined : role}
+      sessionId={sessionId}
+      viewerMode={viewerMode}
+      head={<>
+        <span className={styles.turn}>{fmtTurn(ev.day, ev.speech_id || 0)}</span>
+        {!isPublic && <RoleTag role={role} />}
+        <CoBadge role={ev.claimed_role} />
+        <time className={styles.ts}>{fmtTime(ev.day, ev.speech_id || 0)}</time>
+      </>}
     >
-      <AgentLink sessionId={sessionId} name={ev.agent} viewerMode={viewerMode}>
-        <Avatar name={ev.agent} role={isPublic ? undefined : role} />
-      </AgentLink>
-      <div className={styles.vert} />
-      <div>
-        <div className={styles.spHead}>
-          <AgentLink sessionId={sessionId} name={ev.agent} viewerMode={viewerMode}><span className={styles.name}>{ev.agent}</span></AgentLink>
-          <span className={styles.turn}>{fmtTurn(ev.day, ev.speech_id || 0)}</span>
-          {!isPublic && <RoleTag role={role} />}
-          {coedRole && (
-            <span className={styles.coBadge} style={{ '--co-color': coColor }}>
-              ▶ {ROLE_META_BY_KEY[coedRole]?.ja || coedRole} CO
-            </span>
-          )}
-          <time className={styles.ts}>{fmtTime(ev.day, ev.speech_id || 0)}</time>
+      {replied && (
+        <div className={styles.spQuote}>
+          <div className={styles.qhead}>▶ {replied.agent} #{replied.speech_id} への返信</div>
+          <div>{replied.content.slice(0, 90)}{replied.content.length > 90 ? '…' : ''}</div>
         </div>
-        {replied && (
-          <div className={styles.spQuote}>
-            <div className={styles.qhead}>▶ {replied.agent} #{replied.speech_id} への返信</div>
-            <div>{replied.content.slice(0, 90)}{replied.content.length > 90 ? '…' : ''}</div>
-          </div>
-        )}
-        <div className={styles.spBody}>
-          <Mentioned text={ev.content} />
-        </div>
-        <ThoughtDetails key={String(bulkThoughtsOpen)} reasoning={ev.reasoning} viewerMode={viewerMode} bulkOpen={bulkThoughtsOpen} />
+      )}
+      <div className={styles.spBody}>
+        <Mentioned text={ev.content} />
       </div>
-    </article>
+      <ThoughtDetails key={String(bulkThoughtsOpen)} reasoning={ev.reasoning} viewerMode={viewerMode} bulkOpen={bulkThoughtsOpen} />
+    </FeedCardShell>
   );
 }
 
@@ -109,26 +105,26 @@ function AgentEpisodeCard({ ev, roleAssignment, sessionId, viewerMode = 'spectat
   const isPublic = viewerMode === 'public';
 
   return (
-    <article
+    <FeedCardShell
       className={styles.agentEpisode}
+      vertClassName={styles.vert}
+      spHeadClassName={styles.spHead}
+      nameClassName={styles.name}
       style={{ '--r-color': r?.color }}
-      aria-label={`${ev.agent} ${label}`}
+      ariaLabel={`${ev.agent} ${label}`}
+      agent={ev.agent}
+      avatarRole={isPublic ? undefined : role}
+      sessionId={sessionId}
+      viewerMode={viewerMode}
+      head={<>
+        <span className={styles.turn}>{label}</span>
+        {!isPublic && <RoleTag role={role} />}
+      </>}
     >
-      <AgentLink sessionId={sessionId} name={ev.agent} viewerMode={viewerMode}>
-        <Avatar name={ev.agent} role={isPublic ? undefined : role} />
-      </AgentLink>
-      <div className={styles.vert} />
-      <div>
-        <div className={styles.spHead}>
-          <AgentLink sessionId={sessionId} name={ev.agent} viewerMode={viewerMode}><span className={styles.name}>{ev.agent}</span></AgentLink>
-          <span className={styles.turn}>{label}</span>
-          {!isPublic && <RoleTag role={role} />}
-        </div>
-        <div className={styles.spBody}>
-          <Mentioned text={contentForViewer(ev, viewerMode)} />
-        </div>
+      <div className={styles.spBody}>
+        <Mentioned text={contentForViewer(ev, viewerMode)} />
       </div>
-    </article>
+    </FeedCardShell>
   );
 }
 
@@ -334,19 +330,19 @@ export function SystemRow({ kind, icon, label, children, strategy, reasoning, ts
 // --- 人狼会話カード ---
 function WolfChatCard({ ev, sessionId, viewerMode = 'spectator', bulkThoughtsOpen = false }) {
   return (
-    <article className={`${styles.speech} ${styles.wolfChat}`} aria-label={`${ev.agent} wolf chat`}>
-      <AgentLink sessionId={sessionId} name={ev.agent} viewerMode={viewerMode}>
-        <Avatar name={ev.agent} />
-      </AgentLink>
-      <div className={styles.vert} />
-      <div>
-        <div className={styles.spHead}>
-          <AgentLink sessionId={sessionId} name={ev.agent} viewerMode={viewerMode}><span className={styles.name}>{ev.agent}</span></AgentLink>
-        </div>
-        <div className={styles.spBody}>{ev.content}</div>
-        <ThoughtDetails key={String(bulkThoughtsOpen)} reasoning={ev.reasoning} viewerMode={viewerMode} bulkOpen={bulkThoughtsOpen} />
-      </div>
-    </article>
+    <FeedCardShell
+      className={`${styles.speech} ${styles.wolfChat}`}
+      vertClassName={styles.vert}
+      spHeadClassName={styles.spHead}
+      nameClassName={styles.name}
+      ariaLabel={`${ev.agent} wolf chat`}
+      agent={ev.agent}
+      sessionId={sessionId}
+      viewerMode={viewerMode}
+    >
+      <div className={styles.spBody}>{ev.content}</div>
+      <ThoughtDetails key={String(bulkThoughtsOpen)} reasoning={ev.reasoning} viewerMode={viewerMode} bulkOpen={bulkThoughtsOpen} />
+    </FeedCardShell>
   );
 }
 

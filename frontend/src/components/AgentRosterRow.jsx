@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Avatar from './Avatar.jsx';
 import RoleTag from './RoleTag.jsx';
+import CoBadge from './CoBadge.jsx';
 import { ROLE_META_BY_KEY } from '../lib/roleMeta.js';
 import styles from './AgentRosterRow.module.css';
 
@@ -22,11 +23,7 @@ export default function AgentRosterRow({ name, role, to, showRole = false, coRol
           <span className={styles.name}>{name}</span>
           <span className={styles.meta}>
             {showRole && <RoleTag role={role} />}
-            {coRole && (
-              <span className={styles.coBadge} style={{ '--co-color': ROLE_META_BY_KEY[coRole]?.color }}>
-                ▶ {ROLE_META_BY_KEY[coRole]?.ja || coRole} CO
-              </span>
-            )}
+            <CoBadge role={coRole} />
             {deathMeta && (
               <span className={styles.deathReason}>Day {deathMeta.day} · {deathMeta.content}</span>
             )}

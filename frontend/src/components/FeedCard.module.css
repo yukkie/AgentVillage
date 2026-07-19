@@ -55,16 +55,6 @@
 .spHead .name   { font-family: var(--serif); font-weight: 600; font-size: var(--fs-md); color: var(--tx); }
 .spHead .turn   { font-family: var(--mono); font-size: var(--fs-sm); color: var(--tx-4); }
 .spHead .ts     { font-size: var(--fs-sm); color: var(--tx-3); margin-left: auto; font-family: var(--mono); }
-.spHead .coBadge {
-  font-family: var(--serif);
-  font-size: var(--fs-sm);
-  background: color-mix(in oklab, var(--co-color, var(--acc)) 18%, transparent);
-  border: 1px solid color-mix(in oklab, var(--co-color, var(--acc)) 50%, transparent);
-  color: var(--co-color, var(--acc));
-  padding: 1px 5px;
-  border-radius: var(--r-xs);
-  letter-spacing: 0.04em;
-}
 
 .spQuote {
   border-left: 2px solid var(--bd);
@@ -165,12 +155,6 @@
 .name   { font-family: var(--serif); font-weight: 600; font-size: var(--fs-md); color: var(--tx); }
 .turn   { font-family: var(--mono); font-size: var(--fs-sm); color: var(--tx-4); }
 .ts     { font-size: var(--fs-sm); color: var(--tx-3); margin-left: auto; font-family: var(--mono); }
-.coBadge {
-  font-family: var(--serif); font-size: var(--fs-sm);
-  background: color-mix(in oklab, var(--co-color, var(--acc)) 18%, transparent);
-  border: 1px solid color-mix(in oklab, var(--co-color, var(--acc)) 50%, transparent);
-  color: var(--co-color, var(--acc)); padding: 1px 5px; border-radius: var(--r-xs); letter-spacing: 0.04em;
-}
 .qhead { font-size: var(--fs-sm); color: var(--tx-4); margin-bottom: 2px; font-family: var(--mono); }
 .mention { color: var(--info); font-weight: 500; }
 .bubbleIco { color: var(--tx-3); flex: 0 0 14px; }
