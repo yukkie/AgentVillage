@@ -21,9 +21,12 @@
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | feat(frontend): GameData registry — track data gaps continuously | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
+| yukkie/AgentVillage#595 | tech-debt | 🟡 | 3 | refactor(frontend): extract useAsyncData hook and shared loading/error status UI | fetch+cancelled effect の6重複を `useAsyncData` に集約、loading/error 表示の3流派を統合、`fetchIndex()` 共通化 |
+| yukkie/AgentVillage#596 | tech-debt | 🟡 | 3 | refactor(frontend): extract shared presentational components (CoBadge, FeedCardShell, phaseHeading) | CO バッジ3重複・FeedCard 骨格3重複・フェーズ見出し式2重複を抽出。実装順序制約: #596 → #364 |
+| yukkie/AgentVillage#597 | bug | 🟡 | 2 | fix(frontend): AgentRosterRow duplicate accessible name + extract toggleInSet utility | 行リンクの読み上げが「Alice Alice」と二重化（#585 の alt 導出がすり抜け）。Set トグル3重複も併せて解消 |
 | yukkie/AgentVillage#495 | enhancement | 🟢 | 3 | design: log visibility classes and recipient-based authorization model (for LIVE / player participation) | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
 | yukkie/AgentVillage#319 | enhancement | 🟢 | 3 | feat(frontend): LIVE spectator (real-time view of in-progress game) | state/ を tail して進行中ゲームを表示（将来フェーズ） |
-| yukkie/AgentVillage#364 | enhancement | 🟢 | 5 | refactor: introduce SpectatorScreen view model indexes | SpectatorScreen 用 view model/index を導入し、render 中の events 全走査を減らす |
+| yukkie/AgentVillage#364 | enhancement | 🟢 | 5 | refactor: introduce SpectatorScreen view model indexes | SpectatorScreen 用 view model/index を導入し render 中の events 全走査を減らす。両 screen の prevById/visibleDays/roleAssignment 重複解消＋挙動差判定を含む。実装順序制約: #596 → #364 |
 | yukkie/AgentVillage#323 | enhancement | 🟢 | 3 | feat(frontend): i18n support for frontend UI strings (ja/en) | JSX 内の日本語ハードコードを locale リソースに外出しし、ja/en 切り替えに対応 |
 | yukkie/AgentVillage#379 | enhancement | 🟢 | 3 | Add static type checking to frontend JS (JSDoc or TypeScript) | フィールド名ミスをエディタ/CIで検出できるようにする。スタブ撤廃（#318）以降に検討 |
 
@@ -53,9 +56,8 @@
 | yukkie/AgentVillage#315 | enhancement | 🟢 | 8 | feat: FastAPI + WebSocket backend for real-time web streaming | リアルタイムストリーミング（Milestone 2 完了後） |
 | yukkie/AgentVillage#316 | enhancement | 🟢 | 13 | feat: mobile app (React Native) | iOS/Android 対応（#315 完了後） |
 | yukkie/AgentVillage#30 | enhancement | 🟢 | 13 | State management DB migration (SQLite → PostgreSQL) | JSON → DB 移行 |
-| yukkie/AgentVillage#424 | enhancement | 🟢 | 5 | Dev tool (1/3): AST-based relationship extraction for a central data type | 中心データ型の producer/consumer/transform を Python AST で全列挙し隣接リスト出力。`type-lineage` スキルとして実装（skills repo・テスト同梱）。#466 の設計比較の入力。read マトリクスは #581、JS 抽出は #508 に分割 |
-| yukkie/AgentVillage#581 | enhancement | 🟢 | 3 | Dev tool (1/3, split): consumer×field read matrix for a central data type | #424 から分割。#424 の隣接リストスキーマ上に reads-field エッジ属性として consumer×field read マトリクス（structured/passthrough 区別・event-specific/shared 分類）を表現。#466 設計比較の consumer-side 入力。依存: #424。SP 再見積もり対象 |
-| yukkie/AgentVillage#593 | bug | 🟢 | - | Dev tool: type-lineage typed-path defects & gaps (batch) | #424/#581 のマージ後レビューで検出した typed 経路の取りこぼし・意味論バグの一括起票（14件）。**着手前に `/issue split` 必須**。#583（heuristic read 抽出）とは独立。依存: #424, #581 |
+| yukkie/AgentVillage#593 | bug | （なし） | - | Dev tool: type-lineage typed-path defects & gaps (batch) | #424/#581 のマージ後レビューで検出した typed 経路の取りこぼし・意味論バグの一括起票（14件）。**着手前に `/issue split` 必須**。#583（heuristic read 抽出）とは独立。依存: #424(closed), #581(closed) |
+| yukkie/AgentVillage#583 | enhancement | 🟢 | - | 開発ツール: type-lineage の heuristic/untyped read 抽出（動的型付け Python プロジェクト向け） | typed 経路で拾えない heuristic/untyped な read を抽出。#593（typed 経路の欠陥）とは独立 |
 | yukkie/AgentVillage#508 | enhancement | 🟢 | 5 | Dev tool (2/3): JS field-access extraction | JS consumer のフィールド read をヒューリスティック抽出し #424 の隣接リストに統合（source: js / confidence: heuristic）。#379 導入後は型起点へ強化。依存: #424 |
 | yukkie/AgentVillage#425 | enhancement | 🟢 | 3 | Dev tool (3/3): smell evaluation skill over the extracted relationship graph | #424 のグラフに判定基準を適用する AI 評価スキル（判定コードは書かない）。淀み度集計＋4評価軸。依存: #424。SP 再見積もり対象 |
 | yukkie/AgentVillage#543 | enhancement | 🟢 | 8 | Dev tool: machine-managed Issue dependency graph (bidirectional) | issue SKILL.md の依存配線（依存:/依存される Issue:/順序制約）を機械抽出し隣接リスト化。片方向リンク・分割時の張り替え漏れを整合性チェックで検出。#424 の隣接リスト／2層分離思想を踏襲。依存: #424 |
@@ -66,17 +68,5 @@
 
 *新しいアイデアはここに追記する*
 
-### frontend 重複コード整理バンドル（self-reflection review 2026-07-04・起票は backlog refinement で検討）
-
-frontend 特化 self-reflection review（観点 E 中心）で検出した medium/low の重複。high 3件は #585 / #586 / #587 として起票済み。以下は1 Issue にまとめて refinement で優先度・分割を判断する。
-
-- **CO バッジ重複**（🟡）: `▶ {role} CO` の JSX と `.coBadge` CSS（color-mix 含む）が FeedCard（2箇所）・AgentRosterRow で3重複 → `CoBadge` コンポーネント化。#586 と同時にやると安い
-- **fetch + cancelled フラグ effect の6重複**（🟡）: useAgentBlurb / GlobalProfile / GameScopedProfile / SpectatorReplayData×2 / GameListScreen → `useAsyncData(fetcher, deps)` フックに集約。state 形状（status タプル vs 個別 loading）の不揃いも同時に解消
-- **loading / error 表示の3流派分裂**（🟡）: GlobalProfile と GameScopedProfile はインライン div コピー、SpectatorScreen は SystemRow 流用、GameListScreen は独自 class → 共通ステータス表示部品
-- **prevById 構築の2重実装**（🟡）: SpectatorScreen 版は `event_type === 'speech'` フィルタが無く AgentDetailScreen 版と微妙に挙動が違う → parseGameData.js に一本化。関連: #364（view model indexes、同じ場所に着地しうる）
-- **roleAssignment / visibleDays 導出の両 screen コピー**（🟡）: visibleDays は game_over 除外有無の微差あり（仕様か事故か不明）→ parseGameData の派生セレクタ化。関連: #364
-- **フェーズ見出しラベル式の同一ファイル内2重複**（🟡）: SpectatorScreen.jsx L411 / L429 の長い三項式＋インラインマップ → `phaseHeading(day, phase)` 関数化
-- **FeedCard 3カードの骨格コピー**（🟡）: SpeechCard / AgentEpisodeCard / WolfChatCard が `article > Link+Avatar > vert > spHead` を複製 → `FeedCardShell` 抽出
-- **Set トグル state の3重複**（🟢）: toggleAgentFilter / toggleRoleFilter / GameList toggleAgent → `toggleInSet` ユーティリティか `useToggleSet()` フック
-- **fetchGameBySessionId の INDEX fetch 再実装**（🟢）: fetchGameList と同じ fetch＋エラー処理を重複、呼び出しごとに index.json 全体を再取得 → 共通 `fetchIndex()`
-- **AgentRosterRow のアクセシブルネーム重複**（🟢・#585/#586 設計時に検出）: 行リンク内で bare Avatar の `alt={name}` と可視の名前 span が同居し、スクリーンリーダーの読み上げが「Alice Alice …」と二重になる。#585 の alt 導出（可視ラベルがあれば `alt=""`）は Avatar の `label` prop 経由でしか効かないため、AgentRosterRow が alt 抑制を伝える手段（`label` 利用への構造変更 or 装飾指定 prop）が要る
+> frontend 重複コード整理バンドル（self-reflection review 2026-07-04）は 2026-07-19 の backlog refinement で
+> #595 / #596 / #597 に分割起票し、`prevById` / `visibleDays` / `roleAssignment` の両 screen 重複は #364 に吸収した。
