@@ -56,8 +56,8 @@
 | yukkie/AgentVillage#315 | enhancement | 🟢 | 8 | feat: FastAPI + WebSocket backend for real-time web streaming | リアルタイムストリーミング（Milestone 2 完了後） |
 | yukkie/AgentVillage#316 | enhancement | 🟢 | 13 | feat: mobile app (React Native) | iOS/Android 対応（#315 完了後） |
 | yukkie/AgentVillage#30 | enhancement | 🟢 | 13 | State management DB migration (SQLite → PostgreSQL) | JSON → DB 移行 |
-| yukkie/AgentVillage#593 | bug | （なし） | - | Dev tool: type-lineage typed-path defects & gaps (batch) | #424/#581 のマージ後レビューで検出した typed 経路の取りこぼし・意味論バグの一括起票（14件）。**着手前に `/issue split` 必須**。#583（heuristic read 抽出）とは独立。依存: #424(closed), #581(closed) |
-| yukkie/AgentVillage#583 | enhancement | 🟢 | - | 開発ツール: type-lineage の heuristic/untyped read 抽出（動的型付け Python プロジェクト向け） | typed 経路で拾えない heuristic/untyped な read を抽出。#593（typed 経路の欠陥）とは独立 |
+| yukkie/AgentVillage#593 | bug | 🟢 | - | Dev tool: type-lineage typed-path defects & gaps (batch) | #424/#581 のマージ後レビューで検出した typed 経路の取りこぼし・意味論バグの一括起票（14件）。**着手前に `/issue split` 必須**（SP は分割後の子に振るため親は無印）。#583（heuristic read 抽出）とは独立。依存: #424(closed), #581(closed) |
+| yukkie/AgentVillage#583 | enhancement | 🟢 | 5 | 開発ツール: type-lineage の heuristic/untyped read 抽出（動的型付け Python プロジェクト向け） | typed 経路で拾えない heuristic/untyped な read を抽出。AgentVillage 自体へのベネフィットは≈ゼロで、動的型付けの別プロジェクトへ転用するときに価値が出る。#593 とは独立 |
 | yukkie/AgentVillage#508 | enhancement | 🟢 | 5 | Dev tool (2/3): JS field-access extraction | JS consumer のフィールド read をヒューリスティック抽出し #424 の隣接リストに統合（source: js / confidence: heuristic）。#379 導入後は型起点へ強化。依存: #424 |
 | yukkie/AgentVillage#425 | enhancement | 🟢 | 3 | Dev tool (3/3): smell evaluation skill over the extracted relationship graph | #424 のグラフに判定基準を適用する AI 評価スキル（判定コードは書かない）。淀み度集計＋4評価軸。依存: #424。SP 再見積もり対象 |
 | yukkie/AgentVillage#543 | enhancement | 🟢 | 8 | Dev tool: machine-managed Issue dependency graph (bidirectional) | issue SKILL.md の依存配線（依存:/依存される Issue:/順序制約）を機械抽出し隣接リスト化。片方向リンク・分割時の張り替え漏れを整合性チェックで検出。#424 の隣接リスト／2層分離思想を踏襲。依存: #424 |
