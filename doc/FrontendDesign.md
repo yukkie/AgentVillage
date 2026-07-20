@@ -483,13 +483,23 @@ children ベースの API とした理由: 重複していたのは「`Link` + `
 | `role` | `string?` | 真の役職キー（例: `"Seer"`）。`showRole` が true のとき RoleTag・Avatar 役職刻印に使う |
 | `to` | `string` | 遷移先パス（`Link to`）。`agentDetailPath` 等は**呼び出し側で組み立てて渡す**（画面非依存にするため） |
 | `showRole` | `boolean?` | true で役職タグ・Avatar 役職刻印を表示。呼び出し側が `viewerMode === 'spectator'` を計算して渡す（デフォルト `false`） |
-| `coRole` | `string?` | CO 済み役職キー。あれば CO バッジを表示 |
+| `coRole` | `string?` | CO 済み役職キー。あれば CO バッジ（`CoBadge`）を表示 |
 | `dead` | `boolean?` | 死亡フラグ。Avatar 死亡オーバーレイ・行 muted・statusDot 色（`--tx-4`）に反映 |
 | `deathMeta` | `{day, content}?` | 死因メタ（`Day {day} · {content}`）。役職を露出しないため public でも表示する |
 | `showStatusDot` | `boolean?` | 右端の生死 statusDot を表示するか（デフォルト `true`）。`false` で statusDot を描画せずグリッドを2カラム化する。生死概念のない `global profile mode` 左ペインで `false` を渡す |
 | `selected` | `boolean?` | 現在表示中の行を強調（左ボーダー `--acc` ＋ 背景）。`global profile mode` 左ペインで「今表示しているエージェント」をハイライトするのに使う（デフォルト `false`） |
 
 > **役職出し分けは `showRole` boolean に集約**: 「死亡者は役職常時公開」という特例は持たない。生存・死亡とも `showRole`（＝呼び出し側の `viewerMode === 'spectator'`）に従う。死亡者の役職を public で露出すると消去法で生存者の役職が絞れてしまうため（#521 AC-3）。
+
+#### `CoBadge`
+
+CO（カミングアウト）役職バッジ「▶ {役職 日本語名} CO」の表示専用コンポーネント（#596）。`FeedCard.jsx`（`SpeechCard`）と `AgentRosterRow.jsx` の2箇所で重複していた JSX・CSS（`.coBadge`。`color-mix` を含む同一宣言が3定義）を集約した。
+
+| prop | 型 | 説明 |
+|---|---|---|
+| `role` | `string?` | CO 済み役職キー。falsy なら何も描画しない |
+
+`ROLE_META_BY_KEY` から `ja`（日本語名）と `color`（`--co-color` CSS Variable）を導出する。**`ROLE_META_BY_KEY` にない未知キーでも生キーをそのまま表示する**（防御フォールバック。既存挙動を保存）。`RoleTag` は未知キーで `null` を返すため、`CoBadge` とは未知キーの扱いが異なる（この不整合は本 Issue では解消せず、#599 の判断に委ねる）。
 
 #### `FeedCard`（`FeedItem` / `SystemRow`）
 
@@ -503,6 +513,27 @@ children ベースの API とした理由: 重複していたのは「`Link` + `
 内部に `SpeechCard` / `WolfChatCard` / `AgentEpisodeCard` / `RelationshipUpdateRow` と付随純粋関数（`fmtTurn` / `fmtTime` / `Mentioned` / `ThoughtDetails` / `contentForViewer` / `RelationshipMeterList` / `SYSTEM_EVENT_VIEWS` / `renderConfiguredSystemEvent`）・定数（`MISSING_CONTENT` / `SPECTATOR_ONLY_EVENTS`）を同梱する。
 
 特定 screen の state（`useState`）に依存せず、`sessionId` は props で受ける（`useParams` は使わない）。AgentDetail へのリンクは共有コンポーネント `AgentLink`（#586）で描画する（パス組み立ては `AgentLink` 内部の `lib/agentDetailPath.js` `agentDetailPath` に委譲）。
+
+`SpeechCard` / `AgentEpisodeCard` / `WolfChatCard` の3カードは共通シェル `FeedCardShell` を経由する（#596）。CO バッジは `CoBadge` を使う。
+
+#### `FeedCardShell`
+
+`SpeechCard` / `AgentEpisodeCard` / `WolfChatCard` が複製していた骨格マークアップ（`article > AgentLink+Avatar > vert > spHead`）を抽出した共通シェル（#596）。
+
+所有範囲: `<article>` → `AgentLink>Avatar` → `.vert` → `<div>` → `.spHead` の div → **`.spHead` 内の名前リンク（`AgentLink > span.name`）まで**。
+
+| prop | 型 | 説明 |
+|---|---|---|
+| `className` / `vertClassName` / `spHeadClassName` / `nameClassName` | `string?` | 呼び出し側（`FeedCard.module.css`）のクラス名をそのまま渡す。Shell 自身は CSS を持たない |
+| `style` | `object?` | `<article>` へのインラインスタイル（`--r-color` 等） |
+| `ariaLabel` | `string?` | `<article aria-label>` |
+| `agent` | `string` | エージェント名（Avatar・AgentLink・名前 span に使う） |
+| `avatarRole` | `string?` | Avatar の役職刻印（`undefined` で非表示。呼び出し側が `viewerMode` から計算） |
+| `sessionId` / `viewerMode` | — | `AgentLink` へ素通し |
+| `head` | `ReactNode?` | `.spHead` 内・名前リンクの**後ろ**に差し込まれる追加要素（turn / RoleTag / CoBadge / time など）。カードごとに異なる。渡さなければ名前だけのヘッダになる（`WolfChatCard`） |
+| `children` | `ReactNode` | `.spHead` の**外**、本文以降（quote / spBody / ThoughtDetails） |
+
+CSS モジュールは新設せず、`FeedCard.module.css` の既存クラスを props で受け取る（跨モジュール `composes` を導入しない）。DOM 構造の不変性は `FeedCard.test.jsx` の骨格 contract テスト（`article` 直下の要素順・`.spHead` の存在を assert）で恒久的に担保する。
 
 #### `Icon`
 

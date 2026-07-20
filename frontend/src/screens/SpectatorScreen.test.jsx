@@ -1246,6 +1246,29 @@ describe('SpectatorScreen: sessionId integration', () => {
     }, { timeout: 3000 });
   }
 
+  it('統合: SpectatorScreen: TopBar パンくずとフィード見出しが同じフェーズ見出しラベルを表示する', async () => {
+    /*
+     * SUT: SpectatorScreen (default export)
+     * Mock: fetchGameBySessionId / fetchReplayLog / fetchReplayAgents を vi.fn() でモック
+     * Level: integration
+     * Objective: TopBar パンくずの最終要素と中央フィード見出し(h2)が phaseHeading(activeDay, activePhase)
+     * による同一のラベル文言を表示することを検証する（#596 AC-3: 2箇所が同じ関数を使っていることの配線検証）。
+     */
+    archiveLoader.fetchGameBySessionId.mockResolvedValue({ cast: [] });
+    replayLoader.fetchReplayLog.mockResolvedValue(MINIMAL_JSONL);
+    replayLoader.fetchReplayAgents.mockResolvedValue(MINIMAL_AGENT_JSON);
+
+    renderSpectator('phase-heading-session');
+
+    await waitFor(() => expect(screen.getByText('こんにちは')).toBeTruthy(), { timeout: 3000 });
+
+    const heading = screen.getByRole('heading', { level: 2 });
+    // h2 は "{phaseHeading} {sessionId}" の合成テキストなので先頭の見出しラベル部分だけ取り出す
+    const headingLabel = heading.textContent.replace('phase-heading-session', '').trim();
+    const crumb = screen.getByText(headingLabel, { selector: 'span[aria-current="page"]' });
+    expect(crumb).toBeTruthy();
+  });
+
   it('renders feed events from fetchReplayLog after load', async () => {
     /*
      * SUT: SpectatorScreen (default export)
