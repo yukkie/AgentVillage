@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
 import AgentRosterRow from '../components/AgentRosterRow.jsx';
+import RoleTag from '../components/RoleTag.jsx';
 import { FeedItem } from '../components/FeedCard.jsx';
 import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
@@ -78,7 +79,7 @@ function AgentHero({ agent, agentData, speechCount, sessionMeta, currentDay, dea
       <div className={styles.heroInfo}>
         <h1>{agent}</h1>
         <div className={styles.heroSub}>
-          {!isPublic && r && <span className={styles.heroRoleLabel}>{r.ja}</span>}
+          {!isPublic && r && <RoleTag role={role} />}
           {!isPublic && r && <span>所属: <strong style={{ color: 'var(--tx-2)' }}>{teamLabel}</strong></span>}
           <span>{sessionLabel}</span>
           <span style={{ color: isAlive ? 'var(--alive)' : 'var(--dead)' }}>
@@ -297,7 +298,7 @@ function GlobalHistory({ stats }) {
             return (
               <li key={i} className={styles.recordRow} style={{ '--r-color': r?.color }}>
                 <span className={styles.recordNum}>{rec.gameId}</span>
-                <span className={styles.recordRole}>{r?.ja || rec.role}</span>
+                <RoleTag role={rec.role} className={styles.recordRole} />
                 <span className={`${styles.recordResult} ${rec.won ? styles.win : styles.lose}`}>
                   {rec.won ? '勝利' : '敗北'}
                 </span>

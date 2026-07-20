@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import AgentDetailScreen from './AgentDetailScreen.jsx';
+import roleTagStyles from '../components/RoleTag.module.css';
 
 afterEach(() => {
   cleanup();
@@ -791,5 +792,66 @@ describe('AgentDetailScreen blurb', () => {
     expect(await screen.findByRole('heading', { name: 'Nox' })).toBeTruthy();
     expect(screen.getByText('50%')).toBeTruthy();
     expect(screen.getByText('—')).toBeTruthy();
+  });
+});
+
+// --- RoleTag 統一（#599） ---
+
+describe('AgentDetailScreen: RoleTag unification (#599)', () => {
+  it('統合: AgentHero: 役職ラベルが RoleTag バッジで表示される', async () => {
+    /*
+     * SUT: AgentDetailScreen (game-scoped mode) AgentHero
+     * Mock: global fetch（state_archive/index.json, spectator_log.jsonl, agents/*.json を返す）
+     * Level: integration
+     * Objective: hero の役職ラベルが独自 span ではなく RoleTag（styles.tag 付与）で描画されることを検証する (AC-1, AC-2)。
+     */
+    mockGameScopedReplay();
+    renderGameScoped({ sessionId: 'session-real-001', agentName: 'Nox' });
+
+    const heading = await screen.findByRole('heading', { name: 'Nox' });
+    const hero = heading.closest('header');
+    const roleLabels = within(hero).getAllByText('占い師');
+    const roleTagLabel = roleLabels.find(el => el.classList.contains(roleTagStyles.tag));
+    expect(roleTagLabel).toBeTruthy();
+  });
+
+  it('統合: GlobalHistory: 戦績行の役職が RoleTag バッジで表示される', async () => {
+    /*
+     * SUT: AgentDetailScreen (global profile mode) GlobalHistory
+     * Mock: global fetch（game_stats.json を返す）
+     * Level: integration
+     * Objective: 過去戦績一覧の役職セルが RoleTag（styles.tag 付与）のバッジとして表示されることを検証する (AC-1, AC-2)。
+     */
+    mockFetchOk(STATS_FIXTURE);
+    renderGlobal('/agent/Nox');
+    const history = await screen.findByRole('list', { name: '過去の戦績' });
+
+    const roleCell = within(history).getByText('占い師');
+    expect(roleCell.classList.contains(roleTagStyles.tag)).toBe(true);
+  });
+
+  it('統合: GlobalHistory: 未知の役職キーは生キーをバッジ表示する', async () => {
+    /*
+     * SUT: AgentDetailScreen (global profile mode) GlobalHistory
+     * Mock: global fetch（game_stats.json に未知の役職キーを含めて返す）
+     * Level: integration
+     * Objective: ROLE_META_BY_KEY にない役職キーでも戦績行から役職セルが消えず、生キーがバッジ表示されることを検証する (AC-7)。
+     */
+    const statsWithUnknownRole = {
+      games: [
+        {
+          game_id: '2026-05-11T09:00:00',
+          winner: 'Villagers',
+          players: [
+            { name: 'Nox', role: 'MysteryRole', faction: 'village', model: 'm', survived: true, won: true },
+          ],
+        },
+      ],
+    };
+    mockFetchOk(statsWithUnknownRole);
+    renderGlobal('/agent/Nox');
+    const history = await screen.findByRole('list', { name: '過去の戦績' });
+
+    expect(within(history).getByText('MysteryRole')).toBeTruthy();
   });
 });

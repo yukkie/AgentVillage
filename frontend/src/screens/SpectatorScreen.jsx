@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import AgentLink from '../components/AgentLink.jsx';
 import Avatar, { AvatarButton } from '../components/Avatar.jsx';
 import AgentRosterRow from '../components/AgentRosterRow.jsx';
+import RoleTag from '../components/RoleTag.jsx';
 import { FeedItem, SystemRow } from '../components/FeedCard.jsx';
 import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import topBarStyles from '../components/TopBar.module.css';
@@ -181,7 +182,7 @@ function CoStatusBoard({ coStatus, sessionId, viewerMode }) {
             .map(([name]) => name);
           return (
             <li key={roleKey} className={styles.coRow} style={{ '--r-color': roleDef.color }}>
-              <span className={styles.coRole}>{roleDef.ja}</span>
+              <RoleTag role={roleKey} className={styles.coBoardRole} />
               <span className={styles.coName} style={{ color: coAgents.length ? 'var(--tx)' : 'var(--tx-3)' }}>
                 {coAgents.length ? coAgents.map((name, i) => (
                   <span key={name} className={styles.coAgent}>

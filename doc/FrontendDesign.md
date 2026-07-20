@@ -467,9 +467,10 @@ children ベースの API とした理由: 重複していたのは「`Link` + `
 
 | prop | 型 | 説明 |
 |---|---|---|
-| `role` | `string` | 役職キー（例: `"Seer"`）。`ROLE_META_BY_KEY` にない場合は `null` を返す |
+| `role` | `string` | 役職キー（例: `"Seer"`）。falsy なら何も描画しない |
+| `className` | `string?` | 呼び出し側の CSS Modules クラスを内部 `styles.tag` と結合する。レイアウト制約（`width` / `flex` 等）は `RoleTag` 内部に持ち込まず、呼び出し側から渡す（#599 AC-4） |
 
-`--r-color` CSS Variable を inline style で設定し、子要素が `var(--r-color)` を参照できる。
+`--r-color` CSS Variable を inline style で設定し、子要素が `var(--r-color)` を参照できる。**`ROLE_META_BY_KEY` にない未知キーでも生キー（`role` そのもの）をそのまま表示する**（防御フォールバック、#599 判断1 A案）。未知キー時は `--r-color` が未設定になり、`RoleTag.module.css` の CSS フォールバック（`var(--r-color, var(--tx-2))` 等）で無彩色バッジとして表示される。
 
 #### `AgentRosterRow`
 
@@ -499,7 +500,7 @@ CO（カミングアウト）役職バッジ「▶ {役職 日本語名} CO」�
 |---|---|---|
 | `role` | `string?` | CO 済み役職キー。falsy なら何も描画しない |
 
-`ROLE_META_BY_KEY` から `ja`（日本語名）と `color`（`--co-color` CSS Variable）を導出する。**`ROLE_META_BY_KEY` にない未知キーでも生キーをそのまま表示する**（防御フォールバック。既存挙動を保存）。`RoleTag` は未知キーで `null` を返すため、`CoBadge` とは未知キーの扱いが異なる（この不整合は本 Issue では解消せず、#599 の判断に委ねる）。
+`ROLE_META_BY_KEY` から `ja`（日本語名）と `color`（`--co-color` CSS Variable）を導出する。**`ROLE_META_BY_KEY` にない未知キーでも生キーをそのまま表示する**（防御フォールバック。既存挙動を保存）。`RoleTag` も #599（判断1 A案）で同じく生キーフォールバック表示に統一されたため、両コンポーネントの未知キー挙動は一致している。
 
 #### `FeedCard`（`FeedItem` / `SystemRow`）
 

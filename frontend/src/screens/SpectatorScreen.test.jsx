@@ -7,6 +7,7 @@ import SpectatorScreen from './SpectatorScreen.jsx';
 import { FeedItem } from '../components/FeedCard.jsx';
 import styles from './SpectatorScreen.module.css';
 import feedStyles from '../components/FeedCard.module.css';
+import roleTagStyles from '../components/RoleTag.module.css';
 import * as replayLoader from '../lib/replayLoader.js';
 import * as archiveLoader from '../lib/archiveLoader.js';
 
@@ -1988,6 +1989,22 @@ describe('RightPane: avatars in CO status and night actions (#403)', () => {
     expect(aliceLabel).toBeTruthy();
     expect(aliceLabel.textContent).toBe('Alice');
     expect(aliceImg.closest('a')).toBeTruthy();
+  });
+
+  it('統合: CoStatusBoard: 役職名ラベルが RoleTag バッジで表示される', () => {
+    /*
+     * SUT: RightPane (CoStatusBoard)
+     * Mock: なし
+     * Level: integration
+     * Objective: COボード各行の役職名ラベル（旧 .coRole）が独自 span ではなく RoleTag（styles.tag 付与）で描画されることを検証する (AC-1, AC-2, AC-5)。
+     */
+    const { container } = renderRightPane({
+      coStatus: { Alice: 'Seer' },
+    });
+    const coBoard = container.querySelector('[aria-label="カミングアウト状況"]');
+    const roleLabel = within(coBoard).getByText('占い師');
+    expect(roleLabel.classList.contains(roleTagStyles.tag)).toBe(true);
+    expect(roleLabel.classList.contains(styles.coBoardRole)).toBe(true);
   });
 
   it('統合: RightPane: 夜の行動actor行にアバターと名前が表示される', () => {
