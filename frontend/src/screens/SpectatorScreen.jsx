@@ -339,6 +339,12 @@ function SpectatorReplayData({
   const [loadingAgents, setLoadingAgents] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
+  // #595: この fetch effect の共通フック化（useAsyncData）を検討したが、効果が無いと判断して見送った。
+  // 理由: 1 effect 内で index+agents と replay log の2本を並行 fetch し、loading フラグ2本
+  // （loadingEvents / loadingAgents）を独立に管理しつつ error は共有し、さらに成功時に
+  // setActiveDay / setActivePhase という親 state への副作用を持つ。この形は汎用フックの
+  // { data, loading, error } に収まらず、無理に収めると呼び出し側にフラグの復元分岐が生えて
+  // かえって読みにくくなる。再検出時はこのコメントを判断材料にすること。
   useEffect(() => {
     let cancelled = false;
 
