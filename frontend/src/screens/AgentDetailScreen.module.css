@@ -80,12 +80,6 @@
 
 .pickDead .pickName { text-decoration: line-through; }
 
-.pickRole {
-  font-size: var(--fs-sm);
-  color: var(--r-color, var(--tx-3));
-  font-family: var(--serif);
-}
-
 .statusDot {
   width: 6px;
   height: 6px;
@@ -140,18 +134,6 @@
   color: var(--tx-3);
   font-size: var(--fs-sm);
   flex-wrap: wrap;
-}
-
-.heroRoleLabel {
-  font-family: var(--serif);
-  font-size: var(--fs-md);
-  color: var(--r-color);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  border: 1px solid color-mix(in oklab, var(--r-color) 50%, transparent);
-  padding: 1px 8px;
-  border-radius: var(--r-xs);
-  background: color-mix(in oklab, var(--r-color) 10%, transparent);
 }
 
 .heroBlurb {
@@ -316,7 +298,7 @@
 .recordRow:last-child { border-bottom: none; }
 /* game_id（ISO 文字列）を表示する列。折り返さず収める（global・game-scoped 実データ共通） */
 .recordNum   { font-family: var(--mono); color: var(--tx-4); white-space: nowrap; }
-.recordRole  { font-family: var(--serif); color: var(--r-color, var(--tx-3)); width: 60px; }
+.recordRole  { width: 60px; }
 .recordResult { font-family: var(--serif); }
 .win  { color: var(--alive); }
 .lose { color: var(--danger); }
