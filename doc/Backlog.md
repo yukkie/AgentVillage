@@ -23,7 +23,7 @@
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
 | yukkie/AgentVillage#595 | tech-debt | 🟡 | 3 | refactor(frontend): extract useAsyncData hook and shared loading/error status UI | fetch+cancelled effect の6重複を `useAsyncData` に集約、loading/error 表示の3流派を統合、`fetchIndex()` 共通化 |
 | yukkie/AgentVillage#597 | bug | 🟡 | 2 | fix(frontend): AgentRosterRow duplicate accessible name + extract toggleInSet utility | 行リンクの読み上げが「Alice Alice」と二重化（#585 の alt 導出がすり抜け）。Set トグル3重複も併せて解消 |
-| yukkie/AgentVillage#601 | tech-debt | （なし） | - | refactor(frontend): remove dead descendant-selector duplicates in FeedCard.module.css | #596 の積み残し。子孫セレクタ形/standalone 形の二重定義6組を削除し、再発防止に stylelint `no-duplicate-selectors` を導入。層設計は健全なため深さ制限系ルールは入れない（調査済み） |
+| yukkie/AgentVillage#604 | tech-debt | （なし） | - | refactor(frontend): resolve descendant/standalone selector duplicates in SpectatorScreen.module.css | #601 の積み残し。#601 とは逆方向で、詳細度の高い子孫セレクタ形が勝ち standalone 形が無効の可能性。`.action` 配下は片形のみ/両形/状態修飾が混在し一括削除不可、寄せる方向の決定が要る。#599 と `.coRole` で競合注意 |
 | yukkie/AgentVillage#599 | enhancement | 🟡 | 3 | refactor(frontend): unify all role labels into RoleTag badge component | 役職ラベル7箇所中4箇所が `RoleTag` を使わず独自 span。全てバッジ型に統一（見た目が変わる）。`.coRole` は CO バッジではなく役職名ラベルのためリネームも含む |
 | yukkie/AgentVillage#495 | enhancement | 🟢 | 3 | design: log visibility classes and recipient-based authorization model (for LIVE / player participation) | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
 | yukkie/AgentVillage#319 | enhancement | 🟢 | 3 | feat(frontend): LIVE spectator (real-time view of in-progress game) | state/ を tail して進行中ゲームを表示（将来フェーズ） |
@@ -73,3 +73,5 @@
 > #595 / #596 / #597 に分割起票し、`prevById` / `visibleDays` / `roleAssignment` の両 screen 重複は #364 に吸収した。
 > うち #596（CoBadge / FeedCardShell / phaseHeading の抽出）は PR #600 で完了。実装中に検出した
 > `FeedCard.module.css` の子孫セレクタ形の重複6組は #601 に切り出した。
+> #601 は PR #603 で完了（記載の6組に加え、調査で発見した3組も併せて計9組を削除）。その調査中に見つかった
+> `SpectatorScreen.module.css` の同種重複は、詳細度の勝敗が #601 と逆で単純削除できないため #604 に切り出した。

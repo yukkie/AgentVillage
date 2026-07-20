@@ -52,10 +52,6 @@
   flex-wrap: wrap;
   margin-bottom: 6px;
 }
-.spHead .name   { font-family: var(--serif); font-weight: 600; font-size: var(--fs-md); color: var(--tx); }
-.spHead .turn   { font-family: var(--mono); font-size: var(--fs-sm); color: var(--tx-4); }
-.spHead .ts     { font-size: var(--fs-sm); color: var(--tx-3); margin-left: auto; font-family: var(--mono); }
-
 .spQuote {
   border-left: 2px solid var(--bd);
   padding: 4px 10px;
@@ -65,8 +61,6 @@
   color: var(--tx-3);
   border-radius: 0 var(--r-xs) var(--r-xs) 0;
 }
-.spQuote .qhead { font-size: var(--fs-sm); color: var(--tx-4); margin-bottom: 2px; font-family: var(--mono); }
-
 .spBody {
   font-size: var(--fs-md);
   line-height: 1.7;
@@ -74,8 +68,6 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
-.spBody .mention { color: var(--info); font-weight: 500; }
-
 /* Thought disclosure */
 .spThink {
   margin-top: 10px;
@@ -105,24 +97,8 @@
 }
 .spThink summary::-webkit-details-marker { display: none; }
 .spThink summary::marker { display: none; content: ''; }
-.spThink summary .bubbleIco { color: var(--tx-3); flex: 0 0 14px; }
 .spThink summary:hover .bubbleIco,
 .spThink[open] summary .bubbleIco { color: var(--acc); }
-.spThink summary .label {
-  font-family: var(--serif);
-  font-size: var(--fs-sm);
-  color: inherit;
-  letter-spacing: 0.02em;
-  font-weight: 600;
-}
-.spThink summary .conf {
-  font-family: var(--mono);
-  font-size: var(--fs-sm);
-  color: var(--tx-4);
-  padding-left: 6px;
-  border-left: 1px solid var(--bd);
-  margin-left: 2px;
-}
 .spThink[open] {
   display: block;
   border-color: color-mix(in oklab, var(--acc) 30%, var(--bd));
@@ -135,23 +111,8 @@
   padding-left: 12px;
 }
 .spThink[open] summary .conf { color: var(--tx-3); border-color: var(--bd-soft); }
-.spThink .body {
-  padding: 0 14px 12px 36px;
-  white-space: pre-wrap;
-  line-height: 1.65;
-  font-family: var(--sans);
-  color: var(--tx-2);
-  position: relative;
-}
-.spThink .body::before {
-  content: '';
-  position: absolute;
-  left: 18px; top: 0; bottom: 8px;
-  width: 1px;
-  background: color-mix(in oklab, var(--acc) 30%, var(--bd));
-}
 
-/* spHead child / thought inner (standalone class forms used by JSX) */
+/* speech meta / thought inner */
 .name   { font-family: var(--serif); font-weight: 600; font-size: var(--fs-md); color: var(--tx); }
 .turn   { font-family: var(--mono); font-size: var(--fs-sm); color: var(--tx-4); }
 .ts     { font-size: var(--fs-sm); color: var(--tx-3); margin-left: auto; font-family: var(--mono); }
