@@ -185,7 +185,7 @@ function CoStatusBoard({ coStatus, sessionId, viewerMode }) {
               <RoleTag role={roleKey} className={styles.coBoardRole} />
               <span className={styles.coName} style={{ color: coAgents.length ? 'var(--tx)' : 'var(--tx-3)' }}>
                 {coAgents.length ? coAgents.map((name, i) => (
-                  <span key={name} className={styles.coAgent}>
+                  <span key={name}>
                     {i > 0 && ', '}
                     <AgentLink sessionId={sessionId} name={name} viewerMode={viewerMode}>
                       <Avatar name={name} size="xs" label={name} layout="horizontal" />
