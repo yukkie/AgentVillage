@@ -25,7 +25,6 @@
 }
 
 /* === Left pane: day/phase nav === */
-.phaseNav { padding: 8px 12px 16px; overflow-y: auto; }
 .phaseDay {
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 6px 6px;
@@ -45,8 +44,6 @@
   font-weight: 400;
   letter-spacing: 0.08em;
 }
-.phaseDay .deathline { font-size: var(--fs-sm); color: var(--danger); }
-
 .dayBlock .phaseList {
   max-height: 0;
   overflow: hidden;
@@ -66,25 +63,13 @@
   color: var(--tx-2);
   border-left: 2px solid transparent;
 }
-.phaseItem .dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--tx-4);
-  flex: 0 0 6px;
-}
 .phaseItem.day   .dot { background: var(--acc); }
 .phaseItem.night .dot { background: var(--phase-night); }
 .phaseItem.exec  .dot { background: var(--danger); }
-.phaseItem .turn {
-  font-family: var(--mono);
-  font-size: var(--fs-sm);
-  color: var(--tx-4);
-  margin-left: auto;
-}
 .phaseItem.active { background: var(--bg-2); color: var(--tx); border-left-color: var(--acc); }
 .phaseItem:hover:not(.active) { background: var(--bg-2); color: var(--tx); }
 
 /* Filter */
-.filt { padding: 4px 14px 16px; overflow-y: auto; }
 .filtRow { display: flex; gap: 6px; flex-wrap: wrap; padding-bottom: 8px; }
 .chip {
   height: 24px;
@@ -100,7 +85,6 @@
 }
 .chip:hover { border-color: var(--tx-3); color: var(--tx); }
 .chip.on { background: var(--bg-3); border-color: var(--tx-3); color: var(--tx); }
-.chip .swatch { width: 8px; height: 8px; border-radius: var(--r-xs); }
 
 /* === Feed (center pane) === */
 .feedHead {
@@ -119,13 +103,6 @@
 .feedHead h2 small {
   font-family: var(--sans); font-size: var(--fs-sm); color: var(--tx-3); letter-spacing: 0.1em;
 }
-.feedHead .stat {
-  font-size: var(--fs-sm);
-  color: var(--tx-3);
-  display: flex; align-items: center; gap: 6px;
-}
-.feedHead .stat strong { color: var(--tx); font-weight: 600; font-family: var(--mono); }
-
 .feed { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 0 40px; }
 
 /* Vote breakdown */
@@ -157,11 +134,6 @@
   padding: 4px 0;
   border-bottom: 1px dashed var(--bd-soft);
 }
-.voteCell .from  { color: var(--tx-2); flex: 0 0 auto; min-width: 60px; }
-.voteCell .arrow { color: var(--tx-4); }
-.voteCell .to    { color: var(--tx); font-weight: 500; }
-.voteCell .targetBad { color: var(--danger); }
-
 /* === Right pane: roster === */
 .roster { flex: 1; overflow-y: auto; padding-bottom: 32px; }
 .rosterSection { padding: 6px 14px 16px; }
@@ -179,8 +151,6 @@
   margin: 12px 0 8px;
   display: flex; align-items: center; justify-content: space-between;
 }
-.rosterSection h4 .count { font-family: var(--mono); font-size: var(--fs-sm); color: var(--tx-4); letter-spacing: 0; }
-
 /* roster rows are rendered by the shared AgentRosterRow component (#521) */
 
 /* CO board */
@@ -229,9 +199,7 @@
 .filt { padding: 4px 14px 16px; overflow-y: auto; flex: 0 0 auto; border-top: 1px solid var(--bd); }
 
 /* vote cell */
-.voteFrom  { color: var(--tx-2); flex: 0 0 auto; min-width: 60px; }
 .voteArrow { color: var(--tx-4); }
-.voteTo    { color: var(--tx); font-weight: 500; }
 
 /* roster inner */
 .count     { font-family: var(--mono); font-size: var(--fs-sm); color: var(--tx-4); letter-spacing: 0; }
