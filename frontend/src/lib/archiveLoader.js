@@ -56,16 +56,26 @@ export function parseIndexToGameList(index) {
 }
 
 /**
+ * Fetch and parse state_archive/index.json.
+ * Shared by fetchGameList() and fetchGameBySessionId() (#595).
+ * Not memoized on purpose: a live game's index must stay fresh on every call.
+ *
+ * @returns {Promise<object[]>}
+ */
+async function fetchIndex() {
+  const res = await fetch(INDEX_URL);
+  if (!res.ok) throw new Error(`Failed to fetch game list: ${res.status}`);
+  return res.json();
+}
+
+/**
  * Fetch state_archive/index.json and return a list of GameCard-compatible
  * objects. Throws if the fetch fails.
  *
  * @returns {Promise<object[]>}
  */
 export async function fetchGameList() {
-  const res = await fetch(INDEX_URL);
-  if (!res.ok) throw new Error(`Failed to fetch game list: ${res.status}`);
-  const index = await res.json();
-  return parseIndexToGameList(index);
+  return parseIndexToGameList(await fetchIndex());
 }
 
 // --- Game stats (#522 global profile mode) ---
@@ -204,9 +214,7 @@ export async function fetchAgentConfig() {
  * @returns {Promise<object>}
  */
 export async function fetchGameBySessionId(sessionId) {
-  const res = await fetch(INDEX_URL);
-  if (!res.ok) throw new Error(`Failed to fetch game list: ${res.status}`);
-  const index = await res.json();
+  const index = await fetchIndex();
   const entry = index.find(e => e.session_id === sessionId);
   if (!entry) throw new Error(`Session not found: ${sessionId}`);
   return entry;

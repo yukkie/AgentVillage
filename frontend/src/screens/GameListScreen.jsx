@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Avatar, { AvatarButton } from '../components/Avatar.jsx';
 import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
+import StatusMessage from '../components/StatusMessage.jsx';
 import { fetchGameList, fetchGameStats, parseWinRateRanking } from '../lib/archiveLoader.js';
 import { ALL_AGENT_NAMES } from '../lib/agentMeta.js';
 import styles from './GameListScreen.module.css';
@@ -252,7 +253,7 @@ export default function GameListScreen() {
           <NewVillageForm />
 
           {loading && (
-            <div className={styles.loadingMsg}>読み込み中…</div>
+            <StatusMessage kind="loading">読み込み中…</StatusMessage>
           )}
 
           <div className={styles.listTabs}>

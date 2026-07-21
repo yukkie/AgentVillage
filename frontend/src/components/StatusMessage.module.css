@@ -1,0 +1,3 @@
+.status { font-size: var(--fs-md); }
+.loading { color: var(--tx-4); }
+.error   { color: var(--danger); }

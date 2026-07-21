@@ -502,6 +502,20 @@ CO（カミングアウト）役職バッジ「▶ {役職 日本語名} CO」�
 
 `ROLE_META_BY_KEY` から `ja`（日本語名）と `color`（`--co-color` CSS Variable）を導出する。**`ROLE_META_BY_KEY` にない未知キーでも生キーをそのまま表示する**（防御フォールバック。既存挙動を保存）。`RoleTag` も #599（判断1 A案）で同じく生キーフォールバック表示に統一されたため、両コンポーネントの未知キー挙動は一致している。
 
+#### `StatusMessage`
+
+非同期取得の loading / error 表示を統合した共通ステータス行（#595）。`AgentDetailScreen`（`GlobalProfile` / `GameScopedProfile` 計4箇所）と `GameListScreen` のインライン div コピー・独自 class 参照を置き換える。
+
+| prop | 型 | 説明 |
+|---|---|---|
+| `kind` | `'loading'｜'error'` | 色トークンを決定する（デフォルト `'loading'`）。`loading`→`--tx-4`、`error`→`--danger` |
+| `className` | `string?` | 呼び出し側のレイアウト制約クラス（`.tabContent` 等）を内部 `styles.status` と結合する（`RoleTag` #599 AC-4 と同方針） |
+| `children` | node | 表示する文言。画面ごとに文言が異なるため部品側では固定せず、呼び出し側が children で渡す |
+
+`data-status` 属性に `kind` の値をそのまま出力する（CSS Modules のクラス名はハッシュ化されるため、テストからの参照点として使う）。`role="status"` / `aria-live` は付与しない（既存に無く、付与すると支援技術上の挙動が変わるため。a11y 改善は姉妹 Issue のスコープ）。
+
+`SpectatorScreen` のフィード内 loading/error 行（`SystemRow` 流用）は対象外。`SystemRow` はフィード内の行整列（`.sysIconCol` の 64px アイコン列・`.sysrow` の border-bottom 構造）を持つ別概念の部品であり、意図的に温存する（コピペ重複ではなく既存共通部品の再利用）。
+
 #### `FeedCard`（`FeedItem` / `SystemRow`）
 
 中央フィードのイベントカード群（#526）。SpectatorScreen に閉じていた発言・システム行カードを `src/components/FeedCard.jsx` へ昇格し、game-scoped 中央タイムライン（#523）と共有する。

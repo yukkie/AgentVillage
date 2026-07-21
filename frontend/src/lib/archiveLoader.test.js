@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
-  parseIndexToGameList, parseEntryToGame, fetchGameBySessionId,
+  parseIndexToGameList, parseEntryToGame, fetchGameBySessionId, fetchGameList,
   parseGameStats, parseAllAgentNames, parseWinRateRanking, fetchGameStats,
   parseBlurb, fetchAgentConfig,
 } from './archiveLoader.js';
@@ -136,6 +136,28 @@ describe('parseIndexToGameList', () => {
     Objective: 空の index に対して空配列を返すことを検証する
     */
     expect(parseIndexToGameList([])).toEqual([]);
+  });
+});
+
+// --- fetchGameList (#595 AC-4: shared fetchIndex() error message) ---
+
+describe('fetchGameList', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('throws with the shared index fetch error message', async () => {
+    /*
+     * SUT: fetchGameList
+     * Mock: global fetch（ok:false レスポンスを固定）
+     * Level: unit
+     * Objective: index fetch 失敗時に fetchGameBySessionId と同一のエラーメッセージ
+     * （`Failed to fetch game list: {status}`）で throw することを検証し、
+     * fetchIndex() 共通化後もエラー処理が重複せず一致していることを間接担保する (AC-4)。
+     */
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+
+    await expect(fetchGameList()).rejects.toThrow('Failed to fetch game list: 500');
   });
 });
 

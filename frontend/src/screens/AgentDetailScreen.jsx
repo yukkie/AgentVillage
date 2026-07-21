@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
 import AgentRosterRow from '../components/AgentRosterRow.jsx';
 import RoleTag from '../components/RoleTag.jsx';
+import StatusMessage from '../components/StatusMessage.jsx';
 import { FeedItem } from '../components/FeedCard.jsx';
 import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
@@ -24,6 +25,12 @@ function useAgentBlurb(agent) {
   const [config, setConfig] = useState(null);
 
   useEffect(() => {
+    // #595: この fetch effect の共通フック化（useAsyncData）を検討したが、効果が無いと判断して見送った。
+    // 理由: error の意味論が箇所ごとに異なる。ここは error を null に潰して本体描画を妨げない一方、
+    // GlobalProfile は { status, games } のタプルで error 状態を明示的に描画し、
+    // GameListScreen の fetchGameList は error 処理自体を持たない。state 形状を統一しても
+    // 呼び出し元それぞれに意味論を復元する分岐が生えるだけで、可読性は改善しない。
+    // 再検出時はこのコメントを判断材料にすること。
     let cancelled = false;
     fetchAgentConfig()
       .then(c => { if (!cancelled) setConfig(c); })
@@ -327,9 +334,9 @@ function GlobalProfile({ agent, blurb }) {
 
   let body;
   if (state.status === 'loading') {
-    body = <div className={styles.tabContent} style={{ color: 'var(--tx-4)' }}>読み込み中…</div>;
+    body = <StatusMessage kind="loading" className={styles.tabContent}>読み込み中…</StatusMessage>;
   } else if (state.status === 'error') {
-    body = <div className={styles.tabContent} style={{ color: 'var(--danger)' }}>戦績を読み込めませんでした。</div>;
+    body = <StatusMessage kind="error" className={styles.tabContent}>戦績を読み込めませんでした。</StatusMessage>;
   } else {
     const stats = parseGameStats(state.games, agent);
     const allNames = parseAllAgentNames(state.games);
@@ -391,9 +398,9 @@ function GameScopedProfile({ sessionId, agent, blurb, viewerMode, viewerSearch, 
 
   let body;
   if (gameScopedState.status === 'loading') {
-    body = <div className={styles.tabContent} style={{ color: 'var(--tx-4)' }}>読み込み中…</div>;
+    body = <StatusMessage kind="loading" className={styles.tabContent}>読み込み中…</StatusMessage>;
   } else if (gameScopedState.status === 'error') {
-    body = <div className={styles.tabContent} style={{ color: 'var(--danger)' }}>{gameScopedState.error?.message ?? '読み込めませんでした。'}</div>;
+    body = <StatusMessage kind="error" className={styles.tabContent}>{gameScopedState.error?.message ?? '読み込めませんでした。'}</StatusMessage>;
   } else {
     const { entry, gameData } = gameScopedState;
     const events = gameData?.events ?? [];
