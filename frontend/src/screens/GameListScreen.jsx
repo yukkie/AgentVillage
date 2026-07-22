@@ -214,11 +214,13 @@ export default function GameListScreen() {
   const [activeTab, setActiveTab] = useState('完了');
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [gameListError, setGameListError] = useState(false);
   const [winRateRankingState, setWinRateRankingState] = useState({ status: 'loading', agents: [] });
 
   useEffect(() => {
     fetchGameList()
       .then(setGames)
+      .catch(() => setGameListError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -254,6 +256,10 @@ export default function GameListScreen() {
 
           {loading && (
             <StatusMessage kind="loading">読み込み中…</StatusMessage>
+          )}
+
+          {!loading && gameListError && (
+            <StatusMessage kind="error">ゲーム一覧を読み込めませんでした</StatusMessage>
           )}
 
           <div className={styles.listTabs}>

@@ -603,6 +603,8 @@ CSS Grid `grid-template-columns: var(--lcol) 1fr var(--rcol)` で 3 ペインを
 
 データソース: `state_archive/index.json`（ゲーム一覧）、`state/stats/game_stats.json`（右ペイン勝率ランキング）。新規村フォームの村名プリセット（`VILLAGE_NAME_PRESETS`）は #547 で廃止。
 
+ゲーム一覧取得（`fetchGameList`）が reject した場合、`loading` は既存どおり false になった上で `StatusMessage kind="error"` を表示し、ゲーム0件の正常系と区別する（#614）。兄弟 effect `fetchGameStats`（右ペイン勝率ランキング）の error 処理と同様に `.catch` で状態を保持する形にした。
+
 Semantic HTML: `GameCard` は自己完結したゲーム項目として `<article>`、サイドナビと複数項目を持つ右ウィジェットの項目群は `<ul><li>` で表現する。
 
 #### `SpectatorScreen`

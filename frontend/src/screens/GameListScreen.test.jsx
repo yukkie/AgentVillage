@@ -214,6 +214,49 @@ describe('GameListScreen real stats ranking（#337）', () => {
   });
 });
 
+describe('GameListScreen fetchGameList 失敗時のエラー表示（#614）', () => {
+  it('統合: fetchGameList が reject したとき unhandled rejection を起こさず StatusMessage でエラー表示し loading を解除する', async () => {
+    /*
+     * SUT: GameListScreen
+     * Mock: fetchGameList（reject を再現）/ fetchGameStats
+     * Level: component
+     * Objective: fetchGameList の reject 時に unhandled rejection が発生せず、
+     *   loading が false になり（AC-4）、ゲーム0件と区別できる StatusMessage kind="error" の
+     *   エラー表示が出る（AC-1・AC-2・AC-3）ことを検証する。
+     */
+    archiveLoader.fetchGameList.mockRejectedValue(new Error('boom'));
+    archiveLoader.fetchGameStats.mockResolvedValue(statsFixture);
+
+    renderGameList();
+
+    const errorMessage = await screen.findByText('ゲーム一覧を読み込めませんでした');
+    expect(errorMessage.getAttribute('data-status')).toBe('error');
+
+    // loading が既存挙動どおり解除されている（「読み込み中…」が残らない）
+    expect(screen.queryByText('読み込み中…')).toBeNull();
+
+    // ゲーム0件の正常系（空配列）とは区別される — カードが無いのはエラーによるものであり、
+    // 正常系の「0件表示」用の文言等は出ていない（エラー文言のみが表示される）
+    expect(screen.queryAllByRole('article')).toHaveLength(0);
+  });
+
+  it('統合: fetchGameList 成功時は既存どおりゲーム一覧が表示されエラー表示が出ない（AC-5）', async () => {
+    /*
+     * SUT: GameListScreen
+     * Mock: fetchGameList / fetchGameStats
+     * Level: component
+     * Objective: fetchGameList 成功時に StatusMessage kind="error" が出現せず、
+     *   既存どおりゲーム一覧が表示されることを検証する（回帰防止）。
+     */
+    mockGameList();
+
+    renderGameList();
+
+    await screen.findByRole('article', { name: '20260510_102927' });
+    expect(screen.queryByText('ゲーム一覧を読み込めませんでした')).toBeNull();
+  });
+});
+
 describe('GameListScreen stub UI 削除（AC-1〜AC-4）', () => {
   it('統合: GameCard に upvote・提供:RunVillage・観戦コメント数・並びHot が存在しない', async () => {
     /*
