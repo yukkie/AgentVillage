@@ -4,7 +4,9 @@ import { AGENT_COLORS } from '../lib/agentMeta.js';
 import styles from './Avatar.module.css';
 
 // 唯一のアイコン描画実装（#585 で labeled 用コピーを統合）。
-// alt は内部 API: Avatar が label の有無から導出して渡す（labeled は隣の可視ラベルが名前を担うため alt=""）。
+// alt は内部 API: Avatar が label / decorative の有無から導出して渡す
+// （labeled、または呼び出し側が decorative を宣言した bare は、隣の可視テキストが
+//  名前を担うため alt=""。#597）。
 function AvatarIcon({ name, role, dead, size, highlight, alt }) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const color = AGENT_COLORS[name] || '#888';
@@ -38,9 +40,9 @@ function AvatarIcon({ name, role, dead, size, highlight, alt }) {
  * エージェントアイデンティティコンポーネント。
  * label なし: アイコン単体（bare Avatar）。label あり: アイコン＋名前テキスト。
  */
-export default function Avatar({ name, role, dead, size = 'md', highlight, label, layout = 'vertical', variant = 'plain' }) {
+export default function Avatar({ name, role, dead, size = 'md', highlight, label, layout = 'vertical', variant = 'plain', decorative = false }) {
   if (!label) {
-    return <AvatarIcon name={name} role={role} dead={dead} size={size} highlight={highlight} alt={name} />;
+    return <AvatarIcon name={name} role={role} dead={dead} size={size} highlight={highlight} alt={decorative ? '' : name} />;
   }
 
   const layoutClass = layout === 'horizontal' ? styles.chipH : styles.chipV;

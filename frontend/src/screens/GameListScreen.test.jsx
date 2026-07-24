@@ -165,6 +165,22 @@ describe('GameListScreen list semantics', () => {
     const adaLink = within(ranking).getByRole('link', { name: /Ada Lovelace/ });
     expect(adaLink.getAttribute('href')).toBe('/agent/Ada%20Lovelace');
   });
+
+  it('統合: GameListScreen: 勝率ランキングの行リンクのアクセシブルネームが name 1回のみ', async () => {
+    /*
+     * SUT: GameListScreen / RightPane
+     * Mock: fetchGameList / fetchGameStats
+     * Level: component
+     * Objective: 勝率ランキング行 Link のアクセシブルネームに name が1度だけ現れ、二重化（"Ada Lovelace Ada Lovelace"）しないことを検証する（#597 AC-1b/AC-2）。
+     */
+    mockGameList();
+    renderGameList();
+    const ranking = await screen.findByRole('list', { name: '勝率ランキング' });
+
+    const adaLink = within(ranking).getByRole('link', { name: /Ada Lovelace/ });
+    expect((adaLink.textContent.match(/Ada Lovelace/g) || []).length).toBe(1);
+    expect(adaLink.querySelector('img').getAttribute('alt')).toBe('');
+  });
 });
 
 describe('GameListScreen real stats ranking（#337）', () => {
@@ -354,6 +370,60 @@ describe('GameListScreen 保持要素（AC-6）', () => {
     expect(within(nav).getByText('ルール')).toBeTruthy();
     // 👁 同時観戦（完了ゲームの viewers は null → '—'）
     expect(screen.getByText(/同時観戦/)).toBeTruthy();
+  });
+});
+
+describe('GameListScreen NewVillageForm 容量ガード（#597 AC-5）', () => {
+  it('統合: NewVillageForm: 選択済みエージェントは定員を超えていても解除できる', async () => {
+    /*
+     * SUT: GameListScreen / NewVillageForm toggleAgent
+     * Mock: fetchGameList / fetchGameStats
+     * Level: component
+     * Objective: toggleInSet 共通化後も、選択済みエージェントは定員（デフォルト5人）を占有している状態から
+     *   クリックで解除できることを検証する（トグル核の置換で挙動が変わっていないこと）。
+     */
+    const user = userEvent.setup();
+    mockGameList();
+    renderGameList();
+    await screen.findByRole('article', { name: '20260510_102927' });
+
+    await user.click(screen.getByText('新しい村を作る'));
+
+    const agentButtons = screen.getAllByRole('button', { name: /^(?!新しい村を作る|村を作る|5人|8人|11人|🔴 LIVE|完了).+/ })
+      .filter(b => b.getAttribute('aria-pressed') !== null);
+
+    await user.click(agentButtons[0]);
+    expect(agentButtons[0].getAttribute('aria-pressed')).toBe('true');
+
+    await user.click(agentButtons[0]);
+    expect(agentButtons[0].getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('統合: NewVillageForm: 定員に達すると未選択エージェントは追加されない', async () => {
+    /*
+     * SUT: GameListScreen / NewVillageForm toggleAgent
+     * Mock: fetchGameList / fetchGameStats
+     * Level: component
+     * Objective: toggleInSet 共通化後も、選択数が定員（5人）に達した状態で未選択のエージェントをクリックしても
+     *   追加されない（容量ガードが呼び出し側で従来どおり効く）ことを検証する。
+     */
+    const user = userEvent.setup();
+    mockGameList();
+    renderGameList();
+    await screen.findByRole('article', { name: '20260510_102927' });
+
+    await user.click(screen.getByText('新しい村を作る'));
+
+    const agentButtons = screen.getAllByRole('button').filter(b => b.getAttribute('aria-pressed') !== null);
+
+    for (let i = 0; i < 5; i++) {
+      await user.click(agentButtons[i]);
+    }
+    expect(screen.getByText('5/5人選択中')).toBeTruthy();
+
+    await user.click(agentButtons[5]);
+    expect(agentButtons[5].getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByText('5/5人選択中')).toBeTruthy();
   });
 });
 
