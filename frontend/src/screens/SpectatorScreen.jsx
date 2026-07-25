@@ -13,6 +13,7 @@ import { agentDetailPath } from '../lib/agentDetailPath.js';
 import { fetchReplayAgents, fetchReplayLog } from '../lib/replayLoader.js';
 import { fetchGameBySessionId } from '../lib/archiveLoader.js';
 import { parseGameData, aggregateCoStatus } from '../lib/parseGameData.js';
+import { toggleInSet } from '../lib/toggleInSet.js';
 import { useDeaths } from '../lib/useDeaths.js';
 import { filterByAgents, filterByRoles, filterFeedEvents } from '../lib/feedFilter.js';
 import { useViewerMode, viewerModeToggleLabel } from '../lib/useViewerMode.js';
@@ -480,27 +481,11 @@ export default function SpectatorScreen() {
   const [thoughtsOpen, setThoughtsOpen] = useState(false);
 
   const toggleAgentFilter = (agentName) => {
-    setSelectedAgents(current => {
-      const next = new Set(current);
-      if (next.has(agentName)) {
-        next.delete(agentName);
-      } else {
-        next.add(agentName);
-      }
-      return next;
-    });
+    setSelectedAgents(current => toggleInSet(current, agentName));
   };
 
   const toggleRoleFilter = (roleKey) => {
-    setSelectedRoles(current => {
-      const next = new Set(current);
-      if (next.has(roleKey)) {
-        next.delete(roleKey);
-      } else {
-        next.add(roleKey);
-      }
-      return next;
-    });
+    setSelectedRoles(current => toggleInSet(current, roleKey));
   };
 
   const toggleThoughtsOpen = () => {

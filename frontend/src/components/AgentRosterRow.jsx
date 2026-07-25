@@ -18,7 +18,7 @@ export default function AgentRosterRow({ name, role, to, showRole = false, coRol
   return (
     <li className={`${styles.row} ${dead ? styles.dead : ''} ${showStatusDot ? '' : styles.noDot} ${selected ? styles.selected : ''}`} style={{ '--r-color': r?.color }}>
       <Link to={to} className={styles.link}>
-        <Avatar name={name} role={showRole ? role : undefined} size="sm" dead={dead} />
+        <Avatar name={name} role={showRole ? role : undefined} size="sm" dead={dead} decorative />
         <div className={styles.who}>
           <span className={styles.name}>{name}</span>
           <span className={styles.meta}>

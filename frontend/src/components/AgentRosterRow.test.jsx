@@ -148,6 +148,20 @@ describe('AgentRosterRow', () => {
     expect(container.querySelector('[class*="statusDot"]')).toBeNull();
   });
 
+  it('統合: AgentRosterRow: 行リンクのアクセシブルネームが name 1回のみ', () => {
+    /*
+     * SUT: AgentRosterRow
+     * Mock: なし（plain props を入力）
+     * Level: component
+     * Objective: 行 Link のアクセシブルネームに name が1度だけ現れ、二重化（"Alice Alice"）しないことを検証する（#597 AC-1/AC-2）。
+     */
+    const { container } = renderRow();
+
+    const link = screen.getByRole('link', { name: /Alice/ });
+    expect((link.textContent.match(/Alice/g) || []).length).toBe(1);
+    expect(container.querySelector('img').getAttribute('alt')).toBe('');
+  });
+
   it('統合: AgentRosterRow: アイコン左・statusDot 右端の DOM 順で描画する', () => {
     /*
      * SUT: AgentRosterRow

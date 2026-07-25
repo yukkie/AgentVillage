@@ -421,10 +421,13 @@ stateDiagram-v2
 | `label` | `string?` | 渡すとエージェント名テキストを表示。`label` あり時は `<img alt="">` に変更（accessible name 重複を避ける） |
 | `layout` | `'vertical'｜'horizontal'` | `label` あり時のレイアウト。`vertical`: アイコン上・名前下、`horizontal`: アイコン左・名前右（デフォルト `'vertical'`） |
 | `variant` | `'plain'｜'muted'｜'selected'｜'dead'｜'danger'` | 外観状態（デフォルト `'plain'`）。`dead` はチップ全体の muted スタイル（`dead` prop のアイコン内オーバーレイとは別概念）。`danger` はラベルテキストを `var(--danger)` 色で強調（処刑対象の投票グリッド等） |
+| `decorative` | `boolean?` | true で `label` なし（bare）でも `<img alt="">` を導出する（デフォルト `false`）。呼び出し側が近傍に可視の名前テキストを別途描画しており、bare Avatar 側の alt が重複読み上げを起こす場合に使う（#597）。詳細は下記 |
 
 `label` あり時は identity wrapper 要素（新クラス）がアイコン frame（`.av`）を内包する構造になる。`.av` のスタイルは変更しないため、`label` なしの既存呼び出しは挙動変更なし。
 
-内部構成: アイコン描画は単一の内部実装（`AvatarIcon`）に一本化されている（#585）。`alt` は公開 prop ではなく、`Avatar` が `label` の有無から導出して内部的に渡す（`label` あり → `alt=""`、なし → `alt={name}`）。導出規則と食い違う消費箇所を作らないため、`alt` を個別制御する prop は設けない。
+内部構成: アイコン描画は単一の内部実装（`AvatarIcon`）に一本化されている（#585）。`alt` は公開 prop ではなく、`Avatar` が `label` / `decorative` の有無から導出して内部的に渡す（`label` あり、または `decorative` true → `alt=""`、どちらもなし → `alt={name}`）。
+
+`decorative` は #585 が禁じた「値を自由指定する alt prop」ではない点に注意する。`decorative` が宣言するのは「alt を空にする」という導出済みの意図であり、任意の文字列を alt に渡す手段ではない。#585 の「alt は `label` の有無から導出し、導出規則と食い違う消費箇所を作らないため個別制御 prop は設けない」という方針は、**`label` を持たない bare Avatar が近傍の可視テキストと共存するケースを想定していなかった**（`AgentRosterRow` 等、2行レイアウトのため `label` chip 構造に乗せられない）。`decorative` はこの欠けていたケースに対して、`label` と同じ「可視名があるので alt は空でよい」という意味論を bare 構造のまま宣言できるようにしたものであり、導出規則自体（値ではなく有無で決まる）を拡張しているだけで矛盾しない。
 
 データソース: `AGENT_COLORS`（`lib/agentMeta.js`・`agents.json` の `color` 由来）でエージェント名 → 個人カラー（`--av-c`）を解決。
 
@@ -480,7 +483,7 @@ children ベースの API とした理由: 重複していたのは「`Link` + `
 
 | prop | 型 | 説明 |
 |---|---|---|
-| `name` | `string` | エージェント名（必須）。Avatar の `alt` と1行目テキストに使う |
+| `name` | `string` | エージェント名（必須）。1行目テキストに使う。Avatar には `decorative` を付けて渡すため Avatar 自体の `alt` は空になる（下記） |
 | `role` | `string?` | 真の役職キー（例: `"Seer"`）。`showRole` が true のとき RoleTag・Avatar 役職刻印に使う |
 | `to` | `string` | 遷移先パス（`Link to`）。`agentDetailPath` 等は**呼び出し側で組み立てて渡す**（画面非依存にするため） |
 | `showRole` | `boolean?` | true で役職タグ・Avatar 役職刻印を表示。呼び出し側が `viewerMode === 'spectator'` を計算して渡す（デフォルト `false`） |
@@ -491,6 +494,8 @@ children ベースの API とした理由: 重複していたのは「`Link` + `
 | `selected` | `boolean?` | 現在表示中の行を強調（左ボーダー `--acc` ＋ 背景）。`global profile mode` 左ペインで「今表示しているエージェント」をハイライトするのに使う（デフォルト `false`） |
 
 > **役職出し分けは `showRole` boolean に集約**: 「死亡者は役職常時公開」という特例は持たない。生存・死亡とも `showRole`（＝呼び出し側の `viewerMode === 'spectator'`）に従う。死亡者の役職を public で露出すると消去法で生存者の役職が絞れてしまうため（#521 AC-3）。
+
+> **アクセシブルネームの二重化に注意（#597）**: 行全体を `Link` で包むため、行のアクセシブルネームは中身のテキスト・alt を連結したものになる。`AgentRosterRow` は Avatar（アイコン）と可視の `.name` span の両方で名前を描画するため、Avatar 側の bare `<img alt={name}>` をそのまま使うとリンクの読み上げが「name name …」に二重化する（実際のバグ、#597 で修正）。`AgentRosterRow` 内部では `<Avatar name={name} decorative … />` として Avatar に渡し、`alt=""` を導出させることで二重化を避ける。2行レイアウト・CSS・可視 `.name` span 自体は変更しない（`label` prop への切り替えは Avatar の chip レイアウトを持ち込み、既存 CSS 構造の作り替えを招くため採用しない）。同じ理由で `GameListScreen` 勝率ランキング（`RightPane` の `rankLink`）も bare Avatar + 可視 `.rankName` span が同居しており、同じ `decorative` prop で修正している。
 
 #### `CoBadge`
 

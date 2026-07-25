@@ -101,6 +101,30 @@ describe('Avatar accessibility', () => {
     const img = container.querySelector('img');
     expect(img.getAttribute('alt')).toBe('Nox');
   });
+
+  it('pure: Avatar: decorative で alt="" を導出する', () => {
+    /*
+    SUT: Avatar
+    Mock: なし
+    Level: unit
+    Objective: label なしの bare Avatar でも decorative=true を渡すと img alt="" が導出されることを検証する（#597 判断1 b案）。
+    */
+    const { container } = render(<Avatar name="Nox" decorative />);
+    const img = container.querySelector('img');
+    expect(img.getAttribute('alt')).toBe('');
+  });
+
+  it('pure: Avatar: decorative 未指定の bare Avatar は従来どおり alt=name', () => {
+    /*
+    SUT: Avatar
+    Mock: なし
+    Level: unit
+    Objective: decorative を渡さない bare Avatar の挙動が変わらない（alt=name のまま）ことを回帰確認する。
+    */
+    const { container } = render(<Avatar name="Nox" />);
+    const img = container.querySelector('img');
+    expect(img.getAttribute('alt')).toBe('Nox');
+  });
 });
 
 describe('AvatarButton', () => {

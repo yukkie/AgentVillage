@@ -6,6 +6,7 @@ import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import StatusMessage from '../components/StatusMessage.jsx';
 import { fetchGameList, fetchGameStats, parseWinRateRanking } from '../lib/archiveLoader.js';
 import { ALL_AGENT_NAMES } from '../lib/agentMeta.js';
+import { toggleInSet } from '../lib/toggleInSet.js';
 import styles from './GameListScreen.module.css';
 
 const TABS = ['🔴 LIVE', '完了'];
@@ -19,13 +20,12 @@ function NewVillageForm() {
 
   function toggleAgent(name) {
     setSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(name)) {
-        next.delete(name);
-      } else if (next.size < count) {
-        next.add(name);
+      // 容量ガード（呼び出し側の関心）: 未選択の状態から定員に達している場合は追加しない。
+      // トグル核（あれば削除・なければ追加）は toggleInSet に委譲する。
+      if (!prev.has(name) && prev.size >= count) {
+        return prev;
       }
-      return next;
+      return toggleInSet(prev, name);
     });
   }
 
@@ -196,7 +196,7 @@ function RightPane({ winRateRankingState }) {
               <li className={styles.rankRow} key={name}>
                 <Link to={`/agent/${encodeURIComponent(name)}`} className={styles.rankLink}>
                   <span className={styles.rank}>{i + 1}</span>
-                  <Avatar name={name} size="xs" />
+                  <Avatar name={name} size="xs" decorative />
                   <span className={styles.rankName}>{name}</span>
                   <span className={styles.rankNum}>{winRate}%</span>
                 </Link>
