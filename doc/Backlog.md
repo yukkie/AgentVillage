@@ -21,7 +21,7 @@
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | feat(frontend): GameData registry — track data gaps continuously | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
-| yukkie/AgentVillage#608 | bug | （なし） | - | fix(frontend): restore night action icon role colors in SpectatorScreen | #604 設計フェーズで発見。夜行動アイコンの役職色分けがプロトタイプ移植時の配線ミス（`.ico` 不使用・event_type とクラス名不一致）で全デッド化し機能していない。`.res`/`.when` の復活可否は設計時判断 |
+| yukkie/AgentVillage#608 | bug | （なし） | - | fix(frontend): restore night action icon role colors in SpectatorScreen | #604 設計フェーズで発見。夜行動アイコンの役職色分けがプロトタイプ移植時の配線ミス（`.ico` 不使用・event_type とクラス名不一致）で全デッド化し機能していない。`.res`（占い黒/白バッジ）は `inspection_role` で復活、`.when`/`.action.exec` は削除確定。#609 から申し送られた同型のデッド `.phaseItem.day\|night\|exec .dot` も取り込み済み |
 | yukkie/AgentVillage#495 | enhancement | 🟢 | 3 | design: log visibility classes and recipient-based authorization model (for LIVE / player participation) | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
 | yukkie/AgentVillage#319 | enhancement | 🟢 | 3 | feat(frontend): LIVE spectator (real-time view of in-progress game) | state/ を tail して進行中ゲームを表示（将来フェーズ） |
 | yukkie/AgentVillage#364 | enhancement | 🟢 | 5 | refactor: introduce SpectatorScreen view model indexes | SpectatorScreen 用 view model/index を導入し render 中の events 全走査を減らす。両 screen の prevById/visibleDays/roleAssignment 重複解消＋挙動差判定を含む。実装順序制約: #596 → #364 |
