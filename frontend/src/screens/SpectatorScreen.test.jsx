@@ -955,6 +955,163 @@ describe('RightPane: night actions for activeDay', () => {
   });
 });
 
+describe('RightPane: night action icon role colors (#608)', () => {
+  it.each([
+    ['inspection', 'inspection', styles.inspection],
+    ['guard', 'guard', styles.guard],
+    ['night_attack', 'night_attack', styles.night_attack],
+  ])('統合: RightPane: %s の夜行動アイテムに event_type クラスが付与される', (_label, eventType, expectedClass) => {
+    /*
+     * SUT: RightPane (NightActionsPanel)
+     * Mock: なし
+     * Level: integration
+     * Objective: nightActions の event_type に応じて、CSS 側の役職色ルールと名前が一致する
+     *            state クラス（inspection/guard/night_attack）が action 要素に付与されることを検証する（AC-1, AC-2）。
+     */
+    const daySummary = {
+      1: {
+        nightActions: [{ event_type: eventType, agent: 'Alice', target: 'Bob', is_public: false }],
+        execResult: null,
+        speechCount: 0,
+        nightDone: true,
+      },
+    };
+    const { container } = renderRightPane({ daySummary, activeDay: 1 });
+    const actionList = container.querySelector('[aria-label="Day 1 夜の行動"]');
+    const actionItem = actionList.querySelector(`.${styles.action}`);
+
+    expect(actionItem.classList.contains(expectedClass)).toBe(true);
+  });
+
+  it('統合: RightPane: inspection_role=Werewolf の inspection 行に黒バッジが表示される', () => {
+    /*
+     * SUT: RightPane (NightActionsPanel)
+     * Mock: なし
+     * Level: integration
+     * Objective: inspection_role が 'Werewolf' の inspection 行に .res.black バッジが描画されることを検証する（AC-3）。
+     */
+    const daySummary = {
+      1: {
+        nightActions: [{ event_type: 'inspection', agent: 'Alice', target: 'Bob', is_public: false, inspection_role: 'Werewolf' }],
+        execResult: null,
+        speechCount: 0,
+        nightDone: true,
+      },
+    };
+    const { container } = renderRightPane({ daySummary, activeDay: 1 });
+    const actionList = container.querySelector('[aria-label="Day 1 夜の行動"]');
+    const badge = actionList.querySelector(`.${styles.res}`);
+
+    expect(badge).toBeTruthy();
+    expect(badge.classList.contains(styles.black)).toBe(true);
+    expect(badge.classList.contains(styles.white)).toBe(false);
+  });
+
+  it('統合: RightPane: inspection_role=Villager の inspection 行に白バッジが表示される', () => {
+    /*
+     * SUT: RightPane (NightActionsPanel)
+     * Mock: なし
+     * Level: integration
+     * Objective: inspection_role が 'Villager' の inspection 行に .res.white バッジが描画されることを検証する（AC-3）。
+     */
+    const daySummary = {
+      1: {
+        nightActions: [{ event_type: 'inspection', agent: 'Alice', target: 'Carol', is_public: false, inspection_role: 'Villager' }],
+        execResult: null,
+        speechCount: 0,
+        nightDone: true,
+      },
+    };
+    const { container } = renderRightPane({ daySummary, activeDay: 1 });
+    const actionList = container.querySelector('[aria-label="Day 1 夜の行動"]');
+    const badge = actionList.querySelector(`.${styles.res}`);
+
+    expect(badge).toBeTruthy();
+    expect(badge.classList.contains(styles.white)).toBe(true);
+    expect(badge.classList.contains(styles.black)).toBe(false);
+  });
+
+  it('統合: RightPane: inspection_role が無い旧アーカイブ互換の inspection 行にバッジが表示されない', () => {
+    /*
+     * SUT: RightPane (NightActionsPanel)
+     * Mock: なし
+     * Level: integration
+     * Objective: inspection_role フィールドを持たない旧アーカイブ形状の inspection 行では
+     *            .res バッジが描画されないことを検証する（AC-3 の互換境界）。
+     */
+    const daySummary = {
+      1: {
+        nightActions: [{ event_type: 'inspection', agent: 'Alice', target: 'Bob', is_public: false }],
+        execResult: null,
+        speechCount: 0,
+        nightDone: true,
+      },
+    };
+    const { container } = renderRightPane({ daySummary, activeDay: 1 });
+    const actionList = container.querySelector('[aria-label="Day 1 夜の行動"]');
+
+    expect(actionList.querySelector(`.${styles.res}`)).toBeNull();
+  });
+
+  it('統合: RightPane: guard/night_attack 行には inspection_role があってもバッジが表示されない', () => {
+    /*
+     * SUT: RightPane (NightActionsPanel)
+     * Mock: なし
+     * Level: integration
+     * Objective: バッジ描画が event_type === 'inspection' に限定され、guard/night_attack 行では
+     *            表示されないことを検証する（AC-3 の組み合わせ境界）。
+     */
+    const daySummary = {
+      1: {
+        nightActions: [
+          { event_type: 'guard', agent: 'Carol', target: 'Alice', is_public: false },
+          { event_type: 'night_attack', agent: null, target: 'Alice', is_public: false },
+        ],
+        execResult: null,
+        speechCount: 0,
+        nightDone: true,
+      },
+    };
+    const { container } = renderRightPane({ daySummary, activeDay: 1 });
+    const actionList = container.querySelector('[aria-label="Day 1 夜の行動"]');
+
+    expect(actionList.querySelector(`.${styles.res}`)).toBeNull();
+  });
+});
+
+describe('LeftPane phase dot colors unaffected (#608 AC-6)', () => {
+  it('LeftPane: phaseDiscuss/phaseNight/phaseExec の dot に既存の状態修飾クラスが付与されたまま残る', () => {
+    /*
+     * SUT: LeftPane
+     * Mock: なし
+     * Level: unit
+     * Objective: デッドだった .phaseItem.day|night|exec 系統の削除後も、生存系統
+     *            .phaseDiscuss/.phaseNight/.phaseExec が引き続き各フェーズ行に付与され、
+     *            フェーズドットの色分け表示が変化しないことを検証する（AC-6）。
+     */
+    renderLeftPane({
+      activeDay: 1,
+      activePhase: 'vote',
+      daySummary: {
+        1: {
+          nightActions: [{ event_type: 'inspection', agent: 'Alice', target: 'Bob', is_public: false }],
+          execResult: { target: 'Bob', votes: 1, voteTable: [] },
+          speechCount: 0,
+          nightDone: true,
+        },
+      },
+    });
+
+    const discussRow = screen.getByText(/議論フェーズ/).closest(`.${styles.phaseItem}`);
+    const voteRow = screen.getByText(/投票・処刑/).closest(`.${styles.phaseItem}`);
+    const nightRow = screen.getByText(/夜フェーズ/).closest(`.${styles.phaseItem}`);
+
+    expect(discussRow.classList.contains(styles.phaseDiscuss)).toBe(true);
+    expect(voteRow.classList.contains(styles.phaseExec)).toBe(true);
+    expect(nightRow.classList.contains(styles.phaseNight)).toBe(true);
+  });
+});
+
 describe('LeftPane night phase visibility', () => {
   it('hides the night phase row when nightActions is empty and nightDone is false', () => {
     /**

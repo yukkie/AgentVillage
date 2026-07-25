@@ -218,6 +218,12 @@ function NightActionsPanel({ nightActions, roleAssignment, sessionId, viewerMode
             )}
             <span style={{ color: 'var(--tx-4)', marginLeft: 6 }}>{NIGHT_ACTION_LABEL[a.event_type]}</span>
           </div>
+          {a.event_type === 'inspection' && a.inspection_role === 'Werewolf' && (
+            <span className={`${styles.res} ${styles.black}`}>黒</span>
+          )}
+          {a.event_type === 'inspection' && a.inspection_role === 'Villager' && (
+            <span className={`${styles.res} ${styles.white}`}>白</span>
+          )}
         </li>
       ))}
       {nightActions.length === 0 && (

@@ -63,9 +63,6 @@
   color: var(--tx-2);
   border-left: 2px solid transparent;
 }
-.phaseItem.day   .dot { background: var(--acc); }
-.phaseItem.night .dot { background: var(--phase-night); }
-.phaseItem.exec  .dot { background: var(--danger); }
 .phaseItem.active { background: var(--bg-2); color: var(--tx); border-left-color: var(--acc); }
 .phaseItem:hover:not(.active) { background: var(--bg-2); color: var(--tx); }
 
@@ -183,15 +180,12 @@
   border-bottom: 1px dashed var(--bd-soft);
   font-size: var(--fs-sm);
 }
-.action .when  { font-family: var(--mono); font-size: var(--fs-sm); color: var(--tx-4); flex: 0 0 32px; }
-.action .ico   { font-family: var(--serif); font-size: var(--fs-sm); color: var(--tx-2); flex: 0 0 18px; }
-.action.divine .ico { color: var(--r-seer); }
-.action.guard  .ico { color: var(--r-hunter); }
-.action.attack .ico { color: var(--r-werewolf); }
-.action.exec   .ico { color: var(--danger); }
-.action .res   { font-family: var(--mono); font-size: var(--fs-sm); padding: 1px 5px; border-radius: var(--r-xs); }
-.action .res.black { color: var(--r-werewolf); background: rgba(226,107,107,0.12); }
-.action .res.white { color: var(--r-seer);     background: rgba(110,168,255,0.12); }
+.action.inspection .actionIco { color: var(--r-seer); }
+.action.guard       .actionIco { color: var(--r-hunter); }
+.action.night_attack .actionIco { color: var(--r-werewolf); }
+.res       { font-family: var(--mono); font-size: var(--fs-sm); padding: 1px 5px; border-radius: var(--r-xs); }
+.res.black { color: var(--r-werewolf); background: rgba(226,107,107,0.12); }
+.res.white { color: var(--r-seer);     background: rgba(110,168,255,0.12); }
 
 /* Left pane inner layout: date list scrolls, filter pinned at bottom */
 .leftPaneInner { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: hidden; }
