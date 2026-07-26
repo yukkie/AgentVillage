@@ -19,10 +19,10 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#620 | tech-debt | （なし） | - | refactor(frontend): remove dead CSS rules detected by rule-level reachability audit | ❌ #608/PR #619 の `css: true` を活用し全391テストで CSS ルール到達率を計測（345中46件が未到達）。デッド確定21件（App.module.css 11 / AgentDetailScreen.module.css 10）の削除と、要判定18件の仕分け |
 | yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | feat(frontend): GameData registry — track data gaps continuously | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
-| yukkie/AgentVillage#495 | enhancement | 🟢 | 3 | design: log visibility classes and recipient-based authorization model (for LIVE / player participation) | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
+| yukkie/AgentVillage#495 | enhancement | 🟡 | 3 | design: log visibility classes and recipient-based authorization model (for LIVE / player participation) | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
+| yukkie/AgentVillage#620 | tech-debt | 🟡 | 3 | refactor(frontend): remove dead CSS rules detected by rule-level reachability audit | #608/PR #619 の `css: true` を活用し全391テストで CSS ルール到達率を計測（345中46件が未到達）。デッド確定21件（App.module.css 11 / AgentDetailScreen.module.css 10）の削除と、要判定18件の仕分け |
 | yukkie/AgentVillage#319 | enhancement | 🟢 | 3 | feat(frontend): LIVE spectator (real-time view of in-progress game) | state/ を tail して進行中ゲームを表示（将来フェーズ） |
 | yukkie/AgentVillage#364 | enhancement | 🟢 | 5 | refactor: introduce SpectatorScreen view model indexes | SpectatorScreen 用 view model/index を導入し render 中の events 全走査を減らす。両 screen の prevById/visibleDays/roleAssignment 重複解消＋挙動差判定を含む。実装順序制約: #596 → #364 |
 | yukkie/AgentVillage#323 | enhancement | 🟢 | 3 | feat(frontend): i18n support for frontend UI strings (ja/en) | JSX 内の日本語ハードコードを locale リソースに外出しし、ja/en 切り替えに対応 |
@@ -65,10 +65,3 @@
 ## 未整理メモ
 
 *新しいアイデアはここに追記する*
-
-> frontend 重複コード整理バンドル（self-reflection review 2026-07-04）は 2026-07-19 の backlog refinement で
-> #595 / #596 / #597 に分割起票し、`prevById` / `visibleDays` / `roleAssignment` の両 screen 重複は #364 に吸収した。
-> うち #596（CoBadge / FeedCardShell / phaseHeading の抽出）は PR #600 で完了。実装中に検出した
-> `FeedCard.module.css` の子孫セレクタ形の重複6組は #601 に切り出した。
-> #601 は PR #603 で完了（記載の6組に加え、調査で発見した3組も併せて計9組を削除）。その調査中に見つかった
-> `SpectatorScreen.module.css` の同種重複は、詳細度の勝敗が #601 と逆で単純削除できないため #604 に切り出した。
