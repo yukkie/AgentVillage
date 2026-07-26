@@ -242,7 +242,7 @@ stateDiagram-v2
 {+
   == SpectatorScreen
   {+
-    [人] AGENT-WOLF  観戦 > 第13回 桜霞村 > Day2 議論 |  [● LIVE] | [同時観戦 142] | [⤓ 全ログDL] | [★ 応援]
+    [人] AGENT-WOLF  観戦 > 第13回 桜霞村 > Day2 議論 |  [● LIVE]
   }
   {+
     {+
@@ -268,7 +268,7 @@ stateDiagram-v2
     {+
       == Center (1fr) — 発言フィード
       {
-        Day2 議論  3:47経過/残り4:13 | 発言 19 | CO 2 | 投票確定 6/9 | [⇅ 新しい順][🔍 検索]
+        Day2 議論  3:47経過/残り4:13 | 発言 19 | CO 2 | 投票確定 6/9
       }
       {+
         == SpeechCard (<article>, <time>)

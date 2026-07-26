@@ -31,25 +31,11 @@
 - モックにあった疑い度マトリクスの trust バーは #523 AC-7 で撤去済み（dual-bar → suspicion 単一バー）
 - `AgentDetailScreen.test.jsx` の `game-scoped does not create real trust data from agent json` が再発を防いでいる
 
-> ⚠️ `doc/DetailDesign.md:149` の belief 例に残る `"trust": 0.18` は実装と食い違う古い記載。
-
 ---
 
 ## 残存スタブ UI
 
 データギャップではなく「機能・仕様が未実装のまま置かれている UI 要素」。
-
-### 削除予定（#626）
-
-作る予定が無いと確定したもの。#541 が `GameListScreen` で行った掃除の SpectatorScreen 版。
-
-| UI要素 | 実装箇所 | 現状 |
-|---|---|---|
-| 同時観戦 142 | `SpectatorScreen.jsx:427` | ハードコード数値。ソーシャル機能で仕様未定 |
-| ⤓ 全ログDL | `SpectatorScreen.jsx:431` | アクションなしのダミーボタン |
-| ★ 応援 | `SpectatorScreen.jsx:432` | アクションなしのダミーボタン。ソーシャル機能で仕様未定 |
-| ⇅ 新しい順 | `SpectatorScreen.jsx:446` | アクションなしのダミーボタン（ソート未実装） |
-| 🔍 検索 | `SpectatorScreen.jsx:447` | アクションなしのダミーボタン（検索未実装） |
 
 ### 実装予定（#319 LIVE 観戦）
 
@@ -61,9 +47,6 @@
 | 👁 同時観戦数 | `GameListScreen.jsx:154` / `archiveLoader.js:44` | `viewers: 0` 固定（完了ゲームは `'—'` 表示） |
 | LIVE 緊迫バナー | `GameListScreen.jsx:282-285` | 「第13回『桜霞』」「Ren と Nox の対抗占い」等が完全ハードコード |
 | 🔴 LIVE タブ | `GameListScreen.jsx:101` | `g.live === true` のゲームのみ表示。live データ未供給のため常に0件 |
-
-> ⚠️ SpectatorScreen の「同時観戦 142」（#626 で削除）と GameListScreen の「👁 同時観戦数」（#319 で実装）は別物。
-> 前者は完全なハードコード、後者は `archiveLoader.js` の `viewers` フィールド経由で実データ供給を待つ設計。
 
 ### 別 Issue に引き渡し済み
 

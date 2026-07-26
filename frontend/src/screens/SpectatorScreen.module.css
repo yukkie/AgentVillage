@@ -212,9 +212,6 @@
 .phaseTurn { font-family: var(--mono); font-size: var(--fs-sm); color: var(--tx-2); margin-left: auto; }
 .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--tx-4); flex: 0 0 6px; }
 
-/* feed head */
-.spacer { flex: 1; }
-
 /* feed head stat */
 .stat { font-size: var(--fs-sm); color: var(--tx-3); display: flex; align-items: center; gap: 6px; }
 .stat strong { color: var(--tx); font-weight: 600; font-family: var(--mono); }

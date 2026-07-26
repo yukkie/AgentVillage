@@ -146,7 +146,7 @@ def get_role(role: str) -> Role:
   },
   "state": {
     "beliefs": {
-      "SQ": { "suspicion": 0.62, "trust": 0.18, "reason": ["Day2で票替え"] }
+      "SQ": { "suspicion": 0.62, "reason": ["Day2で票替え"] }
     },
     "memory_summary": ["Day1: SQはジナを擁護"],
     "is_alive": true,
