@@ -424,12 +424,9 @@ function SpectatorReplayData({
       <TopBar crumbs={[{ label: 'r/agent-jinrou', to: '/' }, { label: sessionId }, { label: phaseHeading(activeDay, activePhase) }]}>
         <TopBarBtn onClick={() => navigate('/')}>← 一覧</TopBarBtn>
         <TopBarBtn><span className={topBarStyles.liveDot} /> REPLAY</TopBarBtn>
-        <TopBarBtn>同時観戦 142</TopBarBtn>
         <TopBarBtn onClick={toggleViewerMode}>
           {viewerModeToggleLabel(viewerMode)}
         </TopBarBtn>
-        <TopBarBtn>⤓ 全ログDL</TopBarBtn>
-        <TopBarBtn primary>★ 応援</TopBarBtn>
       </TopBar>
 
       <ThreePaneLayout
@@ -442,9 +439,6 @@ function SpectatorReplayData({
           <h2>{phaseHeading(activeDay, activePhase)} <small>{sessionId}</small></h2>
           <span className={styles.stat}>発言 <strong>{speechCount}</strong></span>
           <span className={styles.stat}>CO <strong>{coCount}</strong></span>
-          <span className={styles.spacer} />
-          <TopBarBtn>⇅ 新しい順</TopBarBtn>
-          <TopBarBtn>🔍 検索</TopBarBtn>
         </div>
         <div className={styles.feed}>
           {loadError && (

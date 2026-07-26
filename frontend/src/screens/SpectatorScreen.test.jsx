@@ -1404,6 +1404,29 @@ describe('SpectatorScreen: sessionId integration', () => {
     }, { timeout: 3000 });
   }
 
+  it('統合: SpectatorScreen: no-planスタブ5要素を表示せずREPLAYバッジと既存フィードを保持する', async () => {
+    /*
+     * SUT: SpectatorScreen (default export)
+     * Mock: fetchGameBySessionId / fetchReplayLog / fetchReplayAgents を vi.fn() でモック
+     * Level: integration
+     * Objective: no-planスタブ5要素を撤去し、REPLAYバッジと既存フィードを保持することを検証する。
+     */
+    archiveLoader.fetchGameBySessionId.mockResolvedValue({ cast: [] });
+    replayLoader.fetchReplayLog.mockResolvedValue(MINIMAL_JSONL);
+    replayLoader.fetchReplayAgents.mockResolvedValue(MINIMAL_AGENT_JSON);
+
+    renderSpectator('stub-cleanup-session');
+
+    await waitFor(() => expect(screen.getByText('こんにちは')).toBeTruthy(), { timeout: 3000 });
+    expect(screen.queryByText('同時観戦 142')).toBeNull();
+    expect(screen.queryByText('⤓ 全ログDL')).toBeNull();
+    expect(screen.queryByText('★ 応援')).toBeNull();
+    expect(screen.queryByText('⇅ 新しい順')).toBeNull();
+    expect(screen.queryByText('🔍 検索')).toBeNull();
+    expect(screen.getByText('REPLAY')).toBeTruthy();
+    await waitForReplayLoadToSettle();
+  });
+
   it('統合: SpectatorScreen: TopBar パンくずとフィード見出しが同じフェーズ見出しラベルを表示する', async () => {
     /*
      * SUT: SpectatorScreen (default export)
