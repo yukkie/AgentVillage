@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
-    "lint:css": "stylelint \"src/**/*.css\""
+    "lint:css": "stylelint \"src/**/*.css\"",
+    "audit:css": "node scripts/cssDeadRules.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

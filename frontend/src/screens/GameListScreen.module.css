@@ -52,7 +52,6 @@
   border-left: 2px solid transparent;
 }
 .sec a:hover { background: var(--bg-2); color: var(--tx); }
-.sec a.on    { background: var(--bg-2); color: var(--tx); border-left-color: var(--acc); }
 
 .ico {
   width: 18px;
