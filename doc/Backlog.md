@@ -26,7 +26,6 @@
 | yukkie/AgentVillage#624 | enhancement | 🟢 | - | feat: launch a new game from NewVillageForm (connect to main.py) | #329 がスコープ外にした起動連携。ブラウザ→Python の受け口方式が Milestone 3(FastAPI) と重なるため着手前に方針確認。人数選択 8 が roles.json に無い不整合も解消。SP は方式次第 |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
 | yukkie/AgentVillage#495 | enhancement | 🟡 | 3 | design: log visibility classes and recipient-based authorization model (for LIVE / player participation) | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
-| yukkie/AgentVillage#620 | tech-debt | 🟡 | 3 | refactor(frontend): remove dead CSS rules detected by rule-level reachability audit | #608/PR #619 の `css: true` を活用し全391テストで CSS ルール到達率を計測（345中46件が未到達）。デッド確定21件（App.module.css 11 / AgentDetailScreen.module.css 10）の削除と、要判定18件の仕分け |
 | yukkie/AgentVillage#319 | enhancement | 🟢 | 3 | feat(frontend): LIVE spectator (real-time view of in-progress game) | state/ を tail して進行中ゲームを表示（将来フェーズ） |
 | yukkie/AgentVillage#364 | enhancement | 🟢 | 5 | refactor: introduce SpectatorScreen view model indexes | SpectatorScreen 用 view model/index を導入し render 中の events 全走査を減らす。両 screen の prevById/visibleDays/roleAssignment 重複解消＋挙動差判定を含む。実装順序制約: #596 → #364 |
 | yukkie/AgentVillage#323 | enhancement | 🟢 | 3 | feat(frontend): i18n support for frontend UI strings (ja/en) | JSX 内の日本語ハードコードを locale リソースに外出しし、ja/en 切り替えに対応 |
