@@ -19,7 +19,10 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | feat(frontend): GameData registry — track data gaps continuously | doc/GameData.md でデータギャップを継続管理（Milestone 横串モニター） |
+| yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | feat(frontend): GameData registry — track data gaps continuously | doc/GameData.md の棚卸しと残項目の引き渡し。PR #625 マージでクローズ可（残項目は #623/#624/#626/#319 へ分離済み） |
+| yukkie/AgentVillage#626 | tech-debt | 🟡 | 2 | refactor(frontend): remove no-plan stub UI from SpectatorScreen | #312 から分離。同時観戦142/全ログDL/★応援/新しい順/検索の5要素を削除（#541 の SpectatorScreen 版）。REPLAY バッジは #319 用に残す |
+| yukkie/AgentVillage#623 | enhancement | 🟡 | 3 | feat(frontend): make GameListScreen rule filter real (roles.json-backed) | #541 が実装を後続送りにしたまま未起票だった分。ルールをroles.json駆動にしフィルターを実装。実在しない「妖狐入り」「短期戦」を撤去 |
+| yukkie/AgentVillage#624 | enhancement | 🟢 | - | feat: launch a new game from NewVillageForm (connect to main.py) | #329 がスコープ外にした起動連携。ブラウザ→Python の受け口方式が Milestone 3(FastAPI) と重なるため着手前に方針確認。人数選択 8 が roles.json に無い不整合も解消。SP は方式次第 |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
 | yukkie/AgentVillage#495 | enhancement | 🟡 | 3 | design: log visibility classes and recipient-based authorization model (for LIVE / player participation) | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |
 | yukkie/AgentVillage#620 | tech-debt | 🟡 | 3 | refactor(frontend): remove dead CSS rules detected by rule-level reachability audit | #608/PR #619 の `css: true` を活用し全391テストで CSS ルール到達率を計測（345中46件が未到達）。デッド確定21件（App.module.css 11 / AgentDetailScreen.module.css 10）の削除と、要判定18件の仕分け |
