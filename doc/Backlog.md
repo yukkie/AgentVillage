@@ -19,8 +19,10 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#312 | enhancement | 🔴 | 3 | feat(frontend): GameData registry — track data gaps continuously | doc/GameData.md の棚卸しと残項目の引き渡し。PR #625 マージでクローズ可（残項目は #623/#624/#626/#319 へ分離済み） |
-| yukkie/AgentVillage#626 | tech-debt | 🟡 | 2 | refactor(frontend): remove no-plan stub UI from SpectatorScreen | #312 から分離。同時観戦142/全ログDL/★応援/新しい順/検索の5要素を削除（#541 の SpectatorScreen 版）。REPLAY バッジは #319 用に残す |
+| yukkie/AgentVillage#630 | enhancement | 🔴 | 2 | feat: regenerate state_archive/index.json automatically after a CLI game | 現状 python tools/generate_archive_index.py を毎回手動実行しないと Web UI の一覧に新ゲームが出ない。main.py の archive_state() 直後で自動再生成する。tools/ は import 対象外のため実体の置き場所が設計判断 |
+| yukkie/AgentVillage#629 | enhancement | 🟡 | 3 | feat(frontend): show village/wolf faction win rates alongside overall win rate | 通算勝率のみで陣営別が見えない。game_stats.json に faction が既にあるため JS 集計のみで実現可（Python 変更不要）。GameList ランキングと AgentDetail 戦績の両方に影響 |
+| yukkie/AgentVillage#628 | tech-debt | 🟡 | 3 | fix(frontend): move shared config JSON out of public/ to stop Vite import warning | npm run dev の "Assets in public directory cannot be imported" 警告。agents/role_meta/roles.json を src/config/ へ移し blurb の fetch を import に一本化。src/config.py のパス定数も追従（案A） |
+| yukkie/AgentVillage#626 | tech-debt | 🟡 | 2 | refactor(frontend): remove no-plan stub UI from SpectatorScreen | #312 から分離。同時観戦142/全ログDL/★応援/新しい順/検索の5要素を削除（#541 の SpectatorScreen 版）。DetailDesign.md の実体なし trust フィールドも撤去 |
 | yukkie/AgentVillage#623 | enhancement | 🟡 | 3 | feat(frontend): make GameListScreen rule filter real (roles.json-backed) | #541 が実装を後続送りにしたまま未起票だった分。ルールをroles.json駆動にしフィルターを実装。実在しない「妖狐入り」「短期戦」を撤去 |
 | yukkie/AgentVillage#624 | enhancement | 🟢 | - | feat: launch a new game from NewVillageForm (connect to main.py) | #329 がスコープ外にした起動連携。ブラウザ→Python の受け口方式が Milestone 3(FastAPI) と重なるため着手前に方針確認。人数選択 8 が roles.json に無い不整合も解消。SP は方式次第 |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
