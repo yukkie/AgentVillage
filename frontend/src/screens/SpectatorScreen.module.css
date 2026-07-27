@@ -37,13 +37,6 @@
   color: var(--tx);
   display: flex; align-items: baseline; gap: 8px;
 }
-.phaseDay h3 small {
-  font-family: var(--sans);
-  font-size: var(--fs-sm);
-  color: var(--tx-3);
-  font-weight: 400;
-  letter-spacing: 0.08em;
-}
 .dayBlock .phaseList {
   max-height: 0;
   overflow: hidden;
@@ -201,8 +194,6 @@
 /* action inner */
 .actionIco { font-family: var(--serif); font-size: var(--fs-sm); color: var(--tx-2); flex: 0 0 18px; }
 .what      { color: var(--tx-2); flex: 1; }
-.what strong { color: var(--tx); font-weight: 600; }
-.what em   { font-style: normal; color: var(--r-color, var(--tx)); font-family: var(--serif); }
 
 /* phase nav inner */
 .phaseDiscuss .dot { background: var(--acc); }

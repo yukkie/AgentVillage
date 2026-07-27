@@ -136,11 +136,9 @@
 .sysMain {
   display: flex; align-items: center; gap: 12px;
 }
-.sysrow .sysText strong { font-family: var(--serif); font-weight: 600; }
 .sysIconCol { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 0 0 64px; width: 64px; }
 .sysLabel { font-family: var(--serif); font-size: var(--fs-sm); color: var(--tx-3); letter-spacing: 0.08em; text-align: center; }
 .sysText { font-size: var(--fs-md); color: var(--tx); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; flex: 1; min-width: 0; }
-.sysTs { font-family: var(--mono); font-size: var(--fs-sm); color: var(--tx-4); }
 .sysIcon {
   width: 28px; height: 28px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
