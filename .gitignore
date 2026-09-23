@@ -14,6 +14,8 @@ ideas_archive/
 issues/
 .claude/worktrees/
 .claude/settings.local.json
+.claude/settings.json
+.claude/launch.json
 .tracecov/
 .coverage
 htmlcov/
