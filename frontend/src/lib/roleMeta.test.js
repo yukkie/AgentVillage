@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { ROLE_META_BY_KEY, ROLE_KEYS, listRoles } from './roleMeta.js';
-import ROLE_META from '../../public/config/role_meta.json';
-import ROLES_ROSTER from '../../public/config/roles.json';
+import ROLE_META from '../config/role_meta.json';
+import ROLES_ROSTER from '../config/roles.json';
 
 // --- role_meta.json data shape (AC-1) ---
 
 describe('role_meta.json data', () => {
   it('unit: role_meta の全役職に key/ja/short/team/color が存在する', () => {
     /*
-    SUT: frontend/public/config/role_meta.json
+    SUT: frontend/src/config/role_meta.json
     Mock: なし
     Level: unit
     Objective: 役職メタ JSON の全エントリが key/ja/short/team/color を持つことを検証する (AC-1)
@@ -26,7 +26,7 @@ describe('role_meta.json data', () => {
 
   it('unit: roles.json の全 role key が role_meta に存在する', () => {
     /*
-    SUT: frontend/public/config/role_meta.json
+    SUT: frontend/src/config/role_meta.json
     Mock: なし
     Level: unit
     Objective: 配分表 roles.json に現れる全役職キーが role_meta に定義されていることを検証する (AC-1 SSOT 退行防止)

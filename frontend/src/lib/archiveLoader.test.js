@@ -2,10 +2,10 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   parseIndexToGameList, parseEntryToGame, fetchGameBySessionId, fetchGameList,
   parseGameStats, parseAllAgentNames, parseWinRateRanking, fetchGameStats,
-  parseBlurb, fetchAgentConfig,
+  parseBlurb,
 } from './archiveLoader.js';
 import { normalizeAgentJson } from '../legacy/normalizeAgentJson.js';
-import AGENT_CONFIG from '../../public/config/agents.json';
+import AGENT_CONFIG from '../config/agents.json';
 
 // --- fixture data ---
 
@@ -435,7 +435,7 @@ describe('parseBlurb', () => {
 describe('agents.json blurb data', () => {
   it('pure: agents.json の全エージェントに英語 blurb が存在する', () => {
     /*
-    SUT: frontend/public/config/agents.json
+    SUT: frontend/src/config/agents.json
     Mock: なし
     Level: unit
     Objective: 全エージェントに非空の英語 blurb 文字列が存在することを検証する (AC-1)
@@ -447,38 +447,6 @@ describe('agents.json blurb data', () => {
       // 英語版（ASCII のみ・日本語文字を含まない）であることを担保する
       expect(/[　-鿿]/.test(agent.blurb)).toBe(false);
     }
-  });
-});
-
-describe('fetchAgentConfig', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('returns parsed /config/agents.json on success', async () => {
-    /*
-    SUT: fetchAgentConfig
-    Mock: global fetch（/config/agents.json のレスポンスを固定）
-    Level: unit
-    Objective: fetch 成功時に /config/agents.json をパースして返すことを検証する。
-    */
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(CONFIG_FIXTURE),
-    }));
-    const result = await fetchAgentConfig();
-    expect(result).toBe(CONFIG_FIXTURE);
-  });
-
-  it('throws when fetch fails', async () => {
-    /*
-    SUT: fetchAgentConfig
-    Mock: global fetch（ok:false）
-    Level: unit
-    Objective: fetch 失敗時に Error をスローすることを検証する (AC-4 fallback path)。
-    */
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
-    await expect(fetchAgentConfig()).rejects.toThrow('Failed to fetch agent config: 500');
   });
 });
 

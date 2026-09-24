@@ -173,18 +173,17 @@ export async function fetchGameStats() {
 
 // --- Agent config blurb (#519) ---
 
-// frontend/public/config/agents.json holds static, name-keyed agent metadata
-// (style, occupation, blurb …). Vite/static hosting serves it as /config/agents.json.
+// frontend/src/config/agents.json holds static, name-keyed agent metadata
+// (style, occupation, blurb …), statically imported by agentMeta.js (#628).
 // This static config is intentionally outside the FastAPI migration scope (#315).
-const AGENT_CONFIG_URL = '/config/agents.json';
 
 /**
- * Look up an agent's static blurb (1-line profile) from /config/agents.json.
+ * Look up an agent's static blurb (1-line profile) from agents.json.
  * Returns null when the agent is absent or config is null/missing so the
  * display side can fall back to a placeholder (AC-4). No placeholder string
  * is baked in here to keep this pure and decoupled from the UI symbol.
  *
- * @param {{name: string, blurb?: string}[] | null} config - Parsed /config/agents.json
+ * @param {{name: string, blurb?: string}[] | null} config - agents.json (AGENT_CONFIG from agentMeta.js)
  * @param {string} name
  * @returns {string | null}
  */
@@ -192,17 +191,6 @@ export function parseBlurb(config, name) {
   if (!Array.isArray(config)) return null;
   const entry = config.find(a => a.name === name);
   return entry?.blurb ?? null;
-}
-
-/**
- * Fetch and parse /config/agents.json. Throws if the fetch fails.
- *
- * @returns {Promise<{name: string, blurb?: string}[]>}
- */
-export async function fetchAgentConfig() {
-  const res = await fetch(AGENT_CONFIG_URL);
-  if (!res.ok) throw new Error(`Failed to fetch agent config: ${res.status}`);
-  return res.json();
 }
 
 /**

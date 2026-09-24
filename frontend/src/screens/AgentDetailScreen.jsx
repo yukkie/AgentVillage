@@ -8,37 +8,22 @@ import { FeedItem } from '../components/FeedCard.jsx';
 import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import { ROLE_META_BY_KEY } from '../lib/roleMeta.js';
+import { AGENT_CONFIG } from '../lib/agentMeta.js';
 import { agentDetailPath } from '../lib/agentDetailPath.js';
-import { fetchGameStats, parseGameStats, parseAllAgentNames, fetchGameBySessionId, fetchAgentConfig, parseBlurb } from '../lib/archiveLoader.js';
+import { fetchGameStats, parseGameStats, parseAllAgentNames, fetchGameBySessionId, parseBlurb } from '../lib/archiveLoader.js';
 import { fetchReplayGame } from '../lib/replayLoader.js';
 import { buildAgentDetailRoster, buildSuspicionMatrix, countAgentSpeeches } from '../lib/parseGameData.js';
 import { useDeaths } from '../lib/useDeaths.js';
 import { useViewerMode, viewerModeToggleLabel } from '../lib/useViewerMode.js';
 import styles from './AgentDetailScreen.module.css';
 
-// blurb（frontend/public/config/agents.json 由来の1行プロフィール・#519）が無い／fetch 失敗時のフォールバック表示。
+// blurb（frontend/src/config/agents.json 由来の1行プロフィール・#519）が無いエージェントのフォールバック表示。
 const BLURB_FALLBACK = '—';
 
 // blurb は viewerMode にもモード（global / game-scoped）にも依存しない名前依存の静的データ。
-// 戦績／リプレイの fetch チェーンに混ぜず独立して取得し、失敗しても本体描画を妨げない（AC-4）。
-function useAgentBlurb(agent) {
-  const [config, setConfig] = useState(null);
-
-  useEffect(() => {
-    // #595: この fetch effect の共通フック化（useAsyncData）を検討したが、効果が無いと判断して見送った。
-    // 理由: error の意味論が箇所ごとに異なる。ここは error を null に潰して本体描画を妨げない一方、
-    // GlobalProfile は { status, games } のタプルで error 状態を明示的に描画し、
-    // GameListScreen の fetchGameList は error 処理自体を持たない。state 形状を統一しても
-    // 呼び出し元それぞれに意味論を復元する分岐が生えるだけで、可読性は改善しない。
-    // 再検出時はこのコメントを判断材料にすること。
-    let cancelled = false;
-    fetchAgentConfig()
-      .then(c => { if (!cancelled) setConfig(c); })
-      .catch(() => { if (!cancelled) setConfig(null); });
-    return () => { cancelled = true; };
-  }, []);
-
-  return parseBlurb(config, agent) ?? BLURB_FALLBACK;
+// agents.json はビルド時に静的 import 済み（agentMeta.js 経由）のため同期的に引ける（#628。取得失敗の概念は無い）。
+function getAgentBlurb(agent) {
+  return parseBlurb(AGENT_CONFIG, agent) ?? BLURB_FALLBACK;
 }
 
 // --- 左ペイン ---
@@ -465,7 +450,7 @@ export default function AgentDetailScreen() {
   const { sessionId, agentName } = useParams();
   const { viewerMode, viewerSearch, toggleViewerMode } = useViewerMode();
   const agent = agentName || 'Nox';
-  const blurb = useAgentBlurb(agent);
+  const blurb = getAgentBlurb(agent);
 
   // sessionId なし → global profile mode（横断戦績・実データ）
   if (!sessionId) {

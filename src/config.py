@@ -7,10 +7,10 @@ WOLF_CHAT_ROUNDS = 3
 
 # Environment
 PROJECT_ROOT = Path(__file__).parent.parent
-PUBLIC_CONFIG_DIR = PROJECT_ROOT / "frontend" / "public" / "config"
-AGENT_CONFIG_PATH = PUBLIC_CONFIG_DIR / "agents.json"
-ROLE_CONFIG_PATH = PUBLIC_CONFIG_DIR / "roles.json"
-TOKEN_CONFIG_PATH = PUBLIC_CONFIG_DIR / "tokens.json"
+SHARED_CONFIG_DIR = PROJECT_ROOT / "frontend" / "src" / "config"
+AGENT_CONFIG_PATH = SHARED_CONFIG_DIR / "agents.json"
+ROLE_CONFIG_PATH = SHARED_CONFIG_DIR / "roles.json"
+TOKEN_CONFIG_PATH = SHARED_CONFIG_DIR / "tokens.json"
 AGENTS_DIR = PROJECT_ROOT / "state/agents"
 LOG_DIR = PROJECT_ROOT / "state"
 SPECTATOR_LOG = LOG_DIR / "spectator_log.jsonl"
