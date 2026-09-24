@@ -420,7 +420,7 @@ stateDiagram-v2
 | `highlight` | `boolean?` | true でエージェント個人カラーのアウトラインを表示 |
 | `label` | `string?` | 渡すとエージェント名テキストを表示。`label` あり時は `<img alt="">` に変更（accessible name 重複を避ける） |
 | `layout` | `'vertical'｜'horizontal'` | `label` あり時のレイアウト。`vertical`: アイコン上・名前下、`horizontal`: アイコン左・名前右（デフォルト `'vertical'`） |
-| `variant` | `'plain'｜'muted'｜'selected'｜'dead'｜'danger'` | 外観状態（デフォルト `'plain'`）。`dead` はチップ全体の muted スタイル（`dead` prop のアイコン内オーバーレイとは別概念）。`danger` はラベルテキストを `var(--danger)` 色で強調（処刑対象の投票グリッド等） |
+| `variant` | `'plain'｜'muted'｜'selected'｜'danger'` | 外観状態（デフォルト `'plain'`）。`muted` はチップ全体を薄く表示（`opacity: 0.4`）。`danger` はラベルテキストを `var(--danger)` 色で強調（処刑対象の投票グリッド等） |
 | `decorative` | `boolean?` | true で `label` なし（bare）でも `<img alt="">` を導出する（デフォルト `false`）。呼び出し側が近傍に可視の名前テキストを別途描画しており、bare Avatar 側の alt が重複読み上げを起こす場合に使う（#597）。詳細は下記 |
 
 `label` あり時は identity wrapper 要素（新クラス）がアイコン frame（`.av`）を内包する構造になる。`.av` のスタイルは変更しないため、`label` なしの既存呼び出しは挙動変更なし。
@@ -438,8 +438,8 @@ stateDiagram-v2
 | prop | 型 | 説明 |
 |---|---|---|
 | `onClick` | `function` | クリックハンドラ（必須） |
-| `selected` | `boolean?` | true で `variant="selected"` を適用。個人カラー（`--av-c`）でボーダー＋シャドウを表示（持続的な選択済み状態） |
-| `...avatarProps` | — | `Avatar` の全 props をそのまま受け付ける |
+| `selected` | `boolean?` | true で `variant="selected"` を適用。個人カラー（`--av-c`）でボーダー＋シャドウを表示（持続的な選択済み状態）。false/未指定時は `variant="muted"`（未選択を視覚的に後退させる。#633） |
+| `...avatarProps` | — | `Avatar` の全 props をそのまま受け付ける（`variant` を明示すれば `selected` によるデフォルト解決を上書きできる） |
 
 hover / focus スタイルは CSS `:hover` / `:focus-visible` で付与（`variant` prop には含まない）。
 画面遷移用途では Avatar を `<Link>` で包む方式を採用（#485）。当初はコンポーネント化せず各呼び出し側で `<Link>` を書いていたが、link wrapper JSX と `.agentLink` CSS のコピーが増えたため `AgentLink` に一本化した（#586）。
@@ -584,8 +584,8 @@ CSS モジュールは新設せず、`FeedCard.module.css` の既存クラスを
 | `children` | `ReactNode` | 中央ペインの内容 |
 | `collapsibleLeft` | `boolean?` | 左ペインに折りたたみボタンを表示 |
 | `collapsibleRight` | `boolean?` | 右ペインに折りたたみボタンを表示 |
-| `leftLabel` | `string?` | 左ペイン折りたたみ時に縦書き表示するラベル |
-| `rightLabel` | `string?` | 右ペイン折りたたみ時に縦書き表示するラベル |
+| `leftLabel` | `string?` | 左ペイン折りたたみ時に縦書き表示するラベル（例: SpectatorScreen `'フィルタ'`、GameListScreen `'一覧'`） |
+| `rightLabel` | `string?` | 右ペイン折りたたみ時に縦書き表示するラベル（例: SpectatorScreen `'ロースター'`、GameListScreen `'ランキング'`） |
 | `leftAriaLabel` | `string?` | 左 `<aside>` の `aria-label`（complementary landmark の区別用。デフォルト `'左サイドパネル'`） |
 | `rightAriaLabel` | `string?` | 右 `<aside>` の `aria-label`（デフォルト `'右サイドパネル'`） |
 

@@ -145,11 +145,6 @@
   box-shadow: 0 0 0 1px var(--av-c, var(--acc));
 }
 
-/* variant: dead — muted whole chip */
-.chip_dead {
-  opacity: 0.35;
-}
-
 /* variant: danger — execution target highlight */
 .chip_danger .chipLabel {
   color: var(--danger);
@@ -165,7 +160,6 @@
   display: inline-flex;
 }
 
-.avatarBtn .chip_plain { opacity: 0.35; }
-.avatarBtn:hover .chip_plain { opacity: 0.9; }
+.avatarBtn:hover .chip_muted { opacity: 0.9; }
 .avatarBtn:hover .chip_selected { opacity: 1; }
 .avatarBtn:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }

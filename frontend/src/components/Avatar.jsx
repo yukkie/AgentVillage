@@ -60,7 +60,7 @@ export default function Avatar({ name, role, dead, size = 'md', highlight, label
  * インタラクティブ用途専用。Avatar を button で包む。
  */
 export function AvatarButton({ onClick, selected, label, variant, ...avatarProps }) {
-  const resolvedVariant = selected ? 'selected' : (variant || 'plain');
+  const resolvedVariant = selected ? 'selected' : (variant || 'muted');
   const pressed = selected == null ? undefined : !!selected;
   return (
     <button

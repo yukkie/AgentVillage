@@ -65,16 +65,6 @@ describe('Avatar variants', () => {
     expect(container.firstChild.dataset.variant).toBe('muted');
   });
 
-  it('applies dead variant', () => {
-    /*
-    SUT: Avatar
-    Mock: なし
-    Level: unit
-    Objective: variant="dead" が data-variant に反映されることを検証する（dead prop のアイコン内オーバーレイとは別）。
-    */
-    const { container } = render(<Avatar name="Nox" label="Nox" variant="dead" />);
-    expect(container.firstChild.dataset.variant).toBe('dead');
-  });
 });
 
 describe('Avatar accessibility', () => {
@@ -187,5 +177,29 @@ describe('AvatarButton', () => {
 
     rerender(<AvatarButton name="Nox" label="Nox" selected={false} onClick={vi.fn()} />);
     expect(screen.getByRole('button', { name: 'Nox' }).getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('統合: AvatarButton: 未選択時は variant=muted になる', () => {
+    /*
+    SUT: AvatarButton
+    Mock: なし
+    Level: unit
+    Objective: selected が false/未指定のとき、内包する Avatar に variant="muted" が適用されることを検証する
+      （#633: 従来 .avatarBtn .chip_plain の特殊上書きで実現していた見た目を chip_muted に一本化）。
+    */
+    const { container } = render(<AvatarButton name="Nox" label="Nox" onClick={vi.fn()} />);
+    expect(container.querySelector('[data-variant="muted"]')).toBeTruthy();
+  });
+
+  it('統合: AvatarButton: 選択時は variant=selected のまま変わらない', () => {
+    /*
+    SUT: AvatarButton
+    Mock: なし
+    Level: unit
+    Objective: selected=true のときは muted ではなく selected が適用されることを回帰確認する。
+    */
+    const { container } = render(<AvatarButton name="Nox" label="Nox" selected onClick={vi.fn()} />);
+    expect(container.querySelector('[data-variant="selected"]')).toBeTruthy();
+    expect(container.querySelector('[data-variant="muted"]')).toBeNull();
   });
 });
