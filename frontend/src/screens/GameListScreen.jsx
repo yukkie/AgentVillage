@@ -248,6 +248,8 @@ export default function GameListScreen() {
       <ThreePaneLayout
         collapsibleLeft
         collapsibleRight
+        leftLabel="一覧"
+        rightLabel="ランキング"
         left={<LeftPane />}
         right={<RightPane winRateRankingState={winRateRankingState} />}
       >

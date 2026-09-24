@@ -328,6 +328,7 @@ function GlobalProfile({ agent, blurb }) {
     body = (
       <ThreePaneLayout
         collapsibleLeft
+        leftLabel="エージェント一覧"
         left={<GlobalLeftPane allNames={allNames} current={agent} />}
       >
         <div className={styles.mainPane}>
@@ -406,6 +407,8 @@ function GameScopedProfile({ sessionId, agent, blurb, viewerMode, viewerSearch, 
       <ThreePaneLayout
         collapsibleLeft
         collapsibleRight={viewerMode === 'spectator'}
+        leftLabel="ロースター"
+        rightLabel={viewerMode === 'spectator' ? '投票' : undefined}
         left={<LeftPane current={agent} sessionId={sessionId} viewerMode={viewerMode} roster={roster} />}
         right={viewerMode === 'spectator' ? <RightPane matrix={matrix} /> : null}
       >

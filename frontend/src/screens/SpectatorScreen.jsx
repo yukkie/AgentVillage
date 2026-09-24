@@ -434,6 +434,8 @@ function SpectatorReplayData({
       <ThreePaneLayout
         collapsibleLeft
         collapsibleRight
+        leftLabel="フィルタ"
+        rightLabel="ロースター"
         left={<LeftPane activeDay={activeDay} setDay={setActiveDay} activePhase={activePhase} setPhase={setActivePhase} days={visibleDays} agentNames={agentNames} daySummary={daySummary} gameOverDay={gameOverDay} selectedAgents={selectedAgents} onToggleAgent={toggleAgentFilter} presentRoles={presentRoles} selectedRoles={selectedRoles} onToggleRole={toggleRoleFilter} thoughtsOpen={thoughtsOpen} onToggleThoughts={toggleThoughtsOpen} viewerMode={viewerMode} />}
         right={<RightPane agents={agents} roleAssignment={roleAssignment} coStatus={replayCoStatus} daySummary={daySummary} activeDay={activeDay} deaths={replayDeaths} viewerMode={viewerMode} />}
       >

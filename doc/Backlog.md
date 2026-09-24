@@ -19,7 +19,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#633 | tech-debt | 🔴 | 2 | fix(frontend): wire up or retire spec'd-but-unwired UI states (.rail / chip_muted / chip_dead) | #620 派生。doc に仕様記載があるのに production の呼び出し元がゼロの UI 状態3件。配線するか仕様ごと廃止するかを対象ごとに判断する。#634 の前提 |
 | ❌ yukkie/AgentVillage#648 | tech-debt | （なし） | - | Reconsider Avatar/AvatarButton prop interface (label-driven feature coupling) | #633 派生。`label` の有無が variant の有効/無効まで暗黙に決めてしまっている。全呼び出し元のユースケースを棚卸しし、望ましい prop インターフェースを再設計する |
 | yukkie/AgentVillage#629 | enhancement | 🟡 | 3 | feat(frontend): show village/wolf faction win rates alongside overall win rate | 通算勝率のみで陣営別が見えない。game_stats.json に faction が既にあるため JS 集計のみで実現可（Python 変更不要）。GameList ランキングと AgentDetail 戦績の両方に影響 |
 | yukkie/AgentVillage#623 | enhancement | 🟡 | 3 | feat(frontend): make GameListScreen rule filter real (roles.json-backed) | #541 が実装を後続送りにしたまま未起票だった分。ルールをroles.json駆動にしフィルターを実装。実在しない「妖狐入り」「短期戦」を撤去 |
