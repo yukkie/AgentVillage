@@ -223,8 +223,9 @@ stateDiagram-v2
       == SideWidgets (280px)
       {+
         == 勝率ランキング (<section><ul><li> / 15人)
-        1 | [Nox]  | 72%
-        2 | [Kai]  | 68%
+        村陣営 17% · 狼陣営 83%（12戦）
+        1 | [Nox]  | 村 80% 狼 —  | 72%
+        2 | [Kai]  | 村 50% 狼 75% | 68%
         3 | [Sera] | 64%
         4 | [Rei]  | 61%
         5 | [Mira] | 58%
@@ -604,9 +605,11 @@ CSS Grid `grid-template-columns: var(--lcol) 1fr var(--rcol)` で 3 ペインを
 | `NewVillageForm` | 展開/収納トグル付きのゲーム作成フォーム。人数選択 → エージェント選択 → 作成ボタン |
 | `GameCard` | ゲーム1件のカード表示（タイトル / ロスターストリップ / 👁同時観戦数） |
 | `LeftPane` | サイドナビ（ルールのみ。#541 でマイページ / カテゴリ / 注目エージェントを削除） |
-| `RightPane` | サイドウィジェット（勝率ランキングのみ。#541 で次回開催 / コミュニティ投稿を削除、#337 で `game_stats.json` 実集計化） |
+| `RightPane` | サイドウィジェット（勝率ランキングのみ。#541 で次回開催 / コミュニティ投稿を削除、#337 で `game_stats.json` 実集計化、#629 で陣営別勝率を追加） |
 
 データソース: `state_archive/index.json`（ゲーム一覧）、`state/stats/game_stats.json`（右ペイン勝率ランキング）。新規村フォームの村名プリセット（`VILLAGE_NAME_PRESETS`）は #547 で廃止。
+
+勝率ランキングの陣営表示（#629）: 見出しの次行（2行目）に全ゲーム横断の陣営勝率（`parseFactionWinRates`、村陣営 / 狼陣営と母数の試合数）を、各ランキング行に通算勝率と併せてエージェントの陣営別勝率（`parseWinRateRanking` の `factionWinRate`）を表示する。陣営は `players[].faction`（`village` / `werewolf`）で判定し、`role` や `games[].winner` から変換しない（`doc/DataSpec.md` §6）。全ゲームの勝者陣営は各ゲームの `won: true` プレイヤーの `faction` とし、判定できないゲームは母数から外す。勝率計算と「データなし」表記は `lib/winRate.js`（`winRate` / `formatWinRate`）に集約し、出場 0 回は `null` → `—` 表示とする（`0%` / `NaN` にしない）。陣営別は追加情報であり、通算勝率の値・並び順・`minGames` フィルタは変えない。
 
 ゲーム一覧取得（`fetchGameList`）が reject した場合、`loading` は既存どおり false になった上で `StatusMessage kind="error"` を表示し、ゲーム0件の正常系と区別する（#614）。兄弟 effect `fetchGameStats`（右ペイン勝率ランキング）の error 処理と同様に `.catch` で状態を保持する形にした。
 
@@ -956,7 +959,7 @@ FastAPI + WebSocket でイベントをストリーミング配信する。`fetch
 
 - `src/lib/archiveLoader.js` に `fetchGameStats()` / `parseGameStats(gamesJson, agentName)` / `parseAllAgentNames(gamesJson)` を追加。`won` をそのまま使い、`winner` / `faction` の値域変換は consumer 側で再実装しない（`doc/DataSpec.md` §6）。
 - **dev 配信経路**: `game_stats.json` は `state/stats/` 配下にあり既存の `/state_archive` middleware では配信されない。`vite.config.js` に `/stats` プレフィックスの静的配信 middleware を追加し（`/state_archive` と同形）、fetch URL を `/stats/game_stats.json` とする。#315 FastAPI 導入時は URL 差し替えのみで対応する。
-- **非同期状態の扱い**: global mode は `fetchGameStats()` 前提のため非同期状態が発生する。fetch 中は loading 表示、失敗時は error 表示にする。`agentName` が `game_stats.json` に存在しない場合も、名前・アバターは表示し、勝率・通算成績は `0戦 / 0勝`、過去戦績一覧は空表示にフォールバックする。
+- **非同期状態の扱い**: global mode は `fetchGameStats()` 前提のため非同期状態が発生する。fetch 中は loading 表示、失敗時は error 表示にする。`agentName` が `game_stats.json` に存在しない場合も、名前・アバターは表示し、通算成績は `0戦 / 0勝`、勝率（通算・陣営別）は `—`（#629 で `0%` 表示から変更）、過去戦績一覧は空表示にフォールバックする。
 - viewerMode による出し分けは行わない（§6.2）。`?view=public` でも表示内容は変わらず、viewerMode トグル UI も出さない。
 
 ### 8.3 `AgentDetailScreen` スタブ項目の2軸4象限仕分け（#515）
@@ -978,6 +981,7 @@ FastAPI + WebSocket でイベントをストリーミング配信する。`fetch
 | 名前 ＋ アバター | ✅ | `game_stats.json` の `players[].name` / アイコンは `/icons/{name}.png` |
 | blurb（1行プロフィール、旧 `AGENT_BLURB`） | ✅ 実装済み（#519、#628 で fetch→import に変更） | `frontend/src/config/agents.json` の静的 `blurb` フィールド（英語）を静的 import し、`parseBlurb()` で抽出。両モード共通。未定義エージェントは `—` フォールバック。日本語化は将来の別 Issue |
 | 勝率・通算成績（`AGENT_STATS` の `games` / `wins`） | ✅ | `game_stats.json` の各 `game.players[]` を `name` でフィルタし `won` / 出場数を集計（`doc/DataSpec.md` §6） |
+| 陣営別勝率（村側 / 狼側、#629） | ✅ | 同上を `players[].faction` で分けて集計（`parseGameStats` の `byFaction`）。ヒーロー統計に通算勝率と並べて表示し、該当陣営の出場 0 回は `—` |
 | 過去の戦績一覧（`TabHistory` の `records`） | ✅ | `game_stats.json` 各 `game` を `name` でフィルタ（`game_id` / `role` / `won`）。**村名列は `game_stats.json` に無いため `session_id`（`game_id`）を代わりに表示する**。過去戦績テーブルの `role` 列は表示してよい（Hero / Avatar / 左ペインの役職タグ・役職刻印を出さない方針とは別物） |
 | 左ペイン名簿（`ALL_AGENTS` / `DEAD_AGENTS`） | ✅（別物に差し替え） | `global` では「同ゲームの参加者ピッカー」は概念として存在しない。代わりに**全エージェント横断のプロフィール一覧リンク集**にする（`game_stats.json` の全 `name` 集合 → 各行 `/agent/{encodeURIComponent(name)}`）。共通 `AgentRosterRow` を `showRole={false}`（役職を出さない・AC-4）・`showStatusDot={false}`（生死概念なし）・`selected={name === current}`（現在地ハイライト）で再利用する。行全体が `Link` のためクリック領域が行全域になる（独自 `display: contents` 行だと padding/gap が hit しない問題を回避） |
 

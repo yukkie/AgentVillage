@@ -11,6 +11,7 @@ import { ROLE_META_BY_KEY } from '../lib/roleMeta.js';
 import { AGENT_CONFIG, parseBlurb } from '../lib/agentMeta.js';
 import { agentDetailPath } from '../lib/agentDetailPath.js';
 import { fetchGameStats, parseGameStats, parseAllAgentNames, fetchGameBySessionId } from '../lib/archiveLoader.js';
+import { winRate, formatWinRate } from '../lib/winRate.js';
 import { fetchReplayGame } from '../lib/replayLoader.js';
 import { buildAgentDetailRoster, buildSuspicionMatrix, countAgentSpeeches } from '../lib/parseGameData.js';
 import { useDeaths } from '../lib/useDeaths.js';
@@ -252,8 +253,18 @@ function GlobalLeftPane({ allNames, current }) {
 
 // --- global ヒーロー: 名前・アバター・勝率・通算成績（AC-1 / AC-6） ---
 // 役職タグ・生死・session ラベルは出さない（AC-4）。
+// ヒーロー統計: 通算勝率＋陣営別勝率（#629）。出場0回は formatWinRate が — を返す。
+function HeroWinRate({ label, caption, wins, total, className }) {
+  return (
+    <div className={styles.heroStat} role="group" aria-label={label}>
+      <div className={`${styles.statNum} ${className ?? ''}`}>{formatWinRate(winRate(wins, total))}</div>
+      <div className={styles.statLabel}>{caption}</div>
+    </div>
+  );
+}
+
 function GlobalHero({ agent, stats, blurb }) {
-  const winPct = stats.total ? Math.round(stats.wins / stats.total * 100) : 0;
+  const { village, werewolf } = stats.byFaction;
 
   return (
     <header className={styles.agentHero}>
@@ -266,10 +277,15 @@ function GlobalHero({ agent, stats, blurb }) {
         <p className={styles.heroBlurb}>{blurb}</p>
       </div>
       <div className={styles.heroStats}>
-        <div className={styles.heroStat}>
-          <div className={styles.statNum}>{winPct}%</div>
-          <div className={styles.statLabel}>勝率 ({stats.total}戦)</div>
-        </div>
+        <HeroWinRate label="通算勝率" caption={`勝率 (${stats.total}戦)`} wins={stats.wins} total={stats.total} />
+        <HeroWinRate
+          label="村陣営勝率" caption={`村陣営 (${village.total}戦)`}
+          wins={village.wins} total={village.total} className={styles.statVillage}
+        />
+        <HeroWinRate
+          label="狼陣営勝率" caption={`狼陣営 (${werewolf.total}戦)`}
+          wins={werewolf.wins} total={werewolf.total} className={styles.statWolf}
+        />
       </div>
     </header>
   );

@@ -279,6 +279,19 @@
   letter-spacing: 0.02em;
 }
 
+/* 勝率ランキング見出し: 1行目に見出し、2行目に全ゲーム陣営勝率（#629） */
+.sideCardHead { margin-bottom: 10px; }
+.sideCardHead h5 { margin: 0 0 4px; }
+.factionSummary {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  font-family: var(--mono);
+  font-size: var(--fs-sm);
+  color: var(--tx-4);
+  white-space: nowrap;
+}
+
 .sideList {
   display: block;
 }
@@ -306,6 +319,16 @@
   text-align: right;
 }
 .rankName { flex: 1; color: var(--tx-2); }
+/* 行内の陣営別勝率（#629） */
+.rankFaction {
+  display: flex;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: var(--fs-sm);
+}
+.rankFaction > span { min-width: 7ch; text-align: right; }
+.village { color: var(--r-villager); }
+.wolf { color: var(--r-werewolf); }
 .rankNum {
   font-family: var(--mono);
   font-size: var(--fs-sm);

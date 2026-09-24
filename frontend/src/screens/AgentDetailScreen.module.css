@@ -114,6 +114,10 @@
   text-transform: uppercase;
 }
 
+/* 陣営別勝率（#629） */
+.statVillage { color: var(--r-villager); }
+.statWolf { color: var(--r-werewolf); }
+
 /* ===== タブ ===== */
 
 .tabs {

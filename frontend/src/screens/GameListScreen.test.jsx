@@ -230,6 +230,99 @@ describe('GameListScreen real stats ranking（#337）', () => {
   });
 });
 
+// Nox: 村 1/3、狼 出場なし / Kai: 狼 2/3、村 出場なし / 全体: 村陣営 1勝・狼陣営 2勝（3戦）
+const factionStatsFixture = {
+  games: [
+    { game_id: 'g1', players: [{ name: 'Nox', faction: 'village', won: true }, { name: 'Kai', faction: 'werewolf', won: false }] },
+    { game_id: 'g2', players: [{ name: 'Nox', faction: 'village', won: false }, { name: 'Kai', faction: 'werewolf', won: true }] },
+    { game_id: 'g3', players: [{ name: 'Nox', faction: 'village', won: false }, { name: 'Kai', faction: 'werewolf', won: true }] },
+  ],
+};
+
+describe('GameListScreen 陣営別勝率（#629）', () => {
+  it('統合: GameListScreen: 勝率ランキング行に通算と陣営別の勝率が表示される', async () => {
+    /*
+     * SUT: GameListScreen / RightPane
+     * Mock: fetchGameList / fetchGameStats
+     * Level: component
+     * Objective: ランキング各行に通算勝率と併せて村側・狼側の勝率が表示されることを検証する (#629 AC-4)
+     */
+    mockGameList([game], factionStatsFixture);
+    renderGameList();
+
+    const ranking = await screen.findByRole('list', { name: '勝率ランキング' });
+    const [kaiRow, noxRow] = within(ranking).getAllByRole('listitem');
+    expect(within(kaiRow).getByText('Kai')).toBeTruthy();
+    expect(within(kaiRow).getByText('67%')).toBeTruthy();
+    expect(within(kaiRow).getByText('狼 67%')).toBeTruthy();
+    expect(within(noxRow).getByText('Nox')).toBeTruthy();
+    expect(within(noxRow).getByText('33%')).toBeTruthy();
+    expect(within(noxRow).getByText('村 33%')).toBeTruthy();
+  });
+
+  it('統合: GameListScreen: 出場0回の陣営は — と表示され NaN や 0% にならない', async () => {
+    /*
+     * SUT: GameListScreen / RightPane
+     * Mock: fetchGameList / fetchGameStats
+     * Level: component
+     * Objective: 該当陣営での出場が 0 回のエージェント行で「—」（データなし）が表示され、NaN / 0% が出ないことを検証する (#629 AC-6)
+     */
+    mockGameList([game], factionStatsFixture);
+    renderGameList();
+
+    const ranking = await screen.findByRole('list', { name: '勝率ランキング' });
+    const [kaiRow, noxRow] = within(ranking).getAllByRole('listitem');
+    expect(within(kaiRow).getByText('村 —')).toBeTruthy();
+    expect(within(noxRow).getByText('狼 —')).toBeTruthy();
+    expect(within(ranking).queryByText(/NaN|Infinity|[村狼] 0%/)).toBeNull();
+  });
+
+  it('統合: GameListScreen: 勝率ランキング上部に全ゲームの陣営勝率と試合数が表示される', async () => {
+    /*
+     * SUT: GameListScreen / RightPane
+     * Mock: fetchGameList / fetchGameStats
+     * Level: component
+     * Objective: 右ペイン見出し行に全ゲーム横断の村陣営・狼陣営の勝率と試合数が表示されることを検証する (#629 AC-10)
+     */
+    mockGameList([game], factionStatsFixture);
+    renderGameList();
+
+    expect(await screen.findByText('村陣営 33%')).toBeTruthy();
+    expect(screen.getByText('狼陣営 67%')).toBeTruthy();
+    expect(screen.getByText('（3戦）')).toBeTruthy();
+  });
+
+  it('統合: GameListScreen: ランキングが空（minGames 未満）でも全ゲームの陣営勝率は表示される', async () => {
+    /*
+     * SUT: GameListScreen / RightPane
+     * Mock: fetchGameList / fetchGameStats
+     * Level: component
+     * Objective: 組み合わせ境界 — minGames による足切りでランキングが空でも陣営勝率は全ゲームで集計・表示されることを検証する (#629 AC-10 × AC-7)
+     */
+    mockGameList([game], { games: [factionStatsFixture.games[0]] });
+    renderGameList();
+
+    expect(await screen.findByText('集計できる戦績がありません')).toBeTruthy();
+    expect(screen.getByText('村陣営 100%')).toBeTruthy();
+    expect(screen.getByText('狼陣営 0%')).toBeTruthy();
+    expect(screen.getByText('（1戦）')).toBeTruthy();
+  });
+
+  it('統合: GameListScreen: ゲーム0件では陣営勝率が — と表示される', async () => {
+    /*
+     * SUT: GameListScreen / RightPane
+     * Mock: fetchGameList / fetchGameStats
+     * Level: component
+     * Objective: 全ゲーム 0 件で陣営勝率が NaN / 0% ではなく「—」になることを検証する (#629 AC-11)
+     */
+    mockGameList([game], { games: [] });
+    renderGameList();
+
+    expect(await screen.findByText('村陣営 —')).toBeTruthy();
+    expect(screen.getByText('狼陣営 —')).toBeTruthy();
+  });
+});
+
 describe('GameListScreen fetchGameList 失敗時のエラー表示（#614）', () => {
   it('統合: fetchGameList が reject したとき unhandled rejection を起こさず StatusMessage でエラー表示し loading を解除する', async () => {
     /*

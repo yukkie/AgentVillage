@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   parseIndexToGameList, parseEntryToGame, fetchGameBySessionId, fetchGameList,
-  parseGameStats, parseAllAgentNames, parseWinRateRanking, fetchGameStats,
+  parseGameStats, parseAllAgentNames, parseWinRateRanking, parseFactionWinRates, fetchGameStats,
 } from './archiveLoader.js';
 import { normalizeAgentJson } from '../legacy/normalizeAgentJson.js';
 
@@ -258,7 +258,45 @@ describe('parseGameStats', () => {
     Objective: game_stats.json に存在しない名前で空集計を返すことを検証する (AC-7 empty state)
     */
     const stats = parseGameStats(STATS_FIXTURE, 'Unknown');
-    expect(stats).toEqual({ wins: 0, total: 0, records: [] });
+    expect(stats).toEqual({
+      wins: 0, total: 0, records: [],
+      byFaction: { village: { wins: 0, total: 0 }, werewolf: { wins: 0, total: 0 } },
+    });
+  });
+
+  it('pure: parseGameStats: faction 別の wins / total を返す', () => {
+    /*
+    SUT: parseGameStats
+    Mock: なし
+    Level: unit
+    Objective: 対象エージェントの村側・狼側それぞれの wins / total を集計し、出場0回の陣営も 0/0 で返すことを検証する (#629 AC-2)
+    */
+    expect(parseGameStats(STATS_FIXTURE, 'Nox').byFaction).toEqual({
+      village: { wins: 1, total: 2 },
+      werewolf: { wins: 0, total: 0 },
+    });
+    expect(parseGameStats(STATS_FIXTURE, 'Kai').byFaction).toEqual({
+      village: { wins: 0, total: 0 },
+      werewolf: { wins: 1, total: 2 },
+    });
+  });
+
+  it('pure: parseGameStats: role ではなく faction で陣営を集計する', () => {
+    /*
+    SUT: parseGameStats
+    Mock: なし
+    Level: unit
+    Objective: role と faction が食い違うデータで faction 側に計上されること（role からの独自マッピングをしない）を検証する (#629 AC-3)
+    */
+    const stats = {
+      games: [
+        { game_id: 'g1', players: [{ name: 'Odd', role: 'Villager', faction: 'werewolf', won: true }] },
+      ],
+    };
+    expect(parseGameStats(stats, 'Odd').byFaction).toEqual({
+      village: { wins: 0, total: 0 },
+      werewolf: { wins: 1, total: 1 },
+    });
   });
 });
 
@@ -353,7 +391,8 @@ describe('parseWinRateRanking', () => {
       ],
     };
 
-    expect(parseWinRateRanking(stats, { limit: 3, minGames: 2 })).toEqual([
+    // #629 で factionWinRate が追加されたため、既存フィールドの値・順序のみを照合する（AC-7）。
+    expect(parseWinRateRanking(stats, { limit: 3, minGames: 2 })).toMatchObject([
       { name: 'Mira', wins: 2, games: 2, winRate: 100 },
       { name: 'Kai', wins: 2, games: 3, winRate: 67 },
       { name: 'Nox', wins: 2, games: 3, winRate: 67 },
@@ -388,6 +427,96 @@ describe('parseWinRateRanking', () => {
     */
     expect(parseWinRateRanking({ games: [] })).toEqual([]);
     expect(parseWinRateRanking(null)).toEqual([]);
+  });
+
+  it('pure: parseWinRateRanking: 各エージェントに faction 別の勝率を付与する', () => {
+    /*
+    SUT: parseWinRateRanking
+    Mock: なし
+    Level: unit
+    Objective: ランキング各行が村側・狼側の勝率を持ち、出場0回の陣営は null になることを検証する (#629 AC-1/AC-6)
+    */
+    const stats = {
+      games: [
+        { game_id: 'g1', players: [{ name: 'Nox', faction: 'village', won: true }] },
+        { game_id: 'g2', players: [{ name: 'Nox', faction: 'village', won: false }] },
+        { game_id: 'g3', players: [{ name: 'Nox', faction: 'village', won: true }] },
+      ],
+    };
+    expect(parseWinRateRanking(stats)[0].factionWinRate).toEqual({ village: 67, werewolf: null });
+  });
+
+  it('pure: parseWinRateRanking: faction 別勝率は既存の順位を変えない', () => {
+    /*
+    SUT: parseWinRateRanking
+    Mock: なし
+    Level: unit
+    Objective: 村側勝率の大小が通算勝率と逆でも、並び順が通算勝率で決まり続けることを検証する (#629 AC-7)
+    */
+    const stats = {
+      games: [
+        // A: 村 2/2 (100%), 狼 0/2 → 通算 50%
+        // B: 村 0/1 (0%),   狼 2/2 → 通算 67%
+        { game_id: 'g1', players: [{ name: 'A', faction: 'village', won: true }, { name: 'B', faction: 'werewolf', won: true }] },
+        { game_id: 'g2', players: [{ name: 'A', faction: 'village', won: true }, { name: 'B', faction: 'werewolf', won: true }] },
+        { game_id: 'g3', players: [{ name: 'A', faction: 'werewolf', won: false }, { name: 'B', faction: 'village', won: false }] },
+        { game_id: 'g4', players: [{ name: 'A', faction: 'werewolf', won: false }] },
+      ],
+    };
+    const ranking = parseWinRateRanking(stats);
+    expect(ranking.map(r => [r.name, r.winRate])).toEqual([['B', 67], ['A', 50]]);
+    expect(ranking.map(r => r.factionWinRate)).toEqual([
+      { village: 0, werewolf: 100 },
+      { village: 100, werewolf: 0 },
+    ]);
+  });
+});
+
+describe('parseFactionWinRates', () => {
+  it('pure: parseFactionWinRates: won プレイヤーの faction から陣営勝率を集計する', () => {
+    /*
+    SUT: parseFactionWinRates
+    Mock: なし
+    Level: unit
+    Objective: 各ゲームの won:true プレイヤーの faction を勝者陣営とし、全ゲーム横断の村陣営・狼陣営の勝率と試合数を返すことを検証する (#629 AC-11)
+    */
+    const stats = {
+      games: [
+        { game_id: 'g1', winner: 'Villagers', players: [{ name: 'A', faction: 'village', won: true }, { name: 'B', faction: 'werewolf', won: false }] },
+        { game_id: 'g2', winner: 'Werewolves', players: [{ name: 'A', faction: 'village', won: false }, { name: 'B', faction: 'werewolf', won: true }] },
+        { game_id: 'g3', winner: 'Werewolves', players: [{ name: 'A', faction: 'village', won: false }, { name: 'B', faction: 'werewolf', won: true }] },
+      ],
+    };
+    expect(parseFactionWinRates(stats)).toEqual({ games: 3, village: 33, werewolf: 67 });
+  });
+
+  it('pure: parseFactionWinRates: ゲーム0件・不正入力では勝率 null を返す', () => {
+    /*
+    SUT: parseFactionWinRates
+    Mock: なし
+    Level: unit
+    Objective: 母数 0 で NaN / 0% ではなく null（データなし）を返し、不正入力でも例外にしないことを検証する (#629 AC-11)
+    */
+    const empty = { games: 0, village: null, werewolf: null };
+    expect(parseFactionWinRates({ games: [] })).toEqual(empty);
+    expect(parseFactionWinRates(null)).toEqual(empty);
+  });
+
+  it('pure: parseFactionWinRates: 勝者を判定できないゲームは母数から除外する', () => {
+    /*
+    SUT: parseFactionWinRates
+    Mock: なし
+    Level: unit
+    Objective: won:true のプレイヤーがいないゲーム・players 欠落ゲームを母数に含めないことを検証する (#629 AC-11)
+    */
+    const stats = {
+      games: [
+        { game_id: 'g1', players: [{ name: 'A', faction: 'village', won: true }] },
+        { game_id: 'g2', players: [{ name: 'A', faction: 'village', won: false }] },
+        { game_id: 'g3' },
+      ],
+    };
+    expect(parseFactionWinRates(stats)).toEqual({ games: 1, village: 100, werewolf: 0 });
   });
 });
 

@@ -667,7 +667,7 @@ describe('AgentDetailScreen(global)', () => {
 
     expect(screen.queryByText('観戦者モード')).toBeNull();
     expect(screen.queryByText('参加者視点')).toBeNull();
-    expect(screen.getByText('50%')).toBeTruthy();
+    expect(within(screen.getByRole('group', { name: '通算勝率' })).getByText('50%')).toBeTruthy();
   });
 
   it('勝率・通算成績が game_stats.json の集計値で表示される', async () => {
@@ -682,7 +682,7 @@ describe('AgentDetailScreen(global)', () => {
     await screen.findByRole('heading', { name: 'Nox' });
 
     // Nox: 2戦1勝 → 勝率 50%
-    expect(screen.getByText('50%')).toBeTruthy();
+    expect(within(screen.getByRole('group', { name: '通算勝率' })).getByText('50%')).toBeTruthy();
     expect(screen.getAllByText(/2\s*戦/).length).toBeGreaterThan(0);
   });
 
@@ -708,14 +708,35 @@ describe('AgentDetailScreen(global)', () => {
     SUT: AgentDetailScreen (global profile mode)
     Mock: global fetch（game_stats.json を返す）
     Level: integration
-    Objective: game_stats.json に無い名前でも名前・アバターを描画し成績 0 を表示することを検証する (AC-7)
+    Objective: game_stats.json に無い名前でも名前・アバターを描画し、成績 0 戦・勝率は 0% ではなく — を表示することを検証する (AC-7 / #629 で勝率を — に変更)
     */
     mockFetchOk(STATS_FIXTURE);
     renderGlobal('/agent/Unknown');
 
     expect(await screen.findByRole('heading', { name: 'Unknown' })).toBeTruthy();
     expect(screen.getByAltText('Unknown')).toBeTruthy();
-    expect(screen.getByText('0%')).toBeTruthy();
+    expect(within(screen.getByRole('group', { name: '通算勝率' })).getByText('—')).toBeTruthy();
+    expect(screen.queryByText('0%')).toBeNull();
+  });
+
+  it('統合: AgentDetailScreen: global hero に通算と陣営別の勝率が表示される', async () => {
+    /*
+    SUT: AgentDetailScreen (global profile mode) / GlobalHero
+    Mock: global fetch（game_stats.json を返す）
+    Level: integration
+    Objective: ヒーロー統計に通算勝率と併せて村陣営・狼陣営の勝率と出場数が表示され、出場0回の陣営は — になることを検証する (#629 AC-5/AC-6)
+    */
+    mockFetchOk(STATS_FIXTURE);
+    renderGlobal('/agent/Nox');
+    await screen.findByRole('heading', { name: 'Nox' });
+
+    // Nox: 村 2戦1勝 / 狼 出場なし
+    const village = screen.getByRole('group', { name: '村陣営勝率' });
+    expect(within(village).getByText('50%')).toBeTruthy();
+    expect(within(village).getByText('村陣営 (2戦)')).toBeTruthy();
+    const wolf = screen.getByRole('group', { name: '狼陣営勝率' });
+    expect(within(wolf).getByText('—')).toBeTruthy();
+    expect(within(wolf).getByText('狼陣営 (0戦)')).toBeTruthy();
   });
 
   it('fetch 失敗時に error 表示を出す', async () => {
