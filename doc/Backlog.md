@@ -20,6 +20,7 @@
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
 | yukkie/AgentVillage#628 | tech-debt | 🔴 | 3 | fix(frontend): move shared config JSON out of public/ to stop Vite import warning | npm run dev の "Assets in public directory cannot be imported" 警告。agents/role_meta/roles.json を src/config/ へ移し blurb の fetch を import に一本化。src/config.py のパス定数も追従（案A） |
+| ❌ yukkie/AgentVillage#640 | tech-debt | （なし） | - | refactor: move parseBlurb from archiveLoader.js to agentMeta.js (responsibility placement) | #628 派生。parseBlurb() は agents.json の静的データを引く純粋関数で archiveLoader.js の他責務（index.json ロード）と異なる。agentMeta.js への移動可否を再検討する |
 | yukkie/AgentVillage#633 | tech-debt | 🔴 | 2 | fix(frontend): wire up or retire spec'd-but-unwired UI states (.rail / chip_muted / chip_dead) | #620 派生。doc に仕様記載があるのに production の呼び出し元がゼロの UI 状態3件。配線するか仕様ごと廃止するかを対象ごとに判断する。#634 の前提 |
 | yukkie/AgentVillage#629 | enhancement | 🟡 | 3 | feat(frontend): show village/wolf faction win rates alongside overall win rate | 通算勝率のみで陣営別が見えない。game_stats.json に faction が既にあるため JS 集計のみで実現可（Python 変更不要）。GameList ランキングと AgentDetail 戦績の両方に影響 |
 | yukkie/AgentVillage#623 | enhancement | 🟡 | 3 | feat(frontend): make GameListScreen rule filter real (roles.json-backed) | #541 が実装を後続送りにしたまま未起票だった分。ルールをroles.json駆動にしフィルターを実装。実在しない「妖狐入り」「短期戦」を撤去 |
