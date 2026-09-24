@@ -206,7 +206,10 @@ function NightActionsPanel({ nightActions, roleAssignment, sessionId, viewerMode
     <ul className={styles.actionList} aria-label={`Day ${activeDay} 夜の行動`}>
       {nightActions.map((a, i) => (
         <li key={i} className={`${styles.action} ${styles[a.event_type] || ''}`}>
-          <div className={styles.actionIco}>{NIGHT_ACTION_ICON[a.event_type] || '・'}</div>
+          <div className={styles.actionIcoWrap}>
+            <div className={styles.actionIco}>{NIGHT_ACTION_ICON[a.event_type] || '・'}</div>
+            <span className={styles.actionLabel}>{NIGHT_ACTION_LABEL[a.event_type]}</span>
+          </div>
           <div className={styles.what}>
             <AgentLink sessionId={sessionId} name={a.agent} viewerMode={viewerMode}>
               <Avatar name={a.agent} size="xs" label={a.agent} layout="horizontal" />
@@ -216,14 +219,13 @@ function NightActionsPanel({ nightActions, roleAssignment, sessionId, viewerMode
                 <Avatar name={a.target} size="xs" label={a.target} layout="horizontal" />
               </AgentLink></>
             )}
-            <span style={{ color: 'var(--tx-4)', marginLeft: 6 }}>{NIGHT_ACTION_LABEL[a.event_type]}</span>
+            {a.event_type === 'inspection' && a.inspection_role === 'Werewolf' && (
+              <span className={`${styles.res} ${styles.black}`} aria-label="人狼判定">⚫</span>
+            )}
+            {a.event_type === 'inspection' && a.inspection_role === 'Villager' && (
+              <span className={`${styles.res} ${styles.white}`} aria-label="人間判定">⚪</span>
+            )}
           </div>
-          {a.event_type === 'inspection' && a.inspection_role === 'Werewolf' && (
-            <span className={`${styles.res} ${styles.black}`}>黒</span>
-          )}
-          {a.event_type === 'inspection' && a.inspection_role === 'Villager' && (
-            <span className={`${styles.res} ${styles.white}`}>白</span>
-          )}
         </li>
       ))}
       {nightActions.length === 0 && (
