@@ -12,3 +12,21 @@ export const AGENT_COLORS = Object.fromEntries(AGENT_CONFIG.map(a => [a.name, a.
 
 // 旧 Object.keys(AGENT_PALETTE) 互換: agents.json の配列順の全エージェント名一覧。
 export const ALL_AGENT_NAMES = AGENT_CONFIG.map(a => a.name);
+
+// --- Agent config blurb (#519, archiveLoader.js から移動 #640) ---
+
+/**
+ * Look up an agent's static blurb (1-line profile) from agents.json.
+ * Returns null when the agent is absent or config is null/missing so the
+ * display side can fall back to a placeholder (AC-4). No placeholder string
+ * is baked in here to keep this pure and decoupled from the UI symbol.
+ *
+ * @param {{name: string, blurb?: string}[] | null} config - agents.json (AGENT_CONFIG)
+ * @param {string} name
+ * @returns {string | null}
+ */
+export function parseBlurb(config, name) {
+  if (!Array.isArray(config)) return null;
+  const entry = config.find(a => a.name === name);
+  return entry?.blurb ?? null;
+}
