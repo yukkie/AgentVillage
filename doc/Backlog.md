@@ -19,6 +19,7 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| ❌ yukkie/AgentVillage#643 | bug | （なし） | - | Fix NightActionsPanel layout: misaligned text, unclear inspection result badge, low-contrast border | SpectatorScreen の夜の行動パネルで、行内要素の縦位置ズレ・占い結果バッジ（白/黒テキスト）の視認性不足・バッジの枠線コントラスト不足・種別ラベルとアイコンの位置対応不明瞭を修正する |
 | ❌ yukkie/AgentVillage#640 | tech-debt | （なし） | - | refactor: move parseBlurb from archiveLoader.js to agentMeta.js (responsibility placement) | #628 派生。parseBlurb() は agents.json の静的データを引く純粋関数で archiveLoader.js の他責務（index.json ロード）と異なる。agentMeta.js への移動可否を再検討する |
 | yukkie/AgentVillage#633 | tech-debt | 🔴 | 2 | fix(frontend): wire up or retire spec'd-but-unwired UI states (.rail / chip_muted / chip_dead) | #620 派生。doc に仕様記載があるのに production の呼び出し元がゼロの UI 状態3件。配線するか仕様ごと廃止するかを対象ごとに判断する。#634 の前提 |
 | yukkie/AgentVillage#629 | enhancement | 🟡 | 3 | feat(frontend): show village/wolf faction win rates alongside overall win rate | 通算勝率のみで陣営別が見えない。game_stats.json に faction が既にあるため JS 集計のみで実現可（Python 変更不要）。GameList ランキングと AgentDetail 戦績の両方に影響 |
