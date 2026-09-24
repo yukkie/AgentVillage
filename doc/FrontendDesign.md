@@ -939,7 +939,7 @@ fetch('../state_archive/20260510_102927/spectator_log.jsonl')
 
 **Phase B — ゲーム一覧の動的化（#338 完了）**
 
-`state_archive/index.json`（`tools/generate_archive_index.py` で事前生成）を fetch して `GameListScreen` に渡す。`stub/gameList.js` の `GAMES` 配列を削除済み。
+`state_archive/index.json`（CLI ゲーム終了後に自動生成。手動再生成は `tools/generate_archive_index.py` / `src/logger/archive_index.py` の `generate_archive_index()`）を fetch して `GameListScreen` に渡す。`stub/gameList.js` の `GAMES` 配列を削除済み。
 
 - `src/lib/archiveLoader.js` — `fetchGameList()` / `parseIndexToGameList()` / `fetchGameBySessionId(sessionId)` でデータ取得・変換
 - `src/legacy/normalizeAgentJson.js` — pre-#52 flat 形式エージェント JSON を正規化（Legacy-Adapter）

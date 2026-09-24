@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 
 from src.engine.setup import initialize_agents
 from src.engine.game import GameEngine
+from src.logger.archive_index import generate_archive_index
 from src.logger.writer import LogWriter, archive_state
 from src.stats.collector import record_game, show_stats
 from src.ui.cli import CLI
@@ -104,6 +105,10 @@ def main() -> None:
         archive_path = archive_state()
         if archive_path:
             print(f"Game archived to: {archive_path}")
+            try:
+                generate_archive_index()
+            except Exception as e:
+                print(f"Warning: failed to regenerate archive index: {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":
