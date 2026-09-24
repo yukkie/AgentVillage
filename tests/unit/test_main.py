@@ -13,16 +13,17 @@ def _run_main(argv: list[str]) -> None:
         main.main()
 
 
+@patch("main.generate_archive_index")
 @patch("main.archive_state", return_value="state_archive/game_20240101.json")
 @patch("main.record_game")
 @patch("main.LogWriter")
 @patch("main.CLI")
 @patch("main.GameEngine")
 @patch("main.initialize_agents")
-def test_main_prints_archive_path(mock_init, mock_engine_cls, mock_cli_cls, mock_writer_cls, mock_record, mock_archive, capsys):
+def test_main_prints_archive_path(mock_init, mock_engine_cls, mock_cli_cls, mock_writer_cls, mock_record, mock_archive, mock_gen_index, capsys):
     """
     SUT: main.main
-    Mock: archive_state が実パスを返す
+    Mock: archive_state が実パスを返す。generate_archive_index はダミーに差し替え
     Level: unit
     Objective: archive_state がパスを返したとき "Game archived to: ..." が出力されること
     """
@@ -36,6 +37,83 @@ def test_main_prints_archive_path(mock_init, mock_engine_cls, mock_cli_cls, mock
 
     captured = capsys.readouterr()
     assert "Game archived to: state_archive/game_20240101.json" in captured.out
+
+
+@patch("main.generate_archive_index")
+@patch("main.archive_state", return_value="state_archive/game_20240101.json")
+@patch("main.record_game")
+@patch("main.LogWriter")
+@patch("main.CLI")
+@patch("main.GameEngine")
+@patch("main.initialize_agents")
+def test_main_calls_generate_archive_index_when_archived(mock_init, mock_engine_cls, mock_cli_cls, mock_writer_cls, mock_record, mock_archive, mock_gen_index):
+    """
+    SUT: main.main
+    Mock: archive_state が実パスを返す。generate_archive_index はダミーに差し替え
+    Level: unit
+    Objective: AC-1/AC-2: archive_state が成功したとき generate_archive_index が呼ばれること。
+    """
+    mock_init.return_value = [MagicMock()]
+    fake_engine = MagicMock()
+    fake_engine.run.return_value = "Villagers"
+    mock_engine_cls.return_value = fake_engine
+    mock_cli_cls.return_value = MagicMock()
+
+    _run_main([])
+
+    mock_gen_index.assert_called_once_with()
+
+
+@patch("main.generate_archive_index")
+@patch("main.archive_state", return_value=None)
+@patch("main.record_game")
+@patch("main.LogWriter")
+@patch("main.CLI")
+@patch("main.GameEngine")
+@patch("main.initialize_agents")
+def test_main_skips_generate_archive_index_when_not_archived(mock_init, mock_engine_cls, mock_cli_cls, mock_writer_cls, mock_record, mock_archive, mock_gen_index):
+    """
+    SUT: main.main
+    Mock: archive_state が None を返す（アーカイブが作られなかったケース）
+    Level: unit
+    Objective: AC-6: archive_state() が None のとき generate_archive_index が呼ばれないこと。
+    """
+    mock_init.return_value = [MagicMock()]
+    fake_engine = MagicMock()
+    fake_engine.run.return_value = "Villagers"
+    mock_engine_cls.return_value = fake_engine
+    mock_cli_cls.return_value = MagicMock()
+
+    _run_main([])
+
+    mock_gen_index.assert_not_called()
+
+
+@patch("main.generate_archive_index", side_effect=RuntimeError("boom"))
+@patch("main.archive_state", return_value="state_archive/game_20240101.json")
+@patch("main.record_game")
+@patch("main.LogWriter")
+@patch("main.CLI")
+@patch("main.GameEngine")
+@patch("main.initialize_agents")
+def test_main_archive_index_failure_does_not_raise(mock_init, mock_engine_cls, mock_cli_cls, mock_writer_cls, mock_record, mock_archive, mock_gen_index, capsys):
+    """
+    SUT: main.main
+    Mock: generate_archive_index が例外を送出するよう差し替え
+    Level: unit
+    Objective: AC-5: index 生成が失敗しても main() は例外を伝播させず、record_game/archive_state の結果に影響しないこと。
+    """
+    mock_init.return_value = [MagicMock()]
+    fake_engine = MagicMock()
+    fake_engine.run.return_value = "Villagers"
+    mock_engine_cls.return_value = fake_engine
+    mock_cli_cls.return_value = MagicMock()
+
+    _run_main([])  # 例外を送出せず完走すること
+
+    mock_record.assert_called_once()
+    captured = capsys.readouterr()
+    assert "Warning: failed to regenerate archive index: boom" in captured.err
 
 
 @patch("main.archive_state", return_value=None)
@@ -93,3 +171,17 @@ def test_main_replay_mode(mock_init, mock_engine_cls, mock_cli_cls, mock_writer_
     mock_init.assert_not_called()
     mock_engine_cls.assert_not_called()
     mock_replay.assert_called_once_with(spectator_mode=False)
+
+
+@patch("main.generate_archive_index")
+def test_replay_mode_does_not_call_generate_archive_index(mock_gen_index):
+    """
+    SUT: main.main
+    Mock: src.ui.replay.run_replay をダミーに差し替え
+    Level: unit
+    Objective: 組み合わせ境界(AC-7): --replay 指定時、generate_archive_index が呼ばれないこと。
+    """
+    with patch("src.ui.replay.run_replay"):
+        _run_main(["--replay"])
+
+    mock_gen_index.assert_not_called()
