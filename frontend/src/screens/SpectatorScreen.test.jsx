@@ -1079,6 +1079,89 @@ describe('RightPane: night action icon role colors (#608)', () => {
   });
 });
 
+describe('RightPane: night action badge layout (#643)', () => {
+  it('統合: RightPane: 占い結果バッジのテキストに「黒」「白」の漢字が含まれない', () => {
+    /*
+     * SUT: RightPane (NightActionsPanel)
+     * Mock: なし
+     * Level: integration
+     * Objective: inspection 判定バッジのテキスト内容に「黒」「白」の漢字ラベルが含まれず、
+     *            絵文字のみで表示されることを検証する（AC-2）。
+     */
+    const daySummary = {
+      1: {
+        nightActions: [
+          { event_type: 'inspection', agent: 'Alice', target: 'Bob', is_public: false, inspection_role: 'Werewolf' },
+        ],
+        execResult: null,
+        speechCount: 0,
+        nightDone: true,
+      },
+    };
+    const { container } = renderRightPane({ daySummary, activeDay: 1 });
+    const actionList = container.querySelector('[aria-label="Day 1 夜の行動"]');
+    const badge = actionList.querySelector(`.${styles.res}`);
+
+    expect(badge).toBeTruthy();
+    expect(badge.textContent).not.toMatch(/[黒白]/);
+  });
+
+  it('統合: RightPane: 占い結果バッジが判定対象（ターゲット行）と同じ .what 要素内に配置される', () => {
+    /*
+     * SUT: RightPane (NightActionsPanel)
+     * Mock: なし
+     * Level: integration
+     * Objective: 占い結果バッジが <li> 末尾に孤立せず、判定対象のアバターと同じ .what 要素内に
+     *            配置されることを検証する（AC-3）。
+     */
+    const daySummary = {
+      1: {
+        nightActions: [
+          { event_type: 'inspection', agent: 'Alice', target: 'Bob', is_public: false, inspection_role: 'Villager' },
+        ],
+        execResult: null,
+        speechCount: 0,
+        nightDone: true,
+      },
+    };
+    const { container } = renderRightPane({ daySummary, activeDay: 1 });
+    const actionList = container.querySelector('[aria-label="Day 1 夜の行動"]');
+    const whatEl = actionList.querySelector(`.${styles.what}`);
+    const badge = actionList.querySelector(`.${styles.res}`);
+
+    expect(whatEl.contains(badge)).toBe(true);
+  });
+
+  it('統合: RightPane: 行動種別ラベルがアイコンと同じ wrapper 要素内に配置される', () => {
+    /*
+     * SUT: RightPane (NightActionsPanel)
+     * Mock: なし
+     * Level: integration
+     * Objective: 行動種別ラベル（護衛/占い/襲撃）が .actionIco と同じ親要素内に配置され、
+     *            .what の末尾（旧配置）には存在しないことを検証する（AC-5）。
+     */
+    const daySummary = {
+      1: {
+        nightActions: [
+          { event_type: 'guard', agent: 'Carol', target: 'Alice', is_public: false },
+        ],
+        execResult: null,
+        speechCount: 0,
+        nightDone: true,
+      },
+    };
+    const { container } = renderRightPane({ daySummary, activeDay: 1 });
+    const actionList = container.querySelector('[aria-label="Day 1 夜の行動"]');
+    const icoEl = actionList.querySelector(`.${styles.actionIco}`);
+    const whatEl = actionList.querySelector(`.${styles.what}`);
+    const label = Array.from(actionList.querySelectorAll('span')).find(el => el.textContent === '護衛');
+
+    expect(label).toBeTruthy();
+    expect(icoEl.parentElement.contains(label)).toBe(true);
+    expect(whatEl.contains(label)).toBe(false);
+  });
+});
+
 describe('LeftPane phase dot colors unaffected (#608 AC-6)', () => {
   it('LeftPane: phaseDiscuss/phaseNight/phaseExec の dot に既存の状態修飾クラスが付与されたまま残る', () => {
     /*

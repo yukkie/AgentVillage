@@ -168,7 +168,7 @@
   padding: 0 12px;
 }
 .action {
-  display: flex; gap: 10px;
+  display: flex; align-items: center; gap: 10px;
   padding: 8px 6px;
   border-bottom: 1px dashed var(--bd-soft);
   font-size: var(--fs-sm);
@@ -176,9 +176,9 @@
 .action.inspection .actionIco { color: var(--r-seer); }
 .action.guard       .actionIco { color: var(--r-hunter); }
 .action.night_attack .actionIco { color: var(--r-werewolf); }
-.res       { font-family: var(--mono); font-size: var(--fs-sm); padding: 1px 5px; border-radius: var(--r-xs); }
-.res.black { color: var(--r-werewolf); background: rgba(226,107,107,0.12); }
-.res.white { color: var(--r-seer);     background: rgba(110,168,255,0.12); }
+.res       { font-size: var(--fs-sm); padding: 1px 5px; border-radius: var(--r-xs); margin-left: 6px; }
+.res.black { background: rgba(226,107,107,0.12); }
+.res.white { background: rgba(110,168,255,0.12); }
 
 /* Left pane inner layout: date list scrolls, filter pinned at bottom */
 .leftPaneInner { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: hidden; }
@@ -192,8 +192,10 @@
 .count     { font-family: var(--mono); font-size: var(--fs-sm); color: var(--tx-4); letter-spacing: 0; }
 
 /* action inner */
-.actionIco { font-family: var(--serif); font-size: var(--fs-sm); color: var(--tx-2); flex: 0 0 18px; }
-.what      { color: var(--tx-2); flex: 1; }
+.actionIcoWrap { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 0 0 18px; }
+.actionIco   { font-family: var(--serif); font-size: var(--fs-sm); color: var(--tx-2); }
+.actionLabel { font-size: var(--fs-sm); color: var(--tx-4); white-space: nowrap; }
+.what        { color: var(--tx-2); flex: 1; display: flex; align-items: center; }
 
 /* phase nav inner */
 .phaseDiscuss .dot { background: var(--acc); }
