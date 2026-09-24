@@ -523,7 +523,7 @@ class ReplayPager:
 イベントを順に処理しながら `CO_ANNOUNCEMENT` が来たタイミングで `claimed_role` を更新する。
 spectatorモードは `agent.role`（変化しない真の役職）を使うため影響なし。
 
-旧アーカイブ互換のため、`profile` が存在しない旧JSONは `name` / `model` / `persona` をトップレベルから読み取り、必要に応じて `frontend/public/config/agents.json` のカタログで補完する。
+旧アーカイブ互換のため、`profile` が存在しない旧JSONは `name` / `model` / `persona` をトップレベルから読み取り、必要に応じて `frontend/src/config/agents.json` のカタログで補完する。
 
 **ページャーループ:**
 - `shutil.get_terminal_size().lines` でターミナル高さを取得

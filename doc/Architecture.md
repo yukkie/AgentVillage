@@ -108,19 +108,19 @@ spectator.py がログを書き出す  →  state_archive/{session}/
 
 ### 2.3.1 静的 config の配置
 
-`frontend/public/config/` は Python と JS が共有する静的設定の SSOT である。
+`frontend/src/config/` は Python と JS が共有する静的設定の SSOT である（#628。旧 `frontend/public/config/`）。
 
 | ファイル | 用途 |
 |---|---|
-| `frontend/public/config/agents.json` | エージェント定義（name / persona / occupation / blurb / color） |
-| `frontend/public/config/roles.json` | 人数別の役職編成（配分表） |
-| `frontend/public/config/role_meta.json` | 役職メタ（日本語名・short・team・色）。`roles.json`（配分表）とは別ファイル |
-| `frontend/public/config/tokens.json` | LLM 呼び出しごとの token 上限 |
+| `frontend/src/config/agents.json` | エージェント定義（name / persona / occupation / blurb / color） |
+| `frontend/src/config/roles.json` | 人数別の役職編成（配分表） |
+| `frontend/src/config/role_meta.json` | 役職メタ（日本語名・short・team・色）。`roles.json`（配分表）とは別ファイル |
+| `frontend/src/config/tokens.json` | LLM 呼び出しごとの token 上限（JS からの参照はなく Python 専用だが、共有 config ディレクトリの一本化のためここに置く） |
 
 これらはゲーム進行で変化しない静的データであり、`state_archive/` や `state/stats/` のような実行時データではない。
-そのため将来の FastAPI 化（#315）の対象外とし、フロントエンドでは Vite / 静的ホスティングの
-`public/` 配信により `/config/*.json` として取得する。Python 側も同じファイルを直接読むことで、
-ブラウザ用とエンジン用の設定が二重化しないようにする。
+そのため将来の FastAPI 化（#315）の対象外とし、フロントエンドでは JS から静的 import してビルド時にバンドルへ焼き込む。
+Vite の `public/` 配信（ランタイム fetch）は使わない — 同一ファイルがバンドルと静的配信の二重経路になることを避けるため（#628）。
+Python 側も同じファイルを直接読むことで、ブラウザ用とエンジン用の設定が二重化しないようにする。
 
 ### 2.4 LogEvent — イベントスキーマと表示制御の3軸
 

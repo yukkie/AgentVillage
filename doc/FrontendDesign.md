@@ -719,7 +719,7 @@ SpectatorScreen から AgentDetailScreen への遷移、および AgentDetailScr
 | `TabHistory` | 過去戦績（ゲーム番号・役職・勝敗） |
 | `MatrixRow` / `NightRow` | 各リストの行コンポーネント |
 
-データソース: `game_stats.json` / `agents/*.json` / `spectator_log.jsonl` / `frontend/public/config/agents.json`（§8.3 参照）。`stub/agentDetail.js` は #547 で削除済み。blurb（1行プロフィール）は `frontend/public/config/agents.json` の `blurb` フィールドを `/config/agents.json` として fetch（#519）。
+データソース: `game_stats.json` / `agents/*.json` / `spectator_log.jsonl` / `frontend/src/config/agents.json`（§8.3 参照）。`stub/agentDetail.js` は #547 で削除済み。blurb（1行プロフィール）は `frontend/src/config/agents.json` の `blurb` フィールドを静的 import で取得（#519、#628 で fetch から import に変更）。
 
 **死亡日表示（#535 / #554）**: `AgentHero` の `死亡 · Day N` の `N` は、ゲーム最終日ではなく**当該エージェントの死亡日**を使う。死亡日は `deathDayOf(events, name)` で public `night_attack` / `elimination` 由来の死亡確定イベントから引く。死亡イベント欠落で `-1` が返った場合は現在日（最終日）へフォールバックする。生存中エージェントの `生存中 · Day N` は従来どおり現在日を使う。
 
@@ -922,7 +922,7 @@ Semantic HTML: `AgentHero` は画面内のエージェント見出しとして `
 |---|---|
 | `stub/spectator.js` | `parseGameData.js` 経由で `state_archive/{sessionId}/spectator_log.jsonl` をパース（#318） |
 | `stub/gameList.js` | `GAMES` は #338、`TOP_AGENTS` は #337 で実データ化。`VILLAGE_NAME_PRESETS`（村名プリセット）は #547 で廃止 |
-| `stub/agentDetail.js` | `game_stats.json` / `agents/*.json` / `spectator_log.jsonl` / `frontend/public/config/agents.json`（§8.3 参照） |
+| `stub/agentDetail.js` | `game_stats.json` / `agents/*.json` / `spectator_log.jsonl` / `frontend/src/config/agents.json`（§8.3 参照） |
 
 ### 8.2 Milestone 2 移行計画
 
@@ -971,12 +971,12 @@ FastAPI + WebSocket でイベントをストリーミング配信する。`fetch
 > 役職・推論・夜行動・疑念マトリクスといった1ゲーム固有情報は出さない。viewerMode 出し分けも行わない（§6.2）。
 > `game-scoped mode` は SpectatorScreen と同じ可視性ルール（§6.2 / `doc/DataSpec.md` §3）で spectator / public を出し分ける。
 
-#### A. `global profile mode` の項目（出所＝`game_stats.json` / `frontend/public/config/agents.json`）
+#### A. `global profile mode` の項目（出所＝`game_stats.json` / `frontend/src/config/agents.json`）
 
 | 項目 | 扱い | 出所 / 理由 |
 |---|---|---|
 | 名前 ＋ アバター | ✅ | `game_stats.json` の `players[].name` / アイコンは `/icons/{name}.png` |
-| blurb（1行プロフィール、旧 `AGENT_BLURB`） | ✅ 実装済み（#519） | `frontend/public/config/agents.json` の静的 `blurb` フィールド（英語）を `/config/agents.json` として `fetchAgentConfig()` で fetch し、`parseBlurb()` で抽出。両モード共通。fetch 失敗／未定義は `—` フォールバック。日本語化は将来の別 Issue |
+| blurb（1行プロフィール、旧 `AGENT_BLURB`） | ✅ 実装済み（#519、#628 で fetch→import に変更） | `frontend/src/config/agents.json` の静的 `blurb` フィールド（英語）を静的 import し、`parseBlurb()` で抽出。両モード共通。未定義エージェントは `—` フォールバック。日本語化は将来の別 Issue |
 | 勝率・通算成績（`AGENT_STATS` の `games` / `wins`） | ✅ | `game_stats.json` の各 `game.players[]` を `name` でフィルタし `won` / 出場数を集計（`doc/DataSpec.md` §6） |
 | 過去の戦績一覧（`TabHistory` の `records`） | ✅ | `game_stats.json` 各 `game` を `name` でフィルタ（`game_id` / `role` / `won`）。**村名列は `game_stats.json` に無いため `session_id`（`game_id`）を代わりに表示する**。過去戦績テーブルの `role` 列は表示してよい（Hero / Avatar / 左ペインの役職タグ・役職刻印を出さない方針とは別物） |
 | 左ペイン名簿（`ALL_AGENTS` / `DEAD_AGENTS`） | ✅（別物に差し替え） | `global` では「同ゲームの参加者ピッカー」は概念として存在しない。代わりに**全エージェント横断のプロフィール一覧リンク集**にする（`game_stats.json` の全 `name` 集合 → 各行 `/agent/{encodeURIComponent(name)}`）。共通 `AgentRosterRow` を `showRole={false}`（役職を出さない・AC-4）・`showStatusDot={false}`（生死概念なし）・`selected={name === current}`（現在地ハイライト）で再利用する。行全体が `Link` のためクリック領域が行全域になる（独自 `display: contents` 行だと padding/gap が hit しない問題を回避） |
@@ -1031,7 +1031,7 @@ FastAPI + WebSocket でイベントをストリーミング配信する。`fetch
 2. **`game-scoped` 基本** — 参加者ピッカー・役職・session メタ・生死・推論ログ（`parseGameData.js` 拡張 ＋ `agents/*.json`）。
 3. **`game-scoped` 中央タイムライン統合** — 日付タブ ＋ 発言/思考/夜行動の統合表示。**SpectatorScreen フィードカードの共通コンポーネント化を含む**（D 参照）。viewerMode public 出し分けを含む。
 4. **TopBar / 演出の撤去 ＋ viewerMode トグル追加** — 不要ボタン削除・ダミー（応援・並べ替え・現在の目標・疑似時刻）撤去・`game-scoped` への viewerMode トグル追加。
-5. **blurb 実装** — `frontend/public/config/agents.json` に静的フィールド追加（両モード共通・別 Issue）。→ #519 で実装済み。
+5. **blurb 実装** — `frontend/src/config/agents.json` に静的フィールド追加（両モード共通・別 Issue）。→ #519 で実装済み、#628 で fetch から静的 import に変更。
 
 ---
 

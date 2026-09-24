@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { AGENT_COLORS, ALL_AGENT_NAMES } from './agentMeta.js';
-import AGENT_CONFIG from '../../public/config/agents.json';
+import AGENT_CONFIG from '../config/agents.json';
 
 // --- agents.json color data (AC-2) ---
 
 describe('agents.json color data', () => {
   it('unit: agents.json の全エージェントに color が存在する', () => {
     /*
-    SUT: frontend/public/config/agents.json
+    SUT: frontend/src/config/agents.json
     Mock: なし
     Level: unit
     Objective: 全エージェントに非空の color 文字列が存在することを検証する (AC-2)
