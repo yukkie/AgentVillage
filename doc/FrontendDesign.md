@@ -49,7 +49,7 @@ frontend/
 │   │   └── AgentDetailScreen.jsx / .module.css
 │   ├── lib/
 │   │   ├── roleMeta.js     # role_meta.json adapter（ROLE_META_BY_KEY / ROLE_KEYS / listRoles）
-│   │   ├── agentMeta.js    # agents.json adapter（AGENT_COLORS / ALL_AGENT_NAMES）
+│   │   ├── agentMeta.js    # agents.json adapter（AGENT_COLORS / ALL_AGENT_NAMES / parseBlurb）
 │   │   ├── feedFilter.js   # filterFeedEvents(events, day, phase) — フェーズ別フィルタ純粋関数
 │   │   └── feedFilter.test.js
 │   ├── App.jsx / .module.css

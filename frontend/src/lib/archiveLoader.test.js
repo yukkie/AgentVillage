@@ -2,10 +2,8 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   parseIndexToGameList, parseEntryToGame, fetchGameBySessionId, fetchGameList,
   parseGameStats, parseAllAgentNames, parseWinRateRanking, fetchGameStats,
-  parseBlurb,
 } from './archiveLoader.js';
 import { normalizeAgentJson } from '../legacy/normalizeAgentJson.js';
-import AGENT_CONFIG from '../config/agents.json';
 
 // --- fixture data ---
 
@@ -390,63 +388,6 @@ describe('parseWinRateRanking', () => {
     */
     expect(parseWinRateRanking({ games: [] })).toEqual([]);
     expect(parseWinRateRanking(null)).toEqual([]);
-  });
-});
-
-// --- parseBlurb / fetchAgentConfig（#519 blurb 実データ化） ---
-
-const CONFIG_FIXTURE = [
-  { name: 'Nox', style: 'cynical, detached, intelligent', blurb: 'Finds the frayed edge in every word, quiet as a moonless night.' },
-  { name: 'Mira', style: 'analytical, methodical, honest', blurb: 'Stands where instinct meets logic, smelling a lie before it lands.' },
-];
-
-describe('parseBlurb', () => {
-  it('pure: parseBlurb が name 一致の blurb を返す', () => {
-    /*
-    SUT: parseBlurb
-    Mock: なし
-    Level: unit
-    Objective: config 配列から name 一致エントリの blurb 文字列を返すことを検証する (AC-2/AC-3)
-    */
-    expect(parseBlurb(CONFIG_FIXTURE, 'Nox')).toBe('Finds the frayed edge in every word, quiet as a moonless night.');
-  });
-
-  it('pure: parseBlurb は未知 name に null を返す', () => {
-    /*
-    SUT: parseBlurb
-    Mock: なし
-    Level: unit
-    Objective: config に存在しない名前では null を返し、表示側のフォールバックに委ねることを検証する (AC-4)
-    */
-    expect(parseBlurb(CONFIG_FIXTURE, 'Unknown')).toBeNull();
-  });
-
-  it('pure: parseBlurb は config が null でも null を返す', () => {
-    /*
-    SUT: parseBlurb
-    Mock: なし
-    Level: unit
-    Objective: fetch 失敗で config が null のとき例外を投げず null を返すことを検証する (AC-4)
-    */
-    expect(parseBlurb(null, 'Nox')).toBeNull();
-  });
-});
-
-describe('agents.json blurb data', () => {
-  it('pure: agents.json の全エージェントに英語 blurb が存在する', () => {
-    /*
-    SUT: frontend/src/config/agents.json
-    Mock: なし
-    Level: unit
-    Objective: 全エージェントに非空の英語 blurb 文字列が存在することを検証する (AC-1)
-    */
-    expect(AGENT_CONFIG.length).toBeGreaterThan(0);
-    for (const agent of AGENT_CONFIG) {
-      expect(typeof agent.blurb).toBe('string');
-      expect(agent.blurb.trim().length).toBeGreaterThan(0);
-      // 英語版（ASCII のみ・日本語文字を含まない）であることを担保する
-      expect(/[　-鿿]/.test(agent.blurb)).toBe(false);
-    }
   });
 });
 

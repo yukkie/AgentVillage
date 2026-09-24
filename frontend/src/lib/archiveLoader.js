@@ -171,28 +171,6 @@ export async function fetchGameStats() {
   return res.json();
 }
 
-// --- Agent config blurb (#519) ---
-
-// frontend/src/config/agents.json holds static, name-keyed agent metadata
-// (style, occupation, blurb …), statically imported by agentMeta.js (#628).
-// This static config is intentionally outside the FastAPI migration scope (#315).
-
-/**
- * Look up an agent's static blurb (1-line profile) from agents.json.
- * Returns null when the agent is absent or config is null/missing so the
- * display side can fall back to a placeholder (AC-4). No placeholder string
- * is baked in here to keep this pure and decoupled from the UI symbol.
- *
- * @param {{name: string, blurb?: string}[] | null} config - agents.json (AGENT_CONFIG from agentMeta.js)
- * @param {string} name
- * @returns {string | null}
- */
-export function parseBlurb(config, name) {
-  if (!Array.isArray(config)) return null;
-  const entry = config.find(a => a.name === name);
-  return entry?.blurb ?? null;
-}
-
 /**
  * Fetch a single game entry by sessionId from state_archive/index.json.
  * Returns the raw index entry (including cast) for use by SpectatorScreen.
