@@ -19,7 +19,6 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
-| yukkie/AgentVillage#633 | tech-debt | 🔴 | 2 | fix(frontend): wire up or retire spec'd-but-unwired UI states (.rail / chip_muted / chip_dead) | #620 派生。doc に仕様記載があるのに production の呼び出し元がゼロの UI 状態3件。配線するか仕様ごと廃止するかを対象ごとに判断する。#634 の前提 |
 | yukkie/AgentVillage#629 | enhancement | 🟡 | 3 | feat(frontend): show village/wolf faction win rates alongside overall win rate | 通算勝率のみで陣営別が見えない。game_stats.json に faction が既にあるため JS 集計のみで実現可（Python 変更不要）。GameList ランキングと AgentDetail 戦績の両方に影響 |
 | yukkie/AgentVillage#623 | enhancement | 🟡 | 3 | feat(frontend): make GameListScreen rule filter real (roles.json-backed) | #541 が実装を後続送りにしたまま未起票だった分。ルールをroles.json駆動にしフィルターを実装。実在しない「妖狐入り」「短期戦」を撤去 |
 | yukkie/AgentVillage#634 | tech-debt | 🟡 | 3 | test(frontend): close L1 test gaps and gate CSS reachability in CI | #620 派生。テストが薄いだけの L1 7件を潰すと「未到達＝デッド」が成立し、CSS 到達性を allowlist 無しで CI ゲート化できる。実装順序制約: #633 → #634（#623 も先が望ましい） |
