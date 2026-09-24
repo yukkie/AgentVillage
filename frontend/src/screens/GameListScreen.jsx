@@ -4,7 +4,8 @@ import Avatar, { AvatarButton } from '../components/Avatar.jsx';
 import TopBar, { TopBarBtn } from '../components/TopBar.jsx';
 import ThreePaneLayout from '../components/ThreePaneLayout.jsx';
 import StatusMessage from '../components/StatusMessage.jsx';
-import { fetchGameList, fetchGameStats, parseWinRateRanking } from '../lib/archiveLoader.js';
+import { fetchGameList, fetchGameStats, parseWinRateRanking, parseFactionWinRates } from '../lib/archiveLoader.js';
+import { formatWinRate } from '../lib/winRate.js';
 import { ALL_AGENT_NAMES } from '../lib/agentMeta.js';
 import { toggleInSet } from '../lib/toggleInSet.js';
 import styles from './GameListScreen.module.css';
@@ -176,11 +177,28 @@ function LeftPane() {
 }
 
 // === 右サイドウィジェット ===
+// 全ゲーム横断の陣営勝率（#629）。勝率ランキング見出しの次行（2行目）に置く。
+function FactionWinRateSummary({ factionWinRates }) {
+  return (
+    <p className={styles.factionSummary}>
+      <span className={styles.village}>{`村陣営 ${formatWinRate(factionWinRates.village)}`}</span>
+      <span aria-hidden="true">·</span>
+      <span className={styles.wolf}>{`狼陣営 ${formatWinRate(factionWinRates.werewolf)}`}</span>
+      <span>{`（${factionWinRates.games}戦）`}</span>
+    </p>
+  );
+}
+
 function RightPane({ winRateRankingState }) {
   return (
     <div className={styles.sideWidgets}>
       <section className={styles.sideCard}>
-        <h5>🏆 勝率ランキング</h5>
+        <div className={styles.sideCardHead}>
+          <h5>🏆 勝率ランキング</h5>
+          {winRateRankingState.status === 'ready' && (
+            <FactionWinRateSummary factionWinRates={winRateRankingState.factionWinRates} />
+          )}
+        </div>
         {winRateRankingState.status === 'loading' && (
           <p className={styles.sideNote}>勝率を集計中…</p>
         )}
@@ -192,13 +210,17 @@ function RightPane({ winRateRankingState }) {
         )}
         {winRateRankingState.status === 'ready' && winRateRankingState.agents.length > 0 && (
           <ul className={styles.sideList} aria-label="勝率ランキング">
-            {winRateRankingState.agents.map(({ name, winRate }, i) => (
+            {winRateRankingState.agents.map(({ name, winRate, factionWinRate }, i) => (
               <li className={styles.rankRow} key={name}>
                 <Link to={`/agent/${encodeURIComponent(name)}`} className={styles.rankLink}>
                   <span className={styles.rank}>{i + 1}</span>
                   <Avatar name={name} size="xs" decorative />
                   <span className={styles.rankName}>{name}</span>
-                  <span className={styles.rankNum}>{winRate}%</span>
+                  <span className={styles.rankFaction}>
+                    <span className={styles.village}>{`村 ${formatWinRate(factionWinRate.village)}`}</span>
+                    <span className={styles.wolf}>{`狼 ${formatWinRate(factionWinRate.werewolf)}`}</span>
+                  </span>
+                  <span className={styles.rankNum}>{formatWinRate(winRate)}</span>
                 </Link>
               </li>
             ))}
@@ -229,7 +251,11 @@ export default function GameListScreen() {
     fetchGameStats()
       .then(stats => {
         if (!cancelled) {
-          setWinRateRankingState({ status: 'ready', agents: parseWinRateRanking(stats) });
+          setWinRateRankingState({
+            status: 'ready',
+            agents: parseWinRateRanking(stats),
+            factionWinRates: parseFactionWinRates(stats),
+          });
         }
       })
       .catch(() => {
