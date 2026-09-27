@@ -30,3 +30,7 @@ design/proposal/prototypes/_sample_events.json
 .tmp/pytest/
 .tmp/type-lineage/
 .tmp_covdiff_fixture/
+
+# ローカル MCP 設定（GitHub MCP 認証ヘッダ helper）
+/.mcp.json
+/mcp_github_auth_headers.py
