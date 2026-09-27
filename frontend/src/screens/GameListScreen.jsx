@@ -8,6 +8,7 @@ import { fetchGameList, fetchGameStats, parseWinRateRanking, parseFactionWinRate
 import { formatWinRate } from '../lib/winRate.js';
 import { ALL_AGENT_NAMES } from '../lib/agentMeta.js';
 import { toggleInSet } from '../lib/toggleInSet.js';
+import { PLAYER_COUNT_RULES, matchesPlayerCountRule } from '../lib/playerCountRule.js';
 import styles from './GameListScreen.module.css';
 
 const TABS = ['🔴 LIVE', '完了'];
@@ -160,16 +161,37 @@ function GameCard({ g }) {
 }
 
 // === 左サイドナビ ===
-function LeftPane() {
+function RuleItem({ label, pressed, onClick }) {
+  return (
+    <li>
+      <button
+        type="button"
+        className={`${styles.ruleBtn} ${pressed ? styles.ruleBtnOn : ''}`}
+        aria-pressed={pressed}
+        onClick={onClick}
+      >
+        {label}
+      </button>
+    </li>
+  );
+}
+
+// ルール項目は roles.json の人数から生成する（#623）。選択中の人数を再クリックすると解除（すべて）に戻る。
+function LeftPane({ activeRule, onSelectRule }) {
   return (
     <nav className={styles.sideNav} aria-label="ゲーム一覧サイドナビ">
       <div className={styles.sec}>
         <h5>ルール</h5>
         <ul>
-          <li><a><span className={styles.ico}>11</span> 標準11人</a></li>
-          <li><a><span className={styles.ico}>15</span> 拡張15人</a></li>
-          <li><a><span className={styles.ico}>妖</span> 妖狐入り</a></li>
-          <li><a><span className={styles.ico}>短</span> 短期戦</a></li>
+          <RuleItem label="すべて" pressed={activeRule === null} onClick={() => onSelectRule(null)} />
+          {PLAYER_COUNT_RULES.map(n => (
+            <RuleItem
+              key={n}
+              label={`${n}人`}
+              pressed={activeRule === n}
+              onClick={() => onSelectRule(activeRule === n ? null : n)}
+            />
+          ))}
         </ul>
       </div>
     </nav>
@@ -234,6 +256,7 @@ function RightPane({ winRateRankingState }) {
 // === メインゲーム一覧画面 ===
 export default function GameListScreen() {
   const [activeTab, setActiveTab] = useState('完了');
+  const [activeRule, setActiveRule] = useState(null);
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [gameListError, setGameListError] = useState(false);
@@ -264,7 +287,8 @@ export default function GameListScreen() {
     return () => { cancelled = true; };
   }, []);
 
-  const visibleGames = filterGames(games, activeTab);
+  // タブ（LIVE/完了）とルール（人数）は AND で併用する（#623）。
+  const visibleGames = filterGames(games, activeTab).filter(g => matchesPlayerCountRule(g, activeRule));
   const liveGame = games.find(g => g.live);
 
   return (
@@ -276,7 +300,7 @@ export default function GameListScreen() {
         collapsibleRight
         leftLabel="一覧"
         rightLabel="ランキング"
-        left={<LeftPane />}
+        left={<LeftPane activeRule={activeRule} onSelectRule={setActiveRule} />}
         right={<RightPane winRateRankingState={winRateRankingState} />}
       >
         <div className={styles.listMain}>
