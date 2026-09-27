@@ -22,6 +22,7 @@ htmlcov/
 coverage.json
 frontend/.vite/
 frontend/coverage/
+frontend/.tmp/
 frontend/dist/
 playwright-screenshots/
 test-results/

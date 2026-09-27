@@ -11,7 +11,8 @@
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
     "lint:css": "stylelint \"src/**/*.css\"",
-    "audit:css": "node scripts/cssDeadRules.mjs"
+    "audit:css": "node scripts/cssDeadRules.mjs",
+    "audit:css:runtime": "vitest run --config vitest.css-reach.config.js && node scripts/cssReach/report.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

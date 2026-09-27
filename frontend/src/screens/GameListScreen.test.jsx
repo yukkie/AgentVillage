@@ -134,6 +134,28 @@ describe('GameListScreen GameCard semantics', () => {
     const link = screen.getByRole('link', { name: new RegExp(game.title) });
     expect(link.getAttribute('href')).toBe('/game/20260510_102927');
   });
+
+  it('統合: GameListScreen: 村陣営勝ちのゲームは村陣営カラーの勝敗バッジを表示する', async () => {
+    /*
+     * SUT: GameListScreen / GameCard (winnerClass) ← archiveLoader.parseEntryToGame
+     * Mock: fetchGameList（index.json エントリを実物の parseEntryToGame で変換した結果を返す）
+     * Level: component
+     * Objective: winner='village' のゲームは「村人陣営勝」ラベルと村陣営スタイルの勝敗バッジで、winner='wolf' のゲームは狼陣営スタイルで表示され、両者が取り違えられないことを検証する（#634 L1）。
+     */
+    const villageWin = archiveLoader.parseEntryToGame({ session_id: 'village_win', winner: 'village', days: 4, cast: ['Nox', 'Mira'] });
+    const wolfWin = archiveLoader.parseEntryToGame({ session_id: 'wolf_win', winner: 'wolf', days: 3, cast: ['Kai', 'Kael'] });
+    mockGameList([villageWin, wolfWin]);
+
+    renderGameList();
+
+    const villageBadge = within(await screen.findByRole('article', { name: 'village_win' })).getByText('村人陣営勝');
+    expect(villageBadge.classList.contains(styles.winnerVillage)).toBe(true);
+    expect(villageBadge.classList.contains(styles.winnerWolf)).toBe(false);
+
+    const wolfBadge = within(screen.getByRole('article', { name: 'wolf_win' })).getByText('狼陣営勝');
+    expect(wolfBadge.classList.contains(styles.winnerWolf)).toBe(true);
+    expect(wolfBadge.classList.contains(styles.winnerVillage)).toBe(false);
+  });
 });
 
 describe('GameListScreen list semantics', () => {
