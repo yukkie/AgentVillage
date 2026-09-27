@@ -27,6 +27,13 @@ repos:
         pass_filenames: false
         files: ^frontend/
         stages: [pre-commit]
+      - id: frontend-css-reach
+        name: frontend CSS reachability gate
+        entry: npm --prefix frontend run audit:css:runtime
+        language: system
+        pass_filenames: false
+        files: ^frontend/
+        stages: [pre-commit]
       - id: design-lint
         name: design lint
         entry: npm --prefix frontend run lint:css

@@ -205,3 +205,100 @@ describe('FeedCard: SystemRow (standalone export)', () => {
     expect(container.querySelector('a[href="/game/s1/agent/Bob"]')).toBeTruthy();
   });
 });
+
+// #634: L1（本番で到達するがテストが薄い）描画分岐。CSS 到達のためだけでなく、
+// 各分岐が描画する内容（返信先・メンション・severity 分類）を振る舞いとして検証する。
+describe('FeedCard: FeedItem speech reply / mention / threat severity (#634)', () => {
+  it('統合: FeedItem: reply_to が同日の既出発言を指すと返信先の発言者・番号・本文を引用表示する', () => {
+    /*
+     * SUT: FeedItem → SpeechCard (reply_to branch)
+     * Mock: なし（plain props を入力）
+     * Level: component
+     * Objective: reply_to が prevById の `${day}-${reply_to}` に一致するとき、返信先の発言者名・発言番号・本文を引用ブロックとして表示することを検証する。
+     */
+    const replied = { day: 2, event_type: 'speech', agent: 'Carol', content: '昨夜の護衛先は伏せておきます', speech_id: 3, is_public: true };
+    const ev = { day: 2, event_type: 'speech', agent: 'Alice', content: 'それは怪しい', speech_id: 5, reply_to: 3, is_public: true };
+    const { container } = render(
+      <MemoryRouter>
+        <FeedItem ev={ev} prevById={{ '2-3': replied }} roleAssignment={roleAssignment} sessionId="s1" viewerMode="spectator" />
+      </MemoryRouter>
+    );
+
+    const quote = container.querySelector(`.${styles.spQuote}`);
+    expect(quote).toBeTruthy();
+    expect(quote.querySelector(`.${styles.qhead}`).textContent).toBe('▶ Carol #3 への返信');
+    expect(quote.textContent).toContain('昨夜の護衛先は伏せておきます');
+    expect(container.querySelector(`.${styles.spBody}`).textContent).toBe('それは怪しい');
+  });
+
+  it('統合: FeedItem: reply_to の参照先が prevById に無いとき引用ブロックを描画しない', () => {
+    /*
+     * SUT: FeedItem → SpeechCard (reply_to branch)
+     * Mock: なし（plain props を入力）
+     * Level: component
+     * Objective: 組み合わせ境界 — reply_to はあるが参照先が prevById に無い（別 day の同番号など）場合、引用ブロックを出さず本文だけを表示することを検証する。
+     */
+    const otherDay = { day: 1, event_type: 'speech', agent: 'Carol', content: '前日の発言', speech_id: 3, is_public: true };
+    const ev = { day: 2, event_type: 'speech', agent: 'Alice', content: 'それは怪しい', speech_id: 5, reply_to: 3, is_public: true };
+    const { container } = render(
+      <MemoryRouter>
+        <FeedItem ev={ev} prevById={{ '1-3': otherDay }} roleAssignment={roleAssignment} sessionId="s1" viewerMode="spectator" />
+      </MemoryRouter>
+    );
+
+    expect(container.querySelector(`.${styles.spQuote}`)).toBeNull();
+    expect(screen.queryByText(/への返信/)).toBeNull();
+    expect(screen.getByText('それは怪しい')).toBeTruthy();
+  });
+
+  it('統合: FeedItem: 本文中の @名前 をメンションとして分離し前後の本文を保持する', () => {
+    /*
+     * SUT: FeedItem → SpeechCard → Mentioned
+     * Mock: なし（plain props を入力）
+     * Level: component
+     * Objective: 本文中の @名前 だけがメンション要素に分離され、前後の地の文が欠けずに同じ順序で表示されることを検証する。
+     */
+    const ev = { day: 1, event_type: 'speech', agent: 'Alice', content: '@Bob と @Carol の投票先が同じだ', speech_id: 2, is_public: true };
+    const { container } = render(
+      <MemoryRouter>
+        <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} sessionId="s1" viewerMode="spectator" />
+      </MemoryRouter>
+    );
+
+    const body = container.querySelector(`.${styles.spBody}`);
+    const mentions = Array.from(body.querySelectorAll(`.${styles.mention}`)).map(el => el.textContent);
+    expect(mentions).toEqual(['@Bob', '@Carol']);
+    expect(body.textContent).toBe('@Bob と @Carol の投票先が同じだ');
+  });
+
+  it('統合: FeedItem: threat_update のスコアを 0.4/0.7 境界で low/medium/high に分類して表示する', () => {
+    /*
+     * SUT: FeedItem → RelationshipUpdateRow → RelationshipMeterList (scoreSeverity)
+     * Mock: なし（plain props を入力）
+     * Level: component
+     * Objective: threat_snapshot の各値が 0.4 未満→low / 0.4 以上 0.7 未満→medium / 0.7 以上→high に分類され、severity ラベルと % が表示されることを境界値で検証する。
+     */
+    const ev = {
+      day: 2,
+      event_type: 'threat_update',
+      agent: 'Bob',
+      content: 'Bob threat update',
+      is_public: false,
+      threat_snapshot: { Alice: 0.39, Carol: 0.4, Dave: 0.69, Eve: 0.7 },
+    };
+    const { container } = render(
+      <MemoryRouter>
+        <FeedItem ev={ev} prevById={{}} roleAssignment={roleAssignment} sessionId="s1" viewerMode="spectator" />
+      </MemoryRouter>
+    );
+
+    const list = container.querySelector('[aria-label="threat snapshot"]');
+    expect(list).toBeTruthy();
+    const severityOf = (label) =>
+      list.querySelector(`[aria-label="${label}"] .${styles.scoreSeverity}`).textContent;
+    expect(severityOf('Alice threat 39%')).toBe('low');
+    expect(severityOf('Carol threat 40%')).toBe('medium');
+    expect(severityOf('Dave threat 69%')).toBe('medium');
+    expect(severityOf('Eve threat 70%')).toBe('high');
+  });
+});

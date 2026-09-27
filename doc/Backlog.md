@@ -20,7 +20,6 @@
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
 | ❌ yukkie/AgentVillage#648 | tech-debt | （なし） | - | Reconsider Avatar/AvatarButton prop interface (label-driven feature coupling) | #633 派生。`label` の有無が variant の有効/無効まで暗黙に決めてしまっている。全呼び出し元のユースケースを棚卸しし、望ましい prop インターフェースを再設計する |
-| yukkie/AgentVillage#634 | tech-debt | 🟡 | 3 | test(frontend): close L1 test gaps and gate CSS reachability in CI | #620 派生。テストが薄いだけの L1 7件を潰すと「未到達＝デッド」が成立し、CSS 到達性を allowlist 無しで CI ゲート化できる。実装順序制約: #633 → #634（#623 も先が望ましい） |
 | yukkie/AgentVillage#624 | enhancement | 🟢 | - | feat: launch a new game from NewVillageForm (connect to main.py) | #329 がスコープ外にした起動連携。ブラウザ→Python の受け口方式が Milestone 3(FastAPI) と重なるため着手前に方針確認。人数選択 8 が roles.json に無い不整合も解消。SP は方式次第 |
 | yukkie/AgentVillage#466 | tech-debt | 🟡 | 5 | Refactor LogEvent payload design | #451 設計中に派生。LogEvent の event-specific payload を直下 optional field / extra_data / discriminated union のどれで整理するか比較検討する |
 | yukkie/AgentVillage#495 | enhancement | 🟡 | 3 | design: log visibility classes and recipient-based authorization model (for LIVE / player participation) | LIVE/プレイヤー参加に向け、可視性クラス×受信者権限の配信認可モデルを先行設計（ADR）。replay は全配信の特殊ケース |

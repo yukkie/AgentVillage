@@ -4,7 +4,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import globals from 'globals';
 
 export default [
-  { ignores: ['dist', 'coverage', '.vite'] },
+  { ignores: ['dist', 'coverage', '.vite', '.tmp'] },
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {
@@ -34,7 +34,7 @@ export default [
     },
   },
   {
-    files: ['**/*.test.{js,jsx}', 'vitest.config.js', 'vite.config.js'],
+    files: ['**/*.test.{js,jsx}', 'vitest.config.js', 'vitest.css-reach.config.js', 'vite.config.js'],
     languageOptions: {
       globals: {
         ...globals.node,
