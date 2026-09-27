@@ -4,6 +4,8 @@ import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import GameListScreen from './GameListScreen.jsx';
 import * as archiveLoader from '../lib/archiveLoader.js';
+import { PLAYER_COUNT_RULES } from '../lib/playerCountRule.js';
+import styles from './GameListScreen.module.css';
 
 vi.mock('../lib/archiveLoader.js', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -84,6 +86,11 @@ afterEach(() => {
 function mockGameList(games = [game], stats = statsFixture) {
   archiveLoader.fetchGameList.mockResolvedValue(games);
   archiveLoader.fetchGameStats.mockResolvedValue(stats);
+}
+
+// ルール項目（#623）も aria-pressed を持つため、NewVillageForm のエージェントボタン抽出ではサイドナビを除外する。
+function sideNav() {
+  return screen.getByRole('navigation', { name: 'ゲーム一覧サイドナビ' });
 }
 
 function renderGameList() {
@@ -483,7 +490,7 @@ describe('GameListScreen NewVillageForm 容量ガード（#597 AC-5）', () => {
     await user.click(screen.getByText('新しい村を作る'));
 
     const agentButtons = screen.getAllByRole('button', { name: /^(?!新しい村を作る|村を作る|5人|8人|11人|🔴 LIVE|完了).+/ })
-      .filter(b => b.getAttribute('aria-pressed') !== null);
+      .filter(b => b.getAttribute('aria-pressed') !== null && !sideNav().contains(b));
 
     await user.click(agentButtons[0]);
     expect(agentButtons[0].getAttribute('aria-pressed')).toBe('true');
@@ -507,7 +514,8 @@ describe('GameListScreen NewVillageForm 容量ガード（#597 AC-5）', () => {
 
     await user.click(screen.getByText('新しい村を作る'));
 
-    const agentButtons = screen.getAllByRole('button').filter(b => b.getAttribute('aria-pressed') !== null);
+    const agentButtons = screen.getAllByRole('button')
+      .filter(b => b.getAttribute('aria-pressed') !== null && !sideNav().contains(b));
 
     for (let i = 0; i < 5; i++) {
       await user.click(agentButtons[i]);
@@ -562,5 +570,168 @@ describe('GameListScreen タブ（AC-9・AC-10）', () => {
     await user.click(screen.getByRole('button', { name: '🔴 LIVE' }));
     await screen.findByRole('article', { name: '20260601_120000' });
     expect(screen.queryByRole('article', { name: '20260510_102927' })).toBeNull();
+  });
+});
+
+describe('GameListScreen ルールフィルター（#623）', () => {
+  const castOf = (n, prefix) => Array.from({ length: n }, (_, i) => `${prefix}${i}`);
+  const endedFive = { ...game, id: 'ended_5', cast: castOf(5, 'E') };
+  const endedEleven = { ...game, id: 'ended_11', cast: castOf(11, 'F') };
+  const liveFive = { ...liveGame, id: 'live_5', cast: castOf(5, 'L') };
+
+  const ruleNav = sideNav;
+
+  // アクセシブルネームで「すべて」+ roles.json 由来の人数項目を順に照合する。
+  function expectRuleButtons() {
+    const expected = ['すべて', ...PLAYER_COUNT_RULES.map(n => `${n}人`)];
+    const buttons = within(ruleNav()).getAllByRole('button');
+    expect(buttons).toHaveLength(expected.length);
+    expected.forEach((name, i) => {
+      expect(within(ruleNav()).getByRole('button', { name })).toBe(buttons[i]);
+    });
+  }
+
+  it('統合: GameListScreen: ルール項目は roles.json の人数から生成され すべて + 6項目になる', async () => {
+    /*
+     * SUT: GameListScreen / LeftPane
+     * Mock: fetchGameList / fetchGameStats
+     * Level: component
+     * Objective: ルール項目が「すべて」と roles.json 由来の人数（PLAYER_COUNT_RULES）ごとのボタンで構成されることを検証する (AC-1)
+     */
+    mockGameList([endedFive]);
+    renderGameList();
+    await screen.findByRole('article', { name: 'ended_5' });
+
+    expectRuleButtons();
+    expect(PLAYER_COUNT_RULES).toHaveLength(6);
+  });
+
+  it('統合: GameListScreen: 妖狐入り・短期戦がサイドナビに存在しない', async () => {
+    /*
+     * SUT: GameListScreen / LeftPane
+     * Mock: fetchGameList / fetchGameStats
+     * Level: component
+     * Objective: roles.json に存在しない「妖狐入り」「短期戦」「標準11人」「拡張15人」のハードコード項目が画面上に無いことを検証する (AC-2)
+     */
+    mockGameList([endedFive]);
+    renderGameList();
+    await screen.findByRole('article', { name: 'ended_5' });
+
+    expect(screen.queryByText(/妖狐入り/)).toBeNull();
+    expect(screen.queryByText(/短期戦/)).toBeNull();
+    expect(within(ruleNav()).queryByText(/標準11人|拡張15人/)).toBeNull();
+  });
+
+  it('統合: GameListScreen: ルール項目をクリックするとその人数のゲームのみ表示される', async () => {
+    /*
+     * SUT: GameListScreen
+     * Mock: fetchGameList（5人・11人の完了ゲーム）/ fetchGameStats
+     * Level: component
+     * Objective: 人数項目のクリックでフィードがその人数のゲームだけに絞られることを検証する (AC-3)
+     */
+    const user = userEvent.setup();
+    mockGameList([endedFive, endedEleven]);
+    renderGameList();
+    await screen.findByRole('article', { name: 'ended_5' });
+    expect(screen.getByRole('article', { name: 'ended_11' })).toBeTruthy();
+
+    await user.click(within(ruleNav()).getByRole('button', { name: '11人' }));
+
+    expect(screen.getByRole('article', { name: 'ended_11' })).toBeTruthy();
+    expect(screen.queryByRole('article', { name: 'ended_5' })).toBeNull();
+  });
+
+  it('統合: GameListScreen: 選択中のルール項目は aria-pressed=true になり再クリックで解除される', async () => {
+    /*
+     * SUT: GameListScreen / LeftPane
+     * Mock: fetchGameList / fetchGameStats
+     * Level: component
+     * Objective: 選択中の項目が aria-pressed と選択クラスで判別でき、同じ項目の再クリックで未選択（すべて）に戻ることを検証する (AC-4)
+     */
+    const user = userEvent.setup();
+    mockGameList([endedFive, endedEleven]);
+    renderGameList();
+    await screen.findByRole('article', { name: 'ended_5' });
+
+    const all = within(ruleNav()).getByRole('button', { name: 'すべて' });
+    const five = within(ruleNav()).getByRole('button', { name: '5人' });
+    expect(all.getAttribute('aria-pressed')).toBe('true');
+    expect(five.getAttribute('aria-pressed')).toBe('false');
+
+    await user.click(five);
+    expect(five.getAttribute('aria-pressed')).toBe('true');
+    expect(five.classList.contains(styles.ruleBtnOn)).toBe(true);
+    expect(all.getAttribute('aria-pressed')).toBe('false');
+    expect(screen.queryByRole('article', { name: 'ended_11' })).toBeNull();
+
+    await user.click(five);
+    expect(five.getAttribute('aria-pressed')).toBe('false');
+    expect(all.getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('article', { name: 'ended_11' })).toBeTruthy();
+  });
+
+  it('統合: GameListScreen: すべてをクリックするとルールフィルターが解除される', async () => {
+    /*
+     * SUT: GameListScreen / LeftPane
+     * Mock: fetchGameList / fetchGameStats
+     * Level: component
+     * Objective: 人数項目の選択中に「すべて」をクリックすると全人数のゲームが再表示されることを検証する (AC-4)
+     */
+    const user = userEvent.setup();
+    mockGameList([endedFive, endedEleven]);
+    renderGameList();
+    await screen.findByRole('article', { name: 'ended_5' });
+
+    await user.click(within(ruleNav()).getByRole('button', { name: '5人' }));
+    expect(screen.queryByRole('article', { name: 'ended_11' })).toBeNull();
+
+    await user.click(within(ruleNav()).getByRole('button', { name: 'すべて' }));
+    expect(screen.getByRole('article', { name: 'ended_5' })).toBeTruthy();
+    expect(screen.getByRole('article', { name: 'ended_11' })).toBeTruthy();
+  });
+
+  it('統合: GameListScreen: ルールフィルターと LIVE/完了タブは AND で効き、タブ切替でルール選択が保持される', async () => {
+    /*
+     * SUT: GameListScreen
+     * Mock: fetchGameList（live 5人・完了 5人・完了 11人）/ fetchGameStats
+     * Level: component
+     * Objective: 組み合わせ境界 — ルール選択とタブが AND で絞り込み、タブを切り替えてもルール選択が保持されることを検証する (AC-5)
+     */
+    const user = userEvent.setup();
+    mockGameList([liveFive, endedFive, endedEleven]);
+    renderGameList();
+    await screen.findByRole('article', { name: 'ended_5' });
+
+    await user.click(within(ruleNav()).getByRole('button', { name: '5人' }));
+    // 完了 × 5人
+    expect(screen.getByRole('article', { name: 'ended_5' })).toBeTruthy();
+    expect(screen.queryByRole('article', { name: 'ended_11' })).toBeNull();
+    expect(screen.queryByRole('article', { name: 'live_5' })).toBeNull();
+
+    // LIVE × 5人（ルール選択は保持）
+    await user.click(screen.getByRole('button', { name: '🔴 LIVE' }));
+    expect(screen.getByRole('article', { name: 'live_5' })).toBeTruthy();
+    expect(screen.queryByRole('article', { name: 'ended_5' })).toBeNull();
+    expect(within(ruleNav()).getByRole('button', { name: '5人' }).getAttribute('aria-pressed')).toBe('true');
+
+    // LIVE × 11人 → 0件
+    await user.click(within(ruleNav()).getByRole('button', { name: '11人' }));
+    expect(screen.queryAllByRole('article')).toHaveLength(0);
+  });
+
+  it('統合: GameListScreen: fetchGameList 失敗時も StatusMessage のエラー表示とルール項目が表示される', async () => {
+    /*
+     * SUT: GameListScreen
+     * Mock: fetchGameList（reject を再現）/ fetchGameStats
+     * Level: component
+     * Objective: 組み合わせ境界 — ゲーム一覧の fetch 失敗時も既存の StatusMessage エラー表示が出て、static import のルール項目は表示されることを検証する (AC-6)
+     */
+    archiveLoader.fetchGameList.mockRejectedValue(new Error('boom'));
+    archiveLoader.fetchGameStats.mockResolvedValue(statsFixture);
+    renderGameList();
+
+    const errorMessage = await screen.findByText('ゲーム一覧を読み込めませんでした');
+    expect(errorMessage.getAttribute('data-status')).toBe('error');
+    expectRuleButtons();
   });
 });

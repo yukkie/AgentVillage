@@ -39,25 +39,27 @@
   margin: 0;
   padding: 0;
 }
-.sec a {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* ルール項目（#623）: <button> の UA スタイル（border/background/font/text-align）を打ち消す */
+.ruleBtn {
+  display: block;
+  width: 100%;
   padding: 6px 8px;
+  background: transparent;
+  border: none;
   border-radius: var(--r1);
+  font: inherit;
   font-size: var(--fs-sm);
   color: var(--tx-2);
+  text-align: left;
   cursor: pointer;
-  text-decoration: none;
   border-left: 2px solid transparent;
 }
-.sec a:hover { background: var(--bg-2); color: var(--tx); }
-
-.ico {
-  width: 18px;
-  text-align: center;
-  font-size: var(--fs-sm);
-  flex: 0 0 18px;
+.ruleBtn:hover { background: var(--bg-2); color: var(--tx); }
+.ruleBtn.ruleBtnOn {
+  background: var(--bg-2);
+  color: var(--tx);
+  font-weight: 600;
+  border-left-color: var(--acc);
 }
 
 /* === 中央メインフィード === */

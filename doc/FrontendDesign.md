@@ -181,9 +181,8 @@ stateDiagram-v2
     {+
       == SideNav (240px, <nav><ul><li>)
       -- ルール --
-      [11] 標準11人
-      [15] 拡張15人
-      [短] 短期戦
+      すべて
+      5人 … 15人（roles.json のキーから生成）
     } |
     {+
       == Center (1fr)
@@ -604,10 +603,12 @@ CSS Grid `grid-template-columns: var(--lcol) 1fr var(--rcol)` で 3 ペインを
 |---|---|
 | `NewVillageForm` | 展開/収納トグル付きのゲーム作成フォーム。人数選択 → エージェント選択 → 作成ボタン |
 | `GameCard` | ゲーム1件のカード表示（タイトル / ロスターストリップ / 👁同時観戦数） |
-| `LeftPane` | サイドナビ（ルールのみ。#541 でマイページ / カテゴリ / 注目エージェントを削除） |
+| `LeftPane` | サイドナビ（ルールのみ。#541 でマイページ / カテゴリ / 注目エージェントを削除）。#623 でルール項目を人数フィルターとして実データ化 |
 | `RightPane` | サイドウィジェット（勝率ランキングのみ。#541 で次回開催 / コミュニティ投稿を削除、#337 で `game_stats.json` 実集計化、#629 で陣営別勝率を追加） |
 
-データソース: `state_archive/index.json`（ゲーム一覧）、`state/stats/game_stats.json`（右ペイン勝率ランキング）。新規村フォームの村名プリセット（`VILLAGE_NAME_PRESETS`）は #547 で廃止。
+ルールフィルター（#623）: 左ナビ「ルール」の項目は `frontend/src/config/roles.json`（人数別の役職編成・SSOT）のキーから生成する。JSON の static import は `lib/playerCountRule.js`（`PLAYER_COUNT_RULES` / `matchesPlayerCountRule`）に集約し、画面側に人数リストを持たない。先頭の「すべて」と各人数項目は `<button type="button" aria-pressed>` で、選択中の項目を再クリックするか「すべて」で解除する。ゲームの人数は `cast.length`（`index.json` の `agent_count` と同値）で判定し、`🔴 LIVE` / `完了` タブとは AND で併用する。#303 以前のアーカイブは `cast` に前ゲームの残骸 agent ファイルが混入しており実際の参加人数と一致しない。`roles.json` に無い人数になったものはどのルール項目にも一致せず「すべて」でのみ表示され、偶然 `roles.json` の人数と一致したもの（例: 実際は7人だが `cast` が9人）は誤った人数の項目に分類される（既知のデータ制約）。
+
+データソース: `state_archive/index.json`（ゲーム一覧）、`state/stats/game_stats.json`（右ペイン勝率ランキング）、`frontend/src/config/roles.json`（ルールフィルター項目・static import）。新規村フォームの村名プリセット（`VILLAGE_NAME_PRESETS`）は #547 で廃止。
 
 勝率ランキングの陣営表示（#629）: 見出しの次行（2行目）に全ゲーム横断の陣営勝率（`parseFactionWinRates`、村陣営 / 狼陣営と母数の試合数）を、各ランキング行に通算勝率と併せてエージェントの陣営別勝率（`parseWinRateRanking` の `factionWinRate`）を表示する。陣営は `players[].faction`（`village` / `werewolf`）で判定し、`role` や `games[].winner` から変換しない（`doc/DataSpec.md` §6）。全ゲームの勝者陣営は各ゲームの `won: true` プレイヤーの `faction` とし、判定できないゲームは母数から外す。勝率計算と「データなし」表記は `lib/winRate.js`（`winRate` / `formatWinRate`）に集約し、出場 0 回は `null` → `—` 表示とする（`0%` / `NaN` にしない）。陣営別は追加情報であり、通算勝率の値・並び順・`minGames` フィルタは変えない。
 
