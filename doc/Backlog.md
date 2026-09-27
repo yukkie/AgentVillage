@@ -19,6 +19,7 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| ❌ yukkie/AgentVillage#658 | tech-debt | 🔴 | - | docs(frontend): derive public-mode secrecy rules from DataSpec visibility & ban visually-unused styling | #656 の前提（実装順: #658 → #656）。DataSpec §2・§3 の公開範囲から「public で伏せる情報」を定義し、全 DOM チャネルに出さない描画規則と「見た目に使われない指定はしない」原則を FrontendDesign に書く。違反箇所の一覧化と idd スキル追記 |
 | ❌ yukkie/AgentVillage#656 | bug | 🔴 | - | fix(frontend): public viewerMode leaks true roles (night actions panel + DOM role styles) | #634 議論中に発見。public でも右ペイン夜の行動（占い/襲撃）が表示され占い師・人狼が名指しで分かる。加えて発言カード・ロスター行の inline style `--r-color` と `speechWolf` クラスで全員の真の役職が DOM から読める |
 | ❌ yukkie/AgentVillage#648 | tech-debt | （なし） | - | Reconsider Avatar/AvatarButton prop interface (label-driven feature coupling) | #633 派生。`label` の有無が variant の有効/無効まで暗黙に決めてしまっている。全呼び出し元のユースケースを棚卸しし、望ましい prop インターフェースを再設計する |
 | yukkie/AgentVillage#624 | enhancement | 🟢 | - | feat: launch a new game from NewVillageForm (connect to main.py) | #329 がスコープ外にした起動連携。ブラウザ→Python の受け口方式が Milestone 3(FastAPI) と重なるため着手前に方針確認。人数選択 8 が roles.json に無い不整合も解消。SP は方式次第 |
