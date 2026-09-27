@@ -19,6 +19,7 @@
 
 | # | 種別 | 優先度 | SP | タイトル | 内容 |
 |---|---|---|---|---|---|
+| ❌ yukkie/AgentVillage#656 | bug | 🔴 | - | fix(frontend): public viewerMode leaks true roles (night actions panel + DOM role styles) | #634 議論中に発見。public でも右ペイン夜の行動（占い/襲撃）が表示され占い師・人狼が名指しで分かる。加えて発言カード・ロスター行の inline style `--r-color` と `speechWolf` クラスで全員の真の役職が DOM から読める |
 | ❌ yukkie/AgentVillage#648 | tech-debt | （なし） | - | Reconsider Avatar/AvatarButton prop interface (label-driven feature coupling) | #633 派生。`label` の有無が variant の有効/無効まで暗黙に決めてしまっている。全呼び出し元のユースケースを棚卸しし、望ましい prop インターフェースを再設計する |
 | yukkie/AgentVillage#634 | tech-debt | 🟡 | 3 | test(frontend): close L1 test gaps and gate CSS reachability in CI | #620 派生。テストが薄いだけの L1 7件を潰すと「未到達＝デッド」が成立し、CSS 到達性を allowlist 無しで CI ゲート化できる。実装順序制約: #633 → #634（#623 も先が望ましい） |
 | yukkie/AgentVillage#624 | enhancement | 🟢 | - | feat: launch a new game from NewVillageForm (connect to main.py) | #329 がスコープ外にした起動連携。ブラウザ→Python の受け口方式が Milestone 3(FastAPI) と重なるため着手前に方針確認。人数選択 8 が roles.json に無い不整合も解消。SP は方式次第 |
